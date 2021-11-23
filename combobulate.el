@@ -409,7 +409,9 @@ like \\[backward-sexp]."
     (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
     map))
 
-(define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs"
+(define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs
+
+\\{combobulate-key-map}"
   :init-value nil :lighter "©" :keymap combobulate-key-map
   (if-let ((setup-fn (alist-get major-mode combobulate-setup-functions-alist)))
       (progn
