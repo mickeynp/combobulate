@@ -104,8 +104,18 @@ If HIGHLIGHTED then the node is highlighted with
   "Returns t if NODE is visible in the current window"
   (and node
        ;; Should we disallow partial occlusion of a node?
-       (pos-visible-in-window-p (tsc-node-start-position node) (selected-window))
-       ;; (pos-visible-in-window-p (tsc-node-end-position node) (selected-window))
+
+       ;; This appears to be faster than `pos-visible-in-window-p'. More research needed.
+       (>= (tsc-node-start-position node)
+           (save-excursion (goto-char (point-min))
+                           (forward-line (1- (line-number-at-pos (window-start))))
+                           (point)))
+       (<= (tsc-node-start-position node)
+           (save-excursion (goto-char (point-min))
+                           (forward-line (1- (line-number-at-pos (window-end))))
+                           (point)))
+       ;; Too slow?
+       ;; (pos-visible-in-window-p (tsc-node-start-position node) (selected-window))
        ))
 
 (defun combobulate--node-on-or-after-node-p (node-a node-b)
