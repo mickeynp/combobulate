@@ -46,7 +46,10 @@
                                             elif_clause
                                             if_statement
                                             try_statement
-                                            )))
+                                            list
+                                            tuple
+                                            dictionary
+                                            set)))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here
