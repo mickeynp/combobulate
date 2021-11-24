@@ -68,7 +68,7 @@ empty or whitespaced line.")
                 (point))))
          (node (tsc-get-descendant-for-position-range root p p)))
     (when node-types
-      (let ((this node) result)
+      (let ((this node))
         (catch 'done
           (while this
             (let ((smallest-node (tsc-get-descendant-for-position-range
@@ -409,6 +409,9 @@ like \\[backward-sexp]."
     (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
     map))
 
+(make-variable-buffer-local 'combobulate-options-key-map)
+(make-variable-buffer-local 'combobulate-pretty-print-function)
+
 (define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs
 
 \\{combobulate-key-map}"
@@ -417,8 +420,6 @@ like \\[backward-sexp]."
       (progn
         ;; Work around obtuse hydra behaviour
         (add-to-list 'mc/cmds-to-run-once 'combobulate-menu/combobulate-edit-cluster-dwim-and-exit)
-        (make-variable-buffer-local 'combobulate-options-key-map)
-        (make-variable-buffer-local 'combobulate-pretty-print-function)
         (funcall setup-fn)
         (tree-sitter-mode 1)
         (tree-sitter-hl-mode 1))))

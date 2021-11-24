@@ -52,7 +52,10 @@ POINT-AT-END is non-nil."
   ;;   (error "Multiple Cursors is not installed or not loaded"))
   (unless multiple-cursors-mode
     (let ((counter 0))
-      (dolist (node-point (mapcar #'tsc-node-start-position nodes))
+      (dolist (node-point (mapcar (if point-at-end
+                                      #'tsc-node-end-position
+                                    #'tsc-node-start-position)
+                                  nodes))
         (cl-incf counter)
         (if (= counter 1)
             (goto-char node-point)

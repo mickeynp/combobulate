@@ -25,14 +25,14 @@
 ;;; Code:
 
 
-(defun combobulate-html-pretty-print (node &optional highlighted)
+(defun combobulate-html-pretty-print (node default-name)
   (if node
       (format "<%s>" (tsc-node-text (tsc-get-nth-named-child (tsc-get-nth-named-child node 0) 0)))
-    ""))
+    default-name))
 
 (defun combobulate-setup-html ()
   (setq combobulate-navigation-node-types '(element))
-  (setq combobulate-pretty-print-function #'combobulate-html-pretty-print))
+  (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)
 ;;; combobulate-html.el ends here

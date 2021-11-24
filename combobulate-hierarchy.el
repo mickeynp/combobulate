@@ -35,18 +35,20 @@
 (defvar combobulate-pretty-print-node-name-function #'combobulate--pretty-print-node-name
   "Buffer local function that pretty prints the node name
 
-This variable must be funcalled by the function in `combobulate-pretty-print-function'.")
+This variable must be funcalled by the function in
+`combobulate-pretty-print-function'.")
 
 (make-variable-buffer-local 'combobulate-pretty-print-node-name-function)
 
 (defface combobulate-highlighted-node-face '((t (:inherit font-lock-doc-face)))
-  "Face for combobulate nodes that are prominently displayed in the UI")
+  "Face for combobulate nodes that are prominently displayed in the UI"
+  :group 'combobulate)
 
 ;; Pretty printing and display options
 
 (defun combobulate--pretty-print-node-name (node default-name)
   "Pretty prints the name of NODE"
-  (mapconcat 'capitalize (split-string (symbol-name (tsc-node-type node)) "[_-]") " "))
+  (concat (mapconcat 'capitalize (split-string (symbol-name (tsc-node-type node)) "[_-]") " ") default-name))
 
 (defun combobulate-pretty-print-node (node &optional highlighted)
   "Pretty prints NODE and optionally HIGHLIGHTED"
