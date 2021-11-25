@@ -48,7 +48,8 @@ This variable must be funcalled by the function in
 
 (defun combobulate--pretty-print-node-name (node default-name)
   "Pretty prints the name of NODE"
-  (concat (mapconcat 'capitalize (split-string (symbol-name (tsc-node-type node)) "[_-]") " ") default-name))
+  (if node (concat (mapconcat 'capitalize (split-string (symbol-name (tsc-node-type node)) "[_-]") " "))
+    default-name))
 
 (defun combobulate-pretty-print-node (node &optional highlighted)
   "Pretty prints NODE and optionally HIGHLIGHTED"
