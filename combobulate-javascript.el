@@ -151,7 +151,7 @@ If the node at point is self-closing then it is removed in full."
   (local-set-key (kbd "C-c o t") combobulate-javascript-key-map)
   (setq combobulate-pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
   (setq combobulate-manipulation-node-cluster-queries
-        '((object (pair (_) @match))
+        '((object (pair \. (_) @match))
           (jsx_self_closing_element (jsx_attribute ((property_identifier) @match)))
           (jsx_opening_element (jsx_attribute ((property_identifier) @match)))))
   (setq combobulate-navigation-node-types '(program
