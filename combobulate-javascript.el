@@ -158,6 +158,7 @@ If the node at point is self-closing then it is removed in full."
                                             arrow_function
                                             function_declaration
                                             function
+                                            export_statement
                                             ;; for jsx
                                             jsx_fragment
                                             jsx_element
