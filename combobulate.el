@@ -388,6 +388,7 @@ like \\[backward-sexp]."
 (defvar combobulate-setup-functions-alist
   '((python-mode . combobulate-setup-python)
     (typescript-mode . combobulate-setup-js-ts)
+    (js-mode . combobulate-setup-js-ts)
     (html-mode . combobulate-setup-html))
   "Alist of setup functions to call when \\[combobulate-mode] is enabled.")
 
