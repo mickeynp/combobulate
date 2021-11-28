@@ -388,6 +388,7 @@ like \\[backward-sexp]."
 (defvar combobulate-setup-functions-alist
   '((python-mode . combobulate-setup-python)
     (typescript-mode . combobulate-setup-js-ts)
+    (js2-mode . combobulate-setup-js-ts)
     (js-mode . combobulate-setup-js-ts)
     (html-mode . combobulate-setup-html))
   "Alist of setup functions to call when \\[combobulate-mode] is enabled.")
@@ -427,6 +428,7 @@ like \\[backward-sexp]."
 
 
 ;; Language overrides
+(add-to-list 'tree-sitter-major-mode-language-alist '(js2-mode . tsx))
 (add-to-list 'tree-sitter-major-mode-language-alist '(js-mode . tsx))
 (add-to-list 'tree-sitter-major-mode-language-alist '(typescript-mode . tsx))
 
