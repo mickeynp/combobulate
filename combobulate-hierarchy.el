@@ -53,8 +53,7 @@ This variable must be funcalled by the function in
 
 (defun combobulate-pretty-print-node (node &optional highlighted)
   "Pretty prints NODE and optionally HIGHLIGHTED"
-  (and combobulate-pretty-print-function
-       (funcall combobulate-pretty-print-function node highlighted)))
+  (combobulate--pretty-print-node node highlighted))
 
 (defun combobulate--pretty-print-node (node &optional highlighted)
   "Internal method that pretty prints NODE and returns a string of text.
