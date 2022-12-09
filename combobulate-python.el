@@ -31,25 +31,30 @@
           (set . (set ((_) @match)))
           (list . (list ((_) @match)))
           (function_definition . (function_definition (identifier) (parameters ((_) @match))))))
-  (setq combobulate-navigation-node-types '(module
-                                            class_definition
-                                            decorated_definition
-                                            function_definition
-                                            while_statement
-                                            with_statement
-                                            for_statement
-                                            dictionary
-                                            except_clause
-                                            finally_clause
-                                            for_in_clause
-                                            finally_clause
-                                            elif_clause
-                                            if_statement
-                                            try_statement
-                                            list
-                                            tuple
-                                            dictionary
-                                            set)))
+
+  (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "lambda"))
+  (setq combobulate-navigation-sexp-nodes '("function_definition" "class_definition" "lambda"))
+  (setq combobulate-navigation-default-nodes '("module"
+                                               "class_definition"
+                                               "decorated_definition"
+                                               "function_definition"
+                                               "while_statement"
+                                               "with_statement"
+                                               "for_statement"
+                                               "dictionary"
+                                               "except_clause"
+                                               "finally_clause"
+                                               "for_in_clause"
+                                               "finally_clause"
+                                               "elif_clause"
+                                               "if_statement"
+                                               "try_statement"
+                                               "list"
+                                               "tuple"
+                                               "dictionary"
+                                               "match_statement"
+                                               "case_clause"
+                                               "set")))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here

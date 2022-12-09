@@ -113,17 +113,17 @@
   ;; try to generate a facsimile of a breadth-first tree search with a
   ;; depth stop of "1" for all nodes but the parent nodes (for which
   ;; we get "2" so you can better see where you're going)
-  (seq-filter #'tsc-node-p `(,@(reverse (seq-take (combobulate--nav-get-parents node) 2))
-                             ,(combobulate--nav-get-prev-sibling node)
-                             ,node
-                             ,(combobulate--nav-get-child node)
-                             ,(combobulate--nav-get-next-sibling node))))
+  (seq-filter #'combobulate-node-p `(,@(reverse (seq-take (combobulate--nav-get-parents node) 2))
+                                     ,(combobulate--nav-get-prev-sibling node)
+                                     ,node
+                                     ,(combobulate--nav-get-child node)
+                                     ,(combobulate--nav-get-next-sibling node))))
 
 (defun combobulate-render-nav-orientation (node)
   "Renders a navigation tree in orientation mode around NODE"
   (let ((orientation))
     (dolist (nav-element (combobulate--generate-nav-orientation node))
-      (push (combobulate--nav-draw-node nav-element (tsc-node-eq node nav-element)) orientation))
+      (push (combobulate--nav-draw-node nav-element (treesit-node-eq node nav-element)) orientation))
     (mapconcat #'car (reverse orientation) "\n")))
 
 (defun combobulate--display-nav-tree (start-node collect-fn)
@@ -132,10 +132,10 @@
 The tree structure follows all the children"
   (when (and start-node (combobulate-navigable-node-p start-node))
     (funcall collect-fn (combobulate--nav-draw-node start-node)))
-  (tsc-mapc-children
-   (lambda (node)
-     (combobulate--display-nav-tree node collect-fn))
-   start-node))
+  (treesit-search-subtree start-node
+                          (lambda (node)
+                            (combobulate--display-nav-tree node collect-fn))
+                          nil t))
 
 
 (provide 'combobulate-display)

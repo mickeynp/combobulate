@@ -30,7 +30,7 @@
 
 (defun combobulate-navigable-node-p (node)
   "Returns non-nil if NODE is a navigable node"
-  (and node (member (tsc-node-type node) combobulate-navigation-node-types)))
+  (and node (member (combobulate-node-type node) combobulate-navigation-default-nodes)))
 
 (defun combobulate--point-at-beginning-of-node-p (node)
   "Returns non-nil if the beginning position of NODE is equal to `point'"
@@ -39,8 +39,8 @@
 (defun combobulate--point-at-end-of-node-p (node &optional error-margin)
   "Returns non-nil if the end position of NODE is equal to `point'
 
-If `error-margin' is given an integer an allowance of up to
-`error-margin' in the end point position is used to determine if
+If ERROR-MARGIN is given an integer an allowance of up to
+ERRROR-MARGIN in the end point position is used to determine if
 `point' is considered at the end of a node."
   (or (= (combobulate-node-point node t) (point))
       (<= (abs (- (point) (combobulate-node-point node t)))
@@ -48,53 +48,56 @@ If `error-margin' is given an integer an allowance of up to
 
 (defun combobulate--goto-node (node &optional end)
   "Moce point to the beginning position of NODE"
-  (and node (goto-char (if end (tsc-node-end-position node) (tsc-node-start-position node)))))
+  (and node (goto-char (if end (combobulate-node-end node) (combobulate-node-start node)))))
 
 (defun combobulate--nav-get-parent (node)
   "Finds a navigable parent of NODE."
   (interactive)
   (and node
        (catch 'done
-         (while (setq node (tsc-get-parent node))
+         (while (setq node (combobulate-node-parent node))
            (if (combobulate-navigable-node-p node)
                (throw 'done node))))))
 
-(defun combobulate--nav-get-parents (node)
-  "Finds all navigable parents of NODE."
-  (seq-filter #'combobulate-navigable-node-p (combobulate--get-parents node)))
+(defun combobulate--nav-get-parents (node &optional skip-current)
+  "Finds all navigable parents of NODE.
 
-(defun combobulate--nav-get-smallest-node-at-point ()
-  "Returns the smallest navigable node that starts at `point'."
+SKIP-CURRENT removes all nodes where the point at the beginning
+of the node."
   (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
-                             (combobulate--point-at-beginning-of-node-p node)))
+                             (if skip-current
+                                 (not (combobulate--point-at-beginning-of-node-p node))
+                               t)))
+              (combobulate-get-parents node)))
+
+(defun combobulate--nav-get-smallest-node-at-point (&optional end)
+  "Returns the smallest navigable node at point, possibly from the END"
+  (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
+                             (funcall (if end #'combobulate--point-at-end-of-node-p
+                                        #'combobulate--point-at-beginning-of-node-p)
+                                      node)))
               (combobulate-all-nodes-at-point)))
 
 (defun combobulate--nav-forward (&optional skip-prefix)
   "Moves forward one navigable node"
-  (when skip-prefix
-    (skip-chars-forward "[\s-\s.]+\n"))
-  (let ((node (combobulate-node-looking-at combobulate-navigation-node-types)))
-    (when (combobulate--point-at-beginning-of-node-p node)
-      node)))
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
+    (when-let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
+      (when (combobulate--point-at-beginning-of-node-p node)
+        node))))
 
 (defun combobulate--nav-backward (&optional skip-prefix)
   "Moves forward one navigable node"
-  (when skip-prefix
-    (skip-chars-backward "[\s-\s.]+\n")
-    ;; Required so that we 'enter' the node immediately behind
-    ;; point. Being on the right-hand side of a node with `point'
-    ;; means you are technically outside it!
-    (forward-char -1))
-  (let ((node (combobulate-node-looking-at combobulate-navigation-node-types)))
-    (forward-char 1)
-    (when (combobulate--point-at-end-of-node-p node 0)
-      node)))
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
+    (let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
+      (forward-char 1)
+      (when (combobulate--point-at-end-of-node-p node 0)
+        node))))
 
 (defun combobulate--nodes-share-parent-p (node-a node-b)
   "Returns t if NODE-A and NODE-B have a common navigable ancesor"
   (let ((parent-a (combobulate--nav-get-parent node-a))
         (parent-b (combobulate--nav-get-parent node-b)))
-    (and parent-a parent-b (tsc-node-eq parent-a parent-b))))
+    (and parent-a parent-b (combobulate-node-eq parent-a parent-b))))
 
 
 (defun combobulate--nav-get-sibling-nodes (node filter-fn)
@@ -120,18 +123,72 @@ If `error-margin' is given an integer an allowance of up to
 
 (defun combobulate--nav-get-child (node)
   "Finds the first navigable child of NODE"
-  (let ((nodes (seq--into-list (mapcar 'cdr (combobulate--query-from-node (combobulate--make-navigation-query) node)))))
-    (car (seq-filter (lambda (match-node) (combobulate--node-after-node-p match-node node)) nodes))))
+  (with-navigation-nodes (:nodes combobulate-navigation-sexp-nodes :skip-prefix t :backward nil)
+    (let ((node (combobulate--get-nearest-navigable-node))
+          (nodes (seq--into-list (mapcar 'cdr (combobulate--query-from-node (combobulate--make-navigation-query)
+                                                                            node)))))
+      (car (seq-filter (lambda (match-node) (combobulate--node-after-node-p match-node node)) nodes)))))
 
 (defun combobulate-avy-jump ()
   "Use avy to jump to a navigable node"
   (interactive)
   ;; Is this right?
-  (avy-process (mapcar (lambda (node) (cons (cons (tsc-node-start-position node)
-                                             (tsc-node-end-position node))
+  (avy-process (mapcar (lambda (node) (cons (cons (combobulate-node-start node)
+                                             (combobulate-node-end node))
                                        (selected-window)))
                        (combobulate--query-tree (combobulate--make-navigation-query)
                                                 #'combobulate--node-visible-window-p))))
+
+(defun combobulate-forward-sexp-function (arg)
+  "Combobulate-aware function capable of navigating by sexp.
+
+This function must be installed in `forward-sexp-function' to
+work properly."
+  (with-navigation-nodes (:nodes combobulate-navigation-sexp-nodes :backward (< arg 0))
+    (let ((node)
+          (inc (if (> arg 0) 1 -1))
+          (backward (< arg 0)))
+      (while (/= arg 0)
+        (funcall (if backward #'skip-chars-backward #'skip-chars-forward) combobulate-skip-prefix-regexp)
+        (setq node
+              (car (seq-filter
+                    (lambda (node) (and (combobulate-navigable-node-p node)
+                                   (funcall (if backward
+                                                #'combobulate--point-at-end-of-node-p
+                                              #'combobulate--point-at-beginning-of-node-p)
+                                            node)))
+                    (combobulate-all-nodes-at-point backward))))
+        (goto-char (if node
+                       (if backward
+                           (combobulate-node-start node)
+                         (combobulate-node-end node))
+                     (or (scan-sexps (point) inc) (buffer-end inc))))
+        (when backward (save-excursion (backward-prefix-chars) (point)))
+        (setq arg (- arg inc))))))
+
+(defun combobulate-build-sparse-tree (direction match-nodes &optional match-fn start-node)
+  (with-navigation-nodes (:nodes match-nodes :backward (eq direction 'backward))
+    (treesit-induce-sparse-tree
+     (or start-node (combobulate-root-node))
+     (or match-fn
+         (lambda (node)
+           (and (combobulate-navigable-node-p node)
+                (cond
+                 ((eq direction 'forward)
+                  (combobulate--node-after-point-p node))
+                 ((eq direction 'backward)
+                  (combobulate--node-before-point-p node))
+                 (t (error "Unknown direction `%s'" direction)))))))))
+
+(defun combobulate-end-of-defun (&optional arg)
+  (interactive)
+  (when-let (tree (combobulate-build-sparse-tree 'forward combobulate-navigation-defun-nodes))
+    (combobulate-move-to-node (car (flatten-tree (cdr tree))))))
+
+(defun combobulate-beginning-of-defun (&optional arg)
+  (interactive)
+  (when-let (tree (combobulate-build-sparse-tree 'backward combobulate-navigation-defun-nodes))
+    (combobulate-move-to-node (car (last (flatten-tree (last tree)))))))
 
 
 (provide 'combobulate-navigation)

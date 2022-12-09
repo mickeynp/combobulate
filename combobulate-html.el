@@ -27,11 +27,11 @@
 
 (defun combobulate-html-pretty-print (node default-name)
   (if node
-      (format "<%s>" (tsc-node-text (tsc-get-nth-named-child (tsc-get-nth-named-child node 0) 0)))
+      (format "<%s>" (combobulate-node-text (combobulate-node-child (combobulate-node-child node 0) 0)))
     default-name))
 
 (defun combobulate-setup-html ()
-  (setq combobulate-navigation-node-types '(element))
+  (setq combobulate-navigation-default-nodes '(element))
   (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)

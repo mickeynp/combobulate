@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021  Mickey Petersen
 
 ;; Author: Mickey Petersen <mickey at masteringemacs.org>
-;; Package-Requires: ((tree-sitter 0.13) (multiple-cursors 20210323.1128) (hydra 20200711.1210) (avy 20201226.1734))
+;; Package-Requires: ((emacs 29))
 ;; Homepage: https://www.github.com/mickeynp/combobulate.el
 ;; Keywords: convenience, tools, languages
 
@@ -23,17 +23,13 @@
 ;;; Commentary:
 ;;
 ;; Navigate and transform source code using the concrete syntax tree
-;; provided by the Emacs package `tree-sitter' and its parent module.
+;; provided by the Emacs 29's builtin support for tree-sitter.
+;;
 
 ;;; Code:
 
 ;; Requirements:
-(unless (functionp 'module-load)
-  (error "You must have dynamic module support compiled for `combobulate.el' to function"))
-
 (require 'seq)
-(require 'tree-sitter)
-(require 'tree-sitter-langs)
 (eval-when-compile
   (require 'cl-lib))
 (require 'multiple-cursors-core)
@@ -42,11 +38,12 @@
 
 (defvar combobulate--last-node-path nil)
 (defvar combobulate--last-navigation-command nil)
+
 (defvar combobulate-flash-node t
   "When non-nil, show a notification when a navigable node changes in a buffer")
+
 (defvar combobulate--last-navigation-node nil
   "The last node combobulate navigated to")
-
 
 (defvar combobulate-strict-node-at-point-check t
   "Use a strict method for finding the node at point if non-nil.
@@ -56,41 +53,76 @@ where a node begins and ends from a conceptual perspective. This
 is especially true if the point is at the end of a line or on an
 empty or whitespaced line.")
 
-(defun combobulate-node-at-point (node-types)
+(defun combobulate-node-at-point (&optional node-types)
   "Return the smallest syntax node at point whose type is one of NODE-TYPES "
-  (let* ((root (tsc-root-node tree-sitter-tree))
-         (p (if combobulate-strict-node-at-point-check
+  (let* ((p (if combobulate-strict-node-at-point-check
                 (point)
               (save-excursion
                 (skip-chars-backward "\t\n ")
                 (when (eolp)
                   (forward-char -1))
                 (point))))
-         (node (tsc-get-descendant-for-position-range root p p)))
-    (when node-types
-      (let ((this node))
-        (catch 'done
-          (while this
-            (let ((smallest-node (tsc-get-descendant-for-position-range
-                                  this
-                                  (tsc-node-start-position this)
-                                  (tsc-node-start-position this))))
-              (cond
-               ((member (tsc-node-type this) node-types) (throw 'done this))
-               ((member (tsc-node-type smallest-node) node-types) (throw 'done smallest-node))
-               (t (setq this (tsc-get-parent this)))))))))))
+         (node (treesit-node-at p)))
+    (if node-types
+        (let ((this node))
+          (catch 'done
+            (while this
+              (let ((smallest-node (combobulate-node-descendant-for-range
+                                    this
+                                    (combobulate-node-start this)
+                                    (combobulate-node-start this))))
+                (cond
+                 ((member (combobulate-node-type this) node-types) (throw 'done this))
+                 ((member (combobulate-node-type smallest-node) node-types) (throw 'done smallest-node))
+                 (t (setq this (combobulate-node-parent this))))))))
+      node)))
 
-(defun combobulate-all-nodes-at-point ()
+(defun combobulate-all-nodes-at-point (&optional backward)
   "Returns all nodes at `point' where the start position of each node is equal to point
 
 The returned list is ordered smallest-to-largest by the node's extent."
   (let ((nodes)
-        (sub-node (tsc-get-descendant-for-position-range (tsc-root-node tree-sitter-tree) (point) (point))))
-    (while (and sub-node (= (tsc-node-start-position sub-node) (point)))
+        (sub-node (combobulate-node-descendant-for-range (combobulate-root-node) (if backward (1- (point)) (point)) (point))))
+    (while (and sub-node (= (if backward (combobulate-node-end sub-node) (combobulate-node-start sub-node)) (point)))
       (push sub-node nodes)
-      (setq sub-node (tsc-get-parent sub-node)))
+      (setq sub-node (combobulate-node-parent sub-node)))
     (reverse nodes)))
 
+(defsubst combobulate-node-range (node)
+  (cons (combobulate-node-start node) (combobulate-node-end node)))
+
+(defsubst combobulate-node-start (node)
+  (treesit-node-start node))
+
+(defsubst combobulate-node-end (node)
+  (treesit-node-end node))
+
+(defsubst combobulate-node-text (node &optional with-properties)
+  (treesit-node-text node (not with-properties)))
+
+(defsubst combobulate-node-child (node n)
+  (treesit-node-child node n t))
+
+(defsubst combobulate-node-parent (node)
+  (treesit-node-parent node))
+
+(defsubst combobulate-node-child-by-field (node field)
+  (treesit-node-child-by-field-name node field))
+
+(defsubst combobulate-node-eq (node1 node2)
+  (treesit-node-eq node1 node2))
+
+(defsubst combobulate-root-node ()
+  (treesit-buffer-root-node))
+
+(defsubst combobulate-node-descendant-for-range (node beg end &optional all)
+  (treesit-node-descendant-for-range node beg end (not all)))
+
+(defsubst combobulate-node-p (node)
+  (treesit-node-p node))
+
+(defsubst combobulate-node-type (node)
+  (treesit-node-type node))
 
 (defun combobulate-node-looking-at (node-types)
   "Returns the node point is looking at if it is one of NODE-TYPES."
@@ -103,15 +135,31 @@ The returned list is ordered smallest-to-largest by the node's extent."
 
 If NODE is nil, then nil is returned."
   (when node
-    (if end (tsc-node-end-position node)
-      (tsc-node-start-position node))))
+    (if end (combobulate-node-end node)
+      (combobulate-node-start node))))
 
 (defvar combobulate--navigation-node-queries '(((try_statement "try" @match)))
   "Node types used")
 
-(defvar combobulate-navigation-node-types nil
-  "Node types used for navigation")
-(make-variable-buffer-local 'combobulate-navigation-node-types)
+(defvar-local combobulate-navigation-default-nodes nil
+  "Primary node types used for navigation.
+
+May be let-bound and set to more specialized node-types.")
+
+(defvar-local combobulate-navigation-sexp-nodes nil
+  "Node types used for sexp-based navigation")
+
+(defvar combobulate-skip-prefix-regexp " \t\n+"
+  "Skip prefix regexp used to skip past whitespace characters.")
+
+(cl-defmacro with-navigation-nodes ((&key nodes skip-prefix backward) &rest body)
+  (declare (indent 1))
+  `(let ((combobulate-navigation-default-nodes (or ,nodes combobulate-navigation-default-nodes)))
+     (when ,skip-prefix
+       (if ,backward
+           (skip-chars-backward combobulate-skip-prefix-regexp)
+         (skip-chars-forward combobulate-skip-prefix-regexp)))
+     ,@body))
 
 (defun combobulate-manipulation-node-cluster-queries nil
   "Alist of (NODE-TYPE . QUERY) for selecting clusters of nodes
@@ -163,13 +211,13 @@ Matches all the key-portion of key-value pairs in a dictionary")
 
 (defun combobulate--query-from-node (query node)
   "Executes QUERY against NODE and returns the results"
-  (tsc-query-captures (tsc-make-query tree-sitter-language query) node nil))
+  (treesit-query-capture node (treesit-query-compile (treesit-node-language node) query) nil))
 
 (defun combobulate--get-ascendant-node (node matcher match-siblings match-parents)
-  (if (funcall matcher (tsc-node-type node))
+  (if (funcall matcher (combobulate-node-type node))
       node
-    (let ((sibling-node (tsc-get-prev-sibling node))
-          (parent-node (tsc-get-parent node)))
+    (let ((sibling-node (combobulate-node-prev-sibling node))
+          (parent-node (combobulate-node-parent node)))
       (if (and sibling-node match-siblings)
           (combobulate--get-ascendant-node sibling-node matcher match-siblings match-parents)
         (when (and parent-node match-parents)
@@ -177,13 +225,13 @@ Matches all the key-portion of key-value pairs in a dictionary")
 
 (defun combobulate--get-nearest-navigable-node ()
   "Returns the nearest navigable node to point"
-  (combobulate-node-at-point combobulate-navigation-node-types))
+  (combobulate-node-at-point combobulate-navigation-default-nodes))
 
-(defun combobulate--get-parents (node)
+(defun combobulate-get-parents (node)
   "Get all parent nodes of NODE"
   (reverse
    (let ((parents '()))
-     (while (setq node (tsc-get-parent node))
+     (while (setq node (combobulate-node-parent node))
        (push node parents))
      parents)))
 
@@ -200,49 +248,50 @@ Matches all the key-portion of key-value pairs in a dictionary")
     (when (and node combobulate-flash-node)
       (message (combobulate-render-nav-orientation nav-node)))))
 
-(defun combobulate--move-point-to-node (node &optional end)
+(defun combobulate-move-to-node (node &optional end)
   "Moves the point to NODE and if END is set to the end of the node"
   (unless node
     (error "Cannot move to node"))
-  (goto-char (if end (tsc-node-end-position node)
-               (tsc-node-start-position node)))
+  (goto-char (if end (combobulate-node-end node)
+               (combobulate-node-start node)))
   (setq combobulate--last-navigation-node node)
   (combobulate--flash-node node))
 
 (defun combobulate--current-node (&optional node)
   "Get the current node at point"
-  (let ((current-node (tree-sitter-node-at-point node)))
-    (if (not (tsc-get-parent current-node))
+  (let ((current-node (combobulate-node-at-point node)))
+    (if (not (combobulate-node-parent current-node))
         (save-excursion
           (skip-chars-backward "\n\t ")
           (forward-char -1)
-          (tree-sitter-node-at-point))
+          (combobulate-node-at-point))
       current-node)))
 
 (defun combobulate--get-ascendant-nodes (start-node)
   "Returns a list of ascendant -- parent -- nodes of START-NODE"
   (and start-node
-       (seq-filter (lambda (node) (member (tsc-node-type node) combobulate-navigation-node-types))
-                   (combobulate--get-parents start-node))))
+       (seq-filter (lambda (node) (member (combobulate-node-type node) combobulate-navigation-default-nodes))
+                   (combobulate-get-parents start-node))))
 
 
 (defun combobulate--make-navigation-query ()
-  "Generates a query that matches all navigable node types in `combobulate-navigation-node-types'"
-  `([,@(mapcar 'list combobulate-navigation-node-types)] @node))
+  "Generates a query that matches all navigable node types in `combobulate-navigation-default-nodes'"
+  `([,@(mapcar (lambda (node) (list (make-symbol node))) combobulate-navigation-default-nodes)] @node))
 
 
 (defun combobulate--query-tree (query filter-fn)
-  (when tree-sitter-tree
-    (seq-filter filter-fn (mapcar 'cdr (combobulate--query-from-node query (tsc-root-node tree-sitter-tree))))))
+  (when (combobulate-node-p (treesit-buffer-root-node))
+    (seq-filter filter-fn (mapcar 'cdr (combobulate--query-from-node query (treesit-buffer-root-node))))))
 
 (defun combobulate--navigate (direction &optional arg)
   "Attempt to hierarchically navigate in DIRECTION and return the new node
 
 The DIRECTION is either directed or undirected. The former uses
-the nearest _navigable_ node that `point' is in to infer where it
-must go next. The undirected option, on the other hand, uses the
-_nearest_ node to `point', which is almost always a node on or
-immediately near `point'.
+the nearest _navigable_ node -- which, depending on the
+direction, can be any of the combobulate navigation node lists --
+that `point' is in to infer where it must go next. The undirected
+option, on the other hand, uses the _nearest_ node to `point',
+which is almost always a node on or immediately near `point'.
 
 Each DIRECTION must be one of:
 
@@ -262,7 +311,7 @@ There are also undirected navigational directions:
  `undirected-up'     which is the first navigable parent from point
 "
   (let ((node (combobulate--get-nearest-navigable-node))
-        (node-at-point (tree-sitter-node-at-point)))
+        (node-at-point (combobulate-node-at-point)))
     (cond ((eq direction 'up) (combobulate--nav-get-parent node))
           ((eq direction 'down) (combobulate--nav-get-child node))
           ((eq direction 'next) (combobulate--nav-get-next-sibling node))
@@ -286,8 +335,7 @@ but with added support for navigable nodes."
                       ;; it wants to jump to is _behind_ `point'. Then, find the
                       ;; minimum of the remaining elements and go to that.
                       (lambda (elem) (and elem (> elem (point))))
-                      (list (save-excursion
-                              (ignore-errors (down-list 1 nil) (point)))
+                      (list (save-excursion (ignore-errors (down-list 1 nil) (point)))
                             (combobulate-node-point (combobulate--navigate 'down))
                             (combobulate-node-point (combobulate--navigate 'undirected-next)))))
     (when-let (target (apply #'min targets))
@@ -303,7 +351,7 @@ but with added support for navigable nodes."
   ;; NOTE: Roll up into `combobulate-navigate-down-list-maybe'
   (when-let (targets (seq-filter
                       (lambda (elem) (and elem (< elem (point))))
-                      (list (save-excursion (ignore-errors (up-list -1 t nil) (point)))
+                      (list (save-excursion (ignore-errors (backward-up-list 1 t t) (point)))
                             (combobulate-node-point (combobulate--navigate 'undirected-up))
                             (combobulate-node-point (combobulate--navigate 'up)))))
     (when-let (target (apply #'max targets))
@@ -319,7 +367,7 @@ syntax-table-specific whitespaces and punctuation characters must
 like \\[forward-sexp]."
   (interactive "^p")
   (if-let (node (combobulate--navigate 'forward))
-      (combobulate--move-point-to-node node t)
+      (combobulate-move-to-node node t)
     (forward-sexp)))
 
 (defun combobulate-navigate-backward-sexp-maybe (&optional arg)
@@ -331,106 +379,119 @@ syntax-table-specific whitespaces and punctuation characters must
 like \\[backward-sexp]."
   (interactive "^p")
   (if-let (node (combobulate--navigate 'backward))
-      (combobulate--move-point-to-node node)
+      (combobulate-move-to-node node)
     (backward-sexp)))
 
 
 (defun combobulate-navigate-up (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'up)))
+  (combobulate-move-to-node (combobulate--navigate 'up)))
 
 (defun combobulate-navigate-down (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'down)))
+  (combobulate-move-to-node (combobulate--navigate 'down)))
 
 (defun combobulate-navigate-undirected-next (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'undirected-next)))
+  (combobulate-move-to-node (combobulate--navigate 'undirected-next)))
 
 (defun combobulate-navigate-next (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'next)))
+  (combobulate-move-to-node (combobulate--navigate 'next)))
 
 (defun combobulate-navigate-previous (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'previous)))
+  (combobulate-move-to-node (combobulate--navigate 'previous)))
 
 (defun combobulate-navigate-forward (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'forward) t))
+  (combobulate-move-to-node (combobulate--navigate 'forward) t))
 
 (defun combobulate-navigate-backward (&optional arg)
   (interactive "^p")
-  (combobulate--move-point-to-node (combobulate--navigate 'backward)))
-
-(defun combobulate-mark-last-node ()
-  "Marks the last node navigated to"
-  (interactive)
-  (if combobulate--last-navigation-node
-      (progn
-        (mark-paragraph)
-        (push-mark (tsc-node-end-position combobulate--last-navigation-node) t t)
-        (combobulate--move-point-to-node combobulate--last-navigation-node))
-    (error "There is no recorded last node")))
-
-(defun combobulate--query-at-point (query node-types)
-  (if-let ((start-node (combobulate-node-at-point node-types)))
-      (tsc-query-captures (tsc-make-query tree-sitter-language query) start-node nil)
-    (error "There is no valid node at point")))
-
-(defmacro combobulate-register (&rest combobulation)
-  "Registers against LANG a COMBOBULATION."
-  nil
-  `(dolist (comb ',combobulation)
-     (message "%s" comb)))
-
+  (combobulate-move-to-node (combobulate--navigate 'backward)))
 
 (defvar combobulate-setup-functions-alist
   '((python-mode . combobulate-setup-python)
+    (python-ts-mode . combobulate-setup-python)
     (typescript-mode . combobulate-setup-js-ts)
+    (typescript-ts-mode . combobulate-setup-js-ts)
+    (tsx-ts-mode . combobulate-setup-js-ts)
     (js2-mode . combobulate-setup-js-ts)
     (js-mode . combobulate-setup-js-ts)
     (html-mode . combobulate-setup-html))
-  "Alist of setup functions to call when \\[combobulate-mode] is enabled.")
+  "Alist of setup functions to call when \\[combobulate-mode] is enabled.
 
-(defvar combobulate-options-key-map (make-sparse-keymap "Combobulate Options"))
+Because tree-sitter-enabled modes are different from the ordinary
+ones, you may wish to customize `major-mode-remap-alist' to
+silently treat the older modes as their newer TS-enabled
+counterparts.")
 
-(defvar combobulate-key-map
-  (let ((map (make-sparse-keymap "Combobulate")))
-    (define-key map (kbd "C-c o") combobulate-options-key-map)
-    (define-key map (kbd "C-c o o") #'combobulate-menu/body)
-    (define-key map (kbd "C-c o j") #'combobulate-avy-jump)
-    (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
-    (define-key map (kbd "C-M-d") #'combobulate-navigate-down-list-maybe)
-    (define-key map (kbd "M-a") #'combobulate-navigate-previous)
-    (define-key map (kbd "M-e") #'combobulate-navigate-next)
-    ;; TODO: Debatable; make these work like forward/backward-list
-    (define-key map (kbd "C-M-p") #'combobulate-navigate-previous)
-    (define-key map (kbd "C-M-n") #'combobulate-navigate-next)
-    (define-key map (kbd "M-k") #'combobulate-kill-node-dwim)
-    (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
-    map))
+(defvar-local combobulate-options-key-map (make-sparse-keymap "Combobulate Options"))
 
-(make-variable-buffer-local 'combobulate-options-key-map)
-(make-variable-buffer-local 'combobulate-pretty-print-function)
+(defvar-local combobulate-key-map
+    (let ((map (make-sparse-keymap "Combobulate")))
+      (define-key map (kbd "C-c o") combobulate-options-key-map)
+      (define-key map (kbd "C-c o o") #'combobulate-menu/body)
+      (define-key map (kbd "C-c o j") #'combobulate-avy-jump)
+      (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
+      (define-key map (kbd "C-M-d") #'combobulate-navigate-down-list-maybe)
+      (define-key map (kbd "C-M-a") #'combobulate-beginning-of-defun)
+      (define-key map (kbd "C-M-e") #'combobulate-end-of-defun)
+      (define-key map (kbd "M-a") #'combobulate-navigate-previous)
+      (define-key map (kbd "M-e") #'combobulate-navigate-next)
+      ;; TODO: Debatable; make these work like forward/backward-list
+      (define-key map (kbd "C-M-p") #'combobulate-navigate-previous)
+      (define-key map (kbd "C-M-n") #'combobulate-navigate-next)
+      (define-key map (kbd "M-k") #'combobulate-kill-node-dwim)
+      (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
+      map))
+
+(make-variable-buffer-local 'forward-sexp-function)
+
+(defvar-local combobulate-navigation-defun-nodes nil
+  "Node names or queries used to navigate by defun.
+
+See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
+
+(defvar-local combobulate-navigation-default-nodes nil
+  "Node names or queries used for general navigation and as a placeholder.
+
+The macro `with-navigation-nodes' binds to this variable and
+locally overrides the navigation nodes by Combobulate's node
+tools.")
+
+(defvar-local combobulate-navigation-sexp-nodes nil
+  "Node names or queries used to navigate by sexp.
+
+See `combobulate-forward-sexp-function'.")
+
+(defvar-local combobulate-manipulation-trim-whitespace nil
+  "Trim whitespace after combobulate manipulates the tree.
+
+It can be one of the following values:
+
+`nil' does nothing; `backward' only deletes whitespaces behind
+where point is left; `all' deletes forward and backward.")
+
+(defun combobulate-setup ()
+  "Setup combobulate in the current buffer and raise an error if it is not supported.
+
+This can be used to reinitialize mode-specific setups if they have changed."
+  (interactive)
+  (if-let ((setup-fn (alist-get major-mode combobulate-setup-functions-alist)))
+      (progn
+        (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
+        (funcall setup-fn))
+    (error "Combobulate is not supported in this mode: `%s'. Customize
+`combobulate-setup-functions-alist' to change this." major-mode)))
 
 (define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs
 
 \\{combobulate-key-map}"
   :init-value nil :lighter "©" :keymap combobulate-key-map
-  (if-let ((setup-fn (alist-get major-mode combobulate-setup-functions-alist)))
-      (progn
-        ;; Work around obtuse hydra behaviour
-        (add-to-list 'mc/cmds-to-run-once 'combobulate-menu/combobulate-edit-cluster-dwim-and-exit)
-        (funcall setup-fn)
-        (tree-sitter-mode 1)
-        (tree-sitter-hl-mode 1))))
-
-
-;; Language overrides
-(add-to-list 'tree-sitter-major-mode-language-alist '(js2-mode . tsx))
-(add-to-list 'tree-sitter-major-mode-language-alist '(js-mode . tsx))
-(add-to-list 'tree-sitter-major-mode-language-alist '(typescript-mode . tsx))
+  (add-to-list 'mc/cmds-to-run-once 'combobulate-menu/combobulate-edit-cluster-dwim-and-exit)
+  (combobulate-setup))
 
 
 (require 'combobulate-hierarchy)

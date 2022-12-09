@@ -24,7 +24,8 @@
 (defun combobulate--swap-node-regions (node-a node-b)
   "Swaps the region substring in NODE-A with NODE-B"
   (save-excursion
-    (transpose-subr-1 (tsc-node-position-range node-a) (tsc-node-position-range node-b))))
+    (transpose-subr-1 (combobulate-node-range node-a) (combobulate-node-range node-b))))
+
 
 (defun combobulate--drag (direction)
   (let* ((up (eq direction 'up))
@@ -35,7 +36,7 @@
     (if up
         (combobulate--swap-node-regions node-a node-b)
       (combobulate--swap-node-regions node-b node-a))
-    (combobulate--move-point-to-node (combobulate--navigate (if up 'previous 'next)))))
+    (combobulate-move-to-node (combobulate--navigate (if up 'previous 'next)))))
 
 (defun combobulate-drag-up ()
   (interactive)

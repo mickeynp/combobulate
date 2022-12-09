@@ -26,10 +26,10 @@
 
 (defun combobulate-jsx-has-open-close-tags-p (node)
   ;; self-closing contains neither `:open_tag' nor `:close_tag'
-  (when (eq (tsc-node-type node) 'jsx_self_closing_element) nil)
+  (when (eq (combobulate-node-type node) 'jsx_self_closing_element) nil)
   (let* ((opening-node (combobulate-jsx--get-open-tag node))
          (closing-node (combobulate-jsx--get-close-tag node)))
-    (and (eq (tsc-node-type node) 'jsx_element) opening-node closing-node)))
+    (and (eq (combobulate-node-type node) 'jsx_element) opening-node closing-node)))
 
 (defun combobulate--jsx-get-twinned-tag (node)
   "Returns the twinned tag of NODE.
@@ -38,30 +38,30 @@ If NODE is a self-closing element, it returns NODE.
 
 If NODE is the opening tag of a pair then it returns the closing
 tag, and vice versa."
-  (let ((parent-node (tsc-get-parent node)))
-    (pcase (tsc-node-type node)
+  (let ((parent-node (combobulate-node-parent node)))
+    (pcase (combobulate-node-type node)
       ('jsx_self_closing_element node)
       ('jsx_opening_element (combobulate-jsx--get-close-tag parent-node))
       ('jsx_closing_element (combobulate-jsx--get-open-tag parent-node)))))
 
 (defun combobulate-jsx--get-open-tag (node)
-  (tsc-get-child-by-field node :open_tag))
+  (combobulate-node-chield-by-field node :open_tag))
 
 (defun combobulate-jsx--get-close-tag (node)
-  (tsc-get-child-by-field node :close_tag))
+  (combobulate-node-chield-by-field node :close_tag))
 
 (defun combobulate-jsx--get-tag-identifier (node)
   "Given a JSX Element return its name tag node"
-  (tsc-get-child-by-field node :name))
+  (combobulate-node-chield-by-field node :name))
 
 (defun combobulate-javascript-jsx--wrap (start end)
   "Transforms the JSX Element node at point to a JSX Expression."
   (interactive)
   (when-let (node (combobulate-node-at-point '(jsx_element jsx_self_closing_element)))
     (let ((pp-node (combobulate-pretty-print-node node)))
-      (goto-char (tsc-node-end-position node))
+      (goto-char (combobulate-node-end node))
       (insert end)
-      (goto-char (tsc-node-start-position node))
+      (goto-char (combobulate-node-start node))
       (insert start)
       pp-node)))
 
@@ -86,23 +86,23 @@ If the node at point is self-closing then it is removed in full."
     (let* ((opening-node (combobulate-jsx--get-open-tag node))
            (closing-node (combobulate-jsx--get-close-tag node))
            (pp-node (combobulate-pretty-print-node node)))
-      (unless (or (eq (tsc-node-type node) 'jsx_self_closing_element)
-                  (and (eq (tsc-node-type opening-node) 'jsx_opening_element)
-                       (eq (tsc-node-type closing-node) 'jsx_closing_element)))
+      (unless (or (eq (combobulate-node-type node) 'jsx_self_closing_element)
+                  (and (eq (combobulate-node-type opening-node) 'jsx_opening_element)
+                       (eq (combobulate-node-type closing-node) 'jsx_closing_element)))
         (error "Cannot vanish element. Must be a JSX self-closing element or a JSX element"))
       ;; self closing elements have neither an `:open_tag' nor a `:close_tag'
-      (when (eq (tsc-node-type node) 'jsx_self_closing_element)
+      (when (eq (combobulate-node-type node) 'jsx_self_closing_element)
         (setq opening-node node
               closing-node node))
       (save-excursion
         (delete-region
-         (tsc-node-start-position closing-node)
-         (tsc-node-end-position closing-node))
-        (goto-char (tsc-node-start-position closing-node))
+         (combobulate-node-start closing-node)
+         (combobulate-node-end closing-node))
+        (goto-char (combobulate-node-start closing-node))
         (delete-blank-lines)
-        (delete-region (tsc-node-start-position opening-node)
-                       (tsc-node-end-position opening-node))
-        (goto-char (tsc-node-start-position opening-node))
+        (delete-region (combobulate-node-start opening-node)
+                       (combobulate-node-end opening-node))
+        (goto-char (combobulate-node-start opening-node))
         (delete-blank-lines))
       (message "Vanished %s..." pp-node))))
 
@@ -125,8 +125,8 @@ If the node at point is self-closing then it is removed in full."
 
 (defun combobulate-javascript-pretty-print-node-name (node default-name)
   "Pretty printer for JS and JSX nodes"
-  (cl-flet ((make-tag-text (node) (concat "<" (tsc-node-text node) ">")))
-    (pcase (tsc-node-type node)
+  (cl-flet ((make-tag-text (node) (concat "<" (combobulate-node-text node) ">")))
+    (pcase (combobulate-node-type node)
       ;; Turn JSX elements into something resembling an SGML-styled
       ;; tag as the default name is too generic to be useful.
       ('jsx_element (make-tag-text (combobulate-jsx--get-tag-identifier (combobulate-jsx--get-open-tag node))))
@@ -135,36 +135,36 @@ If the node at point is self-closing then it is removed in full."
       ('jsx_closing_element (make-tag-text (combobulate-jsx--get-tag-identifier node)))
       (_ default-name))))
 
-(defun combobulate-javascript-forward-sexp-function (arg)
-  (if-let (node (combobulate-node-at-point '(jsx_opening_element jsx_closing_element jsx_self_closing_element jsx_element)))
-      (goto-char (if (>= arg 1)
-                     (tsc-node-end-position node)
-                   (tsc-node-start-position node)))
-    ;; NOTE: This is the default forward-sexp implementation if
-    ;; `forward-sexp-function' is not set. It is unfortunately not
-    ;; separated into its own default function, so we have to replicate
-    ;; it here.
-    (goto-char (or (scan-sexps (point) arg) (buffer-end arg))))
-  (if (< arg 0) (backward-prefix-chars)))
+
+
 
 (defun combobulate-setup-js-ts ()
   (local-set-key (kbd "C-c o t") combobulate-javascript-key-map)
   (setq combobulate-pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
+  (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-node-cluster-queries
         '((object (pair \. (_) @match))
           (jsx_self_closing_element (jsx_attribute ((property_identifier) @match)))
           (jsx_opening_element (jsx_attribute ((property_identifier) @match)))))
-  (setq combobulate-navigation-node-types '(program
-                                            arrow_function
-                                            function_declaration
-                                            function
-                                            export_statement
-                                            ;; for jsx
-                                            jsx_fragment
-                                            jsx_element
-                                            jsx_expression
-                                            jsx_self_closing_element
-                                            )))
+  (setq-local combobulate-navigation-sexp-nodes '("jsx_opening_element"
+                                                  "jsx_closing_element"
+                                                  "jsx_text"
+                                                  "jsx_expression"
+                                                  "jsx_self_closing_element"))
+  (setq-local combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"))
+  (setq-local combobulate-navigation-default-nodes '("program"
+                                                     "arrow_function"
+                                                     "function_declaration"
+                                                     "function"
+                                                     "jsx_attribute"
+                                                     "lexical_declaration"
+                                                     "ternary_expression"
+                                                     "export_statement"
+                                                     "jsx_fragment"
+                                                     "jsx_element"
+                                                     "jsx_expression"
+                                                     "jsx_self_closing_element"
+                                                     )))
 
 
 (provide 'combobulate-javascript)

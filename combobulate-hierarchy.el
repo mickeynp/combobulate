@@ -28,17 +28,15 @@
 (defvar combobulate-pretty-print-node-separator "⏺"
   "Character(s) used to separate nodes in the pretty printer")
 
-(defvar combobulate-pretty-print-function #'combobulate--pretty-print-node
+(defvar-local combobulate-pretty-print-function #'combobulate--pretty-print-node
   "Buffer local function that pretty prints a combobulate node")
-(make-variable-buffer-local 'combobulate-pretty-print-function)
 
-(defvar combobulate-pretty-print-node-name-function #'combobulate--pretty-print-node-name
+(defvar-local combobulate-pretty-print-node-name-function #'combobulate--pretty-print-node-name
   "Buffer local function that pretty prints the node name
 
 This variable must be funcalled by the function in
 `combobulate-pretty-print-function'.")
 
-(make-variable-buffer-local 'combobulate-pretty-print-node-name-function)
 
 (defface combobulate-highlighted-node-face '((t (:inherit font-lock-doc-face)))
   "Face for combobulate nodes that are prominently displayed in the UI"
@@ -48,7 +46,7 @@ This variable must be funcalled by the function in
 
 (defun combobulate--pretty-print-node-name (node default-name)
   "Pretty prints the name of NODE"
-  (if node (concat (mapconcat 'capitalize (split-string (symbol-name (tsc-node-type node)) "[_-]") " "))
+  (if node (concat (mapconcat 'capitalize (split-string (treesit-node-type node) "[_-]") " "))
     default-name))
 
 (defun combobulate-pretty-print-node (node &optional highlighted)
@@ -60,47 +58,47 @@ This variable must be funcalled by the function in
 
 If HIGHLIGHTED then the node is highlighted with
 `combobulate-highlighted-node-face'. "
-  (let ((s (funcall combobulate-pretty-print-node-name-function node (combobulate--pretty-print-node-name node ""))))
+  (let ((s (funcall combobulate-pretty-print-node-name-function node
+                    (combobulate--pretty-print-node-name node ""))))
     (concat (format "%s %s"
                     (if highlighted (propertize s 'face 'combobulate-highlighted-node-face) s)
-                    (if combobulate-debug (tsc-node-byte-range node) "")))))
+                    (if combobulate-debug (combobulate-node-range node) "")))))
 
 
 ;;; Node comparison functions
 
 (defun combobulate--on-node-p (node)
   "Returns t if the current node at point is equal to NODE"
-  (or (= (tsc-node-start-position node) (point))
-      ;; (tsc-node-eq (tree-sitter-node-at-point) node)
+  (or (= (combobulate-node-start node) (point))
       ))
 
 (defun combobulate--point-in-node-range-p (node)
   "Returns t if point is contained between NODE's start and end positions"
-  (and (>= (point) (tsc-node-start-position node))
-       (< (point) (or (tsc-node-end-position node) (point-max)))))
+  (and (>= (point) (combobulate-node-start node))
+       (< (point) (or (combobulate-node-end node) (point-max)))))
 
 (defun combobulate--point-in-node-overlaps-p (node)
   "Returns t if point overlaps NODE's start position"
-  (>= (point) (tsc-node-start-position node)))
+  (>= (point) (combobulate-node-start node)))
 
 (defun combobulate--node-contains-node-p (node-a node-b)
   "Returns t if NODE-A is wholly contained inside NODE-B"
-  (and (>= (tsc-node-start-position node-a)
-           (tsc-node-start-position node-b))
-       (< (tsc-node-end-position node-a)
-          (tsc-node-end-position node-b))))
+  (and (>= (combobulate-node-start node-a)
+           (combobulate-node-start node-b))
+       (< (combobulate-node-end node-a)
+          (combobulate-node-end node-b))))
 
 (defun combobulate--node-before-node-p (node-a node-b)
   "Returns t if NODE-A is positioned before NODE-B"
   (and node-a node-b
-       (< (tsc-node-start-position node-a)
-          (tsc-node-start-position node-b))))
+       (< (combobulate-node-start node-a)
+          (combobulate-node-start node-b))))
 
 (defun combobulate--node-after-node-p (node-a node-b)
   "Returns t if NODE-A is positioned after NODE-B"
   (and node-a node-b
-       (> (tsc-node-start-position node-a)
-          (tsc-node-start-position node-b))))
+       (> (combobulate-node-start node-a)
+          (combobulate-node-start node-b))))
 
 (defun combobulate--node-visible-window-p (node)
   "Returns t if NODE is visible in the current window"
@@ -108,31 +106,37 @@ If HIGHLIGHTED then the node is highlighted with
        ;; Should we disallow partial occlusion of a node?
 
        ;; This appears to be faster than `pos-visible-in-window-p'. More research needed.
-       (>= (tsc-node-start-position node)
+       (>= (combobulate-node-start node)
            (save-excursion (goto-char (point-min))
                            (forward-line (1- (line-number-at-pos (window-start))))
                            (point)))
-       (<= (tsc-node-start-position node)
+       (<= (combobulate-node-start node)
            (save-excursion (goto-char (point-min))
                            (forward-line (1- (line-number-at-pos (window-end))))
                            (point)))
        ;; Too slow?
-       ;; (pos-visible-in-window-p (tsc-node-start-position node) (selected-window))
+       ;; (pos-visible-in-window-p (combobulate-node-start node) (selected-window))
        ))
 
 (defun combobulate--node-on-or-after-node-p (node-a node-b)
   "Returns t if NODE-A is positioned on or after NODE-B"
   (and node-a node-b
-       (>= (tsc-node-start-position node-a)
-           (tsc-node-start-position node-b))))
+       (>= (combobulate-node-start node-a)
+           (combobulate-node-start node-b))))
+
+(defun combobulate--point-at-node-p (node &optional end)
+  "Returns t if point is at the beginning (or maybe END) of NODE"
+  (and (= (if end (combobulate-node-end node)
+            (combobulate-node-start node))
+          (point))))
 
 (defun combobulate--node-before-point-p (node)
   "Returns t if NODE's start position is less than point"
-  (< (tsc-node-start-position node) (point)))
+  (< (combobulate-node-start node) (point)))
 
-(defun combobulate--node-after-or-on-point-p (node)
-  "Returns t if NODE's start position is equal to or greater than point"
-  (>= (tsc-node-start-position node) (point)))
+(defun combobulate--node-after-point-p (node)
+  "Returns t if NODE's start position is greater than point"
+  (> (combobulate-node-start node) (point)))
 
 
 
