@@ -246,7 +246,7 @@ Matches all the key-portion of key-value pairs in a dictionary")
   (when-let (nav-node (or (car (combobulate--nav-get-smallest-node-at-point))
                           (combobulate--get-nearest-navigable-node)))
     (when (and node combobulate-flash-node)
-      (message (combobulate-render-nav-orientation nav-node)))))
+      (message (combobulate-draw-node-tree nav-node)))))
 
 (defun combobulate-move-to-node (node &optional end)
   "Moves the point to NODE and if END is set to the end of the node"
