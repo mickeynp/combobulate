@@ -262,10 +262,18 @@ from `combobulate-manipulation-envelopes') to insert."
              :find-parent ("jsx_opening_element" "jsx_self_closing_element")
              :position at-or-in))
            :match-query ((_) (jsx_attribute)+ @match))
+          ;; sibling-level editing
+          (:activation-nodes
+           ((:node
+             ("jsx_self_closing_element" "jsx_expression" "jsx_element")
+             :position at))
+           :remove-types ("comment")
+           :match-siblings (:keep-parent nil))
+          ;; editing an element's opening/closing tag
           (:activation-nodes
            ((:node
              "jsx_element"
-             :position at-or-in))
+             :position in))
            :remove-types ("comment")
            :match-query (jsx_element (jsx_opening_element (identifier) @match)
                                      (jsx_closing_element (identifier) @match)))))

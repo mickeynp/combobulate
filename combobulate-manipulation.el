@@ -380,7 +380,9 @@ If POINT-AT-END is non-nil, then point is placed at the end of
 the node boundary of each match instead of the beginning."
   (let ((matches))
     (pcase-let ((`((,parent-node . ,_) . ,labelled-matches) (combobulate-procedure-start node)))
-      (setq matches (mapcar 'cdr labelled-matches))
+      ;; Remove `@discard' matches.
+      (setq matches (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
+                                             labelled-matches)))
       (combobulate--mc-edit-nodes matches point-at-end)
       (cond ((= (length matches) 0)
              (combobulate-message "There are zero nodes available to edit."))
