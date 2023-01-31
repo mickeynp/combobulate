@@ -59,7 +59,7 @@ If it's working, you'll see a ``©`` appear in your mode line.
 
 At that point, Combobulate is now working. Combobulate rebinds a wide range of common navigation and editing keys. You can see a complete list by typing ``M-x describe-keymap RET combobulate-key-map``.
 
-*Note that Combobulate may enable or disabled keys depending on the major mode it is active in.*
+*Note that Combobulate may enable or disable keys depending on the major mode it is active in.*
 
 Furthermore, Combobulate ships with a Magit-like transient UI that you can access by typing ``C-c o o``. It exists primarily to teach you about Combobulate's capabilities: every key binding in it is also available without the popup.
 
@@ -72,13 +72,13 @@ That is because of the *concrete syntax tree*. Place your point anywhere in your
 
 For example: your point is on a string; but it's also in a list; which is in a dictionary; which is in an expression statement; which is in a ``for``-loop; which is in a function, and so on.
 
-Because a *concrete syntax tree* is so exacting and so detailed, it's hard for Combobulate to infer what you want to do with the same casual insouciance that commands that don't use a syntax tree: there are simply too many conflicting choices; and many of them are totally uninteresting.
+Because a *concrete syntax tree* is so exacting and so detailed, it's hard for Combobulate to infer what you want to do with the same casual insouciance of commands that don't use a syntax tree: there are simply too choices, and too many nodes.
 
-But Combobulate does not necessarily know that!
+You, the human, know which node you want -- but Combobulate does not necessarily know that!
 
-For best results, put your point at the *beginning* of the thing you want to interact with --- at least until you've gotten the hang of how Combobulate decides what it thinks you're asking for.
+So, for best results, put your point at the *beginning* of the thing you want to interact with --- at least until you've gotten the hang of how Combobulate decides what it thinks you're asking for.
 
-Finally, note that any command that edits your code is at best at "best guess" effort. Carefully scrutinize what Combobulate does.
+Finally, note that any command that edits your code is at best a "best guess" effort. Carefully scrutinize what Combobulate does after you invoke any command that edits.
 
 How do I install Combobulate?
 -----------------------------
@@ -106,6 +106,7 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
 
 .. code-block:: elisp
 
+    ;; `M-x combobulate' (or `C-c o o') to start using Combobulate
     (use-package treesit
       :preface
       (defun mp-setup-install-grammars ()
