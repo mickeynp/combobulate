@@ -2,84 +2,146 @@
  Structured Navigation and Editing with Combobulate
 ====================================================
 
-.. image:: docs/combobulate-navigate.svg
+.. image:: docs/combobulate.png
 
 What is Combobulate?
 ====================
 
-.. note:: Combobulate is **alpha software** with all the caveats that follows from that. Your author uses it daily however, though breaking changes are likely.
+.. note:: Combobulate is under active development. Expect bugs.
 
-Combobulate is an Emacs package that provides a standardized framework for manipulating and navigating your source code using tree sitter's concrete syntax tree. Combobulate is language agnostic and should work with little modification almost all languages supported by tree sitter itself.
+Combobulate is a package that adds structured editing and movement to a wide range of programming languages. Unlike most programming major modes that use error-prone imperative code and regular expressions to determine what's what in your code, Combobulate uses Emacs 29's tree-sitter library. Tree-sitter maintains a *concrete syntax tree* of your code; it gives Combobulate absolute clarity of all aspects of your code, enabling more correct movement and editing than you would otherwise have.
 
-Benefits
---------
+Combobulate extends the existing editing and navigation capabilities of Emacs in addition to adding a range of new features you can't easily do in Emacs without Combobulate.
 
-Combobulate is new and it does not have as many features yet as it's likely to get over time. It is designed to help you navigate and edit your code faster than the tools offered by your major mode (or some Language Server features).
+What does Combobulate do exactly?
+---------------------------------
 
-To start with, Combobulate improves navigation like letting you navigate in or out of syntactic structures that your language may use. In some that might be functions, try/except, while/for blocks and classes like in Python; in others, it might be React-style JSX and Javascript or Typescript. Because Combobulate has a perfect understanding of your code it's able to faultlessly navigate to things most other major modes would struggle with, like arrow functions in Javascript.
+.. image:: docs/sibling-nav-jsx.gif
 
-Combobulate also co-operates with third-party packages you may already use: Combobulate can activate multiple cursors and place them on every dictionary, list, or tuple element in Python, or against every attribute in JSX. Extending this to other parts of a language is easy.
+Combobulate is meant as a companion to the existing movement and editing facilities in Emacs. It's designed to sympathetically improve or supplant editing and movement in many major modes that are otherwise lacking or incorrect. There's a large emphasis on Combobulate being both easy to use, and a natural extension to Emacs's already-powerful editing and movement commands.
 
-Because it offers a unified framework for all programming languages, Combobulate is designed to be easy to extend or modify. Open ``combobulate-<language>.el`` to see the language-specific features it offers. The Python example is a good place to start.
+For instance, navigating up or down list structures with ``C-M-u`` and ``C-M-d`` is much improved. Whether you're navigating in or out of structures in Python or JSX elements in Typescript of Javascript.
 
-You can use Avy to quick jump to important parts of you code, like function definitions. You can also drag elements up or down to re-arrange them.
+Combobulate also improves list-like navigation bound to ``C-M-n`` and ``C-M-p``. They now understand hierarchical code much better, and they will navigate between statements in code as well as parameters in functions or key pairs in dictionaries.
 
-In addition to this, Combobulate ships with a basic hierarchical aid that shows you where you're navigating if you use its navigation features.
+.. image:: docs/drag-complex.gif
 
-Philosophy
-----------
+Combobulate also adds code editing commands, such as the ability to drag logical pieces of code up or down, if they span multiple lines. It can also expand the region one syntactically interesting unit at time: first the string point is in, then the list that is in, and so on.
 
-.. image:: docs/combobulate-navigate-jsx.svg
+Combobulate can also place cursors (using the optional *multiple cursors* package) at syntactically important points in your code, like: dictionary elements; function arguments; or attributes in JSX elements.
 
-Your author feels that Emacs comes with excellent tools for navigating and editing code as it is. Combobulate is philosophically aligned with Emacs's idea that editing and moving by "balanced expressions" (``mark-sexp``, ``forward-sexp``, ``kill-sexp``, ``up/downward-list``, etc.) is a useful way to think of text.
+.. image:: docs/clone-dwim.gif
 
-Before the advent of tree sitter doing so was hard in languages that did not lend themselves to this easily like LISP does. Combobulate aims to take that germ of an idea and the ideas of `ParEdit <https://www.emacswiki.org/emacs/ParEdit>`__ and make it work as consistently and transparently across languages as possible.
+You can clone code and experimentally splice code, much like Paredit. Combobulate also comes with a simple code templating tool that you can use to insert or modify code, such as wrapping a code block in an ``if`` statement in Python, or a JSX element in an expression statement.
 
 
+.. There is a lot more to be said about what Combobulate can do. Read this article XXXXX for a deep dive.
+
+Getting Started with Combobulate
+--------------------------------
+
+When you have installed Combobulate correctly -- see below -- then it'll turn on when you open a file in one of its supported major modes. If it does not do this, try ``M-x combobulate-mode`` to activate Combobulate's minor mode.
+
+If it's working, you'll see a ``©`` appear in your mode line.
+
+At that point, Combobulate is now working. Combobulate rebinds a wide range of common navigation and editing keys. You can see a complete list by typing ``M-x describe-keymap RET combobulate-key-map``.
+
+*Note that Combobulate may enable or disabled keys depending on the major mode it is active in.*
+
+Furthermore, Combobulate ships with a Magit-like transient UI that you can access by typing ``C-c o o``. It exists primarily to teach you about Combobulate's capabilities: every key binding in it is also available without the popup.
+
+Top Tips for using Combobulate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Unlike most of Emacs's major modes and the specialized movement and editing they (may) offer, Combobulate is quite strict. It's strict about *where* you invoke certain commands or key bindings, and what happens when you type in different parts of the same line of code.
+
+That is because of the *concrete syntax tree*. Place your point anywhere in your source code and there might be 5, 10, 15 or more "nodes" in the tree where that point intersects wildly different nodes.
+
+For example: your point is on a string; but it's also in a list; which is in a dictionary; which is in an expression statement; which is in a ``for``-loop; which is in a function, and so on.
+
+Because a *concrete syntax tree* is so exacting and so detailed, it's hard for Combobulate to infer what you want to do with the same casual insouciance that commands that don't use a syntax tree: there are simply too many conflicting choices; and many of them are totally uninteresting.
+
+But Combobulate does not necessarily know that!
+
+For best results, put your point at the *beginning* of the thing you want to interact with --- at least until you've gotten the hang of how Combobulate decides what it thinks you're asking for.
+
+Finally, note that any command that edits your code is at best at "best guess" effort. Carefully scrutinize what Combobulate does.
 
 How do I install Combobulate?
-=============================
-To start using it, install this package::
+-----------------------------
 
-  (use-package combobulate
-    ;; Ensure `combobulate-mode` is activated when you launch a mode it supports
-    :hook ((python-mode . combobulate-mode)
-           (js-mode . combobulate-mode)
-           (typescript-mode . combobulate-mode))
-    :load-path "path-to-this-package")
+Combobulate is not on MELPA or any other package repository, yet. For Combobulate to install properly you must meet the following requirements:
 
-**NOTE**: Because combobulate is alpha software it has hard dependencies on ``avy``, ``multiple-cursors`` and ``hydra``. This will change over time as the package matures. If you wish to help fix that, please submit PRs.
+1. You must be running Emacs 29 or later.
+2. Your Emacs *must* be compiled with tree-sitter support.
 
-How do I use it?
-================
+   In ``C-h v system-configuration-features`` look for ``TREE_SITTER``.
+3. You must have language grammars installed for the languages you want to use Combobulate with.
 
-.. image:: docs/combobulate-avy-jump.svg
+   **However**, you can optionally ask Emacs to download, compile and install these language grammars, but you'll need a suitable C compiler. If you're using Linux, then no problem. Non-Linux users may need to install or configure their operating system to do this.
 
-To start, you can type ``C-c o o`` to open the Hydra menu (or ``M-x combobulate-menu/body``) with a selection of the commands available to you. I recommend you review the key bindings in ``combobulate-mode`` also.
+4. You're interested in using Combobulate with one of these supported Languages:
 
-By default Combobulate also binds to the following keys in its minor mode:
+     CSS, Typescript+TSX, Javascript, Python, or YAML.
 
-``C-M-u`` and ``C-M-d`` intelligent navigation in and out of parentheses (as it normally does) but it also stops at useful navigable nodes
-``C-M-n`` and ``C-M-p`` moves to/from navigable siblings.
+   (Adding support for new languages is reasonably easy though!)
+5. You have a git checkout of Combobulate ready.
 
-``M-k`` kills the navigable node point is in. You can use this to collectively kill larger and larger blocks of code.
-``M-h`` marks the navigable node point is on. Like the kill function (or the *expand region* package) it grows the mark and point with each repeated invocation.
+Here's a verbose example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter  grammars, then you can leave out the code that does this in the ``:preface``.
 
-``C-c o j`` activates avy and lets you jump to navigable parts of your code.
-``C-c o o`` opens the Hydra menu
-``C-c o t`` is a prefix map of mode-specific transformations. Currently only used in Javascript and Typescript modes to vanish/wrap JSX elements.
+Also note that this example uses ``major-mode-remap-alist`` to turn your regular major modes into the tree-sitter-enabled modes.
 
+.. code-block:: elisp
 
+    (use-package treesit
+      :preface
+      (defun mp-setup-install-grammars ()
+        "Install Tree-sitter grammars if they are absent."
+        (interactive)
+        (dolist (grammar
+                 '((css "https://github.com/tree-sitter/tree-sitter-css")
+                   (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "master" "src"))
+                   (python "https://github.com/tree-sitter/tree-sitter-python")
+                   (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src"))
+                   (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+          (add-to-list 'treesit-language-source-alist grammar)
+          ;; Only install `grammar' if we don't already have it
+          ;; installed. However, if you want to *update* a grammar then
+          ;; this obviously prevents that from happening.
+          (unless (treesit-language-available-p (car grammar))
+            (treesit-install-language-grammar (car grammar)))))
 
-Languages Supported
-===================
+      ;; Optional, but recommended. Tree-sitter enabled major modes are
+      ;; distinct from their ordinary counterparts.
+      ;;
+      ;; You can remap major modes with `major-mode-remap-alist'. Note
+      ;; that this does *not* extend to hooks! Make sure you migrate them
+      ;; also
+      (dolist (mapping '((python-mode . python-ts-mode)
+                         (css-mode . css-ts-mode)
+                         (typescript-mode . tsx-ts-mode)
+                         (js-mode . js-ts-mode)
+                         (css-mode . css-ts-mode)
+                         (yaml-mode . yaml-ts-mode)))
+        (add-to-list 'major-mode-remap-alist mapping))
 
-The following languages are supported out of the box by Combobulate:
-
-- Python
-- Typescript + React
-- Javascript + React
-- HTML
-
-*but*, it's super easy to add support for new languages. Open ``combobulate-python.el`` for an example of how to do it.
-
+      :config
+      (mp-setup-install-grammars)
+      ;; Do not forget to customize Combobulate to your liking:
+      ;;
+      ;;  M-x customize-group RET combobulate RET
+      ;;
+      (use-package combobulate
+        ;; Optional, but recommended.
+        ;;
+        ;; You can manually enable Combobulate with `M-x
+        ;; combobulate-mode'.
+        :hook ((python-ts-mode . combobulate-mode)
+               (js-ts-mode . combobulate-mode)
+               (css-ts-mode . combobulate-mode)
+               (yaml-ts-mode . combobulate-mode)
+               (typescript-ts-mode . combobulate-mode)
+               (tsx-ts-mode . combobulate-mode))
+        ;; Amend this to the directory where you keep Combobulate's source
+        ;; code.
+        :load-path ("path-to-git-checkout-of-combobulate")))
