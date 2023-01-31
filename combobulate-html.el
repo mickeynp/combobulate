@@ -1,9 +1,12 @@
 ;;; combobulate-html.el --- HTML and SGML-alike structured editing for combobulate  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021  Mickey Petersen
+;; Copyright (C) 2021-23  Mickey Petersen
 
 ;; Author: Mickey Petersen <mickey at masteringemacs.org>
-;; Keywords:
+;; Package-Requires: ((emacs "29"))
+;; Version: 0.1
+;; Homepage: https://www.github.com/mickeynp/combobulate
+;; Keywords: convenience, tools, languages
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,14 +27,21 @@
 
 ;;; Code:
 
+(require 'combobulate-settings)
+(require 'combobulate-navigation)
+(require 'combobulate-rules)
 
 (defun combobulate-html-pretty-print (node default-name)
-  (if node
-      (format "<%s>" (tsc-node-text (tsc-get-nth-named-child (tsc-get-nth-named-child node 0) 0)))
+  (if (and node (equal (combobulate-node-type node) "element"))
+      (format "<%s>" (thread-first node
+                                   (combobulate-node-child 0)
+                                   (combobulate-node-child 0)
+                                   (combobulate-node-text)))
     default-name))
 
-(defun combobulate-setup-html ()
-  (setq combobulate-navigation-node-types '(element))
+(defun combobulate-html-setup (_)
+  (setq combobulate-navigation-default-nodes '("element"))
+  (setq combobulate-navigation-sexp-nodes '("element" "attribute" "text"))
   (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)
