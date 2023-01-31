@@ -25,6 +25,7 @@ Combobulate's design philosophy is this:
 
 4. Combobulate must have a shallow learning curve.
 
+If you want a guided tour, then I recommend you read `Combobulate: Structured Movement and Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-structured-movement-editing-treesitter>__` for an in-depth overview.
 
 What does Combobulate do exactly?
 ---------------------------------
