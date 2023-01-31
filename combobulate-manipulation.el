@@ -275,10 +275,11 @@ filtered from the list of returned matches."
                           (map-let (:keep-parent :keep-types :remove-types) value
                             (append (list (cons (if keep-parent '@keep '@discard) parent-node))
                                     (mapcar (lambda (n) (cons '@keep n))
-                                            (combobulate-filter-nodes
-                                             (combobulate-get-siblings-of-node point-node nil)
-                                             :keep-types keep-types
-                                             :remove-types remove-types)))))
+                                            (or (combobulate-filter-nodes
+                                                 (combobulate-get-siblings-of-node point-node nil)
+                                                 :keep-types keep-types
+                                                 :remove-types remove-types)
+                                                (list point-node))))))
                          (:match-children
                           (mapcar (lambda (n) (cons '@keep n))
                                   (if (and (booleanp value) value)
