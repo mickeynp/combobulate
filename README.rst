@@ -7,11 +7,24 @@
 What is Combobulate?
 ====================
 
-.. note:: Combobulate is under active development. Expect bugs.
+**Combobulate is under active development. Expect bugs.**
 
 Combobulate is a package that adds structured editing and movement to a wide range of programming languages. Unlike most programming major modes that use error-prone imperative code and regular expressions to determine what's what in your code, Combobulate uses Emacs 29's tree-sitter library. Tree-sitter maintains a *concrete syntax tree* of your code; it gives Combobulate absolute clarity of all aspects of your code, enabling more correct movement and editing than you would otherwise have.
 
 Combobulate extends the existing editing and navigation capabilities of Emacs in addition to adding a range of new features you can't easily do in Emacs without Combobulate.
+
+Combobulate's design philosophy is this:
+
+1. It must be extensible and *relatively* easy to add new languages.
+
+   Open ``combobulate-<lang>.el`` to see how each mode is defined.
+
+2. Commands should broadly work the same across all languages.
+
+3. A strong emphasis on extending and enriching the existing movement and editing commands where possible.
+
+4. Combobulate must have a shallow learning curve.
+
 
 What does Combobulate do exactly?
 ---------------------------------
