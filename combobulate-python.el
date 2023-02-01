@@ -133,8 +133,7 @@ Returns a non-nil value to indicate the indentation took place."
               ;; we can only effectively indent with whole lines.
               :skip-prefix (not (use-region-p))
               :skip-newline nil)
-    (when-let ((node (combobulate--get-nearest-navigable-node))
-               (inhibit-message t))
+    (when-let ((node (combobulate--get-nearest-navigable-node)))
       (when (and (not (use-region-p))
                  combobulate-python-indent-blocks-dwim
                  (combobulate-point-at-beginning-of-node-p
@@ -142,22 +141,21 @@ Returns a non-nil value to indicate the indentation took place."
         (combobulate--mark-node node t t)))))
 
 (defun combobulate-python-calculate-indent (pos)
-  (* python-indent-offset
-     (length
-      (save-excursion
-        (goto-char pos)
-        (or (combobulate-filter-nodes
-             (combobulate-get-parents
-              (combobulate-node-at-point))
-             :keep-types
-             '("block"
-               ;; required because, for some inexplicable reason, the
-               ;; python grammar does not consider a match-case statement
-               ;; to consist of a case clause and a block clause unlike
-               ;; literally everything else.
-               "case_clause"))
-            ;; fallback
-            (python-indent-calculate-levels))))))
+  (let ((calculated-indentation (save-excursion
+                                  (goto-char pos)
+                                  (combobulate-filter-nodes
+                                   (combobulate-get-parents
+                                    (combobulate-node-at-point))
+                                   :keep-types
+                                   '("block"
+                                     ;; required because, for some inexplicable reason, the
+                                     ;; python grammar does not consider a match-case statement
+                                     ;; to consist of a case clause and a block clause unlike
+                                     ;; literally everything else.
+                                     "case_clause")))))
+    (if (null calculated-indentation)
+        (current-indentation)
+      (* python-indent-offset (length calculated-indentation)))))
 
 (defun combobulate-python-indent-for-tab-command (&optional arg)
   "Proxy command for `indent-for-tab-command' that keeps region active.
