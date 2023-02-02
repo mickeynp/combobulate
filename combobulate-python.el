@@ -386,6 +386,11 @@ again to cycle indentation."))))
          (combobulate-production-rules-get "_compound_statement")
          '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
            "list" "call" "tuple" "string" "block" "case_clause" "set")))
+  (setq combobulate-navigation-logical-nodes
+        (append
+         (combobulate-production-rules-get "primary_expression")
+         (combobulate-production-rules-get "expression")
+         combobulate-navigation-default-nodes))
   (setq combobulate-navigation-default-nodes combobulate-navigation-parent-child-nodes))
 
 (provide 'combobulate-python)

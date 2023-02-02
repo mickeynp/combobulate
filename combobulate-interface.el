@@ -132,9 +132,10 @@ kept."
   (treesit-node-descendant-for-range node beg end (not all)))
 
 (defsubst combobulate-node-type (node)
-  (if (combobulate-node-p node)
-      (treesit-node-type node)
-    (combobulate-proxy-node-type node)))
+  (and node
+       (if (combobulate-node-p node)
+           (treesit-node-type node)
+         (combobulate-proxy-node-type node))))
 
 (defsubst combobulate-filter-child (node pred &optional anonymous)
   (treesit-filter-child node pred (not anonymous)))

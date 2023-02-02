@@ -347,12 +347,6 @@ from `combobulate-manipulation-envelopes') to insert."
 
   (setq combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"
                                              "class_declaration" "method_definition"))
-  (setq combobulate-navigation-logical-nodes
-        '("array" "statement_block" "import_statement"
-          "type_annotation" "lexical_declaration"
-          "jsx_opening_element" "jsx_expression"
-          "jsx_closing_element" "pair" "jsx_attribute"
-          "jsx_self_closing_element"))
 
   (setq combobulate-navigation-sibling-procedures
         `(;; for lists, arrays, objects, etc.
@@ -413,7 +407,15 @@ from `combobulate-manipulation-envelopes') to insert."
                   ,@(combobulate-production-rules-get "primary_expression")
                   ,@(combobulate-production-rules-get "object")
                   ,@(combobulate-production-rules-get "statement")
-                  ,@(combobulate-production-rules-get "declaration")))))
+                  ,@(combobulate-production-rules-get "declaration"))))
+  (setq combobulate-navigation-logical-nodes
+        (append combobulate-navigation-default-nodes
+                '("array" "statement_block" "import_statement"
+                  "type_annotation" "lexical_declaration"
+                  "jsx_opening_element" "jsx_expression"
+                  "jsx_text"
+                  "jsx_closing_element" "pair" "jsx_attribute"
+                  "jsx_self_closing_element"))))
 
 
 (provide 'combobulate-js-ts)

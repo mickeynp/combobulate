@@ -285,9 +285,13 @@ If NODE-ONLY is non-nil then only the node texts are returned"
   node)
 
 
-(defun combobulate-visual-move-to-node (node &optional end)
-  "Move point to node, maybe the END, and then visually indicate it."
-  (combobulate-move-to-node node end)
+(defun combobulate-visual-move-to-node (node &optional end auto)
+  "Move point to node, maybe the END, and then visually indicate it.
+
+If AUTO is non-nil, then move to the end if point is at NODE's
+start."
+  (combobulate-move-to-node
+   node (or end (and auto (= (combobulate-node-start node) (point)))))
   (combobulate--flash-node node)
   node)
 
@@ -568,15 +572,35 @@ of the node."
         node))))
 
 (defun combobulate-nav-logical-next ()
-  (when-let (tree (combobulate-build-sparse-tree
-                   'forward combobulate-navigation-default-nodes
-                   #'combobulate-node-on-or-after-point-p))
-    (car (sort (flatten-tree tree) #'combobulate-node-contains-node-p))))
+  (when-let* ((tree (flatten-tree
+                     (combobulate-build-sparse-tree
+                      'forward (remove (combobulate-node-type (combobulate-root-node)) combobulate-navigation-default-nodes)
+                      #'combobulate-node-on-or-after-point-p)))
+              (first-node (pop tree)))
+    (if (combobulate-point-at-beginning-of-node-p first-node)
+        (if (< (combobulate-node-end first-node) (combobulate-node-start (car tree)))
+            first-node
+          (car tree))
+      first-node)))
 
 (defun combobulate-nav-logical-previous ()
   "Navigate to the logical previous node"
-  (when-let (tree (combobulate-build-sparse-tree 'backward combobulate-navigation-default-nodes))
-    (car (last (flatten-tree (last tree))))))
+  (when-let* ((tree (reverse (cons
+                              ;; add in `combobulate-root-node' so we
+                              ;; always have a have a base node to
+                              ;; return to.
+                              (combobulate-root-node)
+                              (flatten-tree (combobulate-build-sparse-tree
+                                             'backward combobulate-navigation-default-nodes
+                                             (lambda (n) (<= (combobulate-node-end n)
+                                                        (point)))
+                                             nil 10000)))))
+              (first-node (pop tree)))
+    (if (combobulate-point-at-end-of-node-p first-node)
+        (if (< (combobulate-node-end (car tree)) (combobulate-node-end first-node))
+            first-node
+          (car tree))
+      first-node)))
 
 (defun combobulate-nodes-share-parent-p (node-a node-b)
   "Return t if NODE-A and NODE-B have a common navigable ancesor"
@@ -758,7 +782,7 @@ NODE-FN can throw `stop' to stop walking; or `skip' to skip
                 (combobulate-walk-tree-1 right node-fn leaf-fn result-fn depth))))))
 
 
-(defun combobulate-build-sparse-tree (direction match-nodes &optional match-fn start-node)
+(defun combobulate-build-sparse-tree (direction match-nodes &optional match-fn start-node limit)
   "Build a sparse tree of MATCH-NODES in DIRECTION.
 
 Optionally use MATCH-FN instead of the builtin
@@ -778,7 +802,9 @@ If START-NODE is set, use it in lieu of `combobulate-root-node'."
                 (combobulate-node-after-point-p node))
                ((eq direction 'backward)
                 (combobulate-node-before-point-p node))
-               (t (error "Unknown direction `%s'" direction)))))))))
+               (t (error "Unknown direction `%s'" direction))))))
+     nil
+     limit)))
 
 (defun combobulate-get-nodes-at-depth (tree depth)
   "Walk TREE and find all nodes at DEPTH."
@@ -868,8 +894,9 @@ NODE is found or all depths have been searched."
          (parent-node (cdr p))
          (production-rules
           (list (combobulate-node-type parent-node))))
-    (with-navigation-nodes (:nodes production-rules)
-      (combobulate-get-expanded-children parent-node combobulate-navigation-rules-overrides))))
+    (when parent-node
+      (with-navigation-nodes (:nodes production-rules)
+        (combobulate-get-expanded-children parent-node combobulate-navigation-rules-overrides)))))
 
 (defun combobulate-production-rules-get (node-type &optional fields)
   "Get production rules for NODE-TYPE and maybe from its FIELDS.
@@ -1226,7 +1253,7 @@ but with added support for navigable nodes."
   (interactive "^p")
   (with-argument-repetition arg
     (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-logical-next) t))))
+      (combobulate-visual-move-to-node (combobulate-nav-logical-next) nil t))))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
   "Move to the previous logical and navigable node ARG times"
