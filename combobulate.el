@@ -103,7 +103,7 @@ same name, which is stored in `:function'"
                           (defalias fn-name
                             `(lambda () ,description
                                (interactive)
-                               (combobulate-apply-envelope ',envelope)))))
+                               (combobulate-execute-envelope ,name)))))
          ;; Tempo has an insane requirement that it _must_ be fed the
          ;; *symbol* that holds the template and never just the
          ;; template.

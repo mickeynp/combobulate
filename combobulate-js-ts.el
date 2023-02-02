@@ -147,22 +147,20 @@ from `combobulate-manipulation-envelopes') to insert."
 (defun combobulate-maybe-insert-attribute ()
   "Insert `=' or maybe a JSX attribute."
   (interactive)
-  (let ((node (combobulate-node-at-point '("jsx_opening_element" "jsx_self_closing_element"))))
-    (if (and node ;; (combobulate-point-in-node-range-p node)
-             )
-        (atomic-change-group
-          (catch 'done
-            (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
-              (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
-                (combobulate-apply-envelope (combobulate-get-envelope-by-name envelope) node t)
-                (throw 'done t)))
-            ;; catch flagrant, out-of-place uses of `='.
-            (if (looking-back "[[:alpha:]]" 1)
-                (combobulate-apply-envelope (combobulate-get-envelope-by-name
-                                             combobulate-js-ts-attribute-envelope-default)
-                                            node)
-              (self-insert-command 1 ?=))))
-      (self-insert-command 1 ?=))))
+  (if-let ((node (combobulate-node-at-point '("jsx_opening_element" "jsx_self_closing_element"))))
+      (atomic-change-group
+        (catch 'done
+          (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
+            (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
+              (combobulate-apply-envelope (combobulate-get-envelope-by-name envelope) node)
+              (throw 'done t)))
+          ;; catch flagrant, out-of-place uses of `='.
+          (if (looking-back "[[:alpha:]]" 1)
+              (combobulate-apply-envelope (combobulate-get-envelope-by-name
+                                           combobulate-js-ts-attribute-envelope-default)
+                                          node)
+            (self-insert-command 1 ?=))))
+    (self-insert-command 1 ?=)))
 
 (defun combobulate-js-ts-setup (_)
   (when combobulate-js-ts-enable-attribute-envelopes

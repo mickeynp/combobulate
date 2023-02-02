@@ -226,51 +226,54 @@ again to cycle indentation."))))
              :position at-or-in))
            :match-siblings (:keep-parent nil))))
 
-  (setq combobulate-manipulation-envelopes
-        `((:description
-           "( ... )"
-           :key "("
-           :extra-key "M-("
-           :mark-node t
-           :nodes ,(seq-difference (combobulate-production-rules-get "primary_expression")
-                                   '("identifier" "attribute"))
-           :name "wrap-parentheses"
-           :template (@ "(" r ")"))
-          (:description
-           "Decorate class or function"
-           :key "@"
-           :mark-node nil
-           :nodes ("function_definition" "class_definition")
-           :name "decorate"
-           :template ((p "Decorator name: ")
-                      n>))
-          (:description
-           "if ...:"
-           :key "bi"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-if"
-           :template
-           ("if " @ ":" n
-            y>))
-          (:description
-           "for ...:"
-           :key "bf"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-for"
-           :template
-           ("for " @ ":" n
-            y>))
-          (:description
-           "while ...:"
-           :key "bw"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-while"
-           :template
-           ("while " @ ":" n
-            y>))))
+  (let ((statement-nodes
+         (append (combobulate-production-rules-get "_compound_statement")
+                 '("block"))))
+    (setq combobulate-manipulation-envelopes
+          `((:description
+             "( ... )"
+             :key "("
+             :extra-key "M-("
+             :mark-node t
+             :nodes ,(append (combobulate-production-rules-get "primary_expression")
+                             (combobulate-production-rules-get "expression"))
+             :name "wrap-parentheses"
+             :template (@ "(" r ")"))
+            (:description
+             "Decorate class or function"
+             :key "@"
+             :mark-node nil
+             :nodes ("function_definition" "class_definition")
+             :name "decorate"
+             :template ((p "Decorator name: ")
+                        n>))
+            (:description
+             "if ...:"
+             :key "bi"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-if"
+             :template
+             ("if " @ ":" n
+              y>))
+            (:description
+             "for ...:"
+             :key "bf"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-for"
+             :template
+             ("for " @ ":" n
+              y>))
+            (:description
+             "while ...:"
+             :key "bw"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-while"
+             :template
+             ("while " @ ":" n
+              y>)))))
 
   (push 'combobulate-python-indent-for-tab-command python-indent-trigger-commands)
   (setq combobulate-manipulation-edit-procedures

@@ -165,12 +165,13 @@
 
 (defun combobulate-draw-node-tree (node)
   "Renders a navigation tree in node-list mode around NODE"
-  (save-excursion
-    (let ((node-list)
-          (combobulate--display-tree (combobulate-tree-make)))
-      (dolist (nav-element (combobulate-draw-node-locus node))
-        (push (combobulate--draw-node nav-element (combobulate-node-eq node nav-element)) node-list))
-      (mapconcat #'car (reverse node-list) "\n"))))
+  (when node
+    (save-excursion
+      (let ((node-list)
+            (combobulate--display-tree (combobulate-tree-make)))
+        (dolist (nav-element (combobulate-draw-node-locus node))
+          (push (combobulate--draw-node nav-element (combobulate-node-eq node nav-element)) node-list))
+        (mapconcat #'car (reverse node-list) "\n")))))
 
 
 (provide 'combobulate-display)

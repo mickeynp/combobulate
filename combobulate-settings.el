@@ -36,6 +36,11 @@
   :group 'languages
   :prefix "combobulate-")
 
+(defgroup combobulate-envelope nil
+  "Settings for Combobulate's code generation templates."
+  :group 'combobulate
+  :prefix "combobulate-envelope-")
+
 (defvar-local combobulate-navigation-defun-nodes nil
   "Node names used to navigate by defun.
 
@@ -119,8 +124,6 @@ determine the indentation.")
 
 (defvar-local combobulate-manipulation-trim-empty-lines t
   "Non-nil trims empty lines after Combobulate manipulates the tree.")
-
-
 
 (defcustom combobulate-flash-node t
   "Display a tree outline of nodes near point if non-nil."
@@ -292,7 +295,11 @@ counterparts.")
 (defvar combobulate-debug nil
   "Enables additional debug information useful for Combobulate developers")
 
-(defface combobulate-refactor-highlight-face '((t (:inherit diff-header)))
+(defface combobulate-refactor-highlight-face '((((background light))
+                                                :background "gray80")
+                                               (((background dark))
+                                                :background "gray20")
+                                               (t :inherit secondary-selection))
   "Face for notable text during editing or refactoring."
   :group 'combobulate)
 
