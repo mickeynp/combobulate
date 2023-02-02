@@ -120,11 +120,12 @@ from `combobulate-manipulation-envelopes') to insert."
   (self-insert-command 1 ?>)
   (save-excursion
     (forward-char -1)
-    (when-let (open-node (combobulate-node-at-point '("jsx_opening_element")))
-      (forward-char 1)
-      (insert (format "</%s>" (combobulate-node-text
-                               (combobulate-node-child-by-field
-                                open-node "name")))))))
+    (when (not (eq ?/ (char-before)))
+      (when-let (open-node (combobulate-node-at-point '("jsx_opening_element")))
+        (forward-char 1)
+        (insert (format "</%s>" (combobulate-node-text
+                                 (combobulate-node-child-by-field
+                                  open-node "name"))))))))
 
 (defun combobulate-maybe-close-tag-or-self-insert ()
   "Insert `/' or maybe close the nearest unopened tag."
