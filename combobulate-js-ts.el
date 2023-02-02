@@ -265,9 +265,9 @@ from `combobulate-manipulation-envelopes') to insert."
           ;; sibling-level editing
           (:activation-nodes
            ((:node
-             ("jsx_self_closing_element" "jsx_expression" "jsx_element")
+             ("jsx_self_closing_element" "jsx_expression" "jsx_element" "jsx_fragment")
              :position at))
-           :remove-types ("comment")
+           :remove-types ("comment" "jsx_text")
            :match-siblings (:keep-parent nil))
           ;; editing an element's opening/closing tag
           (:activation-nodes
