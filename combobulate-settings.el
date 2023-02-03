@@ -161,7 +161,11 @@ Use `linear' and Combobulate will simply move to the first defun
 it finds, regardless of hierarchy."
   :type 'symbol
   :group 'combobulate
-  :options '(parent root self-and-sibling-first linear))
+  :type '(choice
+          (const :tag "Parent" parent)
+          (const :tag "Root" root)
+          (const :tag "Self and Sibling First" self-and-sibling-first)
+          (const :tag "Linear" linear)))
 
 (defcustom combobulate-navigate-next-move-to-end nil
   "Make \\[combobulate-navigate-next] move to the end of the node.
