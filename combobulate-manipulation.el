@@ -808,7 +808,8 @@ buffer.
                                                                 (where-is-internal 'next map)
                                                                 ", ")
                                                      (if (and flash-node combobulate-flash-node)
-                                                         (combobulate-draw-node-tree (combobulate-proxy-to-tree-node current-node))
+                                                         (or (combobulate-draw-node-tree (combobulate-proxy-to-tree-node current-node))
+                                                             "")
                                                        "")))
                                             nil nil)))
                                        (quit 'cancel)))
@@ -994,24 +995,49 @@ more than one."
     ;; region; if so, swap places.
     (when (and mark-active (> (point) (mark)))
       (exchange-point-and-mark))
-    (combobulate-proffer-choices
-     (seq-drop-while #'combobulate-node-in-region-p
-                     (combobulate-nav-get-parents
-                      (combobulate-node-at-point)))
-     ;; do not mark `node' for deletion; highlight `node'; or
-     ;; move point to `node'.
-     (lambda (node _ _ _) (combobulate--mark-node node nil beginning-of-line))
-     :reset-point-on-abort t
-     :reset-point-on-accept nil
-     ;; HACK: This allows repetition of the command that
-     ;; `combobulate-mark-node-dwim' is bound to, but this should be
-     ;; built into `combobulate-proffer-choices'. Furthermore, is
-     ;; `where-is-internal' really the best way to do this?
-     :extra-map (mapcar (lambda (key) (cons key 'next))
-                        (where-is-internal #'combobulate-mark-node-dwim
-                                           combobulate-key-map))
-     :flash-node t
-     :first-choice first-choice)))
+    (let ((nodes (cons (combobulate--get-nearest-navigable-node)
+                       (combobulate-nav-get-parents
+                        (combobulate-node-at-point)))))
+      ;; maybe mark the thing at point first even though it may (or may
+      ;; not) match the extents of a node.
+      ;;
+      ;; Because we shift point around all the time, we don't want the
+      ;; `thing-at-point' machinery to pick up stray "things" at the
+      ;; edges of our region; that would be confusing. So only apply
+      ;; it if we don't have a region (i.e., the first time we run
+      ;; this command)
+      (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
+        ;; NOTE: this may need refinement over time; for now we
+        ;; hardcode the `:type' to be the symbol name of the thing
+        ;; we're looking for, though obviously that is most likely a
+        ;; made-up node type.
+        (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
+                   (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
+          (setq nodes (cons (make-combobulate-proxy-node
+                             :start (car bounds)
+                             :end (cdr bounds)
+                             :type (symbol-name combobulate-mark-node-or-thing-at-point)
+                             :named nil
+                             :node nil
+                             :pp thing
+                             :text thing)
+                            nodes))))
+      (combobulate-proffer-choices
+       (seq-drop-while #'combobulate-node-in-region-p nodes)
+       ;; do not mark `node' for deletion; highlight `node'; or
+       ;; move point to `node'.
+       (lambda (node _ _ _) (combobulate--mark-node node nil beginning-of-line))
+       :reset-point-on-abort t
+       :reset-point-on-accept nil
+       ;; HACK: This allows repetition of the command that
+       ;; `combobulate-mark-node-dwim' is bound to, but this should be
+       ;; built into `combobulate-proffer-choices'. Furthermore, is
+       ;; `where-is-internal' really the best way to do this?
+       :extra-map (mapcar (lambda (key) (cons key 'next))
+                          (where-is-internal #'combobulate-mark-node-dwim
+                                             combobulate-key-map))
+       :flash-node t
+       :first-choice first-choice))))
 
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.

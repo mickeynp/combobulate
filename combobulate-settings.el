@@ -125,6 +125,18 @@ determine the indentation.")
 (defvar-local combobulate-manipulation-trim-empty-lines t
   "Non-nil trims empty lines after Combobulate manipulates the tree.")
 
+(defcustom combobulate-mark-node-or-thing-at-point 'symbol
+  "Maybe mark the thing at point first before extending the mark to the first node.
+
+Can be anything `thing-at-point' supports, theoretically, though
+practically speaking the most useful ones are `symbol' and `word'
+for all but the most esoteric requirements."
+  :group 'combobulate
+  :type '(choice
+          (const :tag "Disabled" nil)
+          (const :tag "Symbol" symbol)
+          (const :tag "Word" word)))
+
 (defcustom combobulate-flash-node t
   "Display a tree outline of nodes near point if non-nil."
   :group 'combobulate

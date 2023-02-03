@@ -40,14 +40,16 @@ kept."
   "Factory that creates a facsimile proxy node of NODES."
   (mapcar
    (lambda (node)
-     (make-combobulate-proxy-node
-      :start (treesit-node-start node)
-      :end (treesit-node-end node)
-      :text (treesit-node-text node)
-      :type (treesit-node-type node)
-      :named (treesit-node-check node 'named)
-      :node node
-      :pp (combobulate-pretty-print-node node)))
+     (if (combobulate-node-p node)
+         (make-combobulate-proxy-node
+          :start (treesit-node-start node)
+          :end (treesit-node-end node)
+          :text (treesit-node-text node)
+          :type (treesit-node-type node)
+          :named (treesit-node-check node 'named)
+          :node node
+          :pp (combobulate-pretty-print-node node))
+       node))
    (if (consp nodes) nodes (list nodes))))
 
 (defun combobulate-proxy-to-tree-node (proxy-node)
