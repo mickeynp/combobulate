@@ -290,10 +290,11 @@ If NODE-ONLY is non-nil then only the node texts are returned"
 
 If AUTO is non-nil, then move to the end if point is at NODE's
 start."
-  (combobulate-move-to-node
-   node (or end (and auto (= (combobulate-node-start node) (point)))))
-  (combobulate--flash-node node)
-  node)
+  (and node
+       (combobulate-move-to-node
+        node (or end (and auto (= (combobulate-node-start node) (point)))))
+       (combobulate--flash-node node)
+       node))
 
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
@@ -577,11 +578,12 @@ of the node."
                       'forward (remove (combobulate-node-type (combobulate-root-node)) combobulate-navigation-default-nodes)
                       #'combobulate-node-on-or-after-point-p)))
               (first-node (pop tree)))
-    (if (combobulate-point-at-beginning-of-node-p first-node)
-        (if (< (combobulate-node-end first-node) (combobulate-node-start (car tree)))
-            first-node
-          (car tree))
-      first-node)))
+    (when tree
+      (if (combobulate-point-at-beginning-of-node-p first-node)
+          (if (< (combobulate-node-end first-node) (combobulate-node-start (car tree)))
+              first-node
+            (seq-find #'combobulate-node-after-point-p tree))
+        first-node))))
 
 (defun combobulate-nav-logical-previous ()
   "Navigate to the logical previous node"
@@ -592,15 +594,11 @@ of the node."
                               (combobulate-root-node)
                               (flatten-tree (combobulate-build-sparse-tree
                                              'backward combobulate-navigation-default-nodes
-                                             (lambda (n) (<= (combobulate-node-end n)
-                                                        (point)))
-                                             nil 10000)))))
+                                             (lambda (n) (or (<= (combobulate-node-end n)
+                                                            (point))
+                                                        (combobulate-point-in-node-range-p n))))))))
               (first-node (pop tree)))
-    (if (combobulate-point-at-end-of-node-p first-node)
-        (if (< (combobulate-node-end (car tree)) (combobulate-node-end first-node))
-            first-node
-          (car tree))
-      first-node)))
+    (seq-find #'combobulate-node-before-point-p tree)))
 
 (defun combobulate-nodes-share-parent-p (node-a node-b)
   "Return t if NODE-A and NODE-B have a common navigable ancesor"
@@ -1252,7 +1250,7 @@ but with added support for navigable nodes."
   "Move to the next logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
+    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix t)
       (combobulate-visual-move-to-node (combobulate-nav-logical-next) nil t))))
 
 (defun combobulate-navigate-logical-previous (&optional arg)

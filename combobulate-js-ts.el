@@ -410,13 +410,7 @@ from `combobulate-manipulation-envelopes') to insert."
                   ,@(combobulate-production-rules-get "statement")
                   ,@(combobulate-production-rules-get "declaration"))))
   (setq combobulate-navigation-logical-nodes
-        (append combobulate-navigation-default-nodes
-                '("array" "statement_block" "import_statement"
-                  "type_annotation" "lexical_declaration"
-                  "jsx_opening_element" "jsx_expression"
-                  "jsx_text"
-                  "jsx_closing_element" "pair" "jsx_attribute"
-                  "jsx_self_closing_element"))))
+        (seq-uniq (flatten-tree combobulate-rules-tsx-inverted))))
 
 
 (provide 'combobulate-js-ts)
