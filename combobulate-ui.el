@@ -65,8 +65,8 @@
     ("C-M-f" "Forward sexp" forward-sexp :transient t)
     ("C-M-b" "Backward sexp" backward-sexp :transient t)]
    ["Hierarchical"
-    ("C-M-u" "Down into list" combobulate-navigate-up-list-maybe :transient t)
-    ("C-M-d" "Up list" combobulate-navigate-down-list-maybe :transient t)
+    ("C-M-u" "Up into list" combobulate-navigate-up-list-maybe :transient t)
+    ("C-M-d" "Down into list" combobulate-navigate-down-list-maybe :transient t)
     ("C-M-p" "Backward sibling" combobulate-navigate-previous :transient t)
     ("C-M-n" "Forward sibling" combobulate-navigate-forward :transient t)]
    [:description (lambda () (concat

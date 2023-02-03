@@ -157,6 +157,12 @@ Uses `point' and `mark' to infer the boundaries."
        (> (- (combobulate-node-end node-a) (combobulate-node-start node-a))
           (- (combobulate-node-end node-b) (combobulate-node-start node-b)))))
 
+(defun combobulate-node-smaller-than-node-p (node-a node-b)
+  "Return t if NODE-A is larger than NODE-B"
+  (and node-a node-b
+       (< (- (combobulate-node-end node-a) (combobulate-node-start node-a))
+          (- (combobulate-node-end node-b) (combobulate-node-start node-b)))))
+
 (defun combobulate-node-ends-before-node-p (node-a node-b)
   "Return t if NODE-A ends before NODE-B "
   (and node-a node-b
@@ -501,6 +507,12 @@ direction of travel."
 (defun combobulate-point-at-beginning-of-node-p (node)
   "Returns non-nil if the beginning position of NODE is equal to `point'"
   (= (combobulate-node-point node) (point)))
+
+(defun combobulate-node-blank-p (node)
+  "Returns t if NODE consists of blank characters.
+
+The function `string-blank-p' is used to determine this."
+  (string-blank-p (combobulate-node-text node)))
 
 (defun combobulate-point-at-end-of-node-p (node &optional error-margin)
   "Returns non-nil if the end position of NODE is equal to `point'
@@ -1170,6 +1182,8 @@ but with added support for navigable nodes."
                            ;; minimum of the remaining elements and go to that.
                            (lambda (elem) (and elem (> elem (point))))
                            (list (save-excursion (ignore-errors (down-list 1 nil) (point)))
+                                 (if (combobulate-point-at-beginning-of-node-p navigable-node)
+                                     (combobulate-node-point navigable-node t))
                                  (combobulate-node-point (combobulate-nav-get-child navigable-node))
                                  (combobulate-node-point (combobulate-nav-get-child nearest-node))))))
         (when-let (target (apply #'min targets))

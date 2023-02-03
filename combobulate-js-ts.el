@@ -395,7 +395,7 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-navigation-parent-child-nodes
         '("program" "arrow_function"
           "function_declaration" "lexical_declaration"
-          "export_statement" "jsx_fragment" "jsx_element"
+          "export_statement" "jsx_fragment" "jsx_element" "jsx_opening_element"
           "jsx_expression" "object" "jsx_self_closing_element" "array"))
 
   (setq combobulate-navigation-default-nodes
