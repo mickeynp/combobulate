@@ -401,7 +401,7 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-navigation-default-nodes
         (append combobulate-navigation-parent-child-nodes
                 `("jsx_attribute" "ternary_expression" "type_arguments" "string"
-                  "arrow_function"
+                  "arrow_function" "jsx_text"
                   ,@(combobulate-production-rules-get "primary_expression")
                   ,@(combobulate-production-rules-get "object")
                   ,@(combobulate-production-rules-get "statement")

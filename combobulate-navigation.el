@@ -1250,7 +1250,7 @@ but with added support for navigable nodes."
   "Move to the next logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix t)
+    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix nil)
       (combobulate-visual-move-to-node (combobulate-nav-logical-next) nil t))))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
