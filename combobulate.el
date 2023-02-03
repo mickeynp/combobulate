@@ -136,9 +136,8 @@ have changed."
         ;; the procedures setup and ready before we continue.
         (setq-local combobulate-navigation-editable-nodes
                     (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
-        (define-key
-         combobulate-options-key-map
-         (kbd "e")
+        (local-set-key
+         (kbd "C-c o e")
          ;; todo: this should be a single-shot setup per mode.
          (let ((map (make-sparse-keymap)))
            (dolist (envelope (combobulate--setup-envelopes
