@@ -658,54 +658,7 @@ that technically has another immediate parent."
   (let* ((siblings (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive (combobulate-node-start node))))))
     (if (eq direction 'forward)
         (car (seq-filter #'combobulate-node-after-point-p siblings))
-      (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
-
-    ;; At this point we should possibly have a sibling on either
-    ;; side of `current-node'.
-    ;;
-    ;; They may well be nil: it's possible not to have siblings.
-    ;; (setq siblings (or (combobulate-filter-nodes
-    ;;                     (or (combobulate--get-directed-siblings
-    ;;                          (or (and (member node combobulate-navigation-default-nodes) node)
-    ;;                              (car parents))
-    ;;                          direction))
-    ;;                     :keep-types combobulate-navigation-default-nodes)
-    ;;                    (if (eq direction 'forward)
-    ;;                        (seq-filter #'combobulate-node-after-point-p
-    ;;                                    (combobulate-node-children (car parents)))
-    ;;                      (reverse (seq-filter #'combobulate-node-before-point-p
-    ;;                                           (combobulate-node-children (car parents)))))))
-    ;; (car-safe siblings)
-    ;; (pcase-let ((`(,prev-sibling ,current-node ,next-sibling) siblings))
-    ;;   (unless current-node
-    ;;     (error "Unable find sibling to navigate from"))
-    ;;   ;; If we're moving up, we get the previous sibling
-    ;;   (if up
-    ;;       (cond ((combobulate-point-at-end-of-node-p current-node)
-    ;;              current-node)
-    ;;             (t prev-sibling))
-    ;;     ;; If we're moving to the next, then we maybe get the next
-    ;;     ;; sibling and if that fails we instead get the parent of
-    ;;     ;; `current-node''s next sibling.
-    ;;     (cond
-    ;;      ((and (or (combobulate-point-at-beginning-of-node-p current-node)
-    ;;                (combobulate-point-in-node-range-p current-node))
-    ;;            combobulate-navigate-next-move-to-end)
-    ;;       current-node)
-    ;;      ((and (not next-sibling)
-    ;;            (combobulate-point-at-end-of-node-p current-node))
-    ;;       ;; aggressively try to find a next sibling. note: needed/wanted?
-    ;;       (let ((current-parents (combobulate-nav-get-parents current-node)))
-    ;;         (catch 'done
-    ;;           (while current-parents
-    ;;             (when (setq current-node
-    ;;                         (thread-first (pop current-parents)
-    ;;                                       (combobulate-get-immediate-siblings-of-node)
-    ;;                                       (last)
-    ;;                                       (car)))
-    ;;               (throw 'done current-node))))))
-    ;;      (t next-sibling))))
-    ))
+      (car (last (seq-filter #'combobulate-node-before-point-p siblings))))))
 
 (defun combobulate-nav-get-next-sibling (node)
   "Get the next sibling of NODE"

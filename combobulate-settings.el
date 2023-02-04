@@ -106,6 +106,9 @@ See `mark-sentence', `forward-sentence' and `backward-sentence'.")
 (defvar-local combobulate-navigation-parent-child-nodes nil
   "Node names used to navigate up or down.")
 
+(defvar-local combobulate-display-ignored-node-types nil
+  "Node types that will not appear in the tree display")
+
 (defvar-local combobulate-manipulation-trim-whitespace nil
   "Trim whitespace after Combobulate manipulates the tree.
 

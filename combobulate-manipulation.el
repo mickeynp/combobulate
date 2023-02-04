@@ -342,13 +342,16 @@ then a cons cell of this shape is returned:
              (combobulate-pretty-print-node point-node)))
      (t
       (setq procedure (pop procedures))
+      ;; (unless (equal (car procedure) point-node)
+      ;;   (error "`%s' does not equal point node %s" (car procedure) point-node))
       (cons procedure (combobulate-procedure-apply-procedure point-node (car procedure) (cdr procedure)))))))
 
 (defun combobulate-procedure-start-aggressive (&optional pt procedures)
   "Attempt to find a procedure at PT."
   (catch 'found
     (let ((procedure))
-      (dolist (node (save-excursion (goto-char (or pt (point))) (combobulate-all-nodes-at-point)))
+      (dolist (node (save-excursion (goto-char (or pt (point)))
+                                    (reverse (combobulate-all-nodes-at-point))))
         (setq procedure (ignore-errors (combobulate-procedure-start node procedures)))
         (when procedure
           (throw 'found procedure))))))

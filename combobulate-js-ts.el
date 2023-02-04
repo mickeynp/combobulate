@@ -103,7 +103,9 @@ from `combobulate-manipulation-envelopes') to insert."
       ("jsx_self_closing_element" (make-tag-text (get-name node) nil "/"))
       ("jsx_opening_element" (make-tag-text (get-name node)))
       ("jsx_closing_element" (make-tag-text (get-name node) "/"))
-      ("jsx_element" (make-tag-text (get-name (combobulate-node-child-by-field node "open_tag"))))
+      ("jsx_element" (concat
+                      (make-tag-text
+                       (get-name (combobulate-node-child-by-field node "open_tag")))))
       ("jsx_attribute" (combobulate-string-truncate
                         (concat (combobulate-node-text (combobulate-node-child node 0)) "="
                                 (combobulate-node-text (combobulate-node-child node 1)))
@@ -350,6 +352,10 @@ from `combobulate-manipulation-envelopes') to insert."
         `(;; for lists, arrays, objects, etc.
           (:activation-nodes
            ((:node
+             ("import_specifier")
+             :position at-or-in
+             :find-parent ("named_imports"))
+            (:node
              ,(append
                (combobulate-production-rules-get "object_pattern")
                (combobulate-production-rules-get "object_type")
@@ -386,12 +392,14 @@ from `combobulate-manipulation-envelopes') to insert."
            ((:node
              ,(append (combobulate-production-rules-get "object")
                       (combobulate-production-rules-get "statement")
-                      (combobulate-production-rules-get "declaration"))
+                      (combobulate-production-rules-get "declaration")
+                      '("program"))
              :position at-or-in
-             :find-immediate-parent ("program" "statement_block")))
+             :find-immediate-parent ("statement_block" "program")))
            :remove-types ("comment")
            :match-children t)))
 
+  (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
   (setq combobulate-navigation-parent-child-nodes
         '("program" "arrow_function"
           "function_declaration" "lexical_declaration"
