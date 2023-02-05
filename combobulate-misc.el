@@ -76,7 +76,7 @@
 (defun combobulate--flash-node (node)
   "Flashes NODE on the screen."
   (when (and node combobulate-flash-node)
-    (message "%s" (combobulate-draw-node-tree node))))
+    (message "%s" (combobulate-display-draw-node-tree node))))
 
 (defsubst combobulate-debug (s &rest args)
   (princ (apply #'format (concat s "\n") args)))
