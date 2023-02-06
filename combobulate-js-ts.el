@@ -211,7 +211,7 @@ from `combobulate-manipulation-envelopes') to insert."
            :mark-node t
            :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
            :name "ternary"
-           :template ("{" p "null" >
+           :template ("{" @ "null" >
                       n > " ? " r> >
                       n > " : " "null" >
                       n > "}" >))
