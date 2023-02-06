@@ -70,10 +70,11 @@ line when you press
   :type 'boolean)
 
 (defun combobulate-python--get-definition (node)
-  (apply #'format "%s%s" (combobulate-query-node-text
-                          '((_) name: (_) @name
-                            [(argument_list) (parameters)] @arg)
-                          node t)))
+  (string-join (combobulate-query-node-text
+                '((_) name: (_) @name
+                  [(argument_list) (parameters)] @arg)
+                node t)
+               ""))
 
 (defun combobulate-python-pretty-print-node-name (node default-name)
   "Pretty printer for JS and JSX nodes"
