@@ -147,8 +147,7 @@
                   (rollback ()
                     (mapc (lambda (ov) (delete-overlay ov))
                           ,--markers)
-                    (setq ,--markers nil)
-                    (combobulate-reinitialize-parser))
+                    (setq ,--markers nil))
                   (commit ()
                     (setq combobulate-refactor--copied-values nil)
                     (mapc (lambda (ov) (combobulate--refactor-commit ov t))
@@ -156,8 +155,9 @@
                                                 (overlay-end b)))
                                     ,--markers))
                     ;; clean up.
-                    (setq ,--markers nil)
-                    (combobulate-reinitialize-parser)))
+                    (mapc (lambda (ov) (delete-overlay ov))
+                          ,--markers)
+                    (setq ,--markers nil)))
          (prog1 (atomic-change-group
                   ,@body)
            (when ,--markers
@@ -711,6 +711,7 @@ point relative to the nodes in
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-g" 'cancel)
     (define-key map "\M-c" 'recursive-edit)
+    (define-key map "C-l" 'recenter)
     (define-key map [return] 'done)
     (define-key map [tab] 'next)
     (define-key map [S-iso-lefttab] 'prev)
@@ -770,12 +771,13 @@ buffer.
                      ;; strip out nodes that share the
                      ;; same range extent.
                      (if unique-only
-                         (seq-uniq nodes (lambda (a b) (or (equal a b)
-                                                      (equal (combobulate-node-range a)
-                                                             (combobulate-node-range b)))))
+                         (seq-uniq nodes (lambda (a b)
+                                           (or (equal a b)
+                                               (equal (combobulate-node-range a)
+                                                      (combobulate-node-range b)))))
                        nodes))))
         (result) (state 'continue) (current-node)
-        (index 0) (pt (point))
+        (index 0) (pt (point)) (raw-event)
         (map (if extra-map
                  (let ((map (make-sparse-keymap)))
                    (set-keymap-parent map combobulate-proffer-map)
@@ -794,28 +796,47 @@ buffer.
                                  (apply-partially #'mark-node-highlighted current-node)
                                  (apply-partially #'combobulate-move-to-node current-node)
                                  (apply-partially #'mark-node-deleted current-node))
+                      ;; if we have just one item, or if
+                      ;; `:first-choice' is non-nil, we pick the first
+                      ;; item in `proxy-nodes'
                       (if (or (= (length proxy-nodes) 1) first-choice)
                           (progn (rollback)
                                  (setq state 'accept))
-                        (setq result (condition-case nil
-                                         (lookup-key
-                                          map
-                                          (vector
-                                           (read-event
-                                            (substitute-command-keys
-                                             (format "%s `%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits\n%s"
-                                                     (combobulate-display-indicator index (length proxy-nodes))
-                                                     (combobulate-pretty-print-node current-node nil)
-                                                     (mapconcat (lambda (k)
-                                                                  (propertize (key-description k) 'face 'help-key-binding))
-                                                                (where-is-internal 'next map)
-                                                                ", ")
-                                                     (if (and flash-node combobulate-flash-node)
-                                                         (or (combobulate-draw-node-tree (combobulate-proxy-to-tree-node current-node))
-                                                             "")
-                                                       "")))
-                                            nil nil)))
-                                       (quit 'cancel)))
+                        (setq result
+                              (condition-case nil
+                                  ;; `lookup-key' is funny and it only
+                                  ;; takes a vector of an event.
+                                  (lookup-key
+                                   map
+                                   (vector
+                                    ;; we need to preserve the raw
+                                    ;; event. If we want the event
+                                    ;; read by `read-event' to pass
+                                    ;; through to the event loop
+                                    ;; unscathed then we need the raw
+                                    ;; version.
+                                    (setq raw-event
+                                          (read-event
+                                           (substitute-command-keys
+                                            (format "%s `%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.\n%s"
+                                                    (combobulate-display-indicator index (length proxy-nodes))
+                                                    (combobulate-pretty-print-node current-node nil)
+                                                    (mapconcat (lambda (k)
+                                                                 (propertize (key-description k) 'face 'help-key-binding))
+                                                               ;; messy; is this really the best way?
+                                                               (where-is-internal 'next map)
+                                                               ", ")
+                                                    (if (and flash-node combobulate-flash-node)
+                                                        (or (combobulate-draw-node-tree (combobulate-proxy-to-tree-node current-node))
+                                                            "")
+                                                      "")))
+                                           nil nil))))
+                                ;; if `condition-case' traps a quit
+                                ;; error, then map it into the symbol
+                                ;; `cancel', which corresponds to the
+                                ;; equivalent event in the state
+                                ;; machine below.
+                                (quit 'cancel)))
                         (pcase result
                           ('prev
                            (commit)
@@ -833,11 +854,16 @@ buffer.
                            (funcall result)
                            (rollback)
                            (throw 'next nil))
-                          (_
+                          ('cancel
                            (combobulate-message "Cancelling...")
                            (setq state 'abort)
                            (rollback)
-                           (keyboard-quit)))))))))
+                           (keyboard-quit))
+                          (_
+                           (combobulate-message "Committing...")
+                           (push raw-event unread-command-events)
+                           (rollback)
+                           (setq state 'accept)))))))))
           (quit nil))
       (error "There are no choices to make."))
     ;; Determine where point is placed on exit.
