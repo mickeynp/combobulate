@@ -711,7 +711,7 @@ point relative to the nodes in
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-g" 'cancel)
     (define-key map "\M-c" 'recursive-edit)
-    (define-key map "C-l" 'recenter)
+    (define-key map "\C-l" #'recenter)
     (define-key map [return] 'done)
     (define-key map [tab] 'next)
     (define-key map [S-iso-lefttab] 'prev)
@@ -827,7 +827,8 @@ buffer.
                                                                (where-is-internal 'next map)
                                                                ", ")
                                                     (if (and flash-node combobulate-flash-node)
-                                                        (or (combobulate-draw-node-tree (combobulate-proxy-to-tree-node current-node))
+                                                        (or (combobulate-display-draw-node-tree
+                                                             (combobulate-proxy-to-tree-node current-node))
                                                             "")
                                                       "")))
                                            nil nil))))
