@@ -140,8 +140,7 @@
                            (combobulate-node-in-region-p (combobulate-ztree-node loc)))
                       'highlight)
                      (highlighted 'combobulate-tree-highlighted-node-face)
-                     (t 'combobulate-tree-normal-node-face))
-                    ))
+                     (t 'combobulate-tree-normal-node-face))))
        ""))))
 
 ;;; Sparse tree code -- used for performance reasons instead of
@@ -181,15 +180,18 @@
          (cons (cons parent
                      (mapcar (lambda (n)
                                (cons n (mapcar #'list
-                                               (seq-filter #'combobulate-navigable-node-p
-                                                           (combobulate-node-children n)))))
+                                               (seq-remove #'combobulate-node-blank-p
+                                                           (seq-filter #'combobulate-navigable-node-p
+                                                                       ;; make this configurable
+                                                                       (seq-take (combobulate-node-children n) 1))))))
                              (seq-uniq
-                              (seq-filter #'combobulate-navigable-node-p
-                                          (or (combobulate-get-immediate-siblings-of-node start-node)
-                                              (list
-                                               (combobulate-node-prev-sibling start-node)
-                                               start-node
-                                               (combobulate-node-next-sibling start-node)))))))
+                              (seq-remove #'combobulate-node-blank-p
+                                          (seq-filter #'combobulate-navigable-node-p
+                                                      (or (combobulate-get-immediate-siblings-of-node start-node)
+                                                          (list
+                                                           (combobulate-node-prev-sibling start-node)
+                                                           start-node
+                                                           (combobulate-node-next-sibling start-node))))))))
                nil))
       (combobulate-ztree-append-child
        ztree
@@ -197,8 +199,9 @@
         (cons nil
               (mapcar (lambda (n)
                         (cons n (mapcar #'list
-                                        (seq-filter #'combobulate-navigable-node-p
-                                                    (combobulate-node-children n)))))
+                                        (seq-remove #'combobulate-node-blank-p
+                                                    (seq-filter #'combobulate-navigable-node-p
+                                                                (combobulate-node-children n))))))
                       (seq-uniq
                        (seq-filter #'combobulate-navigable-node-p
                                    (combobulate-get-immediate-siblings-of-node start-node)))))
