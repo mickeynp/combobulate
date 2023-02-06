@@ -96,7 +96,6 @@ If HIGHLIGHTED then the node is highlighted with
         (concat (format "%s%s"
                         (propertize s 'face
                                     (cond
-                                     ((combobulate-node-in-region-p node) 'hi-green)
                                      (highlighted 'combobulate-tree-highlighted-node-face)
                                      (t 'combobulate-tree-normal-node-face)))
                         (if combobulate-debug (concat " " (combobulate-node-range node)) ""))))

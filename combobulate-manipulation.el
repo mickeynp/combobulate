@@ -820,7 +820,8 @@ buffer.
                                            (substitute-command-keys
                                             (format "%s `%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.\n%s"
                                                     (combobulate-display-indicator index (length proxy-nodes))
-                                                    (combobulate-pretty-print-node current-node nil)
+                                                    (propertize (combobulate-pretty-print-node current-node) 'face
+                                                                'combobulate-tree-highlighted-node-face)
                                                     (mapconcat (lambda (k)
                                                                  (propertize (key-description k) 'face 'help-key-binding))
                                                                ;; messy; is this really the best way?
