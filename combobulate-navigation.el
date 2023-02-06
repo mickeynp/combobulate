@@ -1137,7 +1137,11 @@ but with added support for navigable nodes."
                                  (if (combobulate-point-at-beginning-of-node-p navigable-node)
                                      (combobulate-node-point navigable-node t))
                                  (combobulate-node-point (combobulate-nav-get-child navigable-node))
-                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))))))
+                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))
+                                 (ignore-errors (save-excursion
+                                                  (backward-up-list 1 nil)
+                                                  (forward-sexp)
+                                                  (point)))))))
         (when-let (target (apply #'min targets))
           (goto-char target)
           (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
