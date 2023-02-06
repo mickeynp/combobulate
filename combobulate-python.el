@@ -277,26 +277,33 @@ again to cycle indentation."))))
 
   (push 'combobulate-python-indent-for-tab-command python-indent-trigger-commands)
   (setq combobulate-manipulation-edit-procedures
-        '((:activation-nodes
+        '(;; edit comments in blocks
+          (:activation-nodes
            ((:node "comment" :find-parent ("block") :position at-or-in))
            :match-query (block (comment)+ @match))
+          ;; edit pairs in dictionaries
           (:activation-nodes
            ((:node "pair" :find-parent "dictionary" :position at-or-in)
             (:node "dictionary" :position at-or-in))
            :match-query (dictionary (pair)+ @match)
            :remove-types ("comment"))
+          ;; edit parameters in functions
           (:activation-nodes
            ((:node "function_definition" :position at-or-in))
            :match-query (function_definition (parameters (_)+ @match))
            :remove-types ("comment"))
+          ;; edit elements in containers and blocks
           (:activation-nodes
-           ((:node ("block" "set" "list" "tuple") :position at-or-in))
+           ((:node ("block" "tuple_pattern" "set" "list" "tuple") :position at-or-in))
            :match-query ((_) (_)+ @match)
+           ;; :match-children t
            :remove-types ("comment"))
+          ;; edit arguments in calls
           (:activation-nodes
            ((:node "argument_list" :position at-or-in))
            :match-query ((argument_list) (_)+ @match)
            :remove-types ("comment"))
+          ;; edit imports
           (:activation-nodes
            ((:node "import_from_statement" :position at-or-in :find-parent "module"))
            :match-query (import_from_statement name: (dotted_name)+ @match))))
@@ -315,6 +322,10 @@ again to cycle indentation."))))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ,(combobulate-production-rules-get "import_from_statement")
+             :position at-or-in
+             :find-immediate-parent ("import_from_statement"))
+            (:node
              ,(combobulate-production-rules-get "dictionary")
              :position at-or-in
              :find-immediate-parent ("dictionary"))
@@ -340,7 +351,7 @@ again to cycle indentation."))))
                       (combobulate-production-rules-get "module")
                       '("module" "comment" "case_clause"))
              :position at-or-in
-             :find-immediate-parent ("case_clause" "module" "block")))
+             :find-immediate-parent ("case_clause" "match_statement" "module" "block")))
            :remove-types ("comment")
            :match-children t)))
   (combobulate-production-rules-set '("argument_list"
@@ -394,7 +405,10 @@ again to cycle indentation."))))
          (combobulate-production-rules-get "primary_expression")
          (combobulate-production-rules-get "expression")
          combobulate-navigation-default-nodes))
-  (setq combobulate-navigation-default-nodes combobulate-navigation-parent-child-nodes))
+  (setq combobulate-navigation-default-nodes
+        (seq-uniq (append
+                   combobulate-navigation-logical-nodes
+                   combobulate-navigation-parent-child-nodes))))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here
