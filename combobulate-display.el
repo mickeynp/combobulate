@@ -173,25 +173,26 @@
 (defun combobulate-display-create-locus (start-node)
   (let* ((parent (combobulate-nav-get-parent start-node))
          (grand-parent (combobulate-nav-get-parent parent))
-         (ztree (combobulate-ztree-list-zip (list (or grand-parent parent)))))
+         (ztree (combobulate-ztree-list-zip (list (or grand-parent parent))))
+         (children
+          (cons (if grand-parent parent nil)
+                (mapcar (lambda (n)
+                          (cons n (mapcar #'list
+                                          (seq-remove #'combobulate-node-blank-p
+                                                      (seq-filter #'combobulate-navigable-node-p
+                                                                  ;; make this configurable
+                                                                  (seq-take (combobulate-node-children n) 1))))))
+                        (seq-uniq
+                         (seq-remove #'combobulate-node-blank-p
+                                     (seq-filter #'combobulate-navigable-node-p
+                                                 (or (combobulate-get-immediate-siblings-of-node start-node)
+                                                     (list
+                                                      (combobulate-node-prev-sibling start-node)
+                                                      start-node
+                                                      (combobulate-node-next-sibling start-node))))))))))
     (combobulate-ztree-append-child
      ztree
-     (cons (cons (if grand-parent parent nil)
-                 (mapcar (lambda (n)
-                           (cons n (mapcar #'list
-                                           (seq-remove #'combobulate-node-blank-p
-                                                       (seq-filter #'combobulate-navigable-node-p
-                                                                   ;; make this configurable
-                                                                   (seq-take (combobulate-node-children n) 1))))))
-                         (seq-uniq
-                          (seq-remove #'combobulate-node-blank-p
-                                      (seq-filter #'combobulate-navigable-node-p
-                                                  (or (combobulate-get-immediate-siblings-of-node start-node)
-                                                      (list
-                                                       (combobulate-node-prev-sibling start-node)
-                                                       start-node
-                                                       (combobulate-node-next-sibling start-node))))))))
-           nil))))
+     (if grand-parent children (cons children nil)))))
 
 (defun combobulate-display-draw-tree-1 (tree &optional highlighted-node)
   (let ((drawing))

@@ -1378,8 +1378,6 @@ after TO-NODE."
 (defun combobulate-reinitialize-parser ()
   "Force tree-sitter to reparse the buffer."
   (interactive)
-  ;; Required after editing the buffer programmatically as the
-  ;; tree-sitter integration with Emacs is buggy.
   (dolist (parser (combobulate-parser-list))
     (combobulate-parser-create (combobulate-parser-language parser) nil t)
     (combobulate-parser-delete parser))
