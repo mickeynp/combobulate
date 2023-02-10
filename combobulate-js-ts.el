@@ -188,9 +188,18 @@ from `combobulate-manipulation-envelopes') to insert."
            :mark-node t
            :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
            :key "t"
-           :template ("<" (p "Tag Name (blank for fragment): " tag) ">" > n>
+           :template ("<" (p tag "Tag Name: ") ">" n>
                       r>
-                      n> "</" (s tag) ">" >))
+                      n> "</" (field tag) ">"))
+          (:description
+           "<> ... </>"
+           :name "fragment"
+           :mark-node t
+           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+           :key "f"
+           :template ("<>" n>
+                      r>
+                      n> "</>"))
           (:description
            "{ ... }"
            :key "e"
@@ -212,7 +221,7 @@ from `combobulate-manipulation-envelopes') to insert."
            :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
            :name "ternary"
            :template ("{" @ "null" >
-                      n > " ? " r> >
+                      n > " ? " r>
                       n > " : " "null" >
                       n > "}" >))
           (:description

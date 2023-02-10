@@ -28,49 +28,13 @@
 (eval-when-compile (require 'cl-lib))
 
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
+(declare-function combobulate-node-at-point "combobulate-navigation")
+(declare-function combobulate--goto-node "combobulate-navigation")
 
-(cl-defstruct combobulate-proxy-node
-  "Proxy object for a some properties of a real tree-sitter node.
 
-Only some fields are kept: relationships to other nodes are not
-kept."
-  start end text type named node pp)
 
-(defun combobulate-make-proxy (nodes)
-  "Factory that creates a facsimile proxy node of NODES."
-  (mapcar
-   (lambda (node)
-     (if (combobulate-node-p node)
-         (make-combobulate-proxy-node
-          :start (treesit-node-start node)
-          :end (treesit-node-end node)
-          :text (treesit-node-text node)
-          :type (treesit-node-type node)
-          :named (treesit-node-check node 'named)
-          :node node
-          :pp (combobulate-pretty-print-node node))
-       node))
-   (if (consp nodes) nodes (list nodes))))
-
-(defun combobulate-proxy-to-tree-node (proxy-node)
-  "Attempt to find the real tree-sitter node PROXY-NODE points to."
-  (when proxy-node
-    ;; if we are holding on to a valid treesit node then just pass
-    ;; that on provided it's still useful.
-    (if t
-        ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
-        ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
-        ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
-        (save-excursion
-          (combobulate--goto-node proxy-node)
-          (when-let (pt-node (combobulate-node-at-point (list (combobulate-node-type proxy-node))))
-            (when (and
-                   (equal (combobulate-node-range proxy-node)
-                          (combobulate-node-range pt-node))
-                   (equal (combobulate-node-type pt-node)
-                          (combobulate-node-type proxy-node)))
-              pt-node)))
-      (combobulate-proxy-node-node proxy-node))))
+(defsubst combobulate-node-p (node)
+  (treesit-node-p node))
 
 (defsubst combobulate-buffer-root-node (&optional language)
   (treesit-buffer-root-node language))
@@ -95,9 +59,6 @@ kept."
 
 (defsubst combobulate-query-capture (node query &optional beg end node-only)
   (treesit-query-capture node query beg end node-only))
-
-(defsubst combobulate-node-p (node)
-  (treesit-node-p node))
 
 (defsubst combobulate-node-named-p (node)
   (if (combobulate-node-p node)
@@ -163,6 +124,49 @@ kept."
 (defsubst combobulate-filter-child (node pred &optional anonymous)
   (treesit-filter-child node pred (not anonymous)))
 
+(cl-defstruct combobulate-proxy-node
+  "Proxy object for a some properties of a real tree-sitter node.
+
+Only some fields are kept: relationships to other nodes are not
+kept."
+  start end text type named node pp)
+
+
+(defun combobulate-make-proxy (nodes)
+  "Factory that creates a facsimile proxy node of NODES."
+  (mapcar
+   (lambda (node)
+     (if (combobulate-node-p node)
+         (make-combobulate-proxy-node
+          :start (treesit-node-start node)
+          :end (treesit-node-end node)
+          :text (treesit-node-text node)
+          :type (treesit-node-type node)
+          :named (treesit-node-check node 'named)
+          :node node
+          :pp (combobulate-pretty-print-node node))
+       node))
+   (if (consp nodes) nodes (list nodes))))
+
+(defun combobulate-proxy-to-tree-node (proxy-node)
+  "Attempt to find the real tree-sitter node PROXY-NODE points to."
+  (when proxy-node
+    ;; if we are holding on to a valid treesit node then just pass
+    ;; that on provided it's still useful.
+    (if t
+        ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
+        ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
+        ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
+        (save-excursion
+          (combobulate--goto-node proxy-node)
+          (when-let (pt-node (combobulate-node-at-point (list (combobulate-node-type proxy-node))))
+            (when (and
+                   (equal (combobulate-node-range proxy-node)
+                          (combobulate-node-range pt-node))
+                   (equal (combobulate-node-type pt-node)
+                          (combobulate-node-type proxy-node)))
+              pt-node)))
+      (combobulate-proxy-node-node proxy-node))))
 
 
 (provide 'combobulate-interface)

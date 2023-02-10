@@ -36,7 +36,7 @@
 (declare-function combobulate-draw-node-tree "combobulate-display")
 (declare-function combobulate-node-visible-window-p "combobulate-navigation")
 (declare-function combobulate-node-p "combobulate-navigation")
-
+(declare-function combobulate-display-draw-node-tree "combobulate-display")
 
 
 (defconst combobulate-sigil (propertize "©" 'face 'font-lock-keyword-face))

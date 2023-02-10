@@ -254,8 +254,8 @@ again to cycle indentation."))))
              :nodes ,statement-nodes
              :name "nest-if"
              :template
-             ("if " @ ":" n
-              y>))
+             ("if " @ ":" n>
+              r>))
             (:description
              "for ...:"
              :key "bf"
@@ -263,8 +263,8 @@ again to cycle indentation."))))
              :nodes ,statement-nodes
              :name "nest-for"
              :template
-             ("for " @ ":" n
-              y>))
+             ("for " @ ":" n>
+              r>))
             (:description
              "while ...:"
              :key "bw"
@@ -272,8 +272,8 @@ again to cycle indentation."))))
              :nodes ,statement-nodes
              :name "nest-while"
              :template
-             ("while " @ ":" n
-              y>)))))
+             ("while " @ ":" n>
+              r>)))))
 
   (push 'combobulate-python-indent-for-tab-command python-indent-trigger-commands)
   (setq combobulate-manipulation-edit-procedures

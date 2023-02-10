@@ -140,6 +140,18 @@ the node."
   "Face for notable text during editing or refactoring."
   :group 'combobulate-faces)
 
+(defface combobulate-refactor-field-face '((t (:background "MediumPurple4" :foreground "MediumPurple1")))
+  "Face for prompts and fields during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-inactive-field-face '((t (:background "#342261" :foreground "#6e4bc0")))
+  "Face for prompts and fields during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-cursor-face '((t (:background "VioletRed4" :foreground "VioletRed1")))
+  "Face for fake cursors during editing or refactoring."
+  :group 'combobulate-faces)
+
 (defface combobulate-dimmed-indicator-face '((t (:foreground "slate gray")))
   "Face for dimmed indicators, like the indentation display."
   :group 'combobulate-faces)

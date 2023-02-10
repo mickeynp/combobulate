@@ -104,10 +104,6 @@ same name, which is stored in `:function'"
                             `(lambda () ,description
                                (interactive)
                                (combobulate-execute-envelope ,name)))))
-         ;; Tempo has an insane requirement that it _must_ be fed the
-         ;; *symbol* that holds the template and never just the
-         ;; template.
-         (setf envelopes (plist-put envelope :template-symbol fn-name))
          (setf envelopes (plist-put envelope :point-placement (or point-placement 'start))))))
    envelopes))
 
@@ -167,6 +163,7 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
 (require 'combobulate-rules)
 (require 'combobulate-navigation)
 (require 'combobulate-manipulation)
+(require 'combobulate-envelope)
 (require 'combobulate-contrib)
 (require 'combobulate-display)
 (require 'combobulate-ui)
