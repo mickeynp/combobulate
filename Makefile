@@ -8,3 +8,7 @@ byte-compile:
 rebuild-relationships:
 	cd build ; \
 	python build-relationships.py
+
+download-relationships:
+	cd build ; \
+	python build-relationships.py --download

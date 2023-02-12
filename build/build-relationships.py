@@ -30,6 +30,10 @@ SOURCES = {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/grammar.json",
     },
+    "javascript": {
+        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
+    },
     "jsx": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",

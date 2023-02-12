@@ -164,267 +164,269 @@ from `combobulate-manipulation-envelopes') to insert."
             (self-insert-command 1 ?=))))
     (self-insert-command 1 ?=)))
 
-(defun combobulate-js-ts-setup (_)
-  (when combobulate-js-ts-enable-attribute-envelopes
-    (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute))
-  (when combobulate-js-ts-enable-guess-close-tag
-    (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert))
-  (when combobulate-js-ts-enable-auto-close-tag
-    (local-set-key (kbd ">") #'combobulate-maybe-auto-close-tag))
+(defun combobulate-js-ts-setup (lang)
+  (let ((is-ts (member lang '(tsx typescript))))
+    (when combobulate-js-ts-enable-attribute-envelopes
+      (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute))
+    (when combobulate-js-ts-enable-guess-close-tag
+      (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert))
+    (when combobulate-js-ts-enable-auto-close-tag
+      (local-set-key (kbd ">") #'combobulate-maybe-auto-close-tag))
 
-  ;; NOTE This is subject to change
-  (setq combobulate-manipulation-envelopes
-        `((:description
-           "( ... )"
-           :key "("
-           :extra-key "M-("
-           :mark-node t
-           :nodes ,(combobulate-production-rules-get "primary_expression")
-           :name "wrap-parentheses"
-           :template (@ "(" r ")"))
-          (:description
-           "<...> ... </...>"
-           :name "tag"
-           :mark-node t
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
-           :key "t"
-           :template ("<" (p tag "Tag Name: ") ">" n>
-                      r>
-                      n> "</" (field tag) ">"))
-          (:description
-           "<> ... </>"
-           :name "fragment"
-           :mark-node t
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
-           :key "f"
-           :template ("<>" n>
-                      r>
-                      n> "</>"))
-          (:description
-           "{ ... }"
-           :key "e"
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment" "string")
-           :name "expression"
-           :mark-node t
-           :template ("{" r "}"))
-          (:description
-           "{/* ... */}"
-           :key ";"
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
-           :name "comment"
-           :mark-node t
-           :template ("{/*" r "*/}"))
-          (:description
-           "{... ? ... : ...}"
-           :key "?"
-           :mark-node t
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
-           :name "ternary"
-           :template ("{" @ "null" >
-                      n > " ? " r>
-                      n > " : " "null" >
-                      n > "}" >))
-          (:description
-           "...={ ... }"
-           :key "=e"
-           :mark-node nil
-           :point-placement 'stay
-           :nodes ("jsx_opening_element" "jsx_self_closing_element")
-           :name "attr-expression"
-           :template ("=" "{" @ "}"))
-          (:description
-           "...={{ ... }}"
-           :key "=E"
-           :mark-node nil
-           :point-placement 'stay
-           :nodes ("jsx_opening_element" "jsx_self_closing_element")
-           :name "attr-expression-object"
-           :template ("=" "{{" @ "}}"))
-          (:description
-           "...=\" ... \""
-           :key "=s"
-           :mark-node nil
-           :point-placement 'stay
-           :nodes ("jsx_opening_element" "jsx_self_closing_element")
-           :name "attr-string"
-           :template ("=" "\"" @ "\""))))
+    ;; NOTE This is subject to change
+    (setq combobulate-manipulation-envelopes
+          `((:description
+             "( ... )"
+             :key "("
+             :extra-key "M-("
+             :mark-node t
+             :nodes ,(combobulate-production-rules-get "primary_expression")
+             :name "wrap-parentheses"
+             :template (@ "(" r ")"))
+            (:description
+             "<...> ... </...>"
+             :name "tag"
+             :mark-node t
+             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :key "t"
+             :template ("<" (p tag "Tag Name: ") ">" n>
+                        r>
+                        n> "</" (field tag) ">"))
+            (:description
+             "<> ... </>"
+             :name "fragment"
+             :mark-node t
+             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :key "f"
+             :template ("<>" n>
+                        r>
+                        n> "</>"))
+            (:description
+             "{ ... }"
+             :key "e"
+             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment" "string")
+             :name "expression"
+             :mark-node t
+             :template ("{" r "}"))
+            (:description
+             "{/* ... */}"
+             :key ";"
+             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :name "comment"
+             :mark-node t
+             :template ("{/*" r "*/}"))
+            (:description
+             "{... ? ... : ...}"
+             :key "?"
+             :mark-node t
+             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :name "ternary"
+             :template ("{" @ "null" >
+                        n > " ? " r>
+                        n > " : " "null" >
+                        n > "}" >))
+            (:description
+             "...={ ... }"
+             :key "=e"
+             :mark-node nil
+             :point-placement 'stay
+             :nodes ("jsx_opening_element" "jsx_self_closing_element")
+             :name "attr-expression"
+             :template ("=" "{" @ "}"))
+            (:description
+             "...={{ ... }}"
+             :key "=E"
+             :mark-node nil
+             :point-placement 'stay
+             :nodes ("jsx_opening_element" "jsx_self_closing_element")
+             :name "attr-expression-object"
+             :template ("=" "{{" @ "}}"))
+            (:description
+             "...=\" ... \""
+             :key "=s"
+             :mark-node nil
+             :point-placement 'stay
+             :nodes ("jsx_opening_element" "jsx_self_closing_element")
+             :name "attr-string"
+             :template ("=" "\"" @ "\""))))
 
-  (setq combobulate-pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
-  (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-trim-empty-lines t)
-  (setq combobulate-manipulation-edit-procedures
-        '((:activation-nodes
-           ((:node
-             ("named_imports" "object" "formal_parameters" "array" "object_type")
-             :position at-or-in))
-           :remove-types ("comment")
-           :match-query ((_) (_)+ @match))
-          (:activation-nodes
-           ((:node
-             "variable_declarator"
-             :position at-or-in))
-           :remove-types ("comment")
-           :match-query ((_) name: (array_pattern (_)+  @match)))
-          (:activation-nodes
-           ((:node
-             "jsx_attribute"
-             :find-parent ("jsx_opening_element" "jsx_self_closing_element")
-             :position at-or-in))
-           :match-query ((_) (jsx_attribute)+ @match))
-          ;; sibling-level editing
-          (:activation-nodes
-           ((:node
-             ("jsx_self_closing_element" "jsx_expression" "jsx_element" "jsx_fragment")
-             :position at))
-           :remove-types ("comment" "jsx_text")
-           :match-siblings (:keep-parent nil))
-          ;; editing an element's opening/closing tag
-          (:activation-nodes
-           ((:node
-             "jsx_element"
-             :position in))
-           :remove-types ("comment")
-           :match-query (jsx_element (jsx_opening_element (identifier) @match)
-                                     (jsx_closing_element (identifier) @match)))))
-  (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-nodes '("jsx_element"
-                                            ;; NOTE: you could make a
-                                            ;; legit argument that
-                                            ;; you'd want to move by
-                                            ;; opening/closing element
-                                            ;; "jsx_opening_element"
-                                            ;; "jsx_closing_element"
-                                            "jsx_expression"
-                                            ;; makes < and > in
-                                            ;; typescript behave
-                                            ;; as a cohesive
-                                            ;; unit.
-                                            "type_arguments"
-                                            "jsx_attribute"
-                                            "jsx_self_closing_element"))
-  (setq combobulate-manipulation-splicing-procedures
-        `((:activation-nodes
-           ((:node
-             ,(append
-               '("jsx_fragment" "jsx_element" "jsx_self_closing_element" "jsx_expression"
-                 "lexical_declaration")
-               (combobulate-production-rules-get "if_statement")
-               (combobulate-production-rules-get "declaration")
-               (combobulate-production-rules-get "statement"))
-             :find-base-rule-parent (:remove-types ("statement_block"))
-             :position at-or-in))
-           :match-siblings (:keep-parent nil :keep-siblings t))
-          (:activation-nodes
-           ((:node
-             "pair"
-             :find-parent ("pair")
-             :position at-or-in))
-           :match-query
-           ((_) @discard (object ((_) ","? )+ @keep)))))
-  ;; Required for the top-most splicing procedure: we remove
-  ;; `statement_block' because it interferes with splicing. However,
-  ;; it is also a key part in inferring relationships between certain
-  ;; specialized node types like `lexical_declaration'. So this
-  ;; snippet tweaks the inverted production rules so it recognizes the
-  ;; right thing
-  (combobulate-alist-set "lexical_declaration"
-                         (list "statement" "for_statement")
-                         combobulate-navigation-rules-overrides-inverted)
+    (setq combobulate-pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
+    (setq combobulate-manipulation-trim-whitespace 'backward)
+    (setq combobulate-manipulation-trim-empty-lines t)
+    (setq combobulate-manipulation-edit-procedures
+          `((:activation-nodes
+             ((:node
+               ("named_imports" "object" "formal_parameters" "array" "object_type" "arguments")
+               :position at-or-in))
+             :remove-types ("comment")
+             :match-query ((_) (_)+ @match))
+            (:activation-nodes
+             ((:node
+               "variable_declarator"
+               :position at-or-in))
+             :remove-types ("comment")
+             :match-query ((_) name: (array_pattern (_)+  @match)))
+            (:activation-nodes
+             ((:node
+               "jsx_attribute"
+               :find-parent ("jsx_opening_element" "jsx_self_closing_element")
+               :position at-or-in))
+             :match-query ((_) (jsx_attribute)+ @match))
+            ;; sibling-level editing
+            (:activation-nodes
+             ((:node
+               ("jsx_self_closing_element" "jsx_expression" "jsx_element" "jsx_fragment")
+               :position at))
+             :remove-types ("comment" "jsx_text")
+             :match-siblings (:keep-parent nil))
+            ;; editing an element's opening/closing tag
+            (:activation-nodes
+             ((:node
+               "jsx_element"
+               :position in))
+             :remove-types ("comment")
+             :match-query (jsx_element (jsx_opening_element (identifier) @match)
+                                       (jsx_closing_element (identifier) @match)))))
+    (setq combobulate-navigation-sibling-skip-prefix t)
+    (setq combobulate-navigation-sexp-nodes '("jsx_element"
+                                              ;; NOTE: you could make a
+                                              ;; legit argument that
+                                              ;; you'd want to move by
+                                              ;; opening/closing element
+                                              ;; "jsx_opening_element"
+                                              ;; "jsx_closing_element"
+                                              "jsx_expression"
+                                              ;; makes < and > in
+                                              ;; typescript behave
+                                              ;; as a cohesive
+                                              ;; unit.
+                                              "type_arguments"
+                                              "jsx_attribute"
+                                              "jsx_self_closing_element"))
+    (setq combobulate-manipulation-splicing-procedures
+          `((:activation-nodes
+             ((:node
+               ,(append
+                 '("jsx_fragment" "jsx_element" "jsx_self_closing_element" "jsx_expression"
+                   "lexical_declaration")
+                 (combobulate-production-rules-get "if_statement")
+                 (combobulate-production-rules-get "declaration")
+                 (combobulate-production-rules-get "statement"))
+               :find-base-rule-parent (:remove-types ("statement_block"))
+               :position at-or-in))
+             :match-siblings (:keep-parent nil :keep-siblings t))
+            (:activation-nodes
+             ((:node
+               "pair"
+               :find-parent ("pair")
+               :position at-or-in))
+             :match-query
+             ((_) @discard (object ((_) ","? )+ @keep)))))
+    ;; Required for the top-most splicing procedure: we remove
+    ;; `statement_block' because it interferes with splicing. However,
+    ;; it is also a key part in inferring relationships between certain
+    ;; specialized node types like `lexical_declaration'. So this
+    ;; snippet tweaks the inverted production rules so it recognizes the
+    ;; right thing
+    (combobulate-alist-set "lexical_declaration"
+                           (list "statement" "for_statement")
+                           combobulate-navigation-rules-overrides-inverted)
 
-  (setq combobulate-navigation-drag-parent-nodes '("jsx_element" "jsx_expression"
-                                                   "jsx_self_closing_element"
-                                                   "pair"  "named_imports"
-                                                   "object" "export_statement" "program"
-                                                   "enum_body" "object_type"
-                                                   "object_pattern" "array"
-                                                   "switch_body" "switch_case"
-                                                   "formal_parameters" "arguments"
-                                                   "array_pattern" "statement_block"
-                                                   "jsx_opening_element"))
-  (combobulate-production-rules-set '("jsx_element" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
-  (combobulate-production-rules-set '("jsx_opening_element" :included-fields (:attribute)))
-  (combobulate-production-rules-set '("jsx_self_closing_element" :included-fields (:attribute)))
-  (combobulate-production-rules-set '("switch_case" :included-fields (:body)))
-  (combobulate-production-rules-set '("export_statement" :included-fields (:*unnamed*)))
-  (combobulate-production-rules-set '("program" :expand-rules (("statement" :all t) ("declaration" :all t))))
-  (combobulate-production-rules-set '("statement_block" :expand-rules (("statement" :all t) ("declaration" :all t))))
-  (dolist (node-type '("arguments" "array"))
-    (combobulate-production-rules-set `(,node-type :keep-types ("member_expression")
-                                                   :expand-rules (("expression" :all t)
-                                                                  ("primary_expression" :all t)))))
-  (combobulate-production-rules-set '("array_pattern" :expand-rules (("pattern" :all t))))
+    (setq combobulate-navigation-drag-parent-nodes
+          '("jsx_element" "jsx_expression"
+            "jsx_self_closing_element"
+            "pair"  "named_imports"
+            "object" "export_statement" "program"
+            "enum_body" "object_type"
+            "object_pattern" "array"
+            "switch_body" "switch_case"
+            "formal_parameters" "arguments"
+            "array_pattern" "statement_block"
+            "jsx_opening_element"))
+    (combobulate-production-rules-set '("jsx_element" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
+    (combobulate-production-rules-set '("jsx_opening_element" :included-fields (:attribute)))
+    (combobulate-production-rules-set '("jsx_self_closing_element" :included-fields (:attribute)))
+    (combobulate-production-rules-set '("switch_case" :included-fields (:body)))
+    (combobulate-production-rules-set '("export_statement" :included-fields (:*unnamed*)))
+    (combobulate-production-rules-set '("program" :expand-rules (("statement" :all t) ("declaration" :all t))))
+    (combobulate-production-rules-set '("statement_block" :expand-rules (("statement" :all t) ("declaration" :all t))))
+    (dolist (node-type '("arguments" "array"))
+      (combobulate-production-rules-set `(,node-type :keep-types ("member_expression")
+                                                     :expand-rules (("expression" :all t)
+                                                                    ("primary_expression" :all t)))))
+    (combobulate-production-rules-set '("array_pattern" :expand-rules (("pattern" :all t))))
 
-  (setq combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"
-                                             "class_declaration" "method_definition"))
+    (setq combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"
+                                               "class_declaration" "method_definition"))
 
-  (setq combobulate-navigation-sibling-procedures
-        `(;; for lists, arrays, objects, etc.
-          (:activation-nodes
-           ((:node
-             ("import_specifier")
-             :position at-or-in
-             :find-parent ("named_imports"))
-            (:node
-             ,(append
-               (combobulate-production-rules-get "object_pattern")
-               (combobulate-production-rules-get "object_type")
-               (combobulate-production-rules-get "object")
-               (combobulate-production-rules-get "expression")
-               (combobulate-production-rules-get "primary_expression"))
-             :position at-or-in
-             :find-immediate-parent ("object" "object_type" "import_specifier" "object_pattern" "array" "arguments")))
-           :remove-types ("comment")
-           :match-children t)
-          ;; for jsx
-          (:activation-nodes
-           ((:node
-             ;; attributes can only appear in particular JSX elements,
-             ;; so we need a distinct rule for them.
-             ("jsx_attribute")
-             :position at-or-in
-             :find-immediate-parent
-             ("jsx_opening_element" "jsx_self_closing_element")))
-           :match-children (:all nil :keep-types ("jsx_attribute"))
-           :remove-types ("comment"))
-          (:activation-nodes
-           ((:node
-             ,(seq-difference (combobulate-production-rules-get "jsx_element")
-                              '("jsx_closing_element" "jsx_opening_element" "jsx_text"))
-             :position at-or-in
-             :find-immediate-parent
-             ,(seq-difference (combobulate-production-rules-get "jsx_element")
-                              '("jsx_text" "jsx_closing_element" "jsx_opening_element"))))
-           :remove-types ("comment" "jsx_text" "jsx_closing_element" "jsx_opening_element")
-           :match-children t)
-          ;;; for general navigation
-          (:activation-nodes
-           ((:node
-             ,(append (combobulate-production-rules-get "object")
-                      (combobulate-production-rules-get "statement")
-                      (combobulate-production-rules-get "declaration")
-                      '("program"))
-             :position at-or-in
-             :find-immediate-parent ("statement_block" "program")))
-           :remove-types ("comment")
-           :match-children t)))
+    (setq combobulate-navigation-sibling-procedures
+          `(;; for lists, arrays, objects, etc.
+            (:activation-nodes
+             ((:node
+               ("import_specifier")
+               :position at-or-in
+               :find-parent ("named_imports"))
+              (:node
+               ,(append
+                 (combobulate-production-rules-get "object_pattern")
+                 (when is-ts (combobulate-production-rules-get "object_type"))
+                 (combobulate-production-rules-get "object")
+                 (combobulate-production-rules-get "expression")
+                 (combobulate-production-rules-get "primary_expression"))
+               :position at-or-in
+               :find-immediate-parent ("object" "object_type" "import_specifier" "object_pattern" "array" "arguments")))
+             :remove-types ("comment")
+             :match-children t)
+            ;; for jsx
+            (:activation-nodes
+             ((:node
+               ;; attributes can only appear in particular JSX elements,
+               ;; so we need a distinct rule for them.
+               ("jsx_attribute")
+               :position at-or-in
+               :find-immediate-parent
+               ("jsx_opening_element" "jsx_self_closing_element")))
+             :match-children (:all nil :keep-types ("jsx_attribute"))
+             :remove-types ("comment"))
+            (:activation-nodes
+             ((:node
+               ,(seq-difference (combobulate-production-rules-get "jsx_element")
+                                '("jsx_closing_element" "jsx_opening_element" "jsx_text"))
+               :position at-or-in
+               :find-immediate-parent
+               ,(seq-difference (combobulate-production-rules-get "jsx_element")
+                                '("jsx_text" "jsx_closing_element" "jsx_opening_element"))))
+             :remove-types ("comment" "jsx_text" "jsx_closing_element" "jsx_opening_element")
+             :match-children t)
+            ;; for general navigation
+            (:activation-nodes
+             ((:node
+               ,(append (combobulate-production-rules-get "object")
+                        (combobulate-production-rules-get "statement")
+                        (combobulate-production-rules-get "declaration")
+                        '("program" "switch_case"))
+               :position at-or-in
+               :find-immediate-parent ("statement_block" "switch_body" "program")))
+             :remove-types ("comment")
+             :match-children t)))
 
-  (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
-  (setq combobulate-navigation-parent-child-nodes
-        '("program" "arrow_function"
-          "function_declaration" "lexical_declaration"
-          "export_statement" "jsx_fragment" "jsx_element" "jsx_opening_element"
-          "jsx_expression" "object" "jsx_self_closing_element" "array"))
+    (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
+    (setq combobulate-navigation-parent-child-nodes
+          '("program" "arrow_function"
+            "function_declaration" "lexical_declaration"
+            "export_statement" "jsx_fragment" "jsx_element" "jsx_opening_element"
+            "jsx_expression" "object" "jsx_self_closing_element" "array"))
 
-  (setq combobulate-navigation-default-nodes
-        (append combobulate-navigation-parent-child-nodes
-                `("jsx_attribute" "ternary_expression" "type_arguments" "string"
-                  "arrow_function" "jsx_text"
-                  ,@(combobulate-production-rules-get "primary_expression")
-                  ,@(combobulate-production-rules-get "object")
-                  ,@(combobulate-production-rules-get "statement")
-                  ,@(combobulate-production-rules-get "declaration"))))
-  (setq combobulate-navigation-logical-nodes
-        (seq-uniq (flatten-tree combobulate-rules-tsx-inverted))))
+    (setq combobulate-navigation-default-nodes
+          (append combobulate-navigation-parent-child-nodes
+                  `("jsx_attribute" "ternary_expression" "type_arguments" "string"
+                    "arrow_function" "jsx_text"
+                    ,@(combobulate-production-rules-get "primary_expression")
+                    ,@(combobulate-production-rules-get "object")
+                    ,@(combobulate-production-rules-get "statement")
+                    ,@(combobulate-production-rules-get "declaration"))))
+    (setq combobulate-navigation-logical-nodes
+          (seq-uniq (flatten-tree combobulate-rules-tsx-inverted)))))
 
 
 (provide 'combobulate-js-ts)

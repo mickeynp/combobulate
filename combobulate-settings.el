@@ -366,6 +366,7 @@ Matches all the key-portion of key-value pairs in a dictionary")
 (defvar combobulate-setup-functions-alist
   '((python . combobulate-python-setup)
     (tsx . combobulate-js-ts-setup)
+    (javascript . combobulate-js-ts-setup)
     (jsx . combobulate-js-ts-setup)
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
