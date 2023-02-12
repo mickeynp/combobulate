@@ -884,11 +884,17 @@ buffer.
                           (setq state 'accept)))))))))
           (quit nil))
       (error "There are no choices to make."))
-    ;; Determine where point is placed on exit.
+    ;; Determine where point is placed on exit and whether we return
+    ;; the current node or not.
     (cond
-     ((and (eq state 'abort) reset-point-on-abort) (goto-char pt))
-     ((and (eq state 'accept) reset-point-on-accept) (goto-char pt)))
-    current-node))
+     ((and (eq state 'abort))
+      (when reset-point-on-abort (goto-char pt))
+      nil)
+     ((and (eq state 'accept))
+      (when reset-point-on-accept
+        (goto-char pt))
+      current-node)
+     (t (error "Unknown termination state `%s'" state)))))
 
 (defun combobulate-clone-node-dwim (&optional arg)
   "Clone node at point ARG times."
@@ -961,7 +967,7 @@ these nodes: `%s'." name nodes)))))
 
 See `combobulate-apply-envelope' for more information."
   (let ((envelope (combobulate-get-envelope-by-name envelope-name))
-        (chosen-node))
+        (chosen-node) (accepted nil))
     (if node
         (combobulate-apply-envelope envelope node)
       (let ((combobulate-envelope-static t)
@@ -1001,17 +1007,22 @@ See `combobulate-apply-envelope' for more information."
                        ;; mark deleted and highlight first. That way when we apply
                        ;; the envelope the overlays expand to match.
                        (funcall mark-deleted-fn)
-                       (funcall mark-highlighted-fn)
-                       (seq-let [[_ &rest _] &rest pt]
-                           (combobulate-apply-envelope envelope node)
-                         (goto-char pt)))
+                       (let ((ov (funcall mark-highlighted-fn)))
+                         (seq-let [[start &rest end] &rest pt]
+                             (combobulate-apply-envelope envelope node)
+                           (goto-char pt)
+                           ;; lil' hack. The extent of the node is not
+                           ;; the same as the envelope we just
+                           ;; applied.
+                           (move-overlay ov start end))))
                      :reset-point-on-abort t
                      :reset-point-on-accept nil))
+              (setq accepted t)
               (cancel-change-group change-group))
           (cancel-change-group change-group)))
       ;; here we simply repeat what ever the selected choice was as an
       ;; explicit node skips the proffering process entirely.
-      (when chosen-node
+      (when (and chosen-node accepted)
         (goto-char (cdr (combobulate-execute-envelope envelope-name chosen-node)))))))
 
 (defun combobulate-mark-node-at-point (&optional arg beginning-of-line)
