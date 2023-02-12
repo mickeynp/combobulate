@@ -245,7 +245,11 @@ again to cycle indentation."))))
              :mark-node nil
              :nodes ("function_definition" "class_definition")
              :name "decorate"
-             :template ((p "Decorator name: ")
+             :template ((p @decorator "Decorator name: "
+                           (lambda (text)
+                             (if (string-prefix-p "@" text)
+                                 text
+                               (concat "@" text))))
                         n>))
             (:description
              "if ...:"
