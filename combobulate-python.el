@@ -70,14 +70,19 @@ line when you press
   :type 'boolean)
 
 (defun combobulate-python--get-definition (node)
-  (string-join (combobulate-query-node-text
-                '((_) name: (_) @name
-                  [(argument_list) (parameters)] @arg)
-                node t)
-               ""))
+  (string-join
+   (combobulate-query-node-text
+    (pcase (combobulate-node-type node)
+      ("function_definition"
+       '((_) name: (_) @name parameters: (_) @args))
+      ("class_definition"
+       '((_) name: (_) @name superclasses: (_) @args)))
+    node
+    t)
+   ""))
 
 (defun combobulate-python-pretty-print-node-name (node default-name)
-  "Pretty printer for JS and JSX nodes"
+  "Pretty printer for Python nodes"
   (combobulate-string-truncate
    (replace-regexp-in-string
     (rx (| (>= 2 " ") "\n")) ""

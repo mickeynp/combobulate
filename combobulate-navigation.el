@@ -181,7 +181,7 @@ Uses `point' and `mark' to infer the boundaries."
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
                       (combobulate-node-text (cdr node))))
-          (combobulate--query-from-node query node nil nil node-only)))
+          (combobulate-query-search node query t t)))
 
 (defun combobulate--get-nearest-navigable-node ()
   "Returns the nearest navigable node to point"
@@ -1360,233 +1360,234 @@ removed."
   (and n (intern (combobulate-node-type n))))
 
 (defun combobulate-query-search-1 (query-node query)
-  (let ((parent query-node)
-        (children)
-        (stack)
-        (term) (term-type)
-        (stack-delta 0)
-        ;; one of `start', `field', `node', `sibling' or `label'.
-        (state 'start))
-    (cl-flet* ((to-field (v) (and (symbolp v) (string-remove-suffix ":" (symbol-name v))))
-               (label-p (v) (and (symbolp v) (cond ((string-prefix-p "@" (symbol-name v))
-                                                    'node-label)
-                                                   ((string-prefix-p "*" (symbol-name v))
-                                                    'type-label)
-                                                   ((string-prefix-p "!" (symbol-name v))
-                                                    'text-label))))
-               (make-label (label v)
-                 (cons label (progn
-                               (setq v (if (consp v) (car v) v))
-                               (cond
-                                ((eq (label-p label) 'node-label) v)
-                                ;; NOTE: this can fail if `v' is a cons
-                                ;; with more than one element. How
-                                ;; should that be handled? Is it even
-                                ;; possible?
-                                ((eq (label-p label) 'text-label) (combobulate-node-text v))
-                                ((eq (label-p label) 'type-label) (combobulate-node-type v))
-                                (t (error "Unknown label type `%s'" (label-p label)))))))
-               (push-stack (item) (push item stack) item)
-               (pop-stack () (pop stack))
-               (state-p (expected-states)
-                 (member state (if (listp expected-states) expected-states (list expected-states))))
-               (assert-state (expected-states)
-                 (unless (or (not expected-states) (state-p expected-states))
-                   (error "State error. Expected current state to be `%s', but it is `%s'."
-                          expected-states state)))
-               (set-expected-state (new-state &optional expected-states)
-                 (assert-state expected-states)
+  (when query-node
+    (let ((parent query-node)
+          (children)
+          (stack)
+          (term) (term-type)
+          (stack-delta 0)
+          ;; one of `start', `field', `node', `sibling' or `label'.
+          (state 'start))
+      (cl-flet* ((to-field (v) (and (symbolp v) (string-remove-suffix ":" (symbol-name v))))
+                 (label-p (v) (and (symbolp v) (cond ((string-prefix-p "@" (symbol-name v))
+                                                      'node-label)
+                                                     ((string-prefix-p "*" (symbol-name v))
+                                                      'type-label)
+                                                     ((string-prefix-p "!" (symbol-name v))
+                                                      'text-label))))
+                 (make-label (label v)
+                   (cons label (progn
+                                 (setq v (if (consp v) (car v) v))
+                                 (cond
+                                  ((eq (label-p label) 'node-label) v)
+                                  ;; NOTE: this can fail if `v' is a cons
+                                  ;; with more than one element. How
+                                  ;; should that be handled? Is it even
+                                  ;; possible?
+                                  ((eq (label-p label) 'text-label) (combobulate-node-text v))
+                                  ((eq (label-p label) 'type-label) (combobulate-node-type v))
+                                  (t (error "Unknown label type `%s'" (label-p label)))))))
+                 (push-stack (item) (push item stack) item)
+                 (pop-stack () (pop stack))
+                 (state-p (expected-states)
+                   (member state (if (listp expected-states) expected-states (list expected-states))))
+                 (assert-state (expected-states)
+                   (unless (or (not expected-states) (state-p expected-states))
+                     (error "State error. Expected current state to be `%s', but it is `%s'."
+                            expected-states state)))
+                 (set-expected-state (new-state &optional expected-states)
+                   (assert-state expected-states)
 
-                 (setq state new-state)))
+                   (setq state new-state)))
 
-      (setq children (combobulate-node-children query-node t))
+        (setq children (combobulate-node-children query-node t))
 
-      (while query
-        (setq term (pop query))
-        (setq term-type (combobulate-query--term-type term))
-        (pcase term
-          ;; Handle the very first term in the query. This state is
-          ;; always treated specially, as it's important that
-          ;; `query-node' matches against the first `term'.
-          ;;
-          ;; This is required or node `foo' would match query `(bar)'
-          ;; which is wrong.
-          ((and (guard (state-p '(start))))
-           (if (eq term-type 'sibling-query)
-               (progn
-                 (set-expected-state 'sibling)
-
-                 (push term query))
-             (if (pcase term-type
-                   ('anonymous (equal (combobulate-node-text query-node) term))
-                   ('node (equal term (combobulate-query--node-type query-node)))
-                   ('sub-query (combobulate-query-search-1 query-node term))
-                   ((or 'wildcard 'named-wildcard) t)
-                   (_ (error "Unknown start term %s" term)))
-                 ;; ensure the new state is `node' as we properly matched the node
+        (while query
+          (setq term (pop query))
+          (setq term-type (combobulate-query--term-type term))
+          (pcase term
+            ;; Handle the very first term in the query. This state is
+            ;; always treated specially, as it's important that
+            ;; `query-node' matches against the first `term'.
+            ;;
+            ;; This is required or node `foo' would match query `(bar)'
+            ;; which is wrong.
+            ((and (guard (state-p '(start))))
+             (if (eq term-type 'sibling-query)
                  (progn
-                   (set-expected-state 'node)
-                   ;; return the query-node to the stack so it can be
-                   ;; processed properly as a match.
-                   (setq stack-delta 1)
-                   (if (eq term-type 'node)
-                       (push-stack query-node)
-                     (push-stack query-node)))
-               (set-expected-state 'no-match))))
-          ;; handle `field:' terms
-          ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
-           (set-expected-state 'field '(node))
-           (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
-             (unless (map-contains-key rule (intern (concat ":" (to-field field))))
-               (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
-                      query-node field (map-keys rule))))
-           (push-stack (to-field field)))
-          ;; Handle the labels. There are three types:
-          ;;
-          ;; - `@label', which maps directly the node;
-          ;;
-          ;; - `!label', which maps to the text of the node;
-          ;;
-          ;; - `*label', which maps to the type of the node.
-          ;;
-          ((and (guard (member term-type '(node-label text-label type-label)))
-                (guard (state-p '(node))) label)
-           (when stack-delta
-             (let* ((elems))
-               (dotimes (_ stack-delta)
-                 (push (pop-stack) elems))
-               (dolist (e elems)
-                 (push-stack (make-label label e))
-                 (when combobulate-query--nested-labels
-                   (push (make-label label e) combobulate-query--labelled-nodes)))
-               (unless combobulate-query--nested-labels
-                 (combobulate-walk-tree elems (lambda (leaf _)
-                                                (push (make-label label leaf)
-                                                      combobulate-query--labelled-nodes)))))
-             (setq stack-delta 0))
-           (set-expected-state 'node))
-          ;; handle (_), _, "string" and ( ... )
-          ;;
-          ;; NOTE: turn this into a dedicate predicate that returns
-          ;; the type of term.
-          ((and (guard (member term-type
-                               '(anonymous
-                                 sibling-query
-                                 field node sub-query
-                                 wildcard named-wildcard)))
-                (guard (state-p '(node field)))
-                `,sub-query)
-           (let* ((starting-children children)
-                  ;; determine if it is a wildcard node and what type
-                  ;; (is-wildcard-node (member term-type '(named-wildcard
-                  ;;                                       wildcard)))
-                  ;; named-only searches apply to only some terms
-                  ;; (named-only-search
-                  ;;  (or (and is-wildcard-node (eq term-type 'named-wildcard))
-                  ;;      ;; TODO: missing stringp? label check? field check?
-                  ;;      (or (and (symbolp sub-query) (not is-wildcard-node))
-                  ;;          ;; (eq term-type 'sibling-query)
-                  ;;          (consp sub-query))))
-                  )
+                   (set-expected-state 'sibling)
 
-             (pcase state
-               ('node
-                (pcase (funcall
-                        #'combobulate-query--match-many-children
-                        children
-                        (if (eq term-type 'sibling-query)
-                            sub-query
-                          (list sub-query))
-                        ;; peek at the next term. this would have been
-                        ;; better handled with a prefix-style notation
-                        ;; as that is in keeping with lisps'
-                        ;; roots. however, the tree-sitter query
-                        ;; language has postfix, and, well, so do we.
-                        (let ((next-term-type (combobulate-query--term-type (car query))))
-                          (cond
-                           ((and (eq next-term-type 'quantifier)
-                                 (state-p '(node)))
-                            ;; we matched a quantifier; now get rid of
-                            ;; it from the query list and pass it to
-                            ;; the funcall.
-                            (pop query))
-                           ;; no explicit quantifier? use `1'.
-                           (t '1)))
-                        ;; This is a sloppy take on look-ahead for
-                        ;; greedy matching: pass on a stop node -- if
-                        ;; there is one -- so that the greedy
-                        ;; quantifiers stop matching when they
-                        ;; encounter it
-                        (let ((look-ahead query))
-                          (seq-find
-                           (lambda (next-term)
-                             (pcase (combobulate-query--term-type next-term)
-                               ((or 'field 'quantifier 'node-label 'text-label 'type-label)
-                                nil)
-                               (_ t)))
-                           look-ahead))
-                        (eq term-type 'sibling-query))
-                  ;; `match' indicates that one or more matching
-                  ;; results were found.
-                  ;;
-                  ;; The `remaining-children' are the ones that we
-                  ;; process because
-                  ;; `combobulate-query--match-children' met its test
-                  ;; function and quantifier requirements.
-                  (`(match . (,results . ,remaining-children))
+                   (push term query))
+               (if (pcase term-type
+                     ('anonymous (equal (combobulate-node-text query-node) term))
+                     ('node (equal term (combobulate-query--node-type query-node)))
+                     ('sub-query (combobulate-query-search-1 query-node term))
+                     ((or 'wildcard 'named-wildcard) t)
+                     (_ (error "Unknown start term %s" term)))
+                   ;; ensure the new state is `node' as we properly matched the node
+                   (progn
+                     (set-expected-state 'node)
+                     ;; return the query-node to the stack so it can be
+                     ;; processed properly as a match.
+                     (setq stack-delta 1)
+                     (if (eq term-type 'node)
+                         (push-stack query-node)
+                       (push-stack query-node)))
+                 (set-expected-state 'no-match))))
+            ;; handle `field:' terms
+            ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
+             (set-expected-state 'field '(node))
+             (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
+               (unless (map-contains-key rule (intern (concat ":" (to-field field))))
+                 (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
+                        query-node field (map-keys rule))))
+             (push-stack (to-field field)))
+            ;; Handle the labels. There are three types:
+            ;;
+            ;; - `@label', which maps directly the node;
+            ;;
+            ;; - `!label', which maps to the text of the node;
+            ;;
+            ;; - `*label', which maps to the type of the node.
+            ;;
+            ((and (guard (member term-type '(node-label text-label type-label)))
+                  (guard (state-p '(node))) label)
+             (when stack-delta
+               (let* ((elems))
+                 (dotimes (_ stack-delta)
+                   (push (pop-stack) elems))
+                 (dolist (e elems)
+                   (push-stack (make-label label e))
+                   (when combobulate-query--nested-labels
+                     (push (make-label label e) combobulate-query--labelled-nodes)))
+                 (unless combobulate-query--nested-labels
+                   (combobulate-walk-tree elems (lambda (leaf _)
+                                                  (push (make-label label leaf)
+                                                        combobulate-query--labelled-nodes)))))
+               (setq stack-delta 0))
+             (set-expected-state 'node))
+            ;; handle (_), _, "string" and ( ... )
+            ;;
+            ;; NOTE: turn this into a dedicate predicate that returns
+            ;; the type of term.
+            ((and (guard (member term-type
+                                 '(anonymous
+                                   sibling-query
+                                   field node sub-query
+                                   wildcard named-wildcard)))
+                  (guard (state-p '(node field)))
+                  `,sub-query)
+             (let* ((starting-children children)
+                    ;; determine if it is a wildcard node and what type
+                    ;; (is-wildcard-node (member term-type '(named-wildcard
+                    ;;                                       wildcard)))
+                    ;; named-only searches apply to only some terms
+                    ;; (named-only-search
+                    ;;  (or (and is-wildcard-node (eq term-type 'named-wildcard))
+                    ;;      ;; TODO: missing stringp? label check? field check?
+                    ;;      (or (and (symbolp sub-query) (not is-wildcard-node))
+                    ;;          ;; (eq term-type 'sibling-query)
+                    ;;          (consp sub-query))))
+                    )
 
-                   (set-expected-state 'node)
-                   (setq children remaining-children)
-                   ;; keep tabs of how much we added to the stack this
-                   ;; time around. (it'd be better if we could keep a
-                   ;; pointer to our position in the list...)
-                   (setq stack-delta (length results))
-                   (when results (mapcar #'push-stack results)))
-                  ;; `ignore' means that the quantifier (most likely)
-                  ;; indicated that attempted a look-ahead (usually
-                  ;; greedy) match, but failed to find anything.
-                  ;;
-                  ;; Because that is legal, we do not exit the search
-                  ;; as we ordinarily would: instead we reset children
-                  ;; to what they were when we began
-                  (`(ignore . ,_)
+               (pcase state
+                 ('node
+                  (pcase (funcall
+                          #'combobulate-query--match-many-children
+                          children
+                          (if (eq term-type 'sibling-query)
+                              sub-query
+                            (list sub-query))
+                          ;; peek at the next term. this would have been
+                          ;; better handled with a prefix-style notation
+                          ;; as that is in keeping with lisps'
+                          ;; roots. however, the tree-sitter query
+                          ;; language has postfix, and, well, so do we.
+                          (let ((next-term-type (combobulate-query--term-type (car query))))
+                            (cond
+                             ((and (eq next-term-type 'quantifier)
+                                   (state-p '(node)))
+                              ;; we matched a quantifier; now get rid of
+                              ;; it from the query list and pass it to
+                              ;; the funcall.
+                              (pop query))
+                             ;; no explicit quantifier? use `1'.
+                             (t '1)))
+                          ;; This is a sloppy take on look-ahead for
+                          ;; greedy matching: pass on a stop node -- if
+                          ;; there is one -- so that the greedy
+                          ;; quantifiers stop matching when they
+                          ;; encounter it
+                          (let ((look-ahead query))
+                            (seq-find
+                             (lambda (next-term)
+                               (pcase (combobulate-query--term-type next-term)
+                                 ((or 'field 'quantifier 'node-label 'text-label 'type-label)
+                                  nil)
+                                 (_ t)))
+                             look-ahead))
+                          (eq term-type 'sibling-query))
+                    ;; `match' indicates that one or more matching
+                    ;; results were found.
+                    ;;
+                    ;; The `remaining-children' are the ones that we
+                    ;; process because
+                    ;; `combobulate-query--match-children' met its test
+                    ;; function and quantifier requirements.
+                    (`(match . (,results . ,remaining-children))
 
-                   (set-expected-state 'node)
-                   (setq children starting-children))
-                  ;; `no-match' indicates that a required match was
-                  ;; attempted and failed.
-                  ;;
-                  ;; This is an exit event.
-                  (`(no-match ,_)
+                     (set-expected-state 'node)
+                     (setq children remaining-children)
+                     ;; keep tabs of how much we added to the stack this
+                     ;; time around. (it'd be better if we could keep a
+                     ;; pointer to our position in the list...)
+                     (setq stack-delta (length results))
+                     (when results (mapcar #'push-stack results)))
+                    ;; `ignore' means that the quantifier (most likely)
+                    ;; indicated that attempted a look-ahead (usually
+                    ;; greedy) match, but failed to find anything.
+                    ;;
+                    ;; Because that is legal, we do not exit the search
+                    ;; as we ordinarily would: instead we reset children
+                    ;; to what they were when we began
+                    (`(ignore . ,_)
 
-                   ;; search failed. we looked ahead and found no
-                   ;; children that matched. set the expected state
-                   ;; to `no-match' and reset `children' to nil
-                   (set-expected-state 'no-match)
-                   (setq children nil))
-                  ;; for everything else: throw an error.
-                  (`(,unknown-tag ,rest)
-                   (error "Unknown match tag returned: %s %s" unknown-tag rest))))
-               ;; this handles field matching
-               ('field
-                (set-expected-state 'node 'field)
-                (let ((matches (combobulate-query-search-1
-                                (combobulate-node-child-by-field parent (pop-stack))
-                                sub-query)))
-                  (when matches
-                    (push-stack matches))
-                  (setq stack-delta (length matches))))
-               (_ (error "Unknown parse state for query matcher: `%s'" state)))))
-          (_ (unless (state-p '(no-match))
-               (error "Query parse error: %s Query: %s" term query)))))
-      ;; If we end our state with a `no-match' state, then we've clearly
-      ;; failed to match against the `query'.
-      ;;
-      ;; If so, return `nil'. Otherwise, reverse `stack' and return
-      ;; it: it holds the tree of matches.
+                     (set-expected-state 'node)
+                     (setq children starting-children))
+                    ;; `no-match' indicates that a required match was
+                    ;; attempted and failed.
+                    ;;
+                    ;; This is an exit event.
+                    (`(no-match ,_)
 
-      (if (state-p '(no-match)) nil
-        (reverse stack)))))
+                     ;; search failed. we looked ahead and found no
+                     ;; children that matched. set the expected state
+                     ;; to `no-match' and reset `children' to nil
+                     (set-expected-state 'no-match)
+                     (setq children nil))
+                    ;; for everything else: throw an error.
+                    (`(,unknown-tag ,rest)
+                     (error "Unknown match tag returned: %s %s" unknown-tag rest))))
+                 ;; this handles field matching
+                 ('field
+                  (set-expected-state 'node 'field)
+                  (let ((matches (combobulate-query-search-1
+                                  (combobulate-node-child-by-field parent (pop-stack))
+                                  sub-query)))
+                    (when matches
+                      (push-stack matches))
+                    (setq stack-delta (length matches))))
+                 (_ (error "Unknown parse state for query matcher: `%s'" state)))))
+            (_ (unless (state-p '(no-match))
+                 (error "Query parse error: %s Query: %s" term query)))))
+        ;; If we end our state with a `no-match' state, then we've clearly
+        ;; failed to match against the `query'.
+        ;;
+        ;; If so, return `nil'. Otherwise, reverse `stack' and return
+        ;; it: it holds the tree of matches.
+
+        (if (state-p '(no-match)) nil
+          (reverse stack))))))
 
 (defun combobulate-query-find-test-function (term)
   (let ((term-type (combobulate-query--term-type term)))
