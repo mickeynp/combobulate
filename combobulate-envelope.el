@@ -173,7 +173,9 @@ locally bound to the context of `combobulate-refactor'."
         ;;
         ;; Inserts the register REGISTER (retreived from
         ;; `combobulate-envelope--registers') or, if there is no
-        ;; register specified, default to the REGISTER `region' which
+        ;; register specified, default to the REGISTER `region' (or
+        ;; `region-indented' if
+        ;; `combobulate-envelope-indent-region-function' is nil) which
         ;; holds that captured region (if any).
         ;;
         ;; Forms ending with `>' are indented as per the major mode's
@@ -337,9 +339,13 @@ expansion:
  `r'
  `r>'
 
-   Insert REGISTER at point. Where REGISTER defaults to `region',
-   and thus the marked region (if there is one) when the envelope
-   is activated. The value is stored in
+   Insert REGISTER at point. Where REGISTER defaults to
+   `region' (when `combobulate-envelope-indent-region-function'
+   is non-nil) or `region-indented' when it is nil.
+
+   Both names hold the thus the
+   marked region (if there is one) when the envelope is
+   activated. The value is stored in
    `combobulate-envelope-registers'.
 
    The DEFAULT is a fallback value in case the REGISTER does not
@@ -427,59 +433,62 @@ expansion:
       ;; with the expansion.
       (setq mark-active nil))
     (combobulate-refactor
-     ;; HACK: passing `mark-field' (from `combobulate-refactor')
-     ;; around like this is a messy work-around because of how
-     ;; `cl-flet' scoping works.
-     (setq result (cdr (combobulate-envelope-expand-instructions-1 instructions #'mark-field)))
-     (set-marker end (point))
-     ;; Some instructions are meant to be run at the very end, after
-     ;; all recursive expansions have taken place. Proffered point
-     ;; locations are one such example.
-     (dolist (grouping (seq-group-by #'car result))
-       (pcase grouping
-         (`(prompt . ,prompts)
-          (mapc #'funcall (mapcar #'cdr prompts)))
-         ;; (`(choice . ,choices)
-         ;;  (combobulate-refactor
-         ;;   (let ((node) (nodes))
-         ;;     (pcase-dolist (`(choice ,pt ,text) choices)
-         ;;       (save-excursion
-         ;;         (goto-char pt)
-         ;;         (insert text)
-         ;;         (push (setq node (make-combobulate-proxy-node
-         ;;                           :start pt
-         ;;                           :end (+ pt (length text))
-         ;;                           :text text
-         ;;                           :named t
-         ;;                           :node "Choice"
-         ;;                           :pp "Choice"))
-         ;;               nodes)
-         ;;         (mark-node-highlighted node)))
-         ;;     (rollback))))
-         (`(point . ,points)
-          (combobulate-refactor
-           (let ((nodes (mapcar (lambda (pt-instruction)
-                                  (make-combobulate-proxy-node
-                                   :start (cadr pt-instruction)
-                                   :end (cadr pt-instruction)
-                                   :text ""
-                                   :named t
-                                   :node "point"
-                                   :pp "Point Marker"))
-                                points)))
-             ;; insert cursor overlays at all point markers to make
-             ;; them easier to identify.
-             (mapc #'mark-node-cursor nodes)
-             (setq selected-point
-                   (combobulate-node-start
-                    (combobulate-proffer-choices
-                     nodes
-                     (lambda (_ _ move-fn _)
-                       (funcall move-fn))
-                     :reset-point-on-abort t
-                     :reset-point-on-accept nil)))
-             (rollback))))))
-     (commit))
+     (unwind-protect
+         (progn
+           ;; HACK: passing `mark-field' (from `combobulate-refactor')
+           ;; around like this is a messy work-around because of how
+           ;; `cl-flet' scoping works.
+           (setq result (cdr (combobulate-envelope-expand-instructions-1 instructions #'mark-field)))
+           (set-marker end (point))
+           ;; Some instructions are meant to be run at the very end, after
+           ;; all recursive expansions have taken place. Proffered point
+           ;; locations are one such example.
+           (dolist (grouping (seq-group-by #'car result))
+             (pcase grouping
+               (`(prompt . ,prompts)
+                (mapc #'funcall (mapcar #'cdr prompts)))
+               ;; (`(choice . ,choices)
+               ;;  (combobulate-refactor
+               ;;   (let ((node) (nodes))
+               ;;     (pcase-dolist (`(choice ,pt ,text) choices)
+               ;;       (save-excursion
+               ;;         (goto-char pt)
+               ;;         (insert text)
+               ;;         (push (setq node (make-combobulate-proxy-node
+               ;;                           :start pt
+               ;;                           :end (+ pt (length text))
+               ;;                           :text text
+               ;;                           :named t
+               ;;                           :node "Choice"
+               ;;                           :pp "Choice"))
+               ;;               nodes)
+               ;;         (mark-node-highlighted node)))
+               ;;     (rollback))))
+               (`(point . ,points)
+                (combobulate-refactor
+                 (let ((nodes (mapcar (lambda (pt-instruction)
+                                        (make-combobulate-proxy-node
+                                         :start (cadr pt-instruction)
+                                         :end (cadr pt-instruction)
+                                         :text ""
+                                         :named t
+                                         :node "point"
+                                         :pp "Point Marker"))
+                                      points)))
+                   ;; insert cursor overlays at all point markers to make
+                   ;; them easier to identify.
+                   (mapc #'mark-node-cursor nodes)
+                   (setq selected-point
+                         (combobulate-node-start
+                          (combobulate-proffer-choices
+                           nodes
+                           (lambda (_ _ move-fn _)
+                             (funcall move-fn))
+                           :reset-point-on-abort t
+                           :reset-point-on-accept nil)))
+                   (rollback))))))
+           (commit))
+       (rollback)))
     (when combobulate-envelope-indent-region-function
       (apply combobulate-envelope-indent-region-function
              (combobulate-extend-region-to-whole-lines start end)))
