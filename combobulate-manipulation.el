@@ -48,8 +48,8 @@
     ;; move this into a distinct function that can reproduce stored
     ;; input.
     (goto-char (point-marker))
-    ;; (forward-line 0)
     (skip-syntax-backward " ")
+    (just-one-space 0)
     (setq pt (point))
     (let ((ct 0))
       (dolist (s values)
