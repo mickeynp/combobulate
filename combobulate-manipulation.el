@@ -883,7 +883,7 @@ buffer.
                           (rollback)
                           (setq state 'accept)))))))))
           (quit nil))
-      (error "There are no choices to make."))
+      (error "There are no choices to make"))
     ;; Determine where point is placed on exit and whether we return
     ;; the current node or not.
     (cond
@@ -1223,7 +1223,6 @@ moved to the modified node."
            (node (or (combobulate-node-at-point) (error "No navigable node")))
            (siblings (combobulate-get-immediate-siblings-of-node node)))
       (pcase-let ((`(,prev-sibling ,current-node ,next-sibling) siblings))
-        (combobulate-message (format "Dragging %s" (symbol-name direction)) prev-sibling)
         (if current-node
             (combobulate--goto-node current-node)
           (error "Cannot drag from this position"))

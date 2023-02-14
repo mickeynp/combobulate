@@ -50,7 +50,10 @@
   :parent minibuffer-local-map)
 
 (defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn)
-  "Insert text into fields using the minibuffer with PROMPT and DEFAULT-VALUE."
+  "Insert text into fields using the minibuffer with PROMPT and DEFAULT-VALUE.
+
+BUFFER if optionally the buffer (and its associated window) to
+use. If it is nil, then `current-buffer' is used."
   (let ((win (when (eq (window-buffer) (or buffer (current-buffer)))
                (selected-window))))
     (minibuffer-with-setup-hook
