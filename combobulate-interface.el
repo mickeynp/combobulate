@@ -134,19 +134,22 @@ kept."
 
 (defun combobulate-make-proxy (nodes)
   "Factory that creates a facsimile proxy node of NODES."
-  (mapcar
-   (lambda (node)
-     (if (combobulate-node-p node)
-         (make-combobulate-proxy-node
-          :start (treesit-node-start node)
-          :end (treesit-node-end node)
-          :text (treesit-node-text node)
-          :type (treesit-node-type node)
-          :named (treesit-node-check node 'named)
-          :node node
-          :pp (combobulate-pretty-print-node node))
-       node))
-   (if (consp nodes) nodes (list nodes))))
+  (let ((proxies (mapcar
+                  (lambda (node)
+                    (if (combobulate-node-p node)
+                        (make-combobulate-proxy-node
+                         :start (treesit-node-start node)
+                         :end (treesit-node-end node)
+                         :text (treesit-node-text node)
+                         :type (treesit-node-type node)
+                         :named (treesit-node-check node 'named)
+                         :node node
+                         :pp (combobulate-pretty-print-node node))
+                      node))
+                  (if (consp nodes) nodes (list nodes)))))
+    (if (consp nodes)
+        proxies
+      (car-safe proxies))))
 
 (defun combobulate-proxy-to-tree-node (proxy-node)
   "Attempt to find the real tree-sitter node PROXY-NODE points to."
