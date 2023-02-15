@@ -325,7 +325,7 @@ again to cycle indentation."))))
                                             "for_in_clause"))
   (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
                                                    "module" "match_statement" "dictionary"
-                                                   "case_clause" "list"
+                                                   "case_clause" "list" "while_statement" "tuple"
                                                    "try_statement" "class_definition"
                                                    "argument_list" "import_from_statement"
                                                    "for_statement" "parameters"))
