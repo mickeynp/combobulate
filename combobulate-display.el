@@ -29,6 +29,7 @@
 
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
+(require 'combobulate-ztree)
 (require 'subr-x)
 
 (defvar combobulate--display-tree nil
@@ -45,16 +46,6 @@
                                      (spacer . " "))
   "Glyphs to use for the tree display")
 
-(defun combobulate--determine-tree-node-context (node)
-  (list (cons :parents (if (combobulate-nav-get-parent node) 1 0))
-        (cons :prev-sibling (not (null (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'backward))))
-        (cons :next-sibling (not (null (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'forward))))))
-
-(defun combobulate--determine-parent-tree-node-context (node)
-  (list
-   (cons :prev-sibling (not (null (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'backward))))
-   (cons :next-sibling (not (null (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'forward))))))
-
 (defun combobulate--display-tree-node (ctx)
   (let-alist combobulate-display-glyphs
     (or (pcase ctx
@@ -64,9 +55,11 @@
            .vbar)
           (`((:prev-sibling . nil)
              (:next-sibling . t))
-           ;; straight bar
-           .vbar)
+           .spacer)
           (`((:prev-sibling . t)
+             (:next-sibling . nil))
+           .spacer)
+          (`((:prev-sibling . nil)
              (:next-sibling . nil))
            .spacer)
           ;; leaf nodes
@@ -75,12 +68,16 @@
           (`((:parents . ,parents)
              (:prev-sibling . nil)
              (:next-sibling . nil))
-           (if (> parents 0) (concat .prev-sibling .hbar) (concat .spacer .hbar)))
+           (if (> parents 0)
+               (concat .prev-sibling .hbar)
+             (concat .spacer .hbar)))
           ;; maybe parents, but one next sibling
           (`((:parents . ,parents)
              (:prev-sibling . nil)
              (:next-sibling . t))
-           (if (> parents 0) (concat .prev-next-sibling .hbar) (concat .next-sibling .hbar)))
+           (if (> parents 0)
+               (concat .prev-next-sibling .hbar)
+             (concat .next-sibling .hbar)))
           ;; maybe parents, but one previous sibling
           (`((:parents . ,_)
              (:prev-sibling . t)
@@ -94,83 +91,126 @@
         ;; fallback
         .spacer)))
 
-(defun combobulate--draw-node (node &optional highlighted)
+
+(defun combobulate-display-tree-parents (loc)
+  (let ((parents))
+    (while (setq loc (combobulate-ztree-up loc))
+      ;; parent of root node is root node.. which is a bit odd.
+      (when (and (combobulate-ztree-up loc) (car-safe (combobulate-ztree-node (combobulate-ztree-up loc))))
+        (when-let (node (car (combobulate-ztree-node loc)))
+          (push loc parents))))
+    (reverse parents)))
+
+(defun combobulate-display--determine-tree-node-context (tree)
+  (cons (cons :parents (length (combobulate-display-tree-parents tree)))
+        (combobulate-display--determine-parent-tree-node-context tree)))
+
+(defun combobulate-display--determine-parent-tree-node-context (tree)
+  (list
+   ;; bit of a hacky work-around as `combobulate-ztree-lefts' and `combobulate-ztree-rights'
+   ;; seem to think the children are the siblings and not the other
+   ;; way around?!
+   (cons :prev-sibling (not (null (thread-first tree
+                                                (combobulate-ztree-up)
+                                                (combobulate-ztree-lefts)))))
+   (cons :next-sibling (not (null (thread-first tree
+                                                (combobulate-ztree-up)
+                                                (combobulate-ztree-rights)))))))
+
+(defun combobulate-display--draw-node (loc &optional highlighted)
   "Draws a navigation node NODE, and optionally HIGHLIGHTED, with tree guides"
-  (let ((disp) (guides)
-        (parents (seq-filter #'combobulate-navigable-node-p (combobulate-get-parents node)))
-        (ctx (combobulate--determine-tree-node-context node)))
+  (let ((guides)
+        (parents (combobulate-display-tree-parents loc))
+        (ctx (combobulate-display--determine-tree-node-context loc)))
     (dotimes (offset (length parents))
       (push (concat (combobulate--display-tree-node
-                     (combobulate--determine-parent-tree-node-context
+                     (combobulate-display--determine-parent-tree-node-context
                       (nth offset parents)))
                     (alist-get 'spacer combobulate-display-glyphs))
             guides))
-    (let ((node-text (combobulate-pretty-print-node node)))
-      (push (string-join
-             (list
-              (propertize (apply 'concat guides) 'face 'combobulate-tree-branch-face)
-              (propertize (combobulate--display-tree-node ctx) 'face 'combobulate-tree-branch-face)
-              (propertize "" 'face 'combobulate-tree-branch-face)
-              (propertize (string-trim node-text) 'face
-                          (cond
-                           ((combobulate-node-in-region-p node) 'highlight)
-                           (highlighted 'combobulate-tree-highlighted-node-face)
-                           (t 'combobulate-tree-normal-node-face))))
-             "")
-            disp))))
+    (let ((node-text (combobulate-pretty-print-node (combobulate-ztree-node loc))))
+      (string-join
+       (list
+        (propertize (apply 'concat guides) 'face 'combobulate-tree-branch-face)
+        (propertize (combobulate--display-tree-node ctx) 'face 'combobulate-tree-branch-face)
+        (propertize "" 'face 'combobulate-tree-branch-face)
+        (propertize (string-trim node-text) 'face
+                    (cond
+                     ((and (not (combobulate-ztree-branch-p loc))
+                           (combobulate-node-in-region-p (combobulate-ztree-node loc)))
+                      'highlight)
+                     (highlighted 'combobulate-tree-highlighted-node-face)
+                     (t 'combobulate-tree-normal-node-face))))
+       ""))))
 
 ;;; Sparse tree code -- used for performance reasons instead of
 ;;; `combobulate-nav-xxxx'.
 
-(defun combobulate-tree-get-child-nodes (tree)
-  "Return children of TREE"
-  (mapcar 'car (cdadr tree)))
-
-(defun combobulate-tree-make ()
+(defun combobulate-display-make-tree (&optional start-node depth)
   "Build a sparse tree around the parent of the navigable node at point"
-  (when-let ((node (thread-first (combobulate-node-at-point combobulate-navigation-default-nodes)
-                                 (combobulate-node-parent))))
-    (treesit-induce-sparse-tree node #'combobulate-navigable-node-p)))
+  (when-let ((node (or start-node (thread-first (combobulate--get-nearest-navigable-node)
+                                                (combobulate-node-parent)
+                                                (combobulate-node-parent)
+                                                (combobulate-node-parent)))))
+    (let ((tree (combobulate-induce-sparse-tree
+                 node #'combobulate-navigable-node-p nil (or depth 3))))
+      ;; the tree may start with a `nil' node; if so, ditch it, as it
+      ;; messes with the tree hierarchy.
+      (combobulate-ztree-list-zip (if (car tree) tree (cadr tree))))))
 
-(defun combobulate-tree-get-siblings-of-node (tree node direction)
-  "Given a TREE find all children that are parents of NODE in DIRECTION."
-  (seq-filter (lambda (tree-node)
-                (and (combobulate-node-parent node)
-                     (cond ((eq direction 'forward)
-                            (combobulate-node-after-node-p tree-node node))
-                           ((eq direction 'backward)
-                            (combobulate-node-before-node-p tree-node node))
-                           (t (error "Unknown direction `%s'" direction)))))
-              (combobulate-tree-get-child-nodes tree)))
-
-(defun combobulate-draw-node-locus (node)
-  "Creates an abbreviated navigation tree around NODE"
-  ;; HACK: This approach is obviously hacky and flawed as we simply
-  ;; try to generate a facsimile of a breadth-first tree search with a
-  ;; depth stop of "1" for all nodes but the parent nodes (for which
-  ;; we get "2" so you can better see where you're going)
-  ;;
-  ;; Note that this is mostly for performance reasons above all else.
-  (let ((prev-siblings (last (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'backward)))
-        (next-siblings (car (combobulate-tree-get-siblings-of-node combobulate--display-tree node 'forward)))
-        (parents (reverse (seq-take (combobulate-nav-get-parents node) 2)))
-        (children (combobulate-nav-get-child node)))
-    (seq-filter #'combobulate-node-p
-                (combobulate-node-unique
-                 (flatten-tree `(,@parents
-                                 ,prev-siblings
-                                 ,node
-                                 ,children
-                                 ,next-siblings))))))
-
-(defun combobulate-draw-node-tree (node)
+(defun combobulate-display-draw-node-tree (node)
   "Renders a navigation tree in node-list mode around NODE"
-  (save-excursion
-    (let ((node-list)
-          (combobulate--display-tree (combobulate-tree-make)))
-      (dolist (nav-element (combobulate-draw-node-locus node))
-        (push (combobulate--draw-node nav-element (combobulate-node-eq node nav-element)) node-list))
-      (mapconcat #'car (reverse node-list) "\n"))))
+  (with-navigation-nodes (:nodes (seq-difference
+                                  combobulate-navigation-default-nodes
+                                  combobulate-display-ignored-node-types))
+    (when (member (combobulate-node-type node) combobulate-display-ignored-node-types)
+      (setq node (combobulate--get-nearest-navigable-node)))
+    (when node
+      (save-excursion
+        (combobulate-display-draw-tree-1 (combobulate-display-create-locus node) node)))))
+
+
+(defun combobulate-display-create-locus (start-node)
+  (let* ((parent (combobulate-nav-get-parent start-node))
+         (grand-parent (combobulate-nav-get-parent parent))
+         (ztree (combobulate-ztree-list-zip (list (or grand-parent parent))))
+         (children
+          (cons (if grand-parent parent nil)
+                (mapcar (lambda (n)
+                          (cons n (mapcar #'list
+                                          (seq-remove #'combobulate-node-blank-p
+                                                      (seq-filter #'combobulate-navigable-node-p
+                                                                  ;; make this configurable
+                                                                  (seq-take (combobulate-node-children n) 1))))))
+                        (seq-uniq
+                         (seq-remove #'combobulate-node-blank-p
+                                     (seq-filter #'combobulate-navigable-node-p
+                                                 (or (combobulate-get-immediate-siblings-of-node start-node)
+                                                     (list
+                                                      (combobulate-node-prev-sibling start-node)
+                                                      start-node
+                                                      (combobulate-node-next-sibling start-node))))))))))
+    (combobulate-ztree-append-child
+     ztree
+     (if grand-parent children (cons children nil)))))
+
+(defun combobulate-display-draw-tree-1 (tree &optional highlighted-node)
+  (let ((drawing))
+    (while (and (setq tree (combobulate-ztree-next tree))
+                (not (combobulate-ztree-end-p tree)))
+      (when (not (combobulate-ztree-branch-p tree))
+        (push (combobulate-display--draw-node
+               tree (and highlighted-node
+                         (or (equal (combobulate-ztree-node tree)
+                                    highlighted-node))))
+              drawing)))
+    (string-join (reverse drawing) "\n")))
+
+(defun combobulate-display-draw-complete-tree (start-node target-buf &optional depth)
+  (let* ((tree (combobulate-display-make-tree start-node depth)))
+    (with-current-buffer (get-buffer-create target-buf)
+      (erase-buffer)
+      (insert (combobulate-display-draw-tree-1 tree)))))
 
 
 (provide 'combobulate-display)

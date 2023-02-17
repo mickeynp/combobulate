@@ -36,6 +36,148 @@
   :group 'languages
   :prefix "combobulate-")
 
+(defgroup combobulate-envelope nil
+  "Settings for Combobulate's code generation templates."
+  :group 'combobulate
+  :prefix "combobulate-envelope-")
+
+(defgroup combobulate-faces nil
+  "Faces used by Combobulate."
+  :group 'combobulate)
+
+(defcustom combobulate-mark-node-or-thing-at-point 'symbol
+  "Maybe mark the thing at point first before extending the mark to the first node.
+
+Can be anything `thing-at-point' supports, theoretically, though
+practically speaking the most useful ones are `symbol' and `word'
+for all but the most esoteric requirements."
+  :group 'combobulate
+  :type '(choice
+          (const :tag "Disabled" nil)
+          (const :tag "Symbol" symbol)
+          (const :tag "Word" word)))
+
+(defcustom combobulate-proffer-default-to-command 'done
+  "What should happen in a proffer prompt when an unknown key is pressed.
+
+When set to `done' the proffer UI will accept the current choice
+and commit it if you enter a key not found in
+`combobulate-proffer-map'.
+
+If it is set to `cancel' then the selection is aborted as though
+you'd pressed `C-g'."
+  :group 'combobulate
+  :type '(choice
+          (const :tag "Accept and Commit" done)
+          (const :tag "Cancel" cancel)))
+
+(defcustom combobulate-flash-node t
+  "Display a tree outline of nodes near point if non-nil."
+  :group 'combobulate
+  :type 'boolean)
+
+(defcustom combobulate-beginning-of-defun-behavior 'parent
+  "Control the behavior of the beginning of defun command.
+
+Use `parent' and Combobulate will look at the nearest defun to
+which it belongs and only visit its immediate parent.
+
+Use `root' and Combobulate will instead attempt to find the defun
+most closes to the root of the tree -- i.e., a defun that itself
+has no defun parents.
+
+Use `self-and-sibling-first' and Combobulate will instead first go to
+the beginning of defun point is in, before cycling through
+sibling defuns of the point's defun before moving up to its
+parent, and so on, until it reaches the root.
+
+Use `linear' and Combobulate will simply move to the first defun
+it finds, regardless of hierarchy."
+  :group 'combobulate
+  :type '(choice
+          (const :tag "Parent" parent)
+          (const :tag "Root" root)
+          (const :tag "Self and Sibling First" self-and-sibling-first)
+          (const :tag "Linear" linear)))
+
+(defcustom combobulate-navigate-next-move-to-end nil
+  "Make \\[combobulate-navigate-next] move to the end of the node.
+
+If non-nil, the point is placed at the end of the next sibling
+node. This is the default behavior in major modes -- like elisp
+mode -- that properly places the point at the end of the sibling
+node you navigated to.
+
+However, this can result in placing the point at the end of a
+node that is also technically inside the parent of another, due
+to how node ranges can overlap.
+
+Setting this to nil always places the point at the beginning of
+the node."
+  :type 'boolean
+  :group 'combobulate)
+
+(defcustom combobulate-pulse-node-wait-time 0.5
+  "How long to wait (in seconds) at the pulsed node before returning."
+  :type 'float
+  :group 'combobulate)
+
+(defcustom combobulate-pulse-node t
+  "If non-nil, Combobulate will pulse important nodes."
+  :type 'boolean
+  :group 'combobulate)
+
+(defcustom combobulate-indentation-marker "○●"
+  "Indentation indicators."
+  :type 'string
+  :group 'combobulate)
+
+(defface combobulate-refactor-highlight-face '((((background light))
+                                                :background "gray80")
+                                               (((background dark))
+                                                :background "gray20")
+                                               (t :inherit secondary-selection))
+  "Face for notable text during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-field-face '((t (:background "MediumPurple4" :foreground "MediumPurple1")))
+  "Face for prompts and fields during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-inactive-field-face '((t (:background "#342261" :foreground "#6e4bc0")))
+  "Face for prompts and fields during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-cursor-face '((t (:background "VioletRed4" :foreground "VioletRed1")))
+  "Face for fake cursors during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-dimmed-indicator-face '((t (:foreground "slate gray")))
+  "Face for dimmed indicators, like the indentation display."
+  :group 'combobulate-faces)
+
+(defface combobulate-active-indicator-face '((t (:foreground "dodger blue")))
+  "Face for active indicators, like the indentation display."
+  :group 'combobulate-faces)
+
+(defface combobulate-tree-branch-face '((t (:foreground "slate gray")))
+  "Face for the branches and guides in the display tree."
+  :group 'combobulate-faces)
+
+(defface combobulate-tree-highlighted-node-face '((t (:inherit font-lock-property-face)))
+  "Face for combobulate nodes that are prominently displayed in the UI"
+  :group 'combobulate-faces)
+
+(defface combobulate-tree-pulse-node-face '((t (:inherit secondary-selection)))
+  "Face for nodes that are briefly pulsed on the screen."
+  :group 'combobulate-faces)
+
+(defface combobulate-tree-normal-node-face '((t (:inherit default)))
+  "Face for regular combobulate nodes in the display tree"
+  :group 'combobulate-faces)
+
+;;;; Other settings
+
 (defvar-local combobulate-navigation-defun-nodes nil
   "Node names used to navigate by defun.
 
@@ -101,6 +243,9 @@ See `mark-sentence', `forward-sentence' and `backward-sentence'.")
 (defvar-local combobulate-navigation-parent-child-nodes nil
   "Node names used to navigate up or down.")
 
+(defvar-local combobulate-display-ignored-node-types nil
+  "Node types that will not appear in the tree display")
+
 (defvar-local combobulate-manipulation-trim-whitespace nil
   "Trim whitespace after Combobulate manipulates the tree.
 
@@ -116,64 +261,8 @@ where point is left; `all' deletes forward and backward.")
 The function must take one argument, POS, and from that point
 determine the indentation.")
 
-
 (defvar-local combobulate-manipulation-trim-empty-lines t
   "Non-nil trims empty lines after Combobulate manipulates the tree.")
-
-
-
-(defcustom combobulate-flash-node t
-  "Display a tree outline of nodes near point if non-nil."
-  :group 'combobulate
-  :type 'boolean)
-
-(defcustom combobulate-beginning-of-defun-behavior 'parent
-  "Control the behavior of the beginning of defun command.
-
-Use `parent' and Combobulate will look at the nearest defun to
-which it belongs and only visit its immediate parent.
-
-Use `root' and Combobulate will instead attempt to find the defun
-most closes to the root of the tree -- i.e., a defun that itself
-has no defun parents.
-
-Use `self-and-sibling-first' and Combobulate will instead first go to
-the beginning of defun point is in, before cycling through
-sibling defuns of the point's defun before moving up to its
-parent, and so on, until it reaches the root.
-
-Use `linear' and Combobulate will simply move to the first defun
-it finds, regardless of hierarchy."
-  :type 'symbol
-  :group 'combobulate
-  :options '(parent root self-and-sibling-first linear))
-
-(defcustom combobulate-navigate-next-move-to-end nil
-  "Make \\[combobulate-navigate-next] move to the end of the node.
-
-If non-nil, the point is placed at the end of the next sibling
-node. This is the default behavior in major modes -- like elisp
-mode -- that properly places the point at the end of the sibling
-node you navigated to.
-
-However, this can result in placing the point at the end of a
-node that is also technically inside the parent of another, due
-to how node ranges can overlap.
-
-Setting this to nil always places the point at the beginning of
-the node."
-  :type 'boolean
-  :group 'combobulate)
-
-(defcustom combobulate-pulse-node-wait-time 0.5
-  "How long to wait (in seconds) at the pulsed node before returning."
-  :type 'float
-  :group 'combobulate)
-
-(defcustom combobulate-pulse-node t
-  "If non-nil, Combobulate will pulse important nodes."
-  :type 'boolean
-  :group 'combobulate)
 
 (defvar-local combobulate-navigation-sibling-skip-prefix nil
   "If non-nil, skip prefixes in the direction of travel when finding a sibling.")
@@ -277,6 +366,7 @@ Matches all the key-portion of key-value pairs in a dictionary")
 (defvar combobulate-setup-functions-alist
   '((python . combobulate-python-setup)
     (tsx . combobulate-js-ts-setup)
+    (javascript . combobulate-js-ts-setup)
     (jsx . combobulate-js-ts-setup)
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
@@ -292,40 +382,7 @@ counterparts.")
 (defvar combobulate-debug nil
   "Enables additional debug information useful for Combobulate developers")
 
-(defface combobulate-refactor-highlight-face '((t (:inherit diff-header)))
-  "Face for notable text during editing or refactoring."
-  :group 'combobulate)
-
-(defface combobulate-dimmed-indicator-face '((t (:foreground "slate gray")))
-  "Face for dimmed indicators, like the indentation display."
-  :group 'combobulate)
-
-(defface combobulate-active-indicator-face '((t (:foreground "dodger blue")))
-  "Face for dimmed indicators, like the indentation display."
-  :group 'combobulate)
-
-(defface combobulate-tree-branch-face '((t (:foreground "slate gray")))
-  "Face for combobulate nodes that are prominently displayed in the UI"
-  :group 'combobulate)
-
-(defface combobulate-tree-highlighted-node-face '((t (:inherit font-lock-property-face)))
-  "Face for combobulate nodes that are prominently displayed in the UI"
-  :group 'combobulate)
-
-(defface combobulate-tree-pulse-node-face '((t (:inherit secondary-selection)))
-  "Face for combobulate nodes that are prominently displayed in the UI"
-  :group 'combobulate)
-
-(defface combobulate-tree-normal-node-face '((t (:inherit default)))
-  "Face for combobulate nodes that are prominently displayed in the UI"
-  :group 'combobulate)
-
-(defcustom combobulate-indentation-marker "○●"
-  "Indentation indicators."
-  :type 'string
-  :group 'combobulate)
-
-;; Pretty printing and display options
+;;;; Pretty printing and display options
 
 (declare-function combobulate--pretty-print-node "combobulate-navigation")
 (declare-function combobulate-pretty-print-node-name "combobulate-navigation")

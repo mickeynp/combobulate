@@ -30,6 +30,10 @@ SOURCES = {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/grammar.json",
     },
+    "javascript": {
+        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
+    },
     "jsx": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
@@ -146,11 +150,14 @@ def process_rules(data):
     return rules, inv_rules
 
 
-def generate_sexp(rules, inv_rules, source):
+def generate_sexp(rules, inv_rules, language, source):
     l = []
     for rule_name, rule_fields in rules.items():
         # Ignore named fields and only generate the defaults?
         # without named fields.
+        for field_name, field_values in rule_fields.items():
+            if not field_values:
+                rule_fields[field_name] = Symbol("nil")
         rules = itertools.chain.from_iterable(rule_fields.values())
         l.append(sexp([rule_name, rule_fields]))
         l.append("\n")
@@ -158,7 +165,7 @@ def generate_sexp(rules, inv_rules, source):
         sexp(
             [
                 Symbol("defconst"),
-                Symbol(f"combobulate-rules-{source}"),
+                Symbol(f"combobulate-rules-{language}"),
                 "\n",
                 Quote(sexp(sexp(l))),
             ]
@@ -166,7 +173,7 @@ def generate_sexp(rules, inv_rules, source):
         sexp(
             [
                 Symbol("defconst"),
-                Symbol(f"combobulate-rules-{source}-inverted"),
+                Symbol(f"combobulate-rules-{language}-inverted"),
                 "\n",
                 Quote(sexp([sexp([k, v]) + "\n  " for k, v in inv_rules.items()])),
                 "\n",
@@ -182,7 +189,7 @@ def load_node_types(source):
     except Exception:
         log.critical(
             "Cannot find source %s. Try downloading the sources first with `--download'.",
-            fn,
+            source,
         )
         raise
 
@@ -220,11 +227,11 @@ def write_elisp_file(forms):
         f.write("(provide 'combobulate-rules)\n")
 
 
-def parse_source(source):
-    log.info("Parsing %s", source)
+def parse_source(language, source):
+    log.info("Parsing language %s with node file %s", language, source)
     data = load_node_types(source)
     rules, inv_rules = process_rules(data)
-    return generate_sexp(rules, inv_rules, source)
+    return generate_sexp(rules, inv_rules, language, source)
 
 
 def main():
@@ -237,8 +244,8 @@ def main():
     if args.download:
         download_all_sources()
 
-    for src in SOURCES:
-        forms.append((src, parse_source(files["nodes"])))
+    for src, files in SOURCES.items():
+        forms.append((src, parse_source(src, Path(f"{src}-nodes.json"))))
     write_elisp_file(forms)
 
 

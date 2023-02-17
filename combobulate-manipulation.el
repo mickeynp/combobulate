@@ -38,14 +38,18 @@
 
 
 (declare-function combobulate--mc-edit-nodes "combobulate-contrib")
+(declare-function combobulate-envelope-expand-instructions "combobulate-envelope")
+(declare-function combobulate-display-draw-node-tree "combobulate-display")
+
+(defvar combobulate-key-map)
 
 (defun combobulate--refactor-insert-copied-values (values)
   (let ((start-marker (point-marker)) (after-marker) (pt))
     ;; move this into a distinct function that can reproduce stored
     ;; input.
     (goto-char (point-marker))
-    ;; (forward-line 0)
     (skip-syntax-backward " ")
+    (just-one-space 0)
     (setq pt (point))
     (let ((ct 0))
       (dolist (s values)
@@ -60,7 +64,6 @@
               (setq start-marker (point-marker))))
           (goto-char pt))))
     (back-to-indentation)
-    (delete-blank-lines)
     (setq after-marker (point-marker))
     (when combobulate-manipulation-indent-after-edit
       (indent-region start-marker (save-excursion
@@ -108,7 +111,7 @@
 (defvar combobulate-refactor--copied-values nil)
 
 (defmacro combobulate-refactor (&rest body)
-  (declare (indent 1) (debug (form body)))
+  (declare (indent nil) (debug (form body)))
   (let ((--markers (gensym)))
     `(let ((,--markers nil))
        (cl-flet* ((add-marker (ov &optional end)
@@ -127,8 +130,12 @@
                   ;;      (overlay-put new-ov 'combobulate-refactor-actions n)
                   ;;      (mapc #'delete-overlay markers)
                   ;;      new-ov)))
+                  (mark-range-move (beg end position)
+                    (add-marker (combobulate--refactor-mark-move beg end position)))
                   (mark-range-deleted (beg end)
                     (add-marker (combobulate--refactor-mark-deleted beg end)))
+                  (mark-range-highlighted (beg end &optional face advance)
+                    (add-marker (combobulate--refactor-mark-highlighted beg end face advance)))
                   (mark-copy (start end)
                     (add-marker (combobulate--refactor-mark-copy start end 'combobulate-refactor--copied-values)))
                   (mark-node-copy (n)
@@ -138,25 +145,44 @@
                   (mark-node-deleted (n)
                     (add-marker (combobulate--refactor-mark-deleted (combobulate-node-start n)
                                                                     (combobulate-node-end n))))
-                  (mark-node-highlighted (n)
-                    (add-marker (combobulate--refactor-mark-highlighted (combobulate-node-start n)
-                                                                        (combobulate-node-end n))))
+                  (mark-node-highlighted (n &optional face advance)
+                    (mark-range-highlighted (combobulate-node-start n)
+                                            (combobulate-node-end n)
+                                            face
+                                            advance))
+                  (mark-cursor (pt)
+                    (add-marker (combobulate--refactor-mark-cursor pt)))
+                  (mark-node-cursor (n)
+                    (mark-cursor (combobulate-node-start n)))
+                  (mark-field (pt tag &optional text transformer-fn)
+                    (add-marker (combobulate--refactor-mark-field
+                                 pt tag (or text (symbol-name tag))
+                                 transformer-fn)))
+                  (update-field (tag text)
+                    (seq-filter
+                     (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
+                               (combobulate--refactor-update-field ov tag text)))
+                     ,--markers))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
                   (rollback ()
                     (mapc (lambda (ov) (delete-overlay ov))
                           ,--markers)
-                    (setq ,--markers nil)
-                    (combobulate-reinitialize-parser))
+                    (setq ,--markers nil))
                   (commit ()
                     (setq combobulate-refactor--copied-values nil)
                     (mapc (lambda (ov) (combobulate--refactor-commit ov t))
-                          (seq-sort (lambda (a b) (> (overlay-start a)
-                                                (overlay-end b)))
+                          (seq-sort (lambda (a b)
+                                      (and a b
+                                           (overlayp a)
+                                           (overlayp b)
+                                           (> (overlay-start a)
+                                              (overlay-end b))))
                                     ,--markers))
                     ;; clean up.
-                    (setq ,--markers nil)
-                    (combobulate-reinitialize-parser)))
+                    (mapc (lambda (ov) (delete-overlay ov))
+                          ,--markers)
+                    (setq ,--markers nil)))
          (prog1 (atomic-change-group
                   ,@body)
            (when ,--markers
@@ -341,13 +367,16 @@ then a cons cell of this shape is returned:
              (combobulate-pretty-print-node point-node)))
      (t
       (setq procedure (pop procedures))
+      ;; (unless (equal (car procedure) point-node)
+      ;;   (error "`%s' does not equal point node %s" (car procedure) point-node))
       (cons procedure (combobulate-procedure-apply-procedure point-node (car procedure) (cdr procedure)))))))
 
 (defun combobulate-procedure-start-aggressive (&optional pt procedures)
   "Attempt to find a procedure at PT."
   (catch 'found
     (let ((procedure))
-      (dolist (node (save-excursion (goto-char (or pt (point))) (combobulate-all-nodes-at-point)))
+      (dolist (node (save-excursion (goto-char (or pt (point)))
+                                    (reverse (combobulate-all-nodes-at-point))))
         (setq procedure (ignore-errors (combobulate-procedure-start node procedures)))
         (when procedure
           (throw 'found procedure))))))
@@ -552,54 +581,110 @@ considered whitespace by the mode's syntax table."
   "Corrects the indentation of the first line of TEXT to TARGET-COL."
   (let ((lines (split-string text "\n")))
     (string-join
-     (cons (combobulate-indent-string (car lines) target-col)
+     (cons (combobulate-indent-string
+            (combobulate-indent-string--strip-whitespace (car lines))
+            target-col)
            (cdr lines))
      "\n")))
 
+(defun combobulate-indent-string--strip-whitespace (s &optional count)
+  "Strip S of whitespace, possibly up to COUNT whitespace characters."
+  (string-trim-left
+   s (if count (rx-to-string `(** 0 ,(abs count) space))
+       (rx bol (* space)))))
+
+(defun combobulate-indent-string--count-whitespace (s)
+  (- (length s) (length (combobulate-indent-string--strip-whitespace s))))
+
 (defun combobulate-indent-string (text target-col &optional absolute)
-  ""
-  (let* ((lines (split-string text "\n")))
+  "Ensure the indent of TEXT is set to TARGET-COL.
+
+If ABSOLUTE is t, then every line is adjusted like this:
+
+The first line of text is used as the zero point and indented to
+TARGET-COL, and every subsequent line's indentation is indented
+relative to that one such that their relative indentation to the
+first line is preserved."
+  (let* ((lines (split-string text "\n"))
+         (baseline-col (combobulate-indent-string--count-whitespace (car lines))))
     ;; calculate the indentation at the beginning of the line, if
     ;; any.
     (string-join
      (mapcar (lambda (line)
                (if absolute
-                   (error "Absolute indentation not implemented yet.")
+                   (combobulate-indent-string
+                    (combobulate-indent-string--strip-whitespace line baseline-col)
+                    target-col nil)
                  (if (> target-col 0)
                      (concat (make-string target-col ? ) line)
-                   (string-trim-left line (rx-to-string `(** 0 ,(abs target-col) space))))))
+                   (combobulate-indent-string--strip-whitespace line target-col))))
              lines)
      "\n")))
 
 (defun combobulate--clone-node (node position)
   "Clone NODE and place it at POSITION."
+  (combobulate--place-node-or-text position node))
+
+(defun combobulate--place-node-or-text (position node-or-text &optional mode trailing-newline)
+  "Place NODE-OR-TEXT at POSITION.
+
+NODE-OR-TEXT must be a valid node or a string.
+
+If NODE-OR-TEXT is a NODE, then its first-line indentation is
+calculated first and the text indented properly relative to
+POSITION.
+
+If NODE-OR-TEXT is a string, then all indentation must be handled
+by the caller. The string is inserted at POSITION.
+
+If MODE is non-nil, then it must be either `newline' or
+`inline'. Where `newline' forces the placement of NODE-OR-TEXT on
+a new line. If MODE is `inline' then it is places inline
+alongside other nodes around POSITION.
+
+If TRAILING-NEWLINE is t, then a trailing newline is inserted
+after NODE-OR-TEXT."
   (let* ((col (save-excursion (goto-char position)
-                              (current-indentation)))
-         (node-col (save-excursion
-                     (combobulate--goto-node node)
-                     (current-indentation)))
-         (node-text (combobulate-node-text node)))
+                              (current-column)))
+         (node-text))
+    (cond
+     ((stringp node-or-text)
+      (setq node-text (combobulate-indent-string node-or-text col t)))
+     ((or (combobulate-node-p node-or-text)
+          (combobulate-proxy-node-p node-or-text))
+      (let ((node-col (save-excursion
+                        (combobulate--goto-node node-or-text)
+                        (current-indentation))))
+        (setq node-text (combobulate-indent-string
+                         ;; the first line may not include all of its
+                         ;; indentation because the node extents won't
+                         ;; include it. This fixes it so it does.
+                         (combobulate-indent-string-first-line
+                          (combobulate-node-text node-or-text)
+                          node-col)
+                         (- col node-col)))))
+     (t (error "Cannot place node or text `%s'" node-or-text)))
     (goto-char position)
-    (if (string-blank-p (buffer-substring-no-properties (save-excursion
-                                                          (combobulate--goto-node node)
-                                                          (beginning-of-line)
-                                                          (point))
-                                                        (combobulate-node-start node)))
-        (progn (split-line 1)
-               (combobulate--refactor-insert-copied-values
-                (list (combobulate-indent-string
-                       ;; the first line may not include all of its
-                       ;; indentation because the node extents won't
-                       ;; include it. This fixes it so it does.
-                       (combobulate-indent-string-first-line
-                        node-text
-                        node-col)
-                       (- col node-col)))))
+    ;; If a node has nothing but whitespace preceding it, then it's a
+    ;; "newline-delimited" node. Newline-delimited nodes are regular
+    ;; nodes that exist, usually, on a line of their own. That is on
+    ;; contrast to inline-delimited nodes that are placed to the left
+    ;; or right on a line with other nodes.
+    (if (and (or (eq mode 'newline) (null mode))
+             (combobulate-before-point-blank-p position))
+        ;; newline-delimited node
+        (progn
+          ;; (when trailing-newline
+          ;;   (split-line 0))
+          (combobulate--refactor-insert-copied-values
+           (list node-text)))
+      ;; inline-delimited node
       (save-excursion
         (insert node-text)
+        (just-one-space 0)
         (unless (looking-at "\\s-")
-          (insert " "))))))
-
+          (insert " ")))
+      (just-one-space))))
 
 (defun combobulate--mark-node (node &optional swap beginning-of-line)
   "Mark NODE in the current buffer.
@@ -611,10 +696,51 @@ See `combobulate--mark-extent' for argument explanations."
                               swap
                               beginning-of-line)))
 
-(defun combobulate--delete-node (node)
-  "Deletes NODE in the current buffer."
-  (and node (delete-and-extract-region (combobulate-node-start node)
-                                       (combobulate-node-end node))))
+(defun combobulate--delete-text (beg end &optional correct-indentation delete-blank-lines)
+  (save-excursion
+    (let ((text (save-excursion
+                  (prog1 (delete-and-extract-region beg end)))))
+      (prog1 (if correct-indentation
+                 (combobulate-indent-string-first-line
+                  text
+                  (save-excursion
+                    (goto-char beg)
+                    (current-indentation)))
+               text)
+        (save-excursion
+          ;; Only trim lines if there is more than one as
+          ;; `delete-blank-lines', in case there is only one, will
+          ;; delete that blank line. That can have very bad
+          ;; repercussions if the deletion is used as part of a
+          ;; greater chain of operations, like moving text in a
+          ;; refactor
+          (if (= (combobulate-string-count "\n" text) 0)
+              (save-restriction
+                (goto-char end)
+                (narrow-to-region (line-beginning-position) (point-max))
+                (when (and delete-blank-lines (or (> (combobulate-count-lines-ahead (point)) 1)
+                                                  (= (combobulate-string-count "\n" text) 0)))
+                  (delete-blank-lines)))
+            (save-restriction
+              (narrow-to-region (line-beginning-position) (point-max))
+              (when (and delete-blank-lines (or (> (combobulate-count-lines-ahead (point)) 1)
+                                                (= (combobulate-string-count "\n" text) 0)))
+                (delete-blank-lines)))))))))
+
+(defun combobulate--delete-node (node &optional correct-indentation delete-blank-lines)
+  "Deletes NODE in the current buffer and returns its text.
+
+If CORRECT-INDENTATION is t, then the node's first-line
+indentation is set according to its current indentation in the
+buffer.
+
+If DELETE-BLANK-LINES is t, then all blank lines left behind by
+the deleted node are removed."
+  (when node
+    (combobulate--delete-text (combobulate-node-start node)
+                              (combobulate-node-end node)
+                              correct-indentation
+                              delete-blank-lines)))
 
 (defun combobulate--replace-node (node text &optional before)
   "Replace NODE with TEXT and maybe place point BEFORE.
@@ -666,84 +792,186 @@ point relative to the nodes in
       (combobulate-message "Killed" node)
       (combobulate--kill-node node))))
 
-(defvar combobulate--tempo-point-pos nil
-  "Position of where point must go after a tempo template is expanded.")
-
-(defun combobulate--tempo-handle-element-@ (element)
-  "Tempo ELEMENT `@' that remembers the position of point."
-  (when (eq element '@)
-    (setq combobulate--tempo-point-pos (point))
-    ;; do this because tempo is buggy AF
-    ""))
-
-(defun combobulate--tempo-handle-element-y> (element)
-  "Tempo ELEMENT `y>' that used hacky code to indent a region."
-  (when (eq element 'y>)
-    (progn
-      (python-indent-shift-right (point) (mark) 4)
-      (indent-line-to (car (last (python-indent-calculate-levels))))
-      (exchange-point-and-mark))
-    ;; do this because tempo is buggy AF
-    ""))
+(defvar combobulate-envelope-static)
 
 (defvar combobulate-proffer-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-g" 'cancel)
     (define-key map "\M-c" 'recursive-edit)
+    (define-key map "\C-l" #'recenter)
     (define-key map [return] 'done)
     (define-key map [tab] 'next)
     (define-key map [S-iso-lefttab] 'prev)
     map)
   "Keymap for `combobulate-proffer-choices'.")
 
-(defun combobulate-proffer-choices (nodes action-fn)
-  (let ((proxy-nodes (and nodes (combobulate-make-proxy nodes)))
-        (result) (done) (current-node)
-        (index 0) (pt (point)))
-    (cond
-     ((not proxy-nodes)
-      (error "There are no choices to make."))
-     ((= (length proxy-nodes) 1)
-      (funcall action-fn (nth index proxy-nodes)))
-     (t (condition-case nil
+(cl-defun combobulate-proffer-choices (nodes action-fn &key (first-choice nil)
+                                             (reset-point-on-abort t) (reset-point-on-accept nil)
+                                             (extra-map nil) (flash-node nil) (unique-only t))
+  "Interactively browse NODES one at a time with ACTION-FN applied to it.
+
+Interactively, a user is expected to choose a node in NODES or
+abandon the selection process altogether (see
+`combobulate-proffer-map'.) If there is exactly one node in
+NODES, then it is automatically selected.
+
+ACTION-FN must be a function that takes four arguments:
+
+   (CURRENT-NODE MARK-HIGHLIGHTED-FN MOVE-TO-NODE-FN MARK-DELETED-FN)
+
+Where CURRENT-NODE is the proffered node out of NODES.  The three
+additional arguments are optional; callers must optionally
+`funcall' each one in the order that best makes sense for the
+ACTION-FN.
+
+MARK-HIGHLIGHTED-FN instructs `combobulate-refactor' to highlight
+CURRENT-NODE. MOVE-TO-NODE-FN moves point to the beginning of
+CURRENT-NODE. And MARK-DELETED-FN tells `combobulate-refactor' to
+mark the node for deletion if a successful `commit' call takes
+place.
+
+The caller is responsible for invoking these functions in the
+correct order (or not at all, if they are not required.)
+
+Setting `:first-choice' to t prevents the system from proffering
+choices at all; instead, the first choice is automatically picked.
+
+When `:reset-point' is t, the point is reset to where it
+was when the proffer was first started. If nil, the point is not
+altered at all.
+
+If `:flash-node' is t, then display a node tree in the echo area
+alongside the status message.
+
+If t, `:unique-only' filters out duplicate nodes *and*
+nodes that share the same range extent. I.e., a `block' and a
+`statement' node that effectively encompass the same range in the
+buffer.
+
+`:extra-map' is a list of cons cells consisting of (KEY . COMMAND)."
+  (let ((proxy-nodes
+         (and nodes (combobulate-make-proxy
+                     ;; strip out duplicate nodes. That
+                     ;; includes nodes that are duplicates
+                     ;; of one another; however, we also
+                     ;; strip out nodes that share the
+                     ;; same range extent.
+                     (if unique-only
+                         (seq-uniq nodes (lambda (a b)
+                                           (or (equal a b)
+                                               (equal (combobulate-node-range a)
+                                                      (combobulate-node-range b)))))
+                       nodes))))
+        (result) (state 'continue) (current-node)
+        (index 0) (pt (point)) (raw-event)
+        (map (if extra-map
+                 (let ((map (make-sparse-keymap)))
+                   (set-keymap-parent map combobulate-proffer-map)
+                   (mapc (lambda (k) (define-key map (car k) (cdr k))) extra-map)
+                   map)
+               combobulate-proffer-map)))
+    (if proxy-nodes
+        (condition-case nil
             (with-undo-amalgamate
-              (while (not done)
-                (catch 'next
-                  (setq current-node (nth index proxy-nodes))
-                  (combobulate-refactor
-                      (funcall action-fn current-node)
-                    (mark-node-deleted current-node)
-                    (mark-node-highlighted current-node)
-                    (setq result (condition-case nil
-                                     (lookup-key
-                                      combobulate-proffer-map
-                                      (vector
-                                       (read-event
-                                        (substitute-command-keys
-                                         (format "%s `%s': Press \\`TAB' or \\`S-TAB' to cycle through choices; \\`RET' accepts; the rest quits."
-                                                 (combobulate-display-indicator index (length proxy-nodes))
-                                                 (combobulate-pretty-print-node current-node nil)))
-                                        nil nil)))
-                                   (quit 'cancel)))
-                    (pcase result
-                      ('prev
-                       (commit)
-                       (setq index (mod (1- index) (length proxy-nodes)))
-                       (throw 'next nil))
-                      ('next
-                       (commit)
-                       (setq index (mod (1+ index) (length proxy-nodes)))
-                       (throw 'next nil))
-                      ('done
-                       (rollback)
-                       (combobulate-message "Committing" current-node)
-                       (setq done t))
-                      (_
-                       (combobulate-message "Cancelling...")
-                       (rollback)
-                       (keyboard-quit)))))))
-          (quit nil))))
-    (goto-char pt)))
+              (catch 'exit
+                (while (eq state 'continue)
+                  (catch 'next
+                    (setq current-node (nth index proxy-nodes))
+                    (combobulate-refactor
+                     (funcall action-fn current-node
+                              (apply-partially #'mark-node-highlighted current-node)
+                              (apply-partially #'combobulate-move-to-node current-node)
+                              (apply-partially #'mark-node-deleted current-node))
+                     ;; if we have just one item, or if
+                     ;; `:first-choice' is non-nil, we pick the first
+                     ;; item in `proxy-nodes'
+                     (if (or (= (length proxy-nodes) 1) first-choice)
+                         (progn (rollback)
+                                (setq state 'accept))
+                       (setq result
+                             (condition-case nil
+                                 ;; `lookup-key' is funny and it only
+                                 ;; takes a vector of an event.
+                                 (lookup-key
+                                  map
+                                  (vector
+                                   ;; we need to preserve the raw
+                                   ;; event. If we want the event
+                                   ;; read by `read-event' to pass
+                                   ;; through to the event loop
+                                   ;; unscathed then we need the raw
+                                   ;; version.
+                                   (setq raw-event
+                                         (read-event
+                                          (substitute-command-keys
+                                           (format "%s `%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
+                                                   (combobulate-display-indicator index (length proxy-nodes))
+                                                   (propertize (combobulate-pretty-print-node current-node) 'face
+                                                               'combobulate-tree-highlighted-node-face)
+                                                   (mapconcat (lambda (k)
+                                                                (propertize (key-description k) 'face 'help-key-binding))
+                                                              ;; messy; is this really the best way?
+                                                              (where-is-internal 'next map)
+                                                              ", ")
+                                                   (if (and flash-node combobulate-flash-node)
+                                                       (concat (or (combobulate-display-draw-node-tree
+                                                                    (combobulate-proxy-to-tree-node current-node))
+                                                                   "")
+                                                               "\n")
+                                                     "")))
+                                          nil nil))))
+                               ;; if `condition-case' traps a quit
+                               ;; error, then map it into the symbol
+                               ;; `cancel', which corresponds to the
+                               ;; equivalent event in the state
+                               ;; machine below.
+                               (quit 'cancel)))
+                       (pcase result
+                         ('prev
+                          (commit)
+                          (setq index (mod (1- index) (length proxy-nodes)))
+                          (throw 'next nil))
+                         ('next
+                          (commit)
+                          (setq index (mod (1+ index) (length proxy-nodes)))
+                          (throw 'next nil))
+                         ('done
+                          (rollback)
+                          (combobulate-message "Committing" current-node)
+                          (setq state 'accept))
+                         ((pred functionp)
+                          (funcall result)
+                          (rollback)
+                          (throw 'next nil))
+                         ('cancel
+                          (combobulate-message "Cancelling...")
+                          (setq state 'abort)
+                          (rollback)
+                          (keyboard-quit))
+                         (_
+                          (combobulate-message "Committing...")
+                          ;; pushing `raw-event' to
+                          ;; `unread-command-events' allows for a
+                          ;; seamless exit out of the proffer prompt
+                          ;; by preserving the character the user
+                          ;; typed to 'break out' of `read-event'
+                          ;; earlier.
+                          (push raw-event unread-command-events)
+                          (rollback)
+                          (setq state 'accept)))))))))
+          (quit nil))
+      (error "There are no choices to make"))
+    ;; Determine where point is placed on exit and whether we return
+    ;; the current node or not.
+    (cond
+     ((and (eq state 'abort))
+      (when reset-point-on-abort (goto-char pt))
+      nil)
+     ((and (eq state 'accept))
+      (when reset-point-on-accept
+        (goto-char pt))
+      current-node)
+     (t (error "Unknown termination state `%s'" state)))))
 
 (defun combobulate-clone-node-dwim (&optional arg)
   "Clone node at point ARG times."
@@ -752,11 +980,15 @@ point relative to the nodes in
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
       (combobulate-proffer-choices
        (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
-       (lambda (node)
-         (combobulate--clone-node node (combobulate-node-start node)))))))
+       (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+         (funcall mark-deleted-fn)
+         (combobulate--clone-node node (combobulate-node-start node))
+         (funcall mark-highlighted-fn)
+         (funcall move-fn))
+       :reset-point-on-abort t))))
 
 (defun combobulate-envelop-node (template node mark-node point-placement)
-  "Insert tempo TEMPLATE around NODE.
+  "Insert Combobulate TEMPLATE around NODE.
 
 If MARK-NODE is non-nil, then mark the node, which will then be
 available to tempo as the `r' identifier.  If nil, the region is
@@ -765,31 +997,16 @@ kept as-is.
 POINT-PLACEMENT must be one of `start', `end', or `stay'. `stay'
 does not move point to either of NODE's boundaries."
   (interactive)
-  ;; reset. if it is non-nil after the template, go to it.
-  (setq combobulate--tempo-point-pos nil)
-  ;; required as it won't display otherwise.
-  (let ((tempo-interactive t)
-        (tempo-marks)
-        (start (combobulate-node-start node)) (end (combobulate-node-end node))
-        (tempo-user-elements '(combobulate--tempo-handle-element-@
-                               combobulate--tempo-handle-element-y>)))
-    (save-excursion
-      ;; If we are asked to mark the node, we do. If not, we still go to
-      ;; the beginning
-      (if mark-node
-          (let ((inhibit-message t))
-            (progn (combobulate--mark-node node t)
-                   (setq start (point-marker))
-                   (setq end (mark-marker))))
-        (cond
-         ;; nothing to do if point is `stay'.
-         ((member point-placement '(start end))
-          (combobulate--goto-node node (eq point-placement 'end)))))
-      (tempo-insert-template template (or mark-node mark-active)))
-    (when combobulate--tempo-point-pos
-      (goto-char combobulate--tempo-point-pos))
-    (when combobulate-envelope-indent-region-function
-      (funcall combobulate-envelope-indent-region-function start end))))
+  (save-excursion
+    ;; If we are asked to mark the node, we do. If not, we still go to
+    ;; the beginning
+    (if mark-node
+        (combobulate--mark-node node t)
+      (cond
+       ;; nothing to do if point is `stay'.
+       ((member point-placement '(start end))
+        (combobulate--goto-node node (eq point-placement 'end)))))
+    (combobulate-envelope-expand-instructions template)))
 
 (defun combobulate-get-envelope-by-name (name)
   "Find an envelope with `:name' equal to NAME."
@@ -801,26 +1018,89 @@ does not move point to either of NODE's boundaries."
   (when-let (env (combobulate-get-envelope-by-name name))
     (symbol-function (plist-get env :template-symbol))))
 
-(defun combobulate-apply-envelope (envelope &optional node force)
-  "Envelop node near point with ENVELOPE."
-  (map-let (:nodes :mark-node :description :template-symbol :point-placement :name) envelope
-    (unless (and name nodes template-symbol)
+(defun combobulate-apply-envelope (envelope &optional node)
+  "Envelop NODE near point with ENVELOPE.
+
+Envelopes fail if point is not \"near\" NODE. Set FORCE to
+non-nil to override this check."
+  (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
+    (unless (and name nodes)
       (error "Envelope `%s' is not valid." envelope))
     (with-navigation-nodes (:nodes nodes)
       (if (setq node (or node (combobulate--get-nearest-navigable-node)))
-          (if (or force (combobulate-point-near-node node))
-              (progn (combobulate-message "Enveloping" node "in" description)
-                     (combobulate-envelop-node
-                      template-symbol
-                      node
-                      mark-node
-                      point-placement))
-            (error "Cannot apply envelope `%s'. Point must be in one of \
-these nodes: `%s'." name nodes))
+          (progn (combobulate-message "Enveloping" node "in" description)
+                 (combobulate-envelop-node
+                  template
+                  node
+                  mark-node
+                  point-placement))
         (error "Cannot apply envelope `%s'. Point must be in one of \
 these nodes: `%s'." name nodes)))))
 
-(defun combobulate-mark-node-dwim (&optional arg beginning-of-line)
+(defun combobulate-execute-envelope (envelope-name &optional node force)
+  "Executes any envelope with a `:name' equal to ENVELOPE-NAME.
+
+See `combobulate-apply-envelope' for more information."
+  (let ((envelope (combobulate-get-envelope-by-name envelope-name))
+        (chosen-node) (accepted nil))
+    (if node
+        (goto-char (cdr (combobulate-apply-envelope envelope node)))
+      (let ((combobulate-envelope-static t)
+            (change-group (prepare-change-group))
+            (undo-outer-limit nil)
+            (undo-limit most-positive-fixnum)
+            (undo-strong-limit most-positive-fixnum))
+        (unwind-protect
+            (progn
+              ;; use a change group to ensure we revert the proffered
+              ;; (and selected) choice immediately after. this is a
+              ;; hacky way of displaying an expansion (in conjunction
+              ;; with `combobulate-envelope-static' set to t) and not
+              ;; activate interactive prompts.
+              (activate-change-group change-group)
+              (setq chosen-node
+                    (combobulate-proffer-choices
+                     (seq-sort
+                      (lambda (a b)
+                        ;; "Smart" sorting that orders by largest node first but
+                        ;; *only* when the distance from `point' to the start of `a'
+                        ;; is 0 (i.e., the node starts at point.)
+                        ;;
+                        ;; For all other instances, we measure distance from point.
+                        (if (= (- (combobulate-node-start a) (point)) 0)
+                            (combobulate-node-larger-than-node-p a b)
+                          (> (- (combobulate-node-start a) (point))
+                             (- (combobulate-node-start b) (point)))))
+                      ;; #'combobulate-node-larger-than-node-p
+                      (seq-filter (lambda (n)
+                                    (and (or force (combobulate-point-near-node n))
+                                         (member (combobulate-node-type n)
+                                                 (plist-get envelope :nodes))))
+                                  (cons (combobulate-node-at-point)
+                                        (combobulate-get-parents (combobulate-node-at-point)))))
+                     (lambda (node mark-highlighted-fn _ mark-deleted-fn)
+                       ;; mark deleted and highlight first. That way when we apply
+                       ;; the envelope the overlays expand to match.
+                       (funcall mark-deleted-fn)
+                       (let ((ov (funcall mark-highlighted-fn)))
+                         (seq-let [[start &rest end] &rest pt]
+                             (combobulate-apply-envelope envelope node)
+                           (goto-char pt)
+                           ;; lil' hack. The extent of the node is not
+                           ;; the same as the envelope we just
+                           ;; applied.
+                           (move-overlay ov start end))))
+                     :reset-point-on-abort t
+                     :reset-point-on-accept nil))
+              (setq accepted t)
+              (cancel-change-group change-group))
+          (cancel-change-group change-group)))
+      ;; here we simply repeat what ever the selected choice was, as
+      ;; an explicit node skips the proffering process entirely.
+      (when (and chosen-node accepted)
+        (combobulate-execute-envelope envelope-name chosen-node)))))
+
+(defun combobulate-mark-node-at-point (&optional arg beginning-of-line)
   "Mark the most likely node on or near point ARG times.
 
 The exact node that is marked will depend on the location of
@@ -839,6 +1119,68 @@ point relative to the nodes in
       (combobulate--flash-node parent)
       parent)))
 
+(defun combobulate-mark-node-dwim (&optional arg beginning-of-line first-choice)
+  "Mark the most likely node on or near point ARG times.
+
+The exact node that is marked will depend on the location of
+point relative to the nodes in
+`combobulate-navigation-default-nodes'.
+
+If BEGINNING-OF-LINE is t, then the marked node has its point and
+mark extended, if possible, to the whole line.
+
+Setting FIRST-CHOICE to t disables proffered choices if there is
+more than one."
+  (interactive "^p")
+  (with-argument-repetition arg
+    ;; if the mark's ahead of point then we're at the beginning of the
+    ;; region; if so, swap places.
+    (when (and mark-active (> (point) (mark)))
+      (exchange-point-and-mark))
+    (let ((nodes (cons (combobulate--get-nearest-navigable-node)
+                       (combobulate-nav-get-parents
+                        (combobulate-node-at-point)))))
+      ;; maybe mark the thing at point first even though it may (or may
+      ;; not) match the extents of a node.
+      ;;
+      ;; Because we shift point around all the time, we don't want the
+      ;; `thing-at-point' machinery to pick up stray "things" at the
+      ;; edges of our region; that would be confusing. So only apply
+      ;; it if we don't have a region (i.e., the first time we run
+      ;; this command)
+      (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
+        ;; NOTE: this may need refinement over time; for now we
+        ;; hardcode the `:type' to be the symbol name of the thing
+        ;; we're looking for, though obviously that is most likely a
+        ;; made-up node type.
+        (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
+                   (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
+          (setq nodes (cons (make-combobulate-proxy-node
+                             :start (car bounds)
+                             :end (cdr bounds)
+                             :type (symbol-name combobulate-mark-node-or-thing-at-point)
+                             :named nil
+                             :node nil
+                             :pp thing
+                             :text thing)
+                            nodes))))
+      (combobulate-proffer-choices
+       (seq-drop-while #'combobulate-node-in-region-p nodes)
+       ;; do not mark `node' for deletion; highlight `node'; or
+       ;; move point to `node'.
+       (lambda (node &rest _) (combobulate--mark-node node nil beginning-of-line))
+       :reset-point-on-abort t
+       :reset-point-on-accept nil
+       ;; HACK: This allows repetition of the command that
+       ;; `combobulate-mark-node-dwim' is bound to, but this should be
+       ;; built into `combobulate-proffer-choices'. Furthermore, is
+       ;; `where-is-internal' really the best way to do this?
+       :extra-map (mapcar (lambda (key) (cons key 'next))
+                          (where-is-internal #'combobulate-mark-node-dwim
+                                             combobulate-key-map))
+       :flash-node t
+       :first-choice first-choice))))
+
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.
 
@@ -847,7 +1189,7 @@ defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
     (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes :skip-prefix t)
-      (unless (combobulate-mark-node-dwim nil t)
+      (unless (combobulate-mark-node-at-point nil t)
         (if (< arg 0)
             (combobulate-navigate-beginning-of-defun)
           (when (and mark-active (> (mark) (point)))
@@ -907,27 +1249,111 @@ Each member of PARTITIONS must be one of:
          (tally)
          (matches (or matches (cdr procedure))))
     (combobulate-refactor
-        (pcase-dolist (`(,action . ,node) matches)
-          (pcase action
-            ('@discard
-             (mark-node-deleted node)
-             (setq baseline-target (combobulate-baseline-indentation node))
-             (push (cons action node) tally))
-            ('@keep
-             (pcase-dolist (`(,position . ,part-node)
-                            (combobulate--partition-by-position point-node (list node)))
-               (when (member position partitions)
-                 (push (cons action node) tally)
-                 (pcase-let ((`(,start ,end) (combobulate-extend-region-to-whole-lines
-                                              (combobulate-node-start part-node)
-                                              (combobulate-node-end part-node))))
-                   (mark-copy start end)
-                   (mark-node-indent start end
-                                     baseline-target
-                                     (combobulate-baseline-indentation part-node))))))))
-      (combobulate-message (combobulate-tally-nodes tally))
-      (commit))
+     (pcase-dolist (`(,action . ,node) matches)
+       (pcase action
+         ('@discard
+          (mark-node-deleted node)
+          (setq baseline-target (combobulate-baseline-indentation node))
+          (push (cons action node) tally))
+         ('@keep
+          (pcase-dolist (`(,position . ,part-node)
+                         (combobulate--partition-by-position point-node (list node)))
+            (when (member position partitions)
+              (push (cons action node) tally)
+              (pcase-let ((`(,start ,end) (combobulate-extend-region-to-whole-lines
+                                           (combobulate-node-start part-node)
+                                           (combobulate-node-end part-node))))
+                (mark-copy start end)
+                (mark-node-indent start end
+                                  baseline-target
+                                  (combobulate-baseline-indentation part-node))))))))
+     (combobulate-message (combobulate-tally-nodes tally))
+     (commit))
     (combobulate--refactor-insert-copied-values combobulate-refactor--copied-values)))
+
+(defun combobulate-move-past-close-and-reindent (&optional arg)
+  (interactive "^p")
+  (with-argument-repetition arg
+    (combobulate-move-to-node (combobulate--navigate-up))
+    (if-let (sibling (combobulate--navigate-next))
+        (progn
+          (combobulate-move-to-node sibling)
+          (split-line))
+      (let ((col (current-column)))
+        (combobulate-move-to-node (combobulate--navigate-self-end) t)
+        (newline)
+        (indent-to col)))))
+
+(defun combobulate--yeet (point-node)
+  (let* ((current-col)
+         (source-node (or (car (reverse (combobulate--get-siblings point-node)))
+                          (error "No valid sibling node.")))
+         (target-node
+          (save-excursion
+            (combobulate-move-to-node
+             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+               (combobulate-nav-get-parent point-node)))
+            (or (combobulate-make-proxy (combobulate--get-sibling
+                                         (combobulate-node-at-point)
+                                         'forward))
+                (error "No valid sibling node.")))))
+    (save-excursion
+      (let ((pos) (pos-col))
+        (combobulate-refactor
+         (mark-range-move
+          (combobulate-node-start source-node)
+          (combobulate-node-end source-node)
+          (progn
+            (combobulate-move-to-node target-node)
+            (back-to-indentation)
+            (split-line 1)
+            (setq pos (point-marker))))
+         (commit))
+        (delete-blank-lines)
+        (goto-char pos)
+        (delete-blank-lines)))))
+
+(defun combobulate--yoink (point-node)
+  (let* ((current-col)
+         (point-sibling (car (reverse (combobulate--get-siblings point-node))))
+         (target-node
+          (save-excursion
+            (combobulate-move-to-node
+             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+               (combobulate-nav-get-parent point-node)))
+            (or (combobulate-make-proxy (combobulate--get-sibling
+                                         (combobulate-node-at-point)
+                                         'forward))
+                (error "No valid sibling node.")))))
+    (save-excursion
+      (let ((pos-col))
+        (combobulate-refactor
+         (mark-range-move
+          (combobulate-node-start target-node)
+          (combobulate-node-end target-node)
+          (progn
+            (setq pos-col (current-indentation))
+            ;; find the right place to place the newline and indent.
+            (if point-sibling
+                (combobulate-move-to-node point-sibling t)
+              (end-of-line))
+            (when (combobulate-after-point-blank-p (point))
+              (newline)
+              (indent-to pos-col))
+            (point)))
+         (commit))))))
+
+(defun combobulate-yoink-forward (arg)
+  (interactive "^p")
+  (with-argument-repetition arg
+    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+      (combobulate--yoink (combobulate--get-nearest-navigable-node)))))
+
+(defun combobulate-yeet-forward (arg)
+  (interactive "^p")
+  (with-argument-repetition arg
+    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+      (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
 
 (defun combobulate-delete-whitespace ()
   "Maybe deletes excess whitespace around point.
@@ -956,7 +1382,6 @@ moved to the modified node."
            (node (or (combobulate-node-at-point) (error "No navigable node")))
            (siblings (combobulate-get-immediate-siblings-of-node node)))
       (pcase-let ((`(,prev-sibling ,current-node ,next-sibling) siblings))
-        (combobulate-message (format "Dragging %s" (symbol-name direction)) prev-sibling)
         (if current-node
             (combobulate--goto-node current-node)
           (error "Cannot drag from this position"))
@@ -1028,45 +1453,6 @@ beginning of the line."
                       (push (cons label node) filtered))))
                 filtered))))
 
-
-(defun combobulate-move-node (node to-node placement-query)
-  "Move NODE on or near TO-NODE with PLACEMENT-QUERY.
-
-PLACEMENT-QUERY must be either nil, in which case the placement
-of NODE is approximated, or a query. The query must contain the
-label `@to-node' as a label for the base node from which the
-actual location of NODE is determined.
-
-The actual placement itself can be specified -- due to
-limitations in the query language -- as either `@before' or
-`@after' to indicate whether NODE should be placed before or
-after TO-NODE."
-  (pcase-let ((`(,position . ,target)
-               (or (if placement-query
-                       (cdr (combobulate-take-query-nodes-between
-                             (combobulate--query-from-node placement-query to-node)
-                             'to-node 'to-node))
-                     (cons 'after to-node))
-                   (error "Cannot find any placement nodes from `%s'" to-node))))
-    (unless target
-      (error "Cannot move `%s' as there is no valid target." node))
-    (let ((target-marker (combobulate--refactor-mark-position
-                          (combobulate-node-start target))))
-      (combobulate-node-region-lines node)
-      (combobulate-indent-node node (combobulate-baseline-indentation target) t)
-      (let ((delete-marker (combobulate--refactor-mark-deleted (point) (mark)))
-            (s (buffer-substring-no-properties (point) (mark))))
-        (deactivate-mark)
-        (combobulate--refactor-commit target-marker t)
-        (when (eq position 'after)
-          (forward-line 1))
-        (split-line)
-        (save-excursion
-          (forward-line 0)
-          (insert s))
-        (back-to-indentation)
-        (combobulate--refactor-commit delete-marker t)))))
-
 (defun combobulate--refactor-commit (ov &optional destroy-overlay)
   (if-let ((actions (overlay-get ov 'combobulate-refactor-actions)))
       (let* ((buf (overlay-buffer ov))
@@ -1090,6 +1476,17 @@ after TO-NODE."
                                                              ov-end))
                                           (t ov-end)))))
                      (symbol-value target-var)))
+              (`(move ,beg ,end ,position)
+               (let ((pos position)
+                     (trailing-newlines (combobulate-count-lines-ahead end)))
+                 (save-excursion
+                   (goto-char position)
+                   (combobulate--place-node-or-text
+                    position
+                    (prog1 (combobulate--delete-text beg end t t)
+                      (goto-char pos))
+                    nil
+                    (> trailing-newlines 1)))))
               ('(delete-region)
                ;; detect single-char overlays with newlines.
                (unless (string-blank-p (buffer-substring ov-start ov-end))
@@ -1098,8 +1495,11 @@ after TO-NODE."
                (combobulate-indent-region ov-start ov-end pt baseline-column))
               ('(set-point)
                (goto-char ov-start))
+              (`(field . ,_))
               ;; do nothing; it's just a highlight
               ('(highlighted))
+              ;; cursors are just for display.
+              ('(cursor))
               (_ (error "Unknown refactor commit action `%s'" action)))))
         (when destroy-overlay
           (delete-overlay ov)))
@@ -1110,6 +1510,13 @@ after TO-NODE."
     (overlay-put ov 'combobulate-refactor-actions '((set-point)))
     ov))
 
+(defun combobulate--refactor-mark-move (beg end target-position)
+  (let ((ov (make-overlay beg end)))
+    (overlay-put ov 'combobulate-refactor-actions `((move ,beg ,end ,target-position)))
+    (when combobulate-debug
+      (overlay-put ov 'face 'smerge-refined-changed))
+    ov))
+
 (defun combobulate--refactor-mark-deleted (beg end)
   (let ((ov (make-overlay beg end)))
     (overlay-put ov 'combobulate-refactor-actions '((delete-region)))
@@ -1117,10 +1524,10 @@ after TO-NODE."
       (overlay-put ov 'face 'smerge-refined-removed))
     ov))
 
-(defun combobulate--refactor-mark-highlighted (beg end)
-  (let ((ov (make-overlay beg end)))
+(defun combobulate--refactor-mark-highlighted (beg end &optional face advance)
+  (let ((ov (make-overlay beg end nil advance advance)))
     (overlay-put ov 'combobulate-refactor-actions '((highlighted)))
-    (overlay-put ov 'face 'combobulate-refactor-highlight-face)
+    (overlay-put ov 'face (or face 'combobulate-refactor-highlight-face))
     ov))
 
 (defun combobulate--refactor-mark-copy (beg end &optional target-var)
@@ -1137,6 +1544,48 @@ after TO-NODE."
       (overlay-put ov 'face 'diff-changed))
     ov))
 
+(defun combobulate--refactor-mark-field (pt tag text &optional transformer-fn)
+  (let ((ov (make-overlay pt pt nil t nil)))
+    ;; args 2 and 3 refer to respectively `tag' and the default value.
+    (overlay-put ov 'combobulate-refactor-actions `((field ,tag ,text)))
+    (overlay-put ov 'face 'combobulate-refactor-field-face)
+    (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
+    (combobulate--refactor-set-field ov text (symbol-name tag))
+    ov))
+
+(defun combobulate--refactor-mark-cursor (pt)
+  (let ((ov (make-overlay pt (1+ pt) nil t nil)))
+    ;; args 2 and 3 refer to respectively `tag' and the default value.
+    (overlay-put ov 'combobulate-refactor-actions `((cursor)))
+    (overlay-put ov 'face 'combobulate-refactor-cursor-face)
+    ov))
+
+(defun combobulate--refactor-set-field (ov text &optional default-text)
+  (let ((start (overlay-start ov))
+        (s (if (length= text 0) default-text text))
+        (transformer-fn (or (overlay-get ov 'combobulate-refactor-field-transformer-fn)
+                            #'identity)))
+    (delete-region start (overlay-end ov))
+    (goto-char start)
+    (insert (funcall transformer-fn s))
+    (move-overlay ov start (point))))
+
+(defun combobulate--refactor-field-has-tag-p (ov tag &optional action-name)
+  (let ((actions (overlay-get ov 'combobulate-refactor-actions))
+        (match))
+    (pcase-dolist (`(,action ,ov-tag _) actions)
+      (when (and (eq action (or action-name 'field)) (eq ov-tag tag))
+        (setq match t)))
+    match))
+
+(defun combobulate--refactor-update-field (ov tag text &optional default-text)
+  (let ((actions (overlay-get ov 'combobulate-refactor-actions)))
+    (when (combobulate--refactor-field-has-tag-p ov tag)
+      (map-put! actions 'field (cons tag text))
+      (overlay-put ov 'combobulate-refactor-actions actions)
+      (combobulate--refactor-set-field ov text default-text))
+    ov))
+
 (defun combobulate--refactor-mark-generic (beg end)
   (let ((ov (make-overlay beg end)))
     (overlay-put ov 'combobulate-refactor-actions '((generic)))
@@ -1147,8 +1596,6 @@ after TO-NODE."
 (defun combobulate-reinitialize-parser ()
   "Force tree-sitter to reparse the buffer."
   (interactive)
-  ;; Required after editing the buffer programmatically as the
-  ;; tree-sitter integration with Emacs is buggy.
   (dolist (parser (combobulate-parser-list))
     (combobulate-parser-create (combobulate-parser-language parser) nil t)
     (combobulate-parser-delete parser))

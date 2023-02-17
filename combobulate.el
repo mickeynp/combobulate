@@ -65,6 +65,8 @@
     (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
     (define-key map (kbd "M-<up>") #'combobulate-splice-up)
     (define-key map (kbd "M-<down>") #'combobulate-splice-down)
+    (define-key map (kbd "M-<left>") #'combobulate-yeet-forward)
+    (define-key map (kbd "M-<right>") #'combobulate-yoink-forward)
     (define-key map (kbd "M-N") #'combobulate-drag-down)
     (define-key map (kbd "M-P") #'combobulate-drag-up)
     (define-key map (kbd "M-a") #'combobulate-navigate-logical-previous)
@@ -103,11 +105,7 @@ same name, which is stored in `:function'"
                           (defalias fn-name
                             `(lambda () ,description
                                (interactive)
-                               (combobulate-apply-envelope ',envelope)))))
-         ;; Tempo has an insane requirement that it _must_ be fed the
-         ;; *symbol* that holds the template and never just the
-         ;; template.
-         (setf envelopes (plist-put envelope :template-symbol fn-name))
+                               (combobulate-execute-envelope ,name)))))
          (setf envelopes (plist-put envelope :point-placement (or point-placement 'start))))))
    envelopes))
 
@@ -136,9 +134,8 @@ have changed."
         ;; the procedures setup and ready before we continue.
         (setq-local combobulate-navigation-editable-nodes
                     (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
-        (define-key
-         combobulate-options-key-map
-         (kbd "e")
+        (local-set-key
+         (kbd "C-c o e")
          ;; todo: this should be a single-shot setup per mode.
          (let ((map (make-sparse-keymap)))
            (dolist (envelope (combobulate--setup-envelopes
@@ -168,6 +165,7 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
 (require 'combobulate-rules)
 (require 'combobulate-navigation)
 (require 'combobulate-manipulation)
+(require 'combobulate-envelope)
 (require 'combobulate-contrib)
 (require 'combobulate-display)
 (require 'combobulate-ui)

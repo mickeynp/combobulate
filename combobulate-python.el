@@ -70,14 +70,19 @@ line when you press
   :type 'boolean)
 
 (defun combobulate-python--get-definition (node)
-  (string-join (combobulate-query-node-text
-                '((_) name: (_) @name
-                  [(argument_list) (parameters)] @arg)
-                node t)
-               ""))
+  (string-join
+   (combobulate-query-node-text
+    (pcase (combobulate-node-type node)
+      ("function_definition"
+       '((_) name: (_) @name parameters: (_) @args))
+      ("class_definition"
+       '((_) name: (_) @name superclasses: (_) @args)))
+    node
+    t)
+   ""))
 
 (defun combobulate-python-pretty-print-node-name (node default-name)
-  "Pretty printer for JS and JSX nodes"
+  "Pretty printer for Python nodes"
   (combobulate-string-truncate
    (replace-regexp-in-string
     (rx (| (>= 2 " ") "\n")) ""
@@ -227,74 +232,88 @@ again to cycle indentation."))))
              :position at-or-in))
            :match-siblings (:keep-parent nil))))
 
-  (setq combobulate-manipulation-envelopes
-        `((:description
-           "( ... )"
-           :key "("
-           :extra-key "M-("
-           :mark-node t
-           :nodes ,(seq-difference (combobulate-production-rules-get "primary_expression")
-                                   '("identifier" "attribute"))
-           :name "wrap-parentheses"
-           :template (@ "(" r ")"))
-          (:description
-           "Decorate class or function"
-           :key "@"
-           :mark-node nil
-           :nodes ("function_definition" "class_definition")
-           :name "decorate"
-           :template ((p "Decorator name: ")
-                      n>))
-          (:description
-           "if ...:"
-           :key "bi"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-if"
-           :template
-           ("if " @ ":" n
-            y>))
-          (:description
-           "for ...:"
-           :key "bf"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-for"
-           :template
-           ("for " @ ":" n
-            y>))
-          (:description
-           "while ...:"
-           :key "bw"
-           :mark-node t
-           :nodes ("block")
-           :name "nest-while"
-           :template
-           ("while " @ ":" n
-            y>))))
+  (let ((statement-nodes
+         (append (combobulate-production-rules-get "_compound_statement")
+                 '("block"))))
+    (setq combobulate-manipulation-envelopes
+          `((:description
+             "( ... )"
+             :key "("
+             :extra-key "M-("
+             :mark-node t
+             :nodes ,(append (combobulate-production-rules-get "primary_expression")
+                             (combobulate-production-rules-get "expression"))
+             :name "wrap-parentheses"
+             :template (@ "(" r ")"))
+            (:description
+             "Decorate class or function"
+             :key "@"
+             :mark-node nil
+             :nodes ("function_definition" "class_definition")
+             :name "decorate"
+             :template ((p @decorator "Decorator name"
+                           (lambda (text)
+                             (if (string-prefix-p "@" text)
+                                 text
+                               (concat "@" text))))
+                        n>))
+            (:description
+             "if ...:"
+             :key "bi"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-if"
+             :template
+             ("if " @ ":" n>
+              r>))
+            (:description
+             "for ...:"
+             :key "bf"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-for"
+             :template
+             ("for " @ ":" n>
+              r>))
+            (:description
+             "while ...:"
+             :key "bw"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-while"
+             :template
+             ("while " @ ":" n>
+              r>)))))
 
   (push 'combobulate-python-indent-for-tab-command python-indent-trigger-commands)
   (setq combobulate-manipulation-edit-procedures
-        '((:activation-nodes
+        '(;; edit comments in blocks
+          (:activation-nodes
            ((:node "comment" :find-parent ("block") :position at-or-in))
            :match-query (block (comment)+ @match))
+          ;; edit pairs in dictionaries
           (:activation-nodes
            ((:node "pair" :find-parent "dictionary" :position at-or-in)
             (:node "dictionary" :position at-or-in))
            :match-query (dictionary (pair)+ @match)
            :remove-types ("comment"))
+          ;; edit parameters in functions
           (:activation-nodes
            ((:node "function_definition" :position at-or-in))
            :match-query (function_definition (parameters (_)+ @match))
            :remove-types ("comment"))
+          ;; edit elements in containers and blocks
           (:activation-nodes
-           ((:node ("block" "set" "list" "tuple") :position at-or-in))
+           ((:node ("block" "tuple_pattern" "set" "list" "tuple") :position at-or-in))
            :match-query ((_) (_)+ @match)
+           ;; :match-children t
            :remove-types ("comment"))
+          ;; edit arguments in calls
           (:activation-nodes
            ((:node "argument_list" :position at-or-in))
            :match-query ((argument_list) (_)+ @match)
            :remove-types ("comment"))
+          ;; edit imports
           (:activation-nodes
            ((:node "import_from_statement" :position at-or-in :find-parent "module"))
            :match-query (import_from_statement name: (dotted_name)+ @match))))
@@ -306,13 +325,17 @@ again to cycle indentation."))))
                                             "for_in_clause"))
   (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
                                                    "module" "match_statement" "dictionary"
-                                                   "case_clause" "list"
+                                                   "case_clause" "list" "while_statement" "tuple"
                                                    "try_statement" "class_definition"
                                                    "argument_list" "import_from_statement"
                                                    "for_statement" "parameters"))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ,(combobulate-production-rules-get "import_from_statement")
+             :position at-or-in
+             :find-immediate-parent ("import_from_statement"))
+            (:node
              ,(combobulate-production-rules-get "dictionary")
              :position at-or-in
              :find-immediate-parent ("dictionary"))
@@ -326,7 +349,8 @@ again to cycle indentation."))))
              ,(append
                (combobulate-production-rules-get "parameter")
                (combobulate-production-rules-get "argument_list")
-               (combobulate-production-rules-get "expression"))
+               (combobulate-production-rules-get "expression")
+               (combobulate-production-rules-get "primary_expression"))
              :position at-or-in
              :find-immediate-parent ("parameters" "argument_list")))
            :match-children t
@@ -338,8 +362,8 @@ again to cycle indentation."))))
                       (combobulate-production-rules-get "module")
                       '("module" "comment" "case_clause"))
              :position at-or-in
-             :find-immediate-parent ("case_clause" "module" "block")))
-           :remove-types ("comment")
+             :find-immediate-parent ("case_clause" "match_statement" "module" "block")))
+           :remove-types nil ;; ("comment")
            :match-children t)))
   (combobulate-production-rules-set '("argument_list"
                                       :included-fields (:*unnamed*)
@@ -385,14 +409,18 @@ again to cycle indentation."))))
         (append
          (combobulate-production-rules-get "_simple_statement")
          (combobulate-production-rules-get "_compound_statement")
+         (combobulate-production-rules-get "parameter")
          '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
-           "list" "call" "tuple" "string" "block" "case_clause" "set")))
+           "list" "call" "tuple" "string" "case_clause" "set")))
   (setq combobulate-navigation-logical-nodes
         (append
          (combobulate-production-rules-get "primary_expression")
          (combobulate-production-rules-get "expression")
          combobulate-navigation-default-nodes))
-  (setq combobulate-navigation-default-nodes combobulate-navigation-parent-child-nodes))
+  (setq combobulate-navigation-default-nodes
+        (seq-uniq (append
+                   combobulate-navigation-logical-nodes
+                   combobulate-navigation-parent-child-nodes))))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here

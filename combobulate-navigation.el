@@ -96,7 +96,6 @@ If HIGHLIGHTED then the node is highlighted with
         (concat (format "%s%s"
                         (propertize s 'face
                                     (cond
-                                     ((combobulate-node-in-region-p node) 'hi-green)
                                      (highlighted 'combobulate-tree-highlighted-node-face)
                                      (t 'combobulate-tree-normal-node-face)))
                         (if combobulate-debug (concat " " (combobulate-node-range node)) ""))))
@@ -132,6 +131,23 @@ Uses `point' and `mark' to infer the boundaries."
    (<= (combobulate-node-end node-a)
        (funcall #'max (point) (mark)))))
 
+(defun combobulate-before-point-blank-p (pt)
+  "Return t if there is nothing but blank text before PT."
+  (save-excursion
+    (goto-char pt)
+    (string-blank-p
+     (buffer-substring-no-properties
+      (save-excursion
+        (beginning-of-line)
+        (point))
+      (point)))))
+
+(defun combobulate-after-point-blank-p (pt)
+  "Return t if there is nothing but blank text or a newline after PT."
+  (save-excursion
+    (goto-char pt)
+    (looking-at "[ ]*\n")))
+
 (defun combobulate-node-contains-node-p (node-a node-b)
   "Return t if NODE-A is wholly contained inside NODE-B"
   (and (>= (combobulate-node-start node-a)
@@ -157,6 +173,12 @@ Uses `point' and `mark' to infer the boundaries."
        (> (- (combobulate-node-end node-a) (combobulate-node-start node-a))
           (- (combobulate-node-end node-b) (combobulate-node-start node-b)))))
 
+(defun combobulate-node-smaller-than-node-p (node-a node-b)
+  "Return t if NODE-A is larger than NODE-B"
+  (and node-a node-b
+       (< (- (combobulate-node-end node-a) (combobulate-node-start node-a))
+          (- (combobulate-node-end node-b) (combobulate-node-start node-b)))))
+
 (defun combobulate-node-ends-before-node-p (node-a node-b)
   "Return t if NODE-A ends before NODE-B "
   (and node-a node-b
@@ -176,7 +198,7 @@ Uses `point' and `mark' to infer the boundaries."
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
                       (combobulate-node-text (cdr node))))
-          (combobulate--query-from-node query node nil nil node-only)))
+          (combobulate-query-search node query t t)))
 
 (defun combobulate--get-nearest-navigable-node ()
   "Returns the nearest navigable node to point"
@@ -290,11 +312,11 @@ If NODE-ONLY is non-nil then only the node texts are returned"
 
 If AUTO is non-nil, then move to the end if point is at NODE's
 start."
-  (and node
-       (combobulate-move-to-node
-        node (or end (and auto (= (combobulate-node-start node) (point)))))
-       (combobulate--flash-node node)
-       node))
+  (when node
+    (combobulate-move-to-node
+     node (or end (and auto (= (combobulate-node-start node) (point)))))
+    (combobulate--flash-node node)
+    node))
 
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
@@ -333,7 +355,7 @@ Returns a list of parents ordered closest to farthest."
 (defun combobulate-node-at-point (&optional node-types)
   "Return the smallest syntax node at point whose type is one of NODE-TYPES "
   (let* ((p (point))
-         (node (combobulate-node-at p)))
+         (node (treesit-node-on p p)))
     (if node-types
         (let ((this node))
           (catch 'done
@@ -430,7 +452,7 @@ If NODE is nil, then nil is returned."
   "Skip prefix regexp used to skip past whitespace characters.")
 
 (cl-defmacro with-navigation-nodes ((&key (nodes nil) skip-prefix backward (skip-newline t) (procedures nil)) &rest body)
-  "Invoke BODY with a list of specific navigational nodes, and maybe advance point
+  "Invoke BODY with a list of specific navigational nodes, and maybe advance point.
 
 If `:nodes' is non-nil, it must be a list of legitimate tree
 sitter node types to `let'-bind to
@@ -476,10 +498,7 @@ original position."
   "Repeats BODY an ARG number of times
 
 This is designed to handle the prefix argument and negative
-modifier you can pass to many interactive movement commands.
-
-The binding `is-backward' is bound to the loop and holds the
-direction of travel."
+modifier you can pass to many interactive movement commands."
   (declare (indent 1) (debug (atom body)))
   (let ((--arg (gensym))
         (--inc (gensym))
@@ -501,6 +520,12 @@ direction of travel."
 (defun combobulate-point-at-beginning-of-node-p (node)
   "Returns non-nil if the beginning position of NODE is equal to `point'"
   (= (combobulate-node-point node) (point)))
+
+(defun combobulate-node-blank-p (node)
+  "Returns t if NODE consists of blank characters.
+
+The function `string-blank-p' is used to determine this."
+  (string-blank-p (combobulate-node-text node)))
 
 (defun combobulate-point-at-end-of-node-p (node &optional error-margin)
   "Returns non-nil if the end position of NODE is equal to `point'
@@ -629,6 +654,11 @@ of the node."
      ((stringp q) node-or-type)
      (t nil))))
 
+(defun combobulate--get-siblings (node)
+  "Return all siblings of NODE."
+  (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive
+                      (combobulate-node-start node)))))
+
 (defun combobulate--get-sibling (node direction)
   "Returns the sibling node of NODE in the specified DIRECTION.
 
@@ -639,61 +669,22 @@ can be either `backward' or `forward'. If DIRECTION is
 If DIRECTION is `forward', the next sibling of NODE is
 returned.
 
+If DIRECTION is `self', then NODE is resolved to the closes
+self-like sibling node.
+
 The function will aggressively try to search through the parents
 of the current node if the direction if `forward'. This is done
 to try and prevent point from getting stuck at the end of a node
 that technically has another immediate parent."
-  (let* ((siblings (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive (combobulate-node-start node))))))
-    (if (eq direction 'forward)
-        (car (seq-filter #'combobulate-node-after-point-p siblings))
+  (let* ((siblings (combobulate--get-siblings node)))
+    (cond
+     ((eq direction 'forward)
+      (car (seq-filter #'combobulate-node-after-point-p siblings)))
+     ((eq direction 'backward)
       (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
-
-    ;; At this point we should possibly have a sibling on either
-    ;; side of `current-node'.
-    ;;
-    ;; They may well be nil: it's possible not to have siblings.
-    ;; (setq siblings (or (combobulate-filter-nodes
-    ;;                     (or (combobulate--get-directed-siblings
-    ;;                          (or (and (member node combobulate-navigation-default-nodes) node)
-    ;;                              (car parents))
-    ;;                          direction))
-    ;;                     :keep-types combobulate-navigation-default-nodes)
-    ;;                    (if (eq direction 'forward)
-    ;;                        (seq-filter #'combobulate-node-after-point-p
-    ;;                                    (combobulate-node-children (car parents)))
-    ;;                      (reverse (seq-filter #'combobulate-node-before-point-p
-    ;;                                           (combobulate-node-children (car parents)))))))
-    ;; (car-safe siblings)
-    ;; (pcase-let ((`(,prev-sibling ,current-node ,next-sibling) siblings))
-    ;;   (unless current-node
-    ;;     (error "Unable find sibling to navigate from"))
-    ;;   ;; If we're moving up, we get the previous sibling
-    ;;   (if up
-    ;;       (cond ((combobulate-point-at-end-of-node-p current-node)
-    ;;              current-node)
-    ;;             (t prev-sibling))
-    ;;     ;; If we're moving to the next, then we maybe get the next
-    ;;     ;; sibling and if that fails we instead get the parent of
-    ;;     ;; `current-node''s next sibling.
-    ;;     (cond
-    ;;      ((and (or (combobulate-point-at-beginning-of-node-p current-node)
-    ;;                (combobulate-point-in-node-range-p current-node))
-    ;;            combobulate-navigate-next-move-to-end)
-    ;;       current-node)
-    ;;      ((and (not next-sibling)
-    ;;            (combobulate-point-at-end-of-node-p current-node))
-    ;;       ;; aggressively try to find a next sibling. note: needed/wanted?
-    ;;       (let ((current-parents (combobulate-nav-get-parents current-node)))
-    ;;         (catch 'done
-    ;;           (while current-parents
-    ;;             (when (setq current-node
-    ;;                         (thread-first (pop current-parents)
-    ;;                                       (combobulate-get-immediate-siblings-of-node)
-    ;;                                       (last)
-    ;;                                       (car)))
-    ;;               (throw 'done current-node))))))
-    ;;      (t next-sibling))))
-    ))
+     ((eq direction 'self)
+      (or (car (seq-filter #'combobulate-point-at-beginning-of-node-p siblings))
+          (when (combobulate-point-at-beginning-of-node-p node)))))))
 
 (defun combobulate-nav-get-next-sibling (node)
   "Get the next sibling of NODE"
@@ -703,6 +694,9 @@ that technically has another immediate parent."
   "Get the previous sibling of NODE"
   (combobulate--get-sibling node 'backward))
 
+(defun combobulate-nav-get-self-sibling (node)
+  "Get the current (self) sibling of NODE."
+  (combobulate--get-sibling node 'self))
 
 (defun combobulate-nav-get-child (node)
   "Finds the first navigable child of NODE"
@@ -1170,8 +1164,14 @@ but with added support for navigable nodes."
                            ;; minimum of the remaining elements and go to that.
                            (lambda (elem) (and elem (> elem (point))))
                            (list (save-excursion (ignore-errors (down-list 1 nil) (point)))
+                                 (if (combobulate-point-at-beginning-of-node-p navigable-node)
+                                     (combobulate-node-point navigable-node t))
                                  (combobulate-node-point (combobulate-nav-get-child navigable-node))
-                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))))))
+                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))
+                                 (ignore-errors (save-excursion
+                                                  (backward-up-list 1 nil)
+                                                  (forward-sexp)
+                                                  (point)))))))
         (when-let (target (apply #'min targets))
           (goto-char target)
           (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
@@ -1199,80 +1199,122 @@ but with added support for navigable nodes."
           (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
 
 
+(defun combobulate--navigate-up ()
+  (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+    (combobulate-nav-get-parent
+     (combobulate-node-at-point))))
+
 (defun combobulate-navigate-up (&optional arg)
   "Move up to the nearest navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-get-parent
-                                        (combobulate--get-nearest-navigable-node))))))
+    (combobulate-visual-move-to-node (combobulate--navigate-up))))
+
+(defun combobulate--navigate-down ()
+  (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+    (combobulate-nav-get-child
+     (combobulate--get-nearest-navigable-node))))
 
 (defun combobulate-navigate-down (&optional arg)
   "Move down into the nearest navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-get-child
-                                        (combobulate--get-nearest-navigable-node))))))
+    (combobulate-visual-move-to-node (combobulate--navigate-down))))
+
+(defun combobulate--navigate-next ()
+  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+    (combobulate-nav-get-next-sibling
+     (combobulate--get-nearest-navigable-node))))
 
 (defun combobulate-navigate-next (&optional arg)
   "Move to the next navigable sibling ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
-      (combobulate-visual-move-to-node (combobulate-nav-get-next-sibling
-                                        (combobulate--get-nearest-navigable-node))
-                                       combobulate-navigate-next-move-to-end))))
+    (combobulate-visual-move-to-node (combobulate--navigate-next)
+                                     combobulate-navigate-next-move-to-end)))
+
+(defun combobulate--navigate-self-end ()
+  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+    (combobulate-nav-get-self-sibling
+     (combobulate--get-nearest-navigable-node))))
+
+(defun combobulate-navigate-self-end (&optional arg)
+  "Move to the end of the current navigable node ARG times"
+  (interactive "^p")
+  (with-argument-repetition arg
+    (combobulate-visual-move-to-node (combobulate--navigate-self-end)
+                                     combobulate-navigate-next-move-to-end)))
+
+(defun combobulate--navigate-previous ()
+  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (combobulate-nav-get-prev-sibling
+     (combobulate--get-nearest-navigable-node))))
 
 (defun combobulate-navigate-previous (&optional arg)
   "Move to the previous navigable sibling ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-      (combobulate-visual-move-to-node (combobulate-nav-get-prev-sibling
-                                        (combobulate--get-nearest-navigable-node))))))
+    (combobulate-visual-move-to-node (combobulate--navigate-previous))))
+
+(defun combobulate--navigate-forward ()
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
+    (combobulate-nav-forward t)))
 
 (defun combobulate-navigate-forward (&optional arg)
   "If at the beginning of a navigable node, move forward ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-forward t) t))))
+    (combobulate-visual-move-to-node (combobulate--navigate-forward) t)))
+
+(defun combobulate--navigate-backward ()
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
+    (combobulate-nav-backward t)))
 
 (defun combobulate-navigate-backward (&optional arg)
   "If at the end of a navigable node, move backward ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-backward t)))))
+    (combobulate-visual-move-to-node (combobulate--navigate-backward))))
+
+(defun combobulate--navigate-logical-next ()
+  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix nil)
+    (combobulate-nav-logical-next)))
 
 (defun combobulate-navigate-logical-next (&optional arg)
   "Move to the next logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix t)
-      (combobulate-visual-move-to-node (combobulate-nav-logical-next) nil t))))
+    (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil t)))
+
+(defun combobulate--navigate-logical-previous ()
+  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
+    (combobulate-nav-logical-previous)))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
   "Move to the previous logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-logical-previous)))))
+    (combobulate-visual-move-to-node (combobulate--navigate-logical-previous))))
+
+(defun combobulate--navigate-end-of-defun ()
+  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+    (combobulate-nav-end-of-defun)))
 
 (defun combobulate-navigate-end-of-defun (&optional arg)
   "Navigate to the end of defun ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-end-of-defun) t))))
+    (combobulate-visual-move-to-node (combobulate--navigate-end-of-defun) t)))
+
+(defun combobulate--navigate-beginning-of-defun ()
+  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+    (combobulate-nav-beginning-of-defun)))
 
 (defun combobulate-navigate-beginning-of-defun (&optional arg)
   "Navigate to the beginning of defun ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
-      (combobulate-visual-move-to-node (combobulate-nav-beginning-of-defun)))))
+    (combobulate-visual-move-to-node (combobulate--navigate-beginning-of-defun))))
 
 
 (defun combobulate-query-build-nested-query (nodes query &optional never-merge)
@@ -1390,233 +1432,234 @@ removed."
   (and n (intern (combobulate-node-type n))))
 
 (defun combobulate-query-search-1 (query-node query)
-  (let ((parent query-node)
-        (children)
-        (stack)
-        (term) (term-type)
-        (stack-delta 0)
-        ;; one of `start', `field', `node', `sibling' or `label'.
-        (state 'start))
-    (cl-flet* ((to-field (v) (and (symbolp v) (string-remove-suffix ":" (symbol-name v))))
-               (label-p (v) (and (symbolp v) (cond ((string-prefix-p "@" (symbol-name v))
-                                                    'node-label)
-                                                   ((string-prefix-p "*" (symbol-name v))
-                                                    'type-label)
-                                                   ((string-prefix-p "!" (symbol-name v))
-                                                    'text-label))))
-               (make-label (label v)
-                 (cons label (progn
-                               (setq v (if (consp v) (car v) v))
-                               (cond
-                                ((eq (label-p label) 'node-label) v)
-                                ;; NOTE: this can fail if `v' is a cons
-                                ;; with more than one element. How
-                                ;; should that be handled? Is it even
-                                ;; possible?
-                                ((eq (label-p label) 'text-label) (combobulate-node-text v))
-                                ((eq (label-p label) 'type-label) (combobulate-node-type v))
-                                (t (error "Unknown label type `%s'" (label-p label)))))))
-               (push-stack (item) (push item stack) item)
-               (pop-stack () (pop stack))
-               (state-p (expected-states)
-                 (member state (if (listp expected-states) expected-states (list expected-states))))
-               (assert-state (expected-states)
-                 (unless (or (not expected-states) (state-p expected-states))
-                   (error "State error. Expected current state to be `%s', but it is `%s'."
-                          expected-states state)))
-               (set-expected-state (new-state &optional expected-states)
-                 (assert-state expected-states)
+  (when query-node
+    (let ((parent query-node)
+          (children)
+          (stack)
+          (term) (term-type)
+          (stack-delta 0)
+          ;; one of `start', `field', `node', `sibling' or `label'.
+          (state 'start))
+      (cl-flet* ((to-field (v) (and (symbolp v) (string-remove-suffix ":" (symbol-name v))))
+                 (label-p (v) (and (symbolp v) (cond ((string-prefix-p "@" (symbol-name v))
+                                                      'node-label)
+                                                     ((string-prefix-p "*" (symbol-name v))
+                                                      'type-label)
+                                                     ((string-prefix-p "!" (symbol-name v))
+                                                      'text-label))))
+                 (make-label (label v)
+                   (cons label (progn
+                                 (setq v (if (consp v) (car v) v))
+                                 (cond
+                                  ((eq (label-p label) 'node-label) v)
+                                  ;; NOTE: this can fail if `v' is a cons
+                                  ;; with more than one element. How
+                                  ;; should that be handled? Is it even
+                                  ;; possible?
+                                  ((eq (label-p label) 'text-label) (combobulate-node-text v))
+                                  ((eq (label-p label) 'type-label) (combobulate-node-type v))
+                                  (t (error "Unknown label type `%s'" (label-p label)))))))
+                 (push-stack (item) (push item stack) item)
+                 (pop-stack () (pop stack))
+                 (state-p (expected-states)
+                   (member state (if (listp expected-states) expected-states (list expected-states))))
+                 (assert-state (expected-states)
+                   (unless (or (not expected-states) (state-p expected-states))
+                     (error "State error. Expected current state to be `%s', but it is `%s'."
+                            expected-states state)))
+                 (set-expected-state (new-state &optional expected-states)
+                   (assert-state expected-states)
 
-                 (setq state new-state)))
+                   (setq state new-state)))
 
-      (setq children (combobulate-node-children query-node t))
+        (setq children (combobulate-node-children query-node t))
 
-      (while query
-        (setq term (pop query))
-        (setq term-type (combobulate-query--term-type term))
-        (pcase term
-          ;; Handle the very first term in the query. This state is
-          ;; always treated specially, as it's important that
-          ;; `query-node' matches against the first `term'.
-          ;;
-          ;; This is required or node `foo' would match query `(bar)'
-          ;; which is wrong.
-          ((and (guard (state-p '(start))))
-           (if (eq term-type 'sibling-query)
-               (progn
-                 (set-expected-state 'sibling)
-
-                 (push term query))
-             (if (pcase term-type
-                   ('anonymous (equal (combobulate-node-text query-node) term))
-                   ('node (equal term (combobulate-query--node-type query-node)))
-                   ('sub-query (combobulate-query-search-1 query-node term))
-                   ((or 'wildcard 'named-wildcard) t)
-                   (_ (error "Unknown start term %s" term)))
-                 ;; ensure the new state is `node' as we properly matched the node
+        (while query
+          (setq term (pop query))
+          (setq term-type (combobulate-query--term-type term))
+          (pcase term
+            ;; Handle the very first term in the query. This state is
+            ;; always treated specially, as it's important that
+            ;; `query-node' matches against the first `term'.
+            ;;
+            ;; This is required or node `foo' would match query `(bar)'
+            ;; which is wrong.
+            ((and (guard (state-p '(start))))
+             (if (eq term-type 'sibling-query)
                  (progn
-                   (set-expected-state 'node)
-                   ;; return the query-node to the stack so it can be
-                   ;; processed properly as a match.
-                   (setq stack-delta 1)
-                   (if (eq term-type 'node)
-                       (push-stack query-node)
-                     (push-stack query-node)))
-               (set-expected-state 'no-match))))
-          ;; handle `field:' terms
-          ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
-           (set-expected-state 'field '(node))
-           (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
-             (unless (map-contains-key rule (intern (concat ":" (to-field field))))
-               (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
-                      query-node field (map-keys rule))))
-           (push-stack (to-field field)))
-          ;; Handle the labels. There are three types:
-          ;;
-          ;; - `@label', which maps directly the node;
-          ;;
-          ;; - `!label', which maps to the text of the node;
-          ;;
-          ;; - `*label', which maps to the type of the node.
-          ;;
-          ((and (guard (member term-type '(node-label text-label type-label)))
-                (guard (state-p '(node))) label)
-           (when stack-delta
-             (let* ((elems))
-               (dotimes (_ stack-delta)
-                 (push (pop-stack) elems))
-               (dolist (e elems)
-                 (push-stack (make-label label e))
-                 (when combobulate-query--nested-labels
-                   (push (make-label label e) combobulate-query--labelled-nodes)))
-               (unless combobulate-query--nested-labels
-                 (combobulate-walk-tree elems (lambda (leaf _)
-                                                (push (make-label label leaf)
-                                                      combobulate-query--labelled-nodes)))))
-             (setq stack-delta 0))
-           (set-expected-state 'node))
-          ;; handle (_), _, "string" and ( ... )
-          ;;
-          ;; NOTE: turn this into a dedicate predicate that returns
-          ;; the type of term.
-          ((and (guard (member term-type
-                               '(anonymous
-                                 sibling-query
-                                 field node sub-query
-                                 wildcard named-wildcard)))
-                (guard (state-p '(node field)))
-                `,sub-query)
-           (let* ((starting-children children)
-                  ;; determine if it is a wildcard node and what type
-                  ;; (is-wildcard-node (member term-type '(named-wildcard
-                  ;;                                       wildcard)))
-                  ;; named-only searches apply to only some terms
-                  ;; (named-only-search
-                  ;;  (or (and is-wildcard-node (eq term-type 'named-wildcard))
-                  ;;      ;; TODO: missing stringp? label check? field check?
-                  ;;      (or (and (symbolp sub-query) (not is-wildcard-node))
-                  ;;          ;; (eq term-type 'sibling-query)
-                  ;;          (consp sub-query))))
-                  )
+                   (set-expected-state 'sibling)
 
-             (pcase state
-               ('node
-                (pcase (funcall
-                        #'combobulate-query--match-many-children
-                        children
-                        (if (eq term-type 'sibling-query)
-                            sub-query
-                          (list sub-query))
-                        ;; peek at the next term. this would have been
-                        ;; better handled with a prefix-style notation
-                        ;; as that is in keeping with lisps'
-                        ;; roots. however, the tree-sitter query
-                        ;; language has postfix, and, well, so do we.
-                        (let ((next-term-type (combobulate-query--term-type (car query))))
-                          (cond
-                           ((and (eq next-term-type 'quantifier)
-                                 (state-p '(node)))
-                            ;; we matched a quantifier; now get rid of
-                            ;; it from the query list and pass it to
-                            ;; the funcall.
-                            (pop query))
-                           ;; no explicit quantifier? use `1'.
-                           (t '1)))
-                        ;; This is a sloppy take on look-ahead for
-                        ;; greedy matching: pass on a stop node -- if
-                        ;; there is one -- so that the greedy
-                        ;; quantifiers stop matching when they
-                        ;; encounter it
-                        (let ((look-ahead query))
-                          (seq-find
-                           (lambda (next-term)
-                             (pcase (combobulate-query--term-type next-term)
-                               ((or 'field 'quantifier 'node-label 'text-label 'type-label)
-                                nil)
-                               (_ t)))
-                           look-ahead))
-                        (eq term-type 'sibling-query))
-                  ;; `match' indicates that one or more matching
-                  ;; results were found.
-                  ;;
-                  ;; The `remaining-children' are the ones that we
-                  ;; process because
-                  ;; `combobulate-query--match-children' met its test
-                  ;; function and quantifier requirements.
-                  (`(match . (,results . ,remaining-children))
+                   (push term query))
+               (if (pcase term-type
+                     ('anonymous (equal (combobulate-node-text query-node) term))
+                     ('node (equal term (combobulate-query--node-type query-node)))
+                     ('sub-query (combobulate-query-search-1 query-node term))
+                     ((or 'wildcard 'named-wildcard) t)
+                     (_ (error "Unknown start term %s" term)))
+                   ;; ensure the new state is `node' as we properly matched the node
+                   (progn
+                     (set-expected-state 'node)
+                     ;; return the query-node to the stack so it can be
+                     ;; processed properly as a match.
+                     (setq stack-delta 1)
+                     (if (eq term-type 'node)
+                         (push-stack query-node)
+                       (push-stack query-node)))
+                 (set-expected-state 'no-match))))
+            ;; handle `field:' terms
+            ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
+             (set-expected-state 'field '(node))
+             (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
+               (unless (map-contains-key rule (intern (concat ":" (to-field field))))
+                 (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
+                        query-node field (map-keys rule))))
+             (push-stack (to-field field)))
+            ;; Handle the labels. There are three types:
+            ;;
+            ;; - `@label', which maps directly the node;
+            ;;
+            ;; - `!label', which maps to the text of the node;
+            ;;
+            ;; - `*label', which maps to the type of the node.
+            ;;
+            ((and (guard (member term-type '(node-label text-label type-label)))
+                  (guard (state-p '(node))) label)
+             (when stack-delta
+               (let* ((elems))
+                 (dotimes (_ stack-delta)
+                   (push (pop-stack) elems))
+                 (dolist (e elems)
+                   (push-stack (make-label label e))
+                   (when combobulate-query--nested-labels
+                     (push (make-label label e) combobulate-query--labelled-nodes)))
+                 (unless combobulate-query--nested-labels
+                   (combobulate-walk-tree elems (lambda (leaf _)
+                                                  (push (make-label label leaf)
+                                                        combobulate-query--labelled-nodes)))))
+               (setq stack-delta 0))
+             (set-expected-state 'node))
+            ;; handle (_), _, "string" and ( ... )
+            ;;
+            ;; NOTE: turn this into a dedicate predicate that returns
+            ;; the type of term.
+            ((and (guard (member term-type
+                                 '(anonymous
+                                   sibling-query
+                                   field node sub-query
+                                   wildcard named-wildcard)))
+                  (guard (state-p '(node field)))
+                  `,sub-query)
+             (let* ((starting-children children)
+                    ;; determine if it is a wildcard node and what type
+                    ;; (is-wildcard-node (member term-type '(named-wildcard
+                    ;;                                       wildcard)))
+                    ;; named-only searches apply to only some terms
+                    ;; (named-only-search
+                    ;;  (or (and is-wildcard-node (eq term-type 'named-wildcard))
+                    ;;      ;; TODO: missing stringp? label check? field check?
+                    ;;      (or (and (symbolp sub-query) (not is-wildcard-node))
+                    ;;          ;; (eq term-type 'sibling-query)
+                    ;;          (consp sub-query))))
+                    )
 
-                   (set-expected-state 'node)
-                   (setq children remaining-children)
-                   ;; keep tabs of how much we added to the stack this
-                   ;; time around. (it'd be better if we could keep a
-                   ;; pointer to our position in the list...)
-                   (setq stack-delta (length results))
-                   (when results (mapcar #'push-stack results)))
-                  ;; `ignore' means that the quantifier (most likely)
-                  ;; indicated that attempted a look-ahead (usually
-                  ;; greedy) match, but failed to find anything.
-                  ;;
-                  ;; Because that is legal, we do not exit the search
-                  ;; as we ordinarily would: instead we reset children
-                  ;; to what they were when we began
-                  (`(ignore . ,_)
+               (pcase state
+                 ('node
+                  (pcase (funcall
+                          #'combobulate-query--match-many-children
+                          children
+                          (if (eq term-type 'sibling-query)
+                              sub-query
+                            (list sub-query))
+                          ;; peek at the next term. this would have been
+                          ;; better handled with a prefix-style notation
+                          ;; as that is in keeping with lisps'
+                          ;; roots. however, the tree-sitter query
+                          ;; language has postfix, and, well, so do we.
+                          (let ((next-term-type (combobulate-query--term-type (car query))))
+                            (cond
+                             ((and (eq next-term-type 'quantifier)
+                                   (state-p '(node)))
+                              ;; we matched a quantifier; now get rid of
+                              ;; it from the query list and pass it to
+                              ;; the funcall.
+                              (pop query))
+                             ;; no explicit quantifier? use `1'.
+                             (t '1)))
+                          ;; This is a sloppy take on look-ahead for
+                          ;; greedy matching: pass on a stop node -- if
+                          ;; there is one -- so that the greedy
+                          ;; quantifiers stop matching when they
+                          ;; encounter it
+                          (let ((look-ahead query))
+                            (seq-find
+                             (lambda (next-term)
+                               (pcase (combobulate-query--term-type next-term)
+                                 ((or 'field 'quantifier 'node-label 'text-label 'type-label)
+                                  nil)
+                                 (_ t)))
+                             look-ahead))
+                          (eq term-type 'sibling-query))
+                    ;; `match' indicates that one or more matching
+                    ;; results were found.
+                    ;;
+                    ;; The `remaining-children' are the ones that we
+                    ;; process because
+                    ;; `combobulate-query--match-children' met its test
+                    ;; function and quantifier requirements.
+                    (`(match . (,results . ,remaining-children))
 
-                   (set-expected-state 'node)
-                   (setq children starting-children))
-                  ;; `no-match' indicates that a required match was
-                  ;; attempted and failed.
-                  ;;
-                  ;; This is an exit event.
-                  (`(no-match ,_)
+                     (set-expected-state 'node)
+                     (setq children remaining-children)
+                     ;; keep tabs of how much we added to the stack this
+                     ;; time around. (it'd be better if we could keep a
+                     ;; pointer to our position in the list...)
+                     (setq stack-delta (length results))
+                     (when results (mapcar #'push-stack results)))
+                    ;; `ignore' means that the quantifier (most likely)
+                    ;; indicated that attempted a look-ahead (usually
+                    ;; greedy) match, but failed to find anything.
+                    ;;
+                    ;; Because that is legal, we do not exit the search
+                    ;; as we ordinarily would: instead we reset children
+                    ;; to what they were when we began
+                    (`(ignore . ,_)
 
-                   ;; search failed. we looked ahead and found no
-                   ;; children that matched. set the expected state
-                   ;; to `no-match' and reset `children' to nil
-                   (set-expected-state 'no-match)
-                   (setq children nil))
-                  ;; for everything else: throw an error.
-                  (`(,unknown-tag ,rest)
-                   (error "Unknown match tag returned: %s %s" unknown-tag rest))))
-               ;; this handles field matching
-               ('field
-                (set-expected-state 'node 'field)
-                (let ((matches (combobulate-query-search-1
-                                (combobulate-node-child-by-field parent (pop-stack))
-                                sub-query)))
-                  (when matches
-                    (push-stack matches))
-                  (setq stack-delta (length matches))))
-               (_ (error "Unknown parse state for query matcher: `%s'" state)))))
-          (_ (unless (state-p '(no-match))
-               (error "Query parse error: %s Query: %s" term query)))))
-      ;; If we end our state with a `no-match' state, then we've clearly
-      ;; failed to match against the `query'.
-      ;;
-      ;; If so, return `nil'. Otherwise, reverse `stack' and return
-      ;; it: it holds the tree of matches.
+                     (set-expected-state 'node)
+                     (setq children starting-children))
+                    ;; `no-match' indicates that a required match was
+                    ;; attempted and failed.
+                    ;;
+                    ;; This is an exit event.
+                    (`(no-match ,_)
 
-      (if (state-p '(no-match)) nil
-        (reverse stack)))))
+                     ;; search failed. we looked ahead and found no
+                     ;; children that matched. set the expected state
+                     ;; to `no-match' and reset `children' to nil
+                     (set-expected-state 'no-match)
+                     (setq children nil))
+                    ;; for everything else: throw an error.
+                    (`(,unknown-tag ,rest)
+                     (error "Unknown match tag returned: %s %s" unknown-tag rest))))
+                 ;; this handles field matching
+                 ('field
+                  (set-expected-state 'node 'field)
+                  (let ((matches (combobulate-query-search-1
+                                  (combobulate-node-child-by-field parent (pop-stack))
+                                  sub-query)))
+                    (when matches
+                      (push-stack matches))
+                    (setq stack-delta (length matches))))
+                 (_ (error "Unknown parse state for query matcher: `%s'" state)))))
+            (_ (unless (state-p '(no-match))
+                 (error "Query parse error: %s Query: %s" term query)))))
+        ;; If we end our state with a `no-match' state, then we've clearly
+        ;; failed to match against the `query'.
+        ;;
+        ;; If so, return `nil'. Otherwise, reverse `stack' and return
+        ;; it: it holds the tree of matches.
+
+        (if (state-p '(no-match)) nil
+          (reverse stack))))))
 
 (defun combobulate-query-find-test-function (term)
   (let ((term-type (combobulate-query--term-type term)))

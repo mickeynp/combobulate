@@ -36,7 +36,7 @@
 (declare-function combobulate-draw-node-tree "combobulate-display")
 (declare-function combobulate-node-visible-window-p "combobulate-navigation")
 (declare-function combobulate-node-p "combobulate-navigation")
-
+(declare-function combobulate-display-draw-node-tree "combobulate-display")
 
 
 (defconst combobulate-sigil (propertize "©" 'face 'font-lock-keyword-face))
@@ -73,10 +73,32 @@
       s)))
 
 
+(defun combobulate-count-lines-ahead (&optional pt)
+  "Count the number of lines ahead of point."
+  (save-excursion
+    (goto-char (or pt (point)))
+    (combobulate-string-count
+     "\n"
+     (buffer-substring-no-properties
+      (or pt (point))
+      (save-excursion
+        (skip-chars-forward "[:space:]\n")
+        (point))))))
+
+(defun combobulate-string-count (regexp string)
+  "Count the number of REGEXP in STRING.
+
+No effort is made to account for, or exclude, overlaps."
+  (let ((ct 0) (offset 0))
+    (while (setq offset (string-match regexp string offset))
+      (cl-incf ct)
+      (cl-incf offset))
+    ct))
+
 (defun combobulate--flash-node (node)
   "Flashes NODE on the screen."
   (when (and node combobulate-flash-node)
-    (message "%s" (combobulate-draw-node-tree node))))
+    (message "%s" (combobulate-display-draw-node-tree node))))
 
 (defsubst combobulate-debug (s &rest args)
   (princ (apply #'format (concat s "\n") args)))
