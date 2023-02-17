@@ -138,8 +138,8 @@ kept."
                   (lambda (node)
                     (if (combobulate-node-p node)
                         (make-combobulate-proxy-node
-                         :start (treesit-node-start node)
-                         :end (treesit-node-end node)
+                         :start (set-marker (make-marker) (treesit-node-start node))
+                         :end (set-marker (make-marker) (treesit-node-end node))
                          :text (treesit-node-text node)
                          :type (treesit-node-type node)
                          :named (treesit-node-check node 'named)

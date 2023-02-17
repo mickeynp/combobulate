@@ -65,6 +65,8 @@
     (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
     (define-key map (kbd "M-<up>") #'combobulate-splice-up)
     (define-key map (kbd "M-<down>") #'combobulate-splice-down)
+    (define-key map (kbd "M-<left>") #'combobulate-yeet-forward)
+    (define-key map (kbd "M-<right>") #'combobulate-yoink-forward)
     (define-key map (kbd "M-N") #'combobulate-drag-down)
     (define-key map (kbd "M-P") #'combobulate-drag-up)
     (define-key map (kbd "M-a") #'combobulate-navigate-logical-previous)

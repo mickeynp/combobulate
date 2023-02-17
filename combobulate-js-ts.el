@@ -114,65 +114,23 @@ from `combobulate-manipulation-envelopes') to insert."
       ("lexical_declaration" (combobulate-js-ts--get-declaration-name node))
       (_ default-name))))
 
-(defun combobulate-maybe-auto-close-tag ()
-  "Insert `>' or maybe insert the closing tag."
-  (interactive)
-  (self-insert-command 1 ?>)
-  (save-excursion
-    (forward-char -1)
-    (when (not (eq ?/ (char-before)))
-      (when-let (open-node (combobulate-node-at-point '("jsx_opening_element")))
-        (forward-char 1)
-        (insert (format "</%s>" (combobulate-node-text
-                                 (combobulate-node-child-by-field
-                                  open-node "name"))))))))
 
-(defun combobulate-maybe-close-tag-or-self-insert ()
-  "Insert `/' or maybe close the nearest unopened tag."
-  (interactive)
-  (cl-flet ((get-text (node field)
-              (thread-first node (combobulate-node-child-by-field field)
-                            (combobulate-node-child-by-field "name")
-                            (combobulate-node-text))))
-    (if (looking-back "<" 1)
-        (progn
-          (let* ((element (combobulate-node-at-point '("jsx_element"))))
-            (if (equal (get-text element "open_tag")
-                       (get-text element "close_tag"))
-                (self-insert-command 1 ?/)
-              (combobulate-message "Closing node" element)
-              (combobulate-pulse-node (combobulate-node-child-by-field element "open_tag"))
-              (insert (format "/%s>" (get-text element "open_tag"))))))
-      (self-insert-command 1 ?/))))
-
-
-
-(defun combobulate-maybe-insert-attribute ()
-  "Insert `=' or maybe a JSX attribute."
-  (interactive)
-  (if-let ((node (combobulate-node-at-point '("jsx_opening_element" "jsx_self_closing_element"))))
-      (atomic-change-group
-        (catch 'done
-          (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
-            (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
-              (combobulate-apply-envelope (combobulate-get-envelope-by-name envelope) node)
-              (throw 'done t)))
-          ;; catch flagrant, out-of-place uses of `='.
-          (if (looking-back "[[:alpha:]]" 1)
-              (combobulate-apply-envelope (combobulate-get-envelope-by-name
-                                           combobulate-js-ts-attribute-envelope-default)
-                                          node)
-            (self-insert-command 1 ?=))))
-    (self-insert-command 1 ?=)))
 
 (defun combobulate-js-ts-setup (lang)
   (let ((is-ts (member lang '(tsx typescript))))
     (when combobulate-js-ts-enable-attribute-envelopes
       (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute))
     (when combobulate-js-ts-enable-guess-close-tag
-      (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert))
+      ;; (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert)
+      )
     (when combobulate-js-ts-enable-auto-close-tag
       (local-set-key (kbd ">") #'combobulate-maybe-auto-close-tag))
+
+    (setq combobulate-sgml-open-tag "jsx_opening_element")
+    (setq combobulate-sgml-close-tag "jsx_closing_element")
+    (setq combobulate-sgml-whole-tag "jsx_element")
+    (setq combobulate-sgml-self-closing-tag "jsx_self_closing_element")
+
 
     ;; NOTE This is subject to change
     (setq combobulate-manipulation-envelopes
@@ -223,7 +181,7 @@ from `combobulate-manipulation-envelopes') to insert."
              :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
              :name "ternary"
              :template ("{" @ "null" >
-                        n > " ? " r>
+                        n > " ? " @ r>
                         n > " : " "null" >
                         n > "}" >))
             (:description
@@ -413,10 +371,14 @@ from `combobulate-manipulation-envelopes') to insert."
 
     (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
     (setq combobulate-navigation-parent-child-nodes
-          '("program" "arrow_function"
-            "function_declaration" "lexical_declaration"
-            "export_statement" "jsx_fragment" "jsx_element" "jsx_opening_element"
-            "jsx_expression" "object" "jsx_self_closing_element" "array"))
+          `("program"
+            ,@(combobulate-production-rules-get "declaration")
+            ,@(combobulate-production-rules-get "statement")
+            ,@(combobulate-production-rules-get "statement_block")
+            ;; "function_declaration" "lexical_declaration"
+            ;; "export_statement"  "array""arrow_function"
+            "jsx_fragment" "jsx_element" "jsx_opening_element"
+            "jsx_expression" "jsx_self_closing_element"))
 
     (setq combobulate-navigation-default-nodes
           (append combobulate-navigation-parent-child-nodes

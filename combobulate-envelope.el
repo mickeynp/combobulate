@@ -140,15 +140,15 @@ locally bound to the context of `combobulate-refactor'."
          (funcall mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn)
          (push (cons 'prompt
                      (lambda () (unless combobulate-envelope-static
-                                  (let ((new-text))
-                                    (unless (setq new-text (combobulate-envelope-get-register tag))
-                                      (setq new-text (combobulate-envelope-prompt
-                                                      prompt tag nil
-                                                      (lambda ()
-                                                        (combobulate-envelope--update-prompts
-                                                         buf tag (minibuffer-contents)))))
-                                      (push (cons tag new-text) combobulate-envelope--registers))
-                                    (combobulate-envelope--update-prompts buf tag new-text)))))
+                             (let ((new-text))
+                               (unless (setq new-text (combobulate-envelope-get-register tag))
+                                 (setq new-text (combobulate-envelope-prompt
+                                                 prompt tag nil
+                                                 (lambda ()
+                                                   (combobulate-envelope--update-prompts
+                                                    buf tag (minibuffer-contents)))))
+                                 (push (cons tag new-text) combobulate-envelope--registers))
+                               (combobulate-envelope--update-prompts buf tag new-text)))))
                pass-through-instructions))
         ;;; `(field TAG)' or `(f TAG)'
         ;;
@@ -239,6 +239,8 @@ locally bound to the context of `combobulate-refactor'."
              ;; *first* and *then* ask prompt the user if they want
              ;; to keep the now-displayed instruction.
              (let ((repeat-answer t))
+               (when combobulate-envelope-static
+                 (setq max-repeat 1))
                (while (and repeat-answer (> max-repeat 0))
                  (combobulate-refactor
                   ;; call with `combobulate-envelope-static' set to
@@ -257,6 +259,13 @@ locally bound to the context of `combobulate-refactor'."
                     ;; `combobulate-refactor' -- we can delete
                     ;; the expansion immediately after the
                     ;; prompt.
+
+                    ;; BUG: if
+                    ;; `combobulate-envelope-expand-instructions-1'
+                    ;; ends up calling `save-column' as its last form
+                    ;; before exiting, then the call to set the column
+                    ;; will corrupt the `inst-end' value resulting in
+                    ;; text being left behind.
                     (mark-range-deleted inst-start inst-end)
                     (mark-range-highlighted inst-start inst-end)
                     ;; note that regardless of whether we accept
@@ -267,8 +276,9 @@ locally bound to the context of `combobulate-refactor'."
                     ;; instead re-run it, and this time
                     ;; interactively so prompts and the like are
                     ;; invoked.
-                    (if (setq repeat-answer (combobulate-envelope-prompt-expansion
-                                             "Apply this expansion? "))
+                    (if (setq repeat-answer
+                              (or combobulate-envelope-static
+                                  (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                         (progn (commit)
                                (setq pass-through-instructions
                                      (nconc pass-through-instructions
@@ -487,6 +497,7 @@ expansion:
                            nodes
                            (lambda (_ _ move-fn _)
                              (funcall move-fn))
+                           :first-choice combobulate-envelope-static
                            :reset-point-on-abort t
                            :reset-point-on-accept nil)))
                    (rollback))))))
