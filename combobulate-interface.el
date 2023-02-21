@@ -164,7 +164,8 @@ kept."
           (combobulate--goto-node proxy-node)
           (when-let (pt-node (combobulate-node-at-point (list (combobulate-node-type proxy-node))))
             (when (and
-                   (equal (combobulate-node-range proxy-node)
+                   (equal (cons (marker-position (car (combobulate-node-range proxy-node)))
+                                (marker-position (cdr (combobulate-node-range proxy-node))))
                           (combobulate-node-range pt-node))
                    (equal (combobulate-node-type pt-node)
                           (combobulate-node-type proxy-node)))

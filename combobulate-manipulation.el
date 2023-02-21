@@ -915,10 +915,10 @@ buffer.
                                                               (where-is-internal 'next map)
                                                               ", ")
                                                    (if (and flash-node combobulate-flash-node)
-                                                       (concat (or (combobulate-display-draw-node-tree
+                                                       (concat "\n"
+                                                               (or (combobulate-display-draw-node-tree
                                                                     (combobulate-proxy-to-tree-node current-node))
-                                                                   "")
-                                                               "\n")
+                                                                   ""))
                                                      "")))
                                           nil nil))))
                                ;; if `condition-case' traps a quit
