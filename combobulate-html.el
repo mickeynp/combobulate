@@ -31,10 +31,14 @@
 (require 'combobulate-navigation)
 (require 'combobulate-rules)
 
+(defvar combobulate-js-ts-attribute-envelope-alist)
 (defvar-local combobulate-sgml-open-tag nil)
 (defvar-local combobulate-sgml-close-tag nil)
 (defvar-local combobulate-sgml-whole-tag nil)
 (defvar-local combobulate-sgml-self-closing-tag nil)
+(defvar-local combobulate-js-ts-attribute-envelope-default "attr-string")
+
+(declare-function combobulate-execute-envelope "combobulate-manipulation")
 
 (defun combobulate-maybe-auto-close-tag ()
   "Insert `>' or maybe insert the closing tag."
@@ -55,33 +59,33 @@
                                    open-node 0)))))))))
 
 ;; Note: brittle.
-(defun combobulate-maybe-close-tag-or-self-insert ()
-  "Insert `/' or maybe close the nearest unopened tag."
-  (interactive)
-  (cl-flet ((get-text (node closing)
-              (if (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
-                  (thread-first node
-                                (combobulate-node-child
-                                 (if (equal field combobulate-sgml-close-tag)
-                                     -1
-                                   0))
-                                (combobulate-node-child 0)
-                                (combobulate-node-text))
-                (thread-first node
-                              (combobulate-node-child-by-field
-                               (if closing "close_tag" "open_tag"))
-                              (combobulate-node-child-by-field "name")
-                              (combobulate-node-text)))))
-    (if (looking-back "<" 1)
-        (progn
-          (let* ((element (combobulate-node-at-point (list combobulate-sgml-whole-tag))))
-            (if (equal (get-text element nil)
-                       (get-text element t))
-                (self-insert-command 1 ?/)
-              (combobulate-message "Closing node" element)
-              (combobulate-pulse-node (combobulate-node-child element 0))
-              (insert (format "/%s>" (get-text element combobulate-sgml-open-tag))))))
-      (self-insert-command 1 ?/))))
+;; (defun combobulate-maybe-close-tag-or-self-insert ()
+;;   "Insert `/' or maybe close the nearest unopened tag."
+;;   (interactive)
+;;   (cl-flet ((get-text (node closing)
+;;               (if (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
+;;                   (thread-first node
+;;                                 (combobulate-node-child
+;;                                  (if (equal field combobulate-sgml-close-tag)
+;;                                      -1
+;;                                    0))
+;;                                 (combobulate-node-child 0)
+;;                                 (combobulate-node-text))
+;;                 (thread-first node
+;;                               (combobulate-node-child-by-field
+;;                                (if closing "close_tag" "open_tag"))
+;;                               (combobulate-node-child-by-field "name")
+;;                               (combobulate-node-text)))))
+;;     (if (looking-back "<" 1)
+;;         (progn
+;;           (let* ((element (combobulate-node-at-point (list combobulate-sgml-whole-tag))))
+;;             (if (equal (get-text element nil)
+;;                        (get-text element t))
+;;                 (self-insert-command 1 ?/)
+;;               (combobulate-message "Closing node" element)
+;;               (combobulate-pulse-node (combobulate-node-child element 0))
+;;               (insert (format "/%s>" (get-text element combobulate-sgml-open-tag))))))
+;;       (self-insert-command 1 ?/))))
 
 (defun combobulate-maybe-insert-attribute ()
   "Insert `=' or maybe a JSX attribute."

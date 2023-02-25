@@ -32,6 +32,7 @@
 (require 'combobulate-manipulation)
 (require 'combobulate-interface)
 (require 'combobulate-rules)
+(require 'combobulate-html)
 
 (defgroup combobulate-js-ts nil
   "Configuration switches for Javascript, Typescript and JSX/TSX."
@@ -120,9 +121,8 @@ from `combobulate-manipulation-envelopes') to insert."
   (let ((is-ts (member lang '(tsx typescript))))
     (when combobulate-js-ts-enable-attribute-envelopes
       (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute))
-    (when combobulate-js-ts-enable-guess-close-tag
-      ;; (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert)
-      )
+    ;; (when combobulate-js-ts-enable-guess-close-tag
+    ;;   (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert))
     (when combobulate-js-ts-enable-auto-close-tag
       (local-set-key (kbd ">") #'combobulate-maybe-auto-close-tag))
 

@@ -625,7 +625,7 @@ first line is preserved."
   "Clone NODE and place it at POSITION."
   (combobulate--place-node-or-text position node))
 
-(defun combobulate--place-node-or-text (position node-or-text &optional mode trailing-newline)
+(defun combobulate--place-node-or-text (position node-or-text &optional mode _trailing-newline)
   "Place NODE-OR-TEXT at POSITION.
 
 NODE-OR-TEXT must be a valid node or a string.
@@ -1286,8 +1286,7 @@ Each member of PARTITIONS must be one of:
         (indent-to col)))))
 
 (defun combobulate--yeet (point-node)
-  (let* ((current-col)
-         (source-node (or (car (reverse (combobulate--get-siblings point-node)))
+  (let* ((source-node (or (car (reverse (combobulate--get-siblings point-node)))
                           (error "No valid sibling node.")))
          (target-node
           (save-excursion
@@ -1299,7 +1298,7 @@ Each member of PARTITIONS must be one of:
                                          'forward))
                 (error "No valid sibling node.")))))
     (save-excursion
-      (let ((pos) (pos-col))
+      (let ((pos))
         (combobulate-refactor
          (mark-range-move
           (combobulate-node-start source-node)
@@ -1315,8 +1314,7 @@ Each member of PARTITIONS must be one of:
         (delete-blank-lines)))))
 
 (defun combobulate--yoink (point-node)
-  (let* ((current-col)
-         (point-sibling (car (reverse (combobulate--get-siblings point-node))))
+  (let* ((point-sibling (car (reverse (combobulate--get-siblings point-node))))
          (target-node
           (save-excursion
             (combobulate-move-to-node

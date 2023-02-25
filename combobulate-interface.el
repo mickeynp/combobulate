@@ -57,6 +57,9 @@
 (defsubst combobulate-parser-delete (language)
   (treesit-parser-delete language))
 
+(defsubst combobulate-parser-node (node)
+  (treesit-node-parser node))
+
 (defsubst combobulate-query-capture (node query &optional beg end node-only)
   (treesit-query-capture node query beg end node-only))
 
