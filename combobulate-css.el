@@ -60,7 +60,7 @@
                         :mark-node t
                         :nodes ("rule_set")
                         :name "media-query"
-                        :template ("@media (max-width: " (p "max-width: ") ") {" >
+                        :template ("@media (max-width: " (p 768px "max-width") @ ") {" >
                                    >
                                    n r> >
                                    n > "}" >))))
