@@ -46,6 +46,10 @@ SOURCES = {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-python/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-python/master/src/grammar.json",
     },
+    "c": {
+        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/grammar.json",
+    },
     "html": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/grammar.json",
