@@ -36,6 +36,7 @@
 (defvar-local combobulate-sgml-close-tag nil)
 (defvar-local combobulate-sgml-whole-tag nil)
 (defvar-local combobulate-sgml-self-closing-tag nil)
+(defvar-local combobulate-sgml-exempted-tags '("jsx_expression"))
 (defvar-local combobulate-js-ts-attribute-envelope-default "attr-string")
 
 (declare-function combobulate-execute-envelope "combobulate-manipulation")
@@ -47,16 +48,21 @@
   (save-excursion
     (forward-char -1)
     (when (not (eq ?/ (char-before)))
-      (when-let (open-node (combobulate-node-at-point (list combobulate-sgml-open-tag)))
-        (forward-char 1)
-        (insert (format "</%s>" (combobulate-node-text
-                                 (or
-                                  ;; for tsx/jsx
-                                  (combobulate-node-child-by-field
-                                   open-node "name")
-                                  ;; for `html'
-                                  (combobulate-node-child
-                                   open-node 0)))))))))
+      (let ((open-node (combobulate-node-at-point (list combobulate-sgml-open-tag))))
+        ;; only attempt an expansion if we are not inside one of the exempted tags.
+        (when (and (= (combobulate-node-end open-node) (1+ (point)))
+                   (not (combobulate-node-contains-node-p
+                         (combobulate-node-at-point combobulate-sgml-exempted-tags)
+                         open-node)))
+          (forward-char 1)
+          (insert (format "</%s>" (combobulate-node-text
+                                   (or
+                                    ;; for tsx/jsx
+                                    (combobulate-node-child-by-field
+                                     open-node "name")
+                                    ;; for `html'
+                                    (combobulate-node-child
+                                     open-node 0))))))))))
 
 ;; Note: brittle.
 ;; (defun combobulate-maybe-close-tag-or-self-insert ()
@@ -92,18 +98,26 @@
   (interactive)
   (if-let ((node (combobulate-node-at-point (list combobulate-sgml-open-tag
                                                   combobulate-sgml-self-closing-tag))))
-      (atomic-change-group
-        (catch 'done
-          (unless (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
-            (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
-              (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
-                (combobulate-execute-envelope envelope node)
-                (throw 'done t))))
-          ;; catch flagrant, out-of-place uses of `='.
-          (if (looking-back "[[:alpha:]]" 1)
-              (combobulate-execute-envelope combobulate-js-ts-attribute-envelope-default
-                                            node)
-            (self-insert-command 1 ?=))))
+      ;; Expanding an attribute is only desirable if we are inside an
+      ;; open (or self-closing) node, but *also not* inside a node
+      ;; type in `combobulate-sgml-exempted-tags' which happens to be
+      ;; inside one of those node types.
+      (if (combobulate-node-contains-node-p
+           (combobulate-node-at-point combobulate-sgml-exempted-tags)
+           node)
+          (self-insert-command 1 ?=)
+        (atomic-change-group
+          (catch 'done
+            (unless (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
+              (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
+                (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
+                  (combobulate-execute-envelope envelope node)
+                  (throw 'done t))))
+            ;; catch flagrant, out-of-place uses of `='.
+            (if (looking-back "[[:alpha:]]" 1)
+                (combobulate-execute-envelope combobulate-js-ts-attribute-envelope-default
+                                              node)
+              (self-insert-command 1 ?=)))))
     (self-insert-command 1 ?=)))
 
 (defun combobulate-html-pretty-print (node default-name)
