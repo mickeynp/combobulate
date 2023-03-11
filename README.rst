@@ -156,7 +156,9 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
                (css-ts-mode . combobulate-mode)
                (yaml-ts-mode . combobulate-mode)
                (typescript-ts-mode . combobulate-mode)
-               (tsx-ts-mode . combobulate-mode))
+               (tsx-ts-mode . combobulate-mode)
+               (c-ts-mode . combobulate-mode)
+               (c++-ts-mode . combobulate-mode))
         ;; Amend this to the directory where you keep Combobulate's source
         ;; code.
         :load-path ("path-to-git-checkout-of-combobulate")))

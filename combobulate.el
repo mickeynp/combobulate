@@ -178,6 +178,7 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
 (require 'combobulate-js-ts)
 (require 'combobulate-css)
 (require 'combobulate-yaml)
+(require 'combobulate-c)
 ;;; end language support
 
 (provide 'combobulate)

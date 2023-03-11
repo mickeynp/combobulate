@@ -371,7 +371,9 @@ Matches all the key-portion of key-value pairs in a dictionary")
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
     ;; note: private mode; not yet released.
-    (html . combobulate-html-setup))
+    (html . combobulate-html-setup)
+    (c . combobulate-c-setup)
+    (cpp . combobulate-c-setup))
   "Alist of setup functions to call when \\[combobulate-mode] is enabled.
 
 Because tree-sitter-enabled modes are different from the ordinary

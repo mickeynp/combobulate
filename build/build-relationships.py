@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8; mode: python -*-
 
 import requests
@@ -49,6 +50,10 @@ SOURCES = {
     "c": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/grammar.json",
+    },
+    "cpp": {
+        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-cpp/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-cpp/master/src/grammar.json",
     },
     "html": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/node-types.json",
