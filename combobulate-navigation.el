@@ -150,7 +150,8 @@ Uses `point' and `mark' to infer the boundaries."
 
 (defun combobulate-node-contains-node-p (node-a node-b)
   "Return t if NODE-A is wholly contained inside NODE-B"
-  (and (>= (combobulate-node-start node-a)
+  (and node-a node-b
+       (>= (combobulate-node-start node-a)
            (combobulate-node-start node-b))
        (<= (combobulate-node-end node-a)
            (combobulate-node-end node-b))))

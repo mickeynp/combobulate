@@ -1073,7 +1073,10 @@ See `combobulate-apply-envelope' for more information."
                             (combobulate-node-larger-than-node-p a b)
                           (> (- (combobulate-node-start a) (point))
                              (- (combobulate-node-start b) (point)))))
-                      ;; #'combobulate-node-larger-than-node-p
+                      ;; if we don't have any assigned envelope nodes,
+                      ;; create a proxy node at point; that node (and
+                      ;; thus `point') will instead be where the
+                      ;; envelope is inserted.
                       (if envelope-nodes
                           (seq-filter (lambda (n)
                                         (and (or force (combobulate-point-near-node n))
