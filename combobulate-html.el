@@ -31,13 +31,14 @@
 (require 'combobulate-navigation)
 (require 'combobulate-rules)
 
+(defvar combobulate-js-ts-attribute-envelope-default)
 (defvar combobulate-js-ts-attribute-envelope-alist)
 (defvar-local combobulate-sgml-open-tag nil)
 (defvar-local combobulate-sgml-close-tag nil)
 (defvar-local combobulate-sgml-whole-tag nil)
 (defvar-local combobulate-sgml-self-closing-tag nil)
 (defvar-local combobulate-sgml-exempted-tags '("jsx_expression"))
-(defvar-local combobulate-js-ts-attribute-envelope-default "attr-string")
+
 
 (declare-function combobulate-execute-envelope "combobulate-manipulation")
 
@@ -115,8 +116,12 @@
                   (throw 'done t))))
             ;; catch flagrant, out-of-place uses of `='.
             (if (looking-back "[[:alpha:]]" 1)
-                (combobulate-execute-envelope combobulate-js-ts-attribute-envelope-default
-                                              node)
+                (combobulate-execute-envelope
+                 ;; html can only do strings, so just use that.
+                 (if (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
+                     "attr-string"
+                   combobulate-js-ts-attribute-envelope-default)
+                 node)
               (self-insert-command 1 ?=)))))
     (self-insert-command 1 ?=)))
 
