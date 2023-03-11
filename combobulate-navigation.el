@@ -318,6 +318,17 @@ start."
     (combobulate--flash-node node)
     node))
 
+(defun combobulate-make-proxy-point-node ()
+  "Create a proxy node at `point'."
+  (make-combobulate-proxy-node
+   :start (point)
+   :end (point)
+   :text ""
+   :type "point"
+   :named t
+   :node nil
+   :pp ""))
+
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
   `([,@(mapcar (lambda (node) (list (make-symbol node))) combobulate-navigation-default-nodes)] @node))

@@ -1025,7 +1025,7 @@ does not move point to either of NODE's boundaries."
 Envelopes fail if point is not \"near\" NODE. Set FORCE to
 non-nil to override this check."
   (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
-    (unless (and name nodes)
+    (unless (and name)
       (error "Envelope `%s' is not valid." envelope))
     (with-navigation-nodes (:nodes nodes)
       (if (setq node (or node (combobulate--get-nearest-navigable-node)))
@@ -1047,6 +1047,7 @@ See `combobulate-apply-envelope' for more information."
     (if node
         (goto-char (cdr (combobulate-apply-envelope envelope node)))
       (let ((combobulate-envelope-static t)
+            (envelope-nodes (plist-get envelope :nodes))
             (change-group (prepare-change-group))
             (undo-outer-limit nil)
             (undo-limit most-positive-fixnum)
@@ -1073,12 +1074,14 @@ See `combobulate-apply-envelope' for more information."
                           (> (- (combobulate-node-start a) (point))
                              (- (combobulate-node-start b) (point)))))
                       ;; #'combobulate-node-larger-than-node-p
-                      (seq-filter (lambda (n)
-                                    (and (or force (combobulate-point-near-node n))
-                                         (member (combobulate-node-type n)
-                                                 (plist-get envelope :nodes))))
-                                  (cons (combobulate-node-at-point)
-                                        (combobulate-get-parents (combobulate-node-at-point)))))
+                      (if envelope-nodes
+                          (seq-filter (lambda (n)
+                                        (and (or force (combobulate-point-near-node n))
+                                             (member (combobulate-node-type n)
+                                                     envelope-nodes)))
+                                      (cons (combobulate-node-at-point)
+                                            (combobulate-get-parents (combobulate-node-at-point))))
+                        (list (combobulate-make-proxy-point-node))))
                      (lambda (node mark-highlighted-fn _ mark-deleted-fn)
                        ;; mark deleted and highlight first. That way when we apply
                        ;; the envelope the overlays expand to match.
