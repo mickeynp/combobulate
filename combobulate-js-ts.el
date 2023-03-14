@@ -139,7 +139,9 @@ from `combobulate-manipulation-envelopes') to insert."
              :key "("
              :extra-key "M-("
              :mark-node t
-             :nodes ,(combobulate-production-rules-get "primary_expression")
+             :nodes ,(append
+                      (combobulate-production-rules-get "primary_expression")
+                      (combobulate-production-rules-get "expression"))
              :name "wrap-parentheses"
              :template (@ "(" r ")"))
             (:description
