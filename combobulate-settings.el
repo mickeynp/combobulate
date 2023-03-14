@@ -164,7 +164,7 @@ the node."
   "Face for the branches and guides in the display tree."
   :group 'combobulate-faces)
 
-(defface combobulate-tree-highlighted-node-face '((t (:inherit font-lock-property-face)))
+(defface combobulate-tree-highlighted-node-face '((t (:inherit font-lock-property-name-face)))
   "Face for combobulate nodes that are prominently displayed in the UI"
   :group 'combobulate-faces)
 
