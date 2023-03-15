@@ -1118,7 +1118,8 @@ DIRECTION must be `forward' or `backward'."
        tree
        (lambda (leaf depth)
          (when (and (if (eq 'forward direction)
-                        (combobulate-node-on-or-after-point-p leaf)
+                        (or (combobulate-point-near-node leaf)
+                            (combobulate-node-on-or-after-point-p leaf))
                       (combobulate-node-before-point-p leaf))
                     (or
                      ;; we can always match against nodes at the
