@@ -1043,6 +1043,9 @@ these nodes: `%s'." name nodes)))))
 See `combobulate-apply-envelope' for more information."
   (let ((envelope (combobulate-get-envelope-by-name envelope-name))
         (chosen-node) (accepted nil))
+    (unless envelope
+      (error "There is no such envelope registered with the name `%s'"
+             envelope-name))
     (if node
         (goto-char (cdr (combobulate-apply-envelope envelope node)))
       (let ((combobulate-envelope-static t)
