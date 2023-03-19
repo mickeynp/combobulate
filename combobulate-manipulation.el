@@ -625,7 +625,7 @@ first line is preserved."
   "Clone NODE and place it at POSITION."
   (combobulate--place-node-or-text position node))
 
-(defun combobulate--place-node-or-text (position node-or-text &optional mode _trailing-newline)
+(defun combobulate--place-node-or-text (position node-or-text &optional mode no-trailing-newline)
   "Place NODE-OR-TEXT at POSITION.
 
 NODE-OR-TEXT must be a valid node or a string.
@@ -642,7 +642,7 @@ If MODE is non-nil, then it must be either `newline' or
 a new line. If MODE is `inline' then it is places inline
 alongside other nodes around POSITION.
 
-If TRAILING-NEWLINE is t, then a trailing newline is inserted
+If NO-TRAILING-NEWLINE is t, then no trailing newline is inserted
 after NODE-OR-TEXT."
   (let* ((col (save-excursion (goto-char position)
                               (current-column)))
@@ -674,8 +674,7 @@ after NODE-OR-TEXT."
              (combobulate-before-point-blank-p position))
         ;; newline-delimited node
         (progn
-          ;; (when trailing-newline
-          ;;   (split-line 0))
+          (unless no-trailing-newline (split-line 0))
           (combobulate--refactor-insert-copied-values
            (list node-text)))
       ;; inline-delimited node
