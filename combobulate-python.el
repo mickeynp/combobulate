@@ -163,6 +163,7 @@ Returns a non-nil value to indicate the indentation took place."
         (current-indentation)
       (* python-indent-offset (length calculated-indentation)))))
 
+(defvar combobulate-python--indent-levels nil)
 (defun combobulate-python-indent-for-tab-command (&optional arg)
   "Proxy command for `indent-for-tab-command' that keeps region active.
 
@@ -190,15 +191,17 @@ indent commands cycle through all valid indentation stops."
           ;; indentation offsets.
           (unless (and (eq last-command this-command) has-active-region)
             ;; avoid loops if there is only one entry.
-            (when (> (length levels) 1)
-              ;; Build a circular loop of `levels' so we can tab ad infinitum
-              ;; and cycle through the options.
-              (setq combobulate-python-indent-cycle (if (= (apply #'max levels) current-level)
-                                                        (nconc rlevels rlevels)
-                                                      (nconc levels levels)))
-              (while (and (= current-level (car combobulate-python-indent-cycle))
-                          (member current-level levels))
-                (pop combobulate-python-indent-cycle))))
+            (if (> (length levels) 1)
+                (progn
+                  ;; Build a circular loop of `levels' so we can tab ad infinitum
+                  ;; and cycle through the options.
+                  (setq combobulate-python-indent-cycle (if (= (apply #'max levels) current-level)
+                                                            (nconc rlevels rlevels)
+                                                          (nconc levels levels)))
+                  (while (and (= current-level (car combobulate-python-indent-cycle))
+                              (member current-level levels))
+                    (pop combobulate-python-indent-cycle)))
+              (setq combobulate-python-indent-cycle levels)))
           (indent-for-tab-command arg)
           (combobulate-message
            (concat (combobulate-python--display-indicator)
@@ -267,6 +270,26 @@ again to cycle indentation."))))
              ("if " @ ":" n>
               r>))
             (:description
+             "try ... finally: ..."
+             :key "btf"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-try-finally"
+             :template
+             (@ (save-column "try:" n>
+                             r> n>)
+                "finally:" n>
+                "pass" n>))
+            (:description
+             "def ...():"
+             :key "bd"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-def"
+             :template
+             ("def " (p name "Name") "(" @ ")" ":" n>
+              r>))
+            (:description
              "for ...:"
              :key "bf"
              :mark-node t
@@ -322,7 +345,7 @@ again to cycle indentation."))))
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "lambda"))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
-                                            "for_in_clause"))
+                                            "for_in_clause" "string"))
   (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
                                                    "module" "match_statement" "dictionary"
                                                    "case_clause" "list" "while_statement" "tuple"

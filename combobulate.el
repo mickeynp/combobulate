@@ -139,7 +139,8 @@ have changed."
          ;; todo: this should be a single-shot setup per mode.
          (let ((map (make-sparse-keymap)))
            (dolist (envelope (combobulate--setup-envelopes
-                              combobulate-manipulation-envelopes))
+                              (append combobulate-manipulation-envelopes
+                                      (alist-get parser-lang combobulate-manipulation-envelopes-custom))))
              (map-let (:function :key :extra-key) envelope
                (define-key map (kbd key) function)
                (when extra-key

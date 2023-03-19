@@ -339,6 +339,13 @@ well in indentation-sensitive languages like YAML or Python.")
 (defvar-local combobulate-manipulation-envelopes nil
   "Code generators that wrap -- envelop -- nodes")
 
+(defvar combobulate-manipulation-envelopes-custom nil
+  "Alist of (LANGUAGE . ENVELOPES).
+
+Where LANGUAGE must be a valid `treesit-parser-language' symbol
+to bind the envelopes against. ENVELOPES must be a list of
+envelopes.")
+
 (defvar-local combobulate-navigation-sibling-procedures nil
   "Nodes used for sibling movement")
 
