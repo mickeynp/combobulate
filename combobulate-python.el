@@ -108,16 +108,32 @@ This function is designed to be called from
 `indent-region-function' and (indirectly) through
 \\[combobulate-python-indent-for-tab-command]."
   (let ((deactivate-mark nil))
-    (when combobulate-python-indent-cycle
-      (save-mark-and-excursion
-        (when (and (use-region-p) (> (point) (mark)))
-          (exchange-point-and-mark))
-        (skip-chars-backward combobulate-skip-prefix-regexp
-                             (line-beginning-position))
-        (when (bolp)
-          (setq start (point)))
+    (save-mark-and-excursion
+      (when (and (use-region-p) (> (point) (mark)))
+        (exchange-point-and-mark))
+      (skip-chars-backward combobulate-skip-prefix-regexp
+                           (line-beginning-position))
+      (when (bolp)
+        (setq start (point)))
+      (let ((next-level (combobulate-python-indent-determine-next-level)))
+        (pcase (cons combobulate-python-indent--direction next-level)
+          ((and `(forward . (,prev . nil)))
+           (setq combobulate-python-indent--direction 'backward
+                 columns prev))
+          ((and `(forward . (,_ . ,next)))
+           (setq combobulate-python-indent--direction 'forward
+                 columns next))
+          ((and `(backward . (nil . ,next)))
+           (setq combobulate-python-indent--direction 'forward
+                 columns next))
+          ((and `(backward . (,prev . ,_)))
+           (setq combobulate-python-indent--direction 'backward
+                 columns prev))
+          (_ (setq columns nil))))
+      (when columns
         (combobulate-indent-region
-         start end (or columns (pop combobulate-python-indent-cycle)))))))
+         start end columns nil t))
+      (setq this-command 'combobulate-python-indent-for-tab-command))))
 
 (defvar-local combobulate-python-indent-cycle nil
   "List of indentation columns to cycle through with
@@ -163,7 +179,23 @@ Returns a non-nil value to indicate the indentation took place."
         (current-indentation)
       (* python-indent-offset (length calculated-indentation)))))
 
-(defvar combobulate-python--indent-levels nil)
+(defvar combobulate-python-indent--direction nil)
+
+(defun combobulate-python-indent-determine-next-level ()
+  "Determine the next indentation level.
+
+This function returns a cons cell of the form (PREV . NEXT) where
+PREV is the relative change to indentation level to deindent one
+step. NEXT is the next indentation level. If there is no previous
+or next indentation level, the corresponding value is nil."
+  (cons
+   (and (car (last (seq-filter (lambda (n) (< n (current-indentation)))
+                               (python-indent-calculate-levels))))
+        (- python-indent-offset))
+   (and (seq-filter (lambda (n) (> n (current-indentation)))
+                    (python-indent-calculate-levels))
+        python-indent-offset)))
+
 (defun combobulate-python-indent-for-tab-command (&optional arg)
   "Proxy command for `indent-for-tab-command' that keeps region active.
 
@@ -172,45 +204,27 @@ indent commands cycle through all valid indentation stops."
   (interactive "P")
   (combobulate-python-maybe-indent-block-at-point)
   (if (use-region-p)
-      (let ((has-active-region (use-region-p))
-            (levels) (rlevels)
-            (current-level))
+      (let ((has-active-region (use-region-p)))
         ;; work out the correct indentation point to use as a baseline:
         ;; the top-most place in the region.
         (save-mark-and-excursion
           (when (and has-active-region (> (point) (mark)))
             (exchange-point-and-mark))
-          (setq levels (python-indent-calculate-levels))
-          (setq rlevels (reverse (python-indent-calculate-levels)))
-          (setq current-level (if (member (current-indentation) levels)
-                                  (current-indentation)
-                                (python-indent-calculate-indentation)))
-          ;; if the `this-command' and `last-command' match, then we've been
-          ;; requesting indentation multiple times in a row. If not, we're
-          ;; doing this for the first time, and so we must calculate the
-          ;; indentation offsets.
-          (unless (and (eq last-command this-command) has-active-region)
-            ;; avoid loops if there is only one entry.
-            (if (> (length levels) 1)
-                (progn
-                  ;; Build a circular loop of `levels' so we can tab ad infinitum
-                  ;; and cycle through the options.
-                  (setq combobulate-python-indent-cycle (if (= (apply #'max levels) current-level)
-                                                            (nconc rlevels rlevels)
-                                                          (nconc levels levels)))
-                  (while (and (= current-level (car combobulate-python-indent-cycle))
-                              (member current-level levels))
-                    (pop combobulate-python-indent-cycle)))
-              (setq combobulate-python-indent-cycle levels)))
+          (unless (eq this-command last-command)
+            (setq combobulate-python-indent--direction
+                  ;; figure out the direction to cycle in.
+                  (if (cdr (combobulate-python-indent-determine-next-level))
+                      'forward
+                    'backward)))
           (indent-for-tab-command arg)
           (combobulate-message
            (concat (combobulate-python--display-indicator)
                    " "
                    (substitute-command-keys
                     "Press \\[combobulate-python-indent-for-tab-command] \
-again to cycle indentation."))))
-        (when has-active-region
-          (setq deactivate-mark nil)))
+again to cycle indentation.")))
+          (when has-active-region
+            (setq deactivate-mark nil))))
     (indent-for-tab-command arg)))
 
 (defun combobulate-python-setup (_)
