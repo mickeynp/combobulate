@@ -36,6 +36,7 @@
 (declare-function combobulate--mark-node "combobulate-manipulation")
 (declare-function combobulate-indent-region "combobulate-manipulation")
 
+(defvar combobulate-python-indent--direction nil)
 
 (defgroup combobulate-python nil
   "Configuration switches for Python."
@@ -57,6 +58,16 @@ of blocks of code: functions, for statements, etc.
 
 This works by remapping `indent-for-tab-command' to
 `combobulate-python-indent-for-tab-command'."
+  :type 'boolean
+  :group 'combobulate-python)
+
+(defcustom combobulate-python-indent-mark-region nil
+  "Mark the region when indenting and leave it enabled after.
+
+When non-nil, Combobulate will mark the region when indenting
+with `combobulate-python-indent-for-tab-command'.
+
+When nil, the mark is instead deactivated after indenting."
   :type 'boolean
   :group 'combobulate-python)
 
@@ -139,7 +150,6 @@ This function is designed to be called from
   "List of indentation columns to cycle through with
 \\[combobulate-python-indent-for-tab-command].")
 
-
 (defun combobulate-python-maybe-indent-block-at-point ()
   "Maybe indent the block at point.
 
@@ -179,7 +189,6 @@ Returns a non-nil value to indicate the indentation took place."
         (current-indentation)
       (* python-indent-offset (length calculated-indentation)))))
 
-(defvar combobulate-python-indent--direction nil)
 
 (defun combobulate-python-indent-determine-next-level ()
   "Determine the next indentation level.
@@ -202,30 +211,35 @@ or next indentation level, the corresponding value is nil."
 This command preserves the region if it is active. Subsequent
 indent commands cycle through all valid indentation stops."
   (interactive "P")
-  (combobulate-python-maybe-indent-block-at-point)
-  (if (use-region-p)
-      (let ((has-active-region (use-region-p)))
-        ;; work out the correct indentation point to use as a baseline:
-        ;; the top-most place in the region.
-        (save-mark-and-excursion
-          (when (and has-active-region (> (point) (mark)))
-            (exchange-point-and-mark))
-          (unless (eq this-command last-command)
-            (setq combobulate-python-indent--direction
-                  ;; figure out the direction to cycle in.
-                  (if (cdr (combobulate-python-indent-determine-next-level))
-                      'forward
-                    'backward)))
-          (indent-for-tab-command arg)
-          (combobulate-message
-           (concat (combobulate-python--display-indicator)
-                   " "
-                   (substitute-command-keys
-                    "Press \\[combobulate-python-indent-for-tab-command] \
-again to cycle indentation.")))
-          (when has-active-region
-            (setq deactivate-mark nil))))
-    (indent-for-tab-command arg)))
+  (let ((has-region-active (use-region-p)))
+    (save-excursion
+      (combobulate-python-maybe-indent-block-at-point)
+      (if (use-region-p)
+          (progn
+            ;; work out the correct indentation point to use as a baseline:
+            ;; the top-most place in the region.
+            (save-mark-and-excursion
+              (when (> (point) (mark))
+                (exchange-point-and-mark))
+              (unless (eq this-command last-command)
+                (setq combobulate-python-indent--direction
+                      ;; figure out the direction to cycle in.
+                      (if (cdr (combobulate-python-indent-determine-next-level))
+                          'forward
+                        'backward)))
+              (indent-for-tab-command arg)
+              (combobulate-message
+               (concat (combobulate-python--display-indicator)
+                       " "
+                       (substitute-command-keys
+                        "Press \\[combobulate-python-indent-for-tab-command] \
+again to cycle indentation.")))))
+        (indent-for-tab-command arg)))
+    (if has-region-active
+        (progn
+          (setq deactivate-mark nil)
+          (activate-mark))
+      (setq deactivate-mark t))))
 
 (defun combobulate-python-setup (_)
   ;; do not indent envelopes.
@@ -322,7 +336,7 @@ again to cycle indentation.")))
              ("while " @ ":" n>
               r>)))))
 
-  (push 'combobulate-python-indent-for-tab-command python-indent-trigger-commands)
+  (add-to-list 'python-indent-trigger-commands 'combobulate-python-indent-for-tab-command)
   (setq combobulate-manipulation-edit-procedures
         '(;; edit comments in blocks
           (:activation-nodes
@@ -359,7 +373,7 @@ again to cycle indentation.")))
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "lambda"))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
-                                            "for_in_clause" "string"))
+                                            "for_in_clause" "string" "decorated_definition"))
   (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
                                                    "module" "match_statement" "dictionary"
                                                    "case_clause" "list" "while_statement" "tuple"
