@@ -380,7 +380,7 @@ again to cycle indentation.")))))
 
   (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
-  (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "lambda"))
+  (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "decorated_definition" "lambda"))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
                                             "for_in_clause" "string" "decorated_definition"))
   (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
