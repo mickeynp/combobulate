@@ -211,7 +211,7 @@ or next indentation level, the corresponding value is nil."
 This command preserves the region if it is active. Subsequent
 indent commands cycle through all valid indentation stops."
   (interactive "P")
-  (let ((has-region-active (use-region-p)))
+  (let ((region-manually-activated (use-region-p)))
     (save-excursion
       (combobulate-python-maybe-indent-block-at-point)
       (if (use-region-p)
@@ -235,11 +235,20 @@ indent commands cycle through all valid indentation stops."
                         "Press \\[combobulate-python-indent-for-tab-command] \
 again to cycle indentation.")))))
         (indent-for-tab-command arg)))
-    (if has-region-active
+    (if region-manually-activated
         (progn
           (setq deactivate-mark nil)
           (activate-mark))
-      (setq deactivate-mark t))))
+      (setq deactivate-mark t))
+    ;; HACK: handle the case where we might be indenting on a
+    ;; blank/whitespace-only line. Ordinarily, that would take us to
+    ;; the farthest indentation point, but `save-excursion' will not
+    ;; preserve the point in that case. So we need to do it manually.
+    (when (and (not region-manually-activated)
+               (save-excursion
+                 (beginning-of-line)
+                 (looking-at-p "[[:space:]]*$")))
+      (indent-for-tab-command arg))))
 
 (defun combobulate-python-setup (_)
   ;; do not indent envelopes.
