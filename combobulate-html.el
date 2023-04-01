@@ -116,12 +116,13 @@
                   (throw 'done t))))
             ;; catch flagrant, out-of-place uses of `='.
             (if (looking-back "[[:alpha:]]" 1)
-                (combobulate-execute-envelope
+                (cond
                  ;; html can only do strings, so just use that.
-                 (if (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
-                     "attr-string"
-                   combobulate-js-ts-attribute-envelope-default)
-                 node)
+                 ((equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
+                  (combobulate-execute-envelope "attr-string" node))
+                 (combobulate-js-ts-attribute-envelope-default
+                  (combobulate-execute-envelope combobulate-js-ts-attribute-envelope-default node))
+                 (t (self-insert-command 1 ?=)))
               (self-insert-command 1 ?=)))))
     (self-insert-command 1 ?=)))
 

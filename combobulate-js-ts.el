@@ -55,12 +55,17 @@ and `attr-expression' for expression-based attributes."
   :type '(alist :key-type string :value-type string))
 
 (defcustom combobulate-js-ts-attribute-envelope-default "attr-string"
-  "Default envelope to apply to a JSX attribute.
+  "Default envelope name to apply to a JSX attribute.
 
 Only applied if `combobulate-js-ts-attribute-envelope-alist' does
-not contain a valid JSX attribute alist entry."
+not contain a valid JSX attribute alist entry.
+
+If this value is `nil', then no envelope is applied."
   :group 'combobulate-js-ts
-  :type 'string)
+  :type '(choice (const :tag "No envelope" nil)
+                 (string :tag "String" "attr-string")
+                 (string :tag "JSX Expression" "attr-expression")
+                 (string :tag "JSX Expression + Object" "attr-expression-object")))
 
 (defcustom combobulate-js-ts-enable-auto-close-tag t
   "Auto-close JSX tags when you type `>'."
