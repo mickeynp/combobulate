@@ -268,6 +268,7 @@ from `combobulate-manipulation-envelopes') to insert."
                                               ;; unit.
                                               "type_arguments"
                                               "jsx_attribute"
+                                              "jsx_fragment"
                                               "jsx_self_closing_element"))
     (setq combobulate-manipulation-splicing-procedures
           `((:activation-nodes
