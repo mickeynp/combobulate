@@ -347,6 +347,15 @@ again to cycle indentation.")))))
              ("for " @ ":" n>
               r>))
             (:description
+             "with ...:"
+             :key "bW"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-with"
+             :template
+             ("with " @ ":" n>
+              r>))
+            (:description
              "while ...:"
              :key "bw"
              :mark-node t
