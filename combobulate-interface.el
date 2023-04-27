@@ -78,6 +78,11 @@
       (treesit-node-end node)
     (combobulate-proxy-node-end node)))
 
+(defsubst combobulate-node-field-name (node)
+  (if (combobulate-node-p node)
+      (treesit-node-field-name node)
+    (combobulate-proxy-node-field node)))
+
 (defsubst combobulate-node-range (node)
   (cons (combobulate-node-start node) (combobulate-node-end node)))
 
@@ -132,7 +137,7 @@
 
 Only some fields are kept: relationships to other nodes are not
 kept."
-  start end text type named node pp)
+  start end text type named field node pp)
 
 
 (defun combobulate-make-proxy (nodes)
@@ -146,6 +151,7 @@ kept."
                          :text (treesit-node-text node)
                          :type (treesit-node-type node)
                          :named (treesit-node-check node 'named)
+                         :field (treesit-node-field-name node)
                          :node node
                          :pp (combobulate-pretty-print-node node))
                       node))
@@ -171,7 +177,10 @@ kept."
                                 (marker-position (cdr (combobulate-node-range proxy-node))))
                           (combobulate-node-range pt-node))
                    (equal (combobulate-node-type pt-node)
-                          (combobulate-node-type proxy-node)))
+                          (combobulate-node-type proxy-node))
+                   (or (equal (combobulate-node-field-name pt-node)
+                              (combobulate-node-field-name proxy-node))
+                       t))
               pt-node)))
       (combobulate-proxy-node-node proxy-node))))
 

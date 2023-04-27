@@ -364,10 +364,10 @@ Returns a list of parents ordered closest to farthest."
                                 (when (eq label '@parent)
                                   (push match matched-parents))))))))))))
 
-(defun combobulate-node-at-point (&optional node-types)
+(defun combobulate-node-at-point (&optional node-types named-only)
   "Return the smallest syntax node at point whose type is one of NODE-TYPES "
   (let* ((p (point))
-         (node (treesit-node-on p p)))
+         (node (treesit-node-on p p nil named-only)))
     (if node-types
         (let ((this node))
           (catch 'done

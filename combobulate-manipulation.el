@@ -432,6 +432,11 @@ a match."
                                  (combobulate-proffer-choices
                                   (reverse (mapcar 'car grouped-matches))
                                   (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+                                    ;; rollback the outer
+                                    ;; `combobulate-refactor' call so
+                                    ;; the node cursors we place below
+                                    ;; are properly erased.
+                                    (rollback)
                                     ;; place a fake cursor at every
                                     ;; node to indicate where the
                                     ;; matching nodes are.
@@ -442,7 +447,11 @@ a match."
                                     ;; by highlighting the entire node
                                     ;; boundary.
                                     (funcall mark-highlighted-fn))
-                                  :unique-only t))
+                                  :unique-only t
+                                  :prompt-description
+                                  (format "Edit %s in"
+                                          (propertize (combobulate-pretty-print-node-type node)
+                                                      'face 'combobulate-tree-branch-face))))
                                 grouped-matches))))
        (rollback)
        (when matches
@@ -578,8 +587,10 @@ This looks for nodes of any type found in `combobulate-navigation-default-nodes'
   (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-identical-nodes
-         node arg (lambda (tree-node) (equal (combobulate-node-type node)
-                                        (combobulate-node-type tree-node))))
+         node arg (lambda (tree-node) (and (equal (combobulate-node-type node)
+                                             (combobulate-node-type tree-node))
+                                      (equal (combobulate-node-field-name node)
+                                             (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -589,12 +600,11 @@ This looks for nodes of of any type found in
 `combobulate-navigation-default-nodes' that have the same text as
 the node at point."
   (interactive "P")
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-identical-nodes
-         node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                        (combobulate-node-text node))))
-      (error "Cannot find any editable nodes here"))))
+  (if-let ((node (combobulate-node-at-point nil t)))
+      (combobulate-edit-identical-nodes
+       node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
+                                      (combobulate-node-text node))))
+    (error "Cannot find any editable nodes here")))
 
 (defun combobulate--kill-node (node)
   "Kill NODE in the current buffer."
@@ -881,6 +891,7 @@ point relative to the nodes in
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key (first-choice nil)
                                              (reset-point-on-abort t) (reset-point-on-accept nil)
+                                             (prompt-description nil)
                                              (extra-map nil) (flash-node nil) (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
@@ -922,7 +933,9 @@ nodes that share the same range extent. I.e., a `block' and a
 `statement' node that effectively encompass the same range in the
 buffer.
 
-`:extra-map' is a list of cons cells consisting of (KEY . COMMAND)."
+`:extra-map' is a list of cons cells consisting of (KEY . COMMAND).
+
+`:prompt-description' is a string that is displayed in the prompt."
   (let ((proxy-nodes
          (and nodes (combobulate-make-proxy
                      ;; strip out duplicate nodes. That
@@ -978,8 +991,9 @@ buffer.
                                    (setq raw-event
                                          (read-event
                                           (substitute-command-keys
-                                           (format "%s `%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
+                                           (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
                                                    (combobulate-display-indicator index (length proxy-nodes))
+                                                   (concat (or prompt-description "") " ")
                                                    (propertize (combobulate-pretty-print-node current-node) 'face
                                                                'combobulate-tree-highlighted-node-face)
                                                    (mapconcat (lambda (k)
