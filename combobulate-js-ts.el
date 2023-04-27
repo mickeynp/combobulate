@@ -170,7 +170,7 @@ from `combobulate-manipulation-envelopes') to insert."
             (:description
              "{ ... }"
              :key "e"
-             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment" "string")
+             :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment" "string")
              :name "expression"
              :mark-node t
              :template ("{" r "}"))
@@ -185,7 +185,7 @@ from `combobulate-manipulation-envelopes') to insert."
              "{... ? ... : ...}"
              :key "?"
              :mark-node t
-             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment")
              :name "ternary"
              :template ("{" @ "null" >
                         n > " ? " @ r>
@@ -301,6 +301,7 @@ from `combobulate-manipulation-envelopes') to insert."
 
     (setq combobulate-navigation-drag-parent-nodes
           '("jsx_element" "jsx_expression"
+            "jsx_fragment"
             "jsx_self_closing_element"
             "pair"  "named_imports"
             "object" "export_statement" "program"
@@ -311,6 +312,7 @@ from `combobulate-manipulation-envelopes') to insert."
             "array_pattern" "statement_block"
             "jsx_opening_element"))
     (combobulate-production-rules-set '("jsx_element" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
+    (combobulate-production-rules-set '("jsx_fragment" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
     (combobulate-production-rules-set '("jsx_opening_element" :included-fields (:attribute)))
     (combobulate-production-rules-set '("jsx_self_closing_element" :included-fields (:attribute)))
     (combobulate-production-rules-set '("switch_case" :included-fields (:body)))
