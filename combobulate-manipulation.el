@@ -736,7 +736,27 @@ after NODE-OR-TEXT."
       (setq node-text (combobulate-indent-string node-or-text col t)))
      ((or (combobulate-node-p node-or-text)
           (combobulate-proxy-node-p node-or-text))
-      (let ((node-col (save-excursion
+      (let ((sequence-separator
+             ;; attempt to guess the sequence separator, almost always
+             ;; an anonymous node, that (usually!) follows nodes --
+             ;; think array/list separators; semicolons after
+             ;; expressions, etc. -- and ensure it is appended to the
+             ;; cloned text. This is of course not the proper way to
+             ;; do this: the `xxx-grammar.json' files contain the
+             ;; rules for sequences and the character to use. This is
+             ;; merely the 90% solution that works for most, but not
+             ;; all, instances.
+             (save-excursion
+               (combobulate--goto-node node-or-text t)
+               (let ((node-after (combobulate-node-on (point) (1+ (point)) nil nil)))
+                 ;; we only care about unnamed nodes: yes, it's
+                 ;; possible named nodes are used for sequence
+                 ;; separators, I suppose, but this is not handled
+                 ;; here at all.
+                 (if (combobulate-node-named-p node-after)
+                     ""
+                   (combobulate-node-text node-after)))))
+            (node-col (save-excursion
                         (combobulate--goto-node node-or-text)
                         (current-indentation))))
         (setq node-text (combobulate-indent-string
@@ -744,7 +764,7 @@ after NODE-OR-TEXT."
                          ;; indentation because the node extents won't
                          ;; include it. This fixes it so it does.
                          (combobulate-indent-string-first-line
-                          (combobulate-node-text node-or-text)
+                          (concat (combobulate-node-text node-or-text) sequence-separator)
                           node-col)
                          (- col node-col)))))
      (t (error "Cannot place node or text `%s'" node-or-text)))
@@ -1072,7 +1092,8 @@ buffer.
          (funcall mark-deleted-fn)
          (combobulate--clone-node node (combobulate-node-start node))
          (funcall mark-highlighted-fn)
-         (funcall move-fn))
+         (funcall move-fn)
+         (combobulate-skip-whitespace-forward))
        :reset-point-on-abort t))))
 
 (defun combobulate-envelop-node (template node mark-node point-placement)

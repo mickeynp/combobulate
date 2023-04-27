@@ -39,6 +39,9 @@
 (defsubst combobulate-buffer-root-node (&optional language)
   (treesit-buffer-root-node language))
 
+(defsubst combobulate-node-on (beg end &optional parser-or-lang named)
+  (treesit-node-on beg end parser-or-lang named))
+
 (defsubst combobulate-node-at (pos &optional parser-or-lang named)
   (treesit-node-at pos parser-or-lang named))
 

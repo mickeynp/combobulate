@@ -463,6 +463,12 @@ If NODE is nil, then nil is returned."
 (defvar combobulate-skip-prefix-regexp-no-newline " \t"
   "Skip prefix regexp used to skip past whitespace characters.")
 
+(defun combobulate-skip-whitespace-forward (&optional skip-newline)
+  "Skip whitespace forward, including newlines if SKIP-NEWLINE is non-nil."
+  (skip-chars-forward
+   (if skip-newline combobulate-skip-prefix-regexp
+     combobulate-skip-prefix-regexp-no-newline)))
+
 (cl-defmacro with-navigation-nodes ((&key (nodes nil) skip-prefix backward (skip-newline t) (procedures nil)) &rest body)
   "Invoke BODY with a list of specific navigational nodes, and maybe advance point.
 
@@ -496,9 +502,7 @@ original position."
                (skip-chars-backward
                 (if ,skip-newline combobulate-skip-prefix-regexp
                   combobulate-skip-prefix-regexp-no-newline))
-             (skip-chars-forward
-              (if ,skip-newline combobulate-skip-prefix-regexp
-                combobulate-skip-prefix-regexp-no-newline))))
+             (combobulate-skip-whitespace-forward ,skip-newline)))
          ;; preserves call stack in case of an error
          (unwind-protect
              (prog1 (progn ,@body)
