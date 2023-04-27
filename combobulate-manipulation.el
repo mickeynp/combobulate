@@ -386,22 +386,69 @@ then a cons cell of this shape is returned:
 
 If NODES is a list of `(@label . node)' cons cells, tally nodes by that
 first; followed by the node type of each grouped label."
-  (when nodes
-    (if (and (consp nodes) (consp (car nodes)))
-        (mapconcat
-         (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                  (concat (capitalize (substring (symbol-name label) 1))
-                          " "
-                          (combobulate-tally-nodes (mapcar 'cdr rest)))))
-         (combobulate-group-nodes nodes #'car) ". ")
-      (string-join (mapcar (lambda (group)
-                             (concat
-                              (propertize (int-to-string (length (cdr group)))
-                                          'face 'combobulate-active-indicator-face)
-                              " "
-                              (format "`%s'" (car group))))
-                           (combobulate-group-nodes nodes #'combobulate-pretty-print-node-type))
-                   "; "))))
+  (if nodes
+      (if (and (consp nodes) (consp (car nodes)))
+          (mapconcat
+           (lambda (g) (pcase-let ((`(,label . ,rest) g))
+                    (concat (capitalize (substring (symbol-name label) 1))
+                            " "
+                            (combobulate-tally-nodes (mapcar 'cdr rest)))))
+           (combobulate-group-nodes nodes #'car) ". ")
+        (string-join (mapcar (lambda (group)
+                               (concat
+                                (propertize (int-to-string (length (cdr group)))
+                                            'face 'combobulate-active-indicator-face)
+                                " "
+                                (format "`%s'" (car group))))
+                             (combobulate-group-nodes nodes #'combobulate-pretty-print-node-type))
+                     "; "))
+    "zero"))
+
+(defun combobulate-edit-identical-nodes (node &optional point-at-end match-fn)
+  "Edit nodes identical to NODE if they match MATCH-FN.
+
+If POINT-AT-END is non-nil, then point is placed at the end of
+the node boundary of each match instead of the beginning.
+
+The locus of editable nodes is determined by NODE's parents and
+is selectable.
+
+MATCH-FN takes one argument, a node, and returns non-nil if it is
+a match."
+  (let ((matches)
+        ;; default to 1 "match" as there's no point in creating
+        ;; multiple cursors when there's just one match
+        (ct 1)
+        (grouped-matches))
+    (dolist (start-node (combobulate-get-parents node))
+      (setq matches (flatten-tree (combobulate-induce-sparse-tree start-node match-fn)))
+      ;; this catches parent nodes that do not add more, new, nodes to
+      ;; the editing locus by filtering them out.
+      (when (> (length matches) ct)
+        (setq ct (length matches))
+        (push (cons start-node matches) grouped-matches)))
+    (combobulate-refactor
+     (let ((matches (cdr (assoc (combobulate-proxy-to-tree-node
+                                 (combobulate-proffer-choices
+                                  (reverse (mapcar 'car grouped-matches))
+                                  (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+                                    ;; place a fake cursor at every
+                                    ;; node to indicate where the
+                                    ;; matching nodes are.
+                                    (mapc #'mark-node-cursor
+                                          (cdr (assoc (combobulate-proxy-to-tree-node node)
+                                                      grouped-matches)))
+                                    ;; indicate the locus of editing
+                                    ;; by highlighting the entire node
+                                    ;; boundary.
+                                    (funcall mark-highlighted-fn))
+                                  :unique-only t))
+                                grouped-matches))))
+       (rollback)
+       (when matches
+         (combobulate--mc-edit-nodes matches point-at-end)
+         (combobulate-message
+          (concat "Editing " (combobulate-tally-nodes matches) " identical nodes.")))))))
 
 (defun combobulate-edit-cluster (node &optional point-at-end)
   "Edit CLUSTER of nodes at, or around, NODE.
@@ -521,6 +568,33 @@ end of each edited node."
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-cluster node arg)
       (error "Cannot find any editable clusters here"))))
+
+
+(defun combobulate-edit-node-type-dwim (arg)
+  "Edit nodes of the same type by node locus.
+
+This looks for nodes of any type found in `combobulate-navigation-default-nodes'."
+  (interactive "P")
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-edit-identical-nodes
+         node arg (lambda (tree-node) (equal (combobulate-node-type node)
+                                        (combobulate-node-type tree-node))))
+      (error "Cannot find any editable nodes here"))))
+
+(defun combobulate-edit-node-by-text-dwim (arg)
+  "Edit nodes with the same text by node locus.
+
+This looks for nodes of of any type found in
+`combobulate-navigation-default-nodes' that have the same text as
+the node at point."
+  (interactive "P")
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-edit-identical-nodes
+         node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
+                                        (combobulate-node-text node))))
+      (error "Cannot find any editable nodes here"))))
 
 (defun combobulate--kill-node (node)
   "Kill NODE in the current buffer."

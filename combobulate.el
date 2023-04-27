@@ -44,10 +44,17 @@
     (make-sparse-keymap "Combobulate Envelopes")
   "Dynamically set key map of Combobulate envelopes.")
 
+(defvar combobulate-edit-key-map
+  (let ((map (make-sparse-keymap "Combobulate Edit")))
+    (define-key map (kbd "c") #'combobulate-edit-cluster-dwim)
+    (define-key map (kbd "t") #'combobulate-edit-node-type-dwim)
+    (define-key map (kbd "x") #'combobulate-edit-node-by-text-dwim)
+    map))
+
 (defvar combobulate-options-key-map
   (let ((map (make-sparse-keymap "Combobulate Options")))
     (define-key map (kbd "j") #'combobulate-avy-jump)
-    (define-key map (kbd "t") #'combobulate-edit-cluster-dwim)
+    (define-key map (kbd "t") combobulate-edit-key-map)
     (define-key map (kbd "o") #'combobulate)
     (define-key map (kbd "c") #'combobulate-clone-node-dwim)
     (define-key map (kbd "v") #'combobulate-vanish-node)
@@ -82,10 +89,7 @@
   "Prepare ENVELOPES for interactive use.
 
 Each envelope is read and an interactive function for it
-created. The envelope is then modified in-situ with a
-`:template-symbol' containing the symbol name of the `:template'
--- a weird requirement of tempo -- and a function bound to the
-same name, which is stored in `:function'"
+created."
   (mapcar
    (lambda (envelope)
      (map-let (:description :name :template :point-placement) envelope
