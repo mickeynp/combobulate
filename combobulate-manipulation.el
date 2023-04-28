@@ -421,7 +421,12 @@ a match."
         (ct 1)
         (grouped-matches))
     (dolist (start-node (combobulate-get-parents node))
-      (setq matches (flatten-tree (combobulate-induce-sparse-tree start-node match-fn)))
+      (setq matches (seq-uniq (flatten-tree (combobulate-induce-sparse-tree start-node match-fn))
+                              ;; Remove nodes that share the same node
+                              ;; range: they are most probably the
+                              ;; same node.
+                              (lambda (node-a node-b) (equal (combobulate-node-range node-a)
+                                                        (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)
