@@ -26,7 +26,8 @@
 
 (require 'treesit)
 (eval-when-compile (require 'cl-lib))
-
+(declare-function combobulate-filter-nodes "combobulate-navigation")
+(declare-function combobulate-all-nodes-at-point "combobulate-navigation")
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
 (declare-function combobulate-node-at-point "combobulate-navigation")
 (declare-function combobulate--goto-node "combobulate-navigation")
@@ -174,17 +175,19 @@ kept."
         ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
         (save-excursion
           (combobulate--goto-node proxy-node)
-          (when-let (pt-node (combobulate-node-at-point (list (combobulate-node-type proxy-node))))
-            (when (and
-                   (equal (cons (marker-position (car (combobulate-node-range proxy-node)))
-                                (marker-position (cdr (combobulate-node-range proxy-node))))
-                          (combobulate-node-range pt-node))
-                   (equal (combobulate-node-type pt-node)
-                          (combobulate-node-type proxy-node))
-                   (or (equal (combobulate-node-field-name pt-node)
-                              (combobulate-node-field-name proxy-node))
-                       t))
-              pt-node)))
+          (car-safe (seq-filter (lambda (pt-node)
+                                  (and
+                                   (equal (cons (marker-position (car (combobulate-node-range proxy-node)))
+                                                (marker-position (cdr (combobulate-node-range proxy-node))))
+                                          (combobulate-node-range pt-node))
+                                   (equal (combobulate-node-type pt-node)
+                                          (combobulate-node-type proxy-node))
+                                   (or (equal (combobulate-node-field-name pt-node)
+                                              (combobulate-node-field-name proxy-node))
+                                       t)))
+                                (combobulate-filter-nodes
+                                 (combobulate-all-nodes-at-point)
+                                 :keep-types (list (combobulate-node-type proxy-node))))))
       (combobulate-proxy-node-node proxy-node))))
 
 

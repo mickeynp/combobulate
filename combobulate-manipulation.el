@@ -183,13 +183,15 @@
                     (mapc (lambda (ov) (delete-overlay ov))
                           ,--markers)
                     (setq ,--markers nil)))
-         (prog1 (atomic-change-group
-                  ,@body)
-           (when ,--markers
-             (error "Uncommitted changes: %s"
-                    (prog1 ,--markers
-                      (combobulate--refactor-clear-overlays
-                       (combobulate--refactor-get-all-overlays))))))))))
+         (condition-case nil
+             (prog1 (atomic-change-group
+                      ,@body)
+               (when ,--markers
+                 (error "Uncommitted changes: %s"
+                        (prog1 ,--markers
+                          (combobulate--refactor-clear-overlays
+                           (combobulate--refactor-get-all-overlays))))))
+           (quit (rollback)))))))
 
 (defun combobulate-procedure-get-activation-nodes (procedures)
   "Given a list of PROCEDURES, return a merged list of all activation nodes."
@@ -404,6 +406,49 @@ first; followed by the node type of each grouped label."
                      "; "))
     "zero"))
 
+(defun combobulate-edit-cluster-dwim (arg)
+  "Edit clusters of nodes around point.
+
+This looks for clusters of nodes to edit in
+`combobulate-navigation-editable-nodes'.
+
+If you specify a prefix ARG, then the points are placed at the
+end of each edited node."
+  (interactive "P")
+  (with-navigation-nodes (:nodes combobulate-navigation-editable-nodes
+                                 :procedures combobulate-manipulation-edit-procedures)
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-edit-cluster node arg)
+      (error "Cannot find any editable clusters here"))))
+
+
+(defun combobulate-edit-node-type-dwim (arg)
+  "Edit nodes of the same type by node locus.
+
+This looks for nodes of any type found in `combobulate-navigation-default-nodes'."
+  (interactive "P")
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-edit-identical-nodes
+         node arg (lambda (tree-node) (and(equal (combobulate-node-type node)
+                                            (combobulate-node-type tree-node))
+                                     (equal (combobulate-node-field-name node)
+                                            (combobulate-node-field-name tree-node)))))
+      (error "Cannot find any editable nodes here"))))
+
+(defun combobulate-edit-node-by-text-dwim (arg)
+  "Edit nodes with the same text by node locus.
+
+This looks for nodes of of any type found in
+`combobulate-navigation-default-nodes' that have the same text as
+the node at point."
+  (interactive "P")
+  (if-let ((node (combobulate-node-at-point nil t)))
+      (combobulate-edit-identical-nodes
+       node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
+                                      (combobulate-node-text node))))
+    (error "Cannot find any editable nodes here")))
+
 (defun combobulate-edit-identical-nodes (node &optional point-at-end match-fn)
   "Edit nodes identical to NODE if they match MATCH-FN.
 
@@ -424,7 +469,9 @@ a match."
       (setq matches (seq-uniq (flatten-tree (combobulate-induce-sparse-tree start-node match-fn))
                               ;; Remove nodes that share the same node
                               ;; range: they are most probably the
-                              ;; same node.
+                              ;; same node. If we do not do this, we
+                              ;; would end up with several multiple
+                              ;; cursors at the exact same position.
                               (lambda (node-a node-b) (equal (combobulate-node-range node-a)
                                                         (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
@@ -433,31 +480,40 @@ a match."
         (setq ct (length matches))
         (push (cons start-node matches) grouped-matches)))
     (combobulate-refactor
-     (let ((matches (cdr (assoc (combobulate-proxy-to-tree-node
-                                 (combobulate-proffer-choices
-                                  (reverse (mapcar 'car grouped-matches))
-                                  (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
-                                    ;; rollback the outer
-                                    ;; `combobulate-refactor' call so
-                                    ;; the node cursors we place below
-                                    ;; are properly erased.
-                                    (rollback)
-                                    ;; place a fake cursor at every
-                                    ;; node to indicate where the
-                                    ;; matching nodes are.
-                                    (mapc #'mark-node-cursor
-                                          (cdr (assoc (combobulate-proxy-to-tree-node node)
-                                                      grouped-matches)))
-                                    ;; indicate the locus of editing
-                                    ;; by highlighting the entire node
-                                    ;; boundary.
-                                    (funcall mark-highlighted-fn))
-                                  :unique-only t
-                                  :prompt-description
-                                  (format "Edit %s in"
-                                          (propertize (combobulate-pretty-print-node-type node)
-                                                      'face 'combobulate-tree-branch-face))))
-                                grouped-matches))))
+     (let ((matches
+            (cdr
+             (assoc
+              (combobulate-proxy-to-tree-node
+               (combobulate-proffer-choices
+                (reverse (mapcar 'car grouped-matches))
+                (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+                  (princ (format "Editing %s in %s%s\n"
+                                 (combobulate-pretty-print-node-type node)
+                                 (combobulate-proxy-to-tree-node node)
+                                 (and (combobulate-node-field-name node)
+                                      (format " (%s)"
+                                              (combobulate-node-field-name node)))))
+                  ;; rollback the outer
+                  ;; `combobulate-refactor' call so
+                  ;; the node cursors we place below
+                  ;; are properly erased.
+                  (rollback)
+                  ;; place a fake cursor at every
+                  ;; node to indicate where the
+                  ;; matching nodes are.
+                  (mapc #'mark-node-cursor
+                        (cdr (assoc (combobulate-proxy-to-tree-node node)
+                                    grouped-matches)))
+                  ;; indicate the locus of editing
+                  ;; by highlighting the entire node
+                  ;; boundary.
+                  (funcall mark-highlighted-fn))
+                :unique-only nil
+                :prompt-description
+                (format "Edit %s in"
+                        (propertize (combobulate-pretty-print-node-type node)
+                                    'face 'combobulate-tree-branch-face))))
+              grouped-matches))))
        (rollback)
        (when matches
          (combobulate--mc-edit-nodes matches point-at-end)
@@ -568,48 +624,7 @@ If there are no legitimate sexp nodes around point, fall back to
 						 ".")))))
 		 (point)))))
 
-(defun combobulate-edit-cluster-dwim (arg)
-  "Edit clusters of nodes around point.
 
-This looks for clusters of nodes to edit in
-`combobulate-navigation-editable-nodes'.
-
-If you specify a prefix ARG, then the points are placed at the
-end of each edited node."
-  (interactive "P")
-  (with-navigation-nodes (:nodes combobulate-navigation-editable-nodes
-                                 :procedures combobulate-manipulation-edit-procedures)
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-cluster node arg)
-      (error "Cannot find any editable clusters here"))))
-
-
-(defun combobulate-edit-node-type-dwim (arg)
-  "Edit nodes of the same type by node locus.
-
-This looks for nodes of any type found in `combobulate-navigation-default-nodes'."
-  (interactive "P")
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-identical-nodes
-         node arg (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                             (combobulate-node-type tree-node))
-                                      (equal (combobulate-node-field-name node)
-                                             (combobulate-node-field-name tree-node)))))
-      (error "Cannot find any editable nodes here"))))
-
-(defun combobulate-edit-node-by-text-dwim (arg)
-  "Edit nodes with the same text by node locus.
-
-This looks for nodes of of any type found in
-`combobulate-navigation-default-nodes' that have the same text as
-the node at point."
-  (interactive "P")
-  (if-let ((node (combobulate-node-at-point nil t)))
-      (combobulate-edit-identical-nodes
-       node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                      (combobulate-node-text node))))
-    (error "Cannot find any editable nodes here")))
 
 (defun combobulate--kill-node (node)
   "Kill NODE in the current buffer."
