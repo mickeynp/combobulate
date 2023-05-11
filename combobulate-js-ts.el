@@ -153,7 +153,7 @@ from `combobulate-manipulation-envelopes') to insert."
              "<...> ... </...>"
              :name "tag"
              :mark-node t
-             :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+             :nodes ("jsx_element" "jsx_expression" "jsx_self_closing_element" "jsx_fragment")
              :key "t"
              :template ("<" (p tag "Tag Name: ") ">" n>
                         r>
@@ -267,6 +267,7 @@ from `combobulate-manipulation-envelopes') to insert."
                                               ;; as a cohesive
                                               ;; unit.
                                               "type_arguments"
+                                              "function_declaration"
                                               "jsx_attribute"
                                               "jsx_fragment"
                                               "jsx_self_closing_element"))
@@ -393,7 +394,7 @@ from `combobulate-manipulation-envelopes') to insert."
     (setq combobulate-navigation-default-nodes
           (append combobulate-navigation-parent-child-nodes
                   `("jsx_attribute" "ternary_expression" "type_arguments" "string"
-                    "arrow_function" "jsx_text"
+                    "arrow_function" "jsx_text" "function_declaration"
                     ,@(combobulate-production-rules-get "primary_expression")
                     ,@(combobulate-production-rules-get "object")
                     ,@(combobulate-production-rules-get "statement")
