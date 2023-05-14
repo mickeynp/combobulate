@@ -328,6 +328,7 @@ start."
    :type "point"
    :named t
    :node nil
+   :field nil
    :pp ""))
 
 (defun combobulate--make-navigation-query ()

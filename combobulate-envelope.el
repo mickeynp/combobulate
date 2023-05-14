@@ -480,13 +480,7 @@ expansion:
                (`(point . ,points)
                 (combobulate-refactor
                  (let ((nodes (mapcar (lambda (pt-instruction)
-                                        (make-combobulate-proxy-node
-                                         :start (cadr pt-instruction)
-                                         :end (cadr pt-instruction)
-                                         :text ""
-                                         :named t
-                                         :node "point"
-                                         :pp "Point Marker"))
+                                        (combobulate-make-proxy-point-node))
                                       points)))
                    ;; insert cursor overlays at all point markers to make
                    ;; them easier to identify.

@@ -1306,6 +1306,7 @@ more than one."
                              :type (symbol-name combobulate-mark-node-or-thing-at-point)
                              :named nil
                              :node nil
+                             :field nil
                              :pp thing
                              :text thing)
                             nodes))))
