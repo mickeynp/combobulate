@@ -464,6 +464,7 @@ a match."
         ;; default to 1 "match" as there's no point in creating
         ;; multiple cursors when there's just one match
         (ct 1)
+        (group-node)
         (grouped-matches))
     (dolist (start-node (combobulate-get-parents node))
       (setq matches (seq-uniq (flatten-tree (combobulate-induce-sparse-tree start-node match-fn))
@@ -507,6 +508,7 @@ a match."
                   ;; indicate the locus of editing
                   ;; by highlighting the entire node
                   ;; boundary.
+                  (setq group-node node)
                   (funcall mark-highlighted-fn))
                 :unique-only nil
                 :prompt-description
@@ -518,7 +520,11 @@ a match."
        (when matches
          (combobulate--mc-edit-nodes matches point-at-end)
          (combobulate-message
-          (concat "Editing " (combobulate-tally-nodes matches) " identical nodes.")))))))
+          (format "Editing %s in `%s'"
+                  (combobulate-tally-nodes matches)
+                  (propertize
+                   (combobulate-node-type group-node)
+                   'face 'combobulate-active-indicator-face))))))))
 
 (defun combobulate-edit-cluster (node &optional point-at-end)
   "Edit CLUSTER of nodes at, or around, NODE.

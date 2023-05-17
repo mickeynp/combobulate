@@ -319,11 +319,11 @@ start."
     (combobulate--flash-node node)
     node))
 
-(defun combobulate-make-proxy-point-node ()
+(defun combobulate-make-proxy-point-node (&optional pt)
   "Create a proxy node at `point'."
   (make-combobulate-proxy-node
-   :start (point)
-   :end (point)
+   :start (or pt (point))
+   :end (or pt (point))
    :text ""
    :type "point"
    :named t
