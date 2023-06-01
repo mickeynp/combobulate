@@ -1189,6 +1189,33 @@ but with added support for navigable nodes."
           (goto-char target)
           (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
 
+(defun combobulate-navigate-down-list-backward-maybe (&optional arg)
+  "Navigate down into a list or the nearest navigable node ARG times, backwards.
+
+This command mimics the existing \\[down-list] command
+but with added support for navigable nodes."
+  (interactive "^p")
+  (with-argument-repetition arg
+    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+      (when-let ((navigable-node (combobulate--get-nearest-navigable-node))
+                 (nearest-node (combobulate-node-at-point))
+                 (targets (seq-filter
+                           ;; Filter elements that are either nil or where the location
+                           ;; it wants to jump to is _before_ `point'. Then, find the
+                           ;; maximum of the remaining elements and go to that.
+                           (lambda (elem) (and elem (< elem (point))))
+                           (list (save-excursion (ignore-errors (down-list -1 nil) (point)))
+                                 (if (combobulate-point-at-beginning-of-node-p navigable-node)
+                                     (combobulate-node-point navigable-node t))
+                                 (combobulate-node-point (combobulate-nav-get-child navigable-node))
+                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))
+                                 (ignore-errors (save-excursion
+                                                  (backward-up-list 1 nil)
+                                                  (point)))))))
+        (when-let (target (apply #'max targets))
+          (goto-char target)
+          (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
+
 (defun combobulate-navigate-up-list-maybe (&optional arg)
   "Maybe navigate up out of a list or to the nearest navigable node
 
@@ -1208,6 +1235,28 @@ but with added support for navigable nodes."
                              (combobulate-node-point navigable-node-parent)
                              (combobulate-node-point nearest-node-parent)))))
         (when-let (target (and targets (apply #'max targets)))
+          (goto-char target)
+          (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
+
+(defun combobulate-navigate-up-list-backward-maybe (&optional arg)
+  "Maybe navigate up out of a list or to the nearest navigable node, backwards.
+
+This command mimics the existing \\[up-list] command
+but with added support for navigable nodes."
+  (interactive "^p")
+  ;; NOTE: Roll up into `combobulate-navigate-down-list-maybe'
+  (with-argument-repetition arg
+    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+      (let* ((navigable-node (combobulate--get-nearest-navigable-node))
+             (nearest-node (combobulate-node-at-point))
+             (navigable-node-parent (and navigable-node (combobulate-nav-get-parent navigable-node)))
+             (nearest-node-parent (and nearest-node (combobulate-nav-get-parent nearest-node)))
+             (targets (seq-filter
+                       (lambda (elem) (and elem (> elem (point))))
+                       (list (save-excursion (ignore-errors (up-list 1 t t) (point)))
+                             (combobulate-node-point navigable-node-parent)
+                             (combobulate-node-point nearest-node-parent)))))
+        (when-let (target (and targets (apply #'min targets)))
           (goto-char target)
           (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
 
