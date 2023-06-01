@@ -1197,8 +1197,8 @@ but with added support for navigable nodes."
 (defun combobulate-navigate-down-list-backward-maybe (&optional arg)
   "Navigate down into a list or the nearest navigable node ARG times, backwards.
 
-This command mimics the existing \\[down-list] command
-but with added support for navigable nodes."
+This command mimics the existing \\[down-list] command with
+negative ARG but with added support for navigable nodes."
   (interactive "^p")
   (with-argument-repetition arg
     (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
@@ -1215,7 +1215,8 @@ but with added support for navigable nodes."
                                  (combobulate-node-point (combobulate-nav-get-child navigable-node))
                                  (combobulate-node-point (combobulate-nav-get-child nearest-node))
                                  (ignore-errors (save-excursion
-                                                  (backward-up-list 1 nil)
+                                                  (up-list 1 nil)
+                                                  (backward-sexp)
                                                   (point)))))))
         (when-let (target (apply #'max targets))
           (goto-char target)
