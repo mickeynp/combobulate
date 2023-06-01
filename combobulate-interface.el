@@ -26,7 +26,8 @@
 
 (require 'treesit)
 (eval-when-compile (require 'cl-lib))
-
+(declare-function combobulate-filter-nodes "combobulate-navigation")
+(declare-function combobulate-all-nodes-at-point "combobulate-navigation")
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
 (declare-function combobulate-node-at-point "combobulate-navigation")
 (declare-function combobulate--goto-node "combobulate-navigation")
@@ -38,6 +39,9 @@
 
 (defsubst combobulate-buffer-root-node (&optional language)
   (treesit-buffer-root-node language))
+
+(defsubst combobulate-node-on (beg end &optional parser-or-lang named)
+  (treesit-node-on beg end parser-or-lang named))
 
 (defsubst combobulate-node-at (pos &optional parser-or-lang named)
   (treesit-node-at pos parser-or-lang named))
@@ -77,6 +81,11 @@
   (if (combobulate-node-p node)
       (treesit-node-end node)
     (combobulate-proxy-node-end node)))
+
+(defsubst combobulate-node-field-name (node)
+  (if (combobulate-node-p node)
+      (treesit-node-field-name node)
+    (combobulate-proxy-node-field node)))
 
 (defsubst combobulate-node-range (node)
   (cons (combobulate-node-start node) (combobulate-node-end node)))
@@ -132,7 +141,7 @@
 
 Only some fields are kept: relationships to other nodes are not
 kept."
-  start end text type named node pp)
+  start end text type named field node pp)
 
 
 (defun combobulate-make-proxy (nodes)
@@ -146,6 +155,7 @@ kept."
                          :text (treesit-node-text node)
                          :type (treesit-node-type node)
                          :named (treesit-node-check node 'named)
+                         :field (treesit-node-field-name node)
                          :node node
                          :pp (combobulate-pretty-print-node node))
                       node))
@@ -165,14 +175,19 @@ kept."
         ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
         (save-excursion
           (combobulate--goto-node proxy-node)
-          (when-let (pt-node (combobulate-node-at-point (list (combobulate-node-type proxy-node))))
-            (when (and
-                   (equal (cons (marker-position (car (combobulate-node-range proxy-node)))
-                                (marker-position (cdr (combobulate-node-range proxy-node))))
-                          (combobulate-node-range pt-node))
-                   (equal (combobulate-node-type pt-node)
-                          (combobulate-node-type proxy-node)))
-              pt-node)))
+          (car-safe (seq-filter (lambda (pt-node)
+                                  (and
+                                   (equal (cons (marker-position (car (combobulate-node-range proxy-node)))
+                                                (marker-position (cdr (combobulate-node-range proxy-node))))
+                                          (combobulate-node-range pt-node))
+                                   (equal (combobulate-node-type pt-node)
+                                          (combobulate-node-type proxy-node))
+                                   (or (equal (combobulate-node-field-name pt-node)
+                                              (combobulate-node-field-name proxy-node))
+                                       t)))
+                                (combobulate-filter-nodes
+                                 (combobulate-all-nodes-at-point)
+                                 :keep-types (list (combobulate-node-type proxy-node))))))
       (combobulate-proxy-node-node proxy-node))))
 
 

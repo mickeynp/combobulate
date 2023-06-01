@@ -39,6 +39,13 @@
    ("a" "Jump to a nearby node" combobulate-avy-jump)
    ("d" "Jump to a nearby defun" combobulate-avy-jump-defun)])
 
+(transient-define-prefix combobulate-edit ()
+  "Edit nodes with multiple cursors..."
+  ["Edit DWIM by …"
+   ("c" "Cluster" combobulate-edit-cluster-dwim)
+   ("t" "Node Type" combobulate-edit-node-type-dwim)
+   ("x" "Node Text" combobulate-edit-node-by-text-dwim)])
+
 (transient-define-prefix combobulate-envelop ()
   "Envelop node on or around point with a template"
   ["Envelopes"
@@ -86,7 +93,7 @@
     ("M-h" "Expand region" combobulate-mark-node-dwim :transient t)]
    ["Editing"
     ("M-k" "Kill node DWIM" combobulate-kill-node-dwim :transient t)
-    ("t" "Edit node cluster DWIM" combobulate-edit-cluster-dwim)
+    ("t" "Edit …" combobulate-edit)
     ("c" "Clone node DWIM" combobulate-clone-node-dwim)
     ("C-M-t" "Transpose sexp" combobulate-transpose-sexps)
     ("e" "Envelop …" combobulate-envelop)]

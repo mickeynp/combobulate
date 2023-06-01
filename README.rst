@@ -87,7 +87,7 @@ How do I install Combobulate?
 Combobulate is not on MELPA or any other package repository, yet. For Combobulate to install properly you must meet the following requirements:
 
 1. You must be running Emacs 29 or later.
-2. Your Emacs *must* be compiled with tree-sitter support.
+2. Your Emacs *must* be compiled with tree-sitter support. Read `How to Get Started with Tree Sitter <https://www.masteringemacs.org/article/how-to-get-started-tree-sitter>`__ to learn how to compile Emacs and install tree-sitter.
 
    In ``C-h v system-configuration-features`` look for ``TREE_SITTER``.
 3. You must have language grammars installed for the languages you want to use Combobulate with.
@@ -107,7 +107,7 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
 
 .. code-block:: elisp
 
-    ;; `M-x combobulate' (or `C-c o o') to start using Combobulate
+    ;; `M-x combobulate' (default: `C-c o o') to start using Combobulate
     (use-package treesit
       :preface
       (defun mp-setup-install-grammars ()
@@ -147,6 +147,11 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
       ;;  M-x customize-group RET combobulate RET
       ;;
       (use-package combobulate
+        :preface
+        ;; You can customize Combobulate's key prefix here.
+        ;; Note that you may have to restart Emacs for this to take effect!
+        (setq combobulate-key-prefix "C-c o")
+        
         ;; Optional, but recommended.
         ;;
         ;; You can manually enable Combobulate with `M-x

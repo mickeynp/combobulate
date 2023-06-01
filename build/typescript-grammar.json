@@ -1,5 +1,5 @@
 {
-  "name": "tsx",
+  "name": "typescript",
   "word": "identifier",
   "rules": {
     "program": {
@@ -1966,19 +1966,15 @@
         },
         {
           "type": "SYMBOL",
+          "name": "type_assertion"
+        },
+        {
+          "type": "SYMBOL",
           "name": "primary_expression"
         },
         {
           "type": "SYMBOL",
           "name": "glimmer_template"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_jsx_element"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "jsx_fragment"
         },
         {
           "type": "SYMBOL",

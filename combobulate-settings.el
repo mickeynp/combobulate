@@ -132,6 +132,22 @@ the node."
   :type 'string
   :group 'combobulate)
 
+(defcustom combobulate-key-prefix "C-c o"
+  "Prefix key for Combobulate commands. Leave blank to disable.
+
+This is the prefix key for all Combobulate commands. It is
+recommended that you set this to something that is easy to type
+and remember, but that does not conflict with any other key.
+
+When you change this key prefix you must restart Emacs for the
+change to take effect.
+
+Note this must be a string readable by the `kbd' macro, and not a
+vector or an escaped string."
+  :type 'string
+  :group 'combobulate)
+
+
 (defface combobulate-refactor-highlight-face '((((background light))
                                                 :background "gray80")
                                                (((background dark))
@@ -374,6 +390,7 @@ Matches all the key-portion of key-value pairs in a dictionary")
   '((python . combobulate-python-setup)
     (tsx . combobulate-js-ts-setup)
     (javascript . combobulate-js-ts-setup)
+    (typescript . combobulate-js-ts-setup)
     (jsx . combobulate-js-ts-setup)
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)

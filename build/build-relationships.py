@@ -31,6 +31,10 @@ SOURCES = {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/grammar.json",
     },
+    "typescript": {
+        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/typescript/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/typescript/src/grammar.json",
+    },
     "javascript": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
@@ -217,7 +221,7 @@ def download_all_sources():
 def write_elisp_file(forms):
     log.info("Writing forms to file")
     with Path("../combobulate-rules.el").open("w") as f:
-        for (src, (form, inv_form)) in forms:
+        for src, (form, inv_form) in forms:
             if not form:
                 log.error("Skipping %s as it is empty", src)
                 continue

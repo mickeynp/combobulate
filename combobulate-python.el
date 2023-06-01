@@ -347,6 +347,15 @@ again to cycle indentation.")))))
              ("for " @ ":" n>
               r>))
             (:description
+             "with ...:"
+             :key "bW"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-with"
+             :template
+             ("with " @ ":" n>
+              r>))
+            (:description
              "while ...:"
              :key "bw"
              :mark-node t
@@ -399,6 +408,7 @@ again to cycle indentation.")))))
                                                    "case_clause" "list" "while_statement" "tuple"
                                                    "try_statement" "class_definition"
                                                    "argument_list" "import_from_statement"
+                                                   "with_statement"
                                                    "for_statement" "parameters"))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes

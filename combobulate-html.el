@@ -51,7 +51,8 @@
     (when (not (eq ?/ (char-before)))
       (let ((open-node (combobulate-node-at-point (list combobulate-sgml-open-tag))))
         ;; only attempt an expansion if we are not inside one of the exempted tags.
-        (when (and (= (combobulate-node-end open-node) (1+ (point)))
+        (when (and open-node
+                   (= (combobulate-node-end open-node) (1+ (point)))
                    (not (combobulate-node-contains-node-p
                          (combobulate-node-at-point combobulate-sgml-exempted-tags)
                          open-node)))

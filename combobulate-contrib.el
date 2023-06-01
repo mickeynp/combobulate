@@ -70,6 +70,10 @@ POINT-AT-END is non-nil."
             (save-excursion
               (goto-char node-point)
               (mc/create-fake-cursor-at-point))))
+        (dolist (ignored-command '(combobulate-edit-cluster-dwim
+                                   combobulate-edit-node-type-dwim
+                                   combobulate-edit-node-by-text-dwim))
+          (add-to-list 'mc--default-cmds-to-run-once ignored-command))
         (mc/maybe-multiple-cursors-mode))
     (error "Multiple cursors is not installed")))
 
