@@ -32,10 +32,6 @@
 (require 'combobulate-rules)
 (require 'subr-x)
 
-(defvar combobulate-css-key-map
-  (let ((map (make-sparse-keymap)))
-    map))
-
 (defun combobulate-css-pretty-print-node-name (node default-name)
   "Pretty printer for JS and JSX nodes"
   (pcase (combobulate-node-type node)
@@ -52,7 +48,6 @@
     (_ default-name)))
 
 (defun combobulate-css-setup (_)
-  (local-set-key (kbd "C-c o t") combobulate-css-key-map)
   ;; NOTE This is subject to change
   (setq combobulate-manipulation-envelopes
         '((:description "Envelop in a media query"

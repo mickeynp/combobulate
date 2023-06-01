@@ -107,9 +107,13 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
 
 .. code-block:: elisp
 
-    ;; `M-x combobulate' (or `C-c o o') to start using Combobulate
+    ;; `M-x combobulate' (default: `C-c o o') to start using Combobulate
     (use-package treesit
       :preface
+      ;; You can customize Combobulate's key prefix here.
+      ;; Note that you may have to restart Emacs for this to take effect!
+      (setq combobulate-key-prefix "C-c o")
+
       (defun mp-setup-install-grammars ()
         "Install Tree-sitter grammars if they are absent."
         (interactive)

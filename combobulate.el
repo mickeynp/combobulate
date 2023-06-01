@@ -80,8 +80,10 @@
     (define-key map (kbd "M-e") #'combobulate-navigate-logical-next)
     (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
     (define-key map (kbd "M-k") #'combobulate-kill-node-dwim)
-    (define-key map (kbd "C-c o") combobulate-options-key-map)
     map))
+
+(when combobulate-key-prefix
+  (define-key combobulate-key-map (kbd combobulate-key-prefix) combobulate-options-key-map))
 
 (make-variable-buffer-local 'forward-sexp-function)
 
@@ -138,18 +140,19 @@ have changed."
         ;; the procedures setup and ready before we continue.
         (setq-local combobulate-navigation-editable-nodes
                     (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
-        (local-set-key
-         (kbd "C-c o e")
-         ;; todo: this should be a single-shot setup per mode.
-         (let ((map (make-sparse-keymap)))
-           (dolist (envelope (combobulate--setup-envelopes
-                              (append combobulate-manipulation-envelopes
-                                      (alist-get parser-lang combobulate-manipulation-envelopes-custom))))
-             (map-let (:function :key :extra-key) envelope
-               (define-key map (kbd key) function)
-               (when extra-key
-                 (define-key combobulate-key-map (kbd extra-key) function))))
-           map))
+        (when combobulate-key-prefix
+          (local-set-key
+           (kbd (format "%s e" combobulate-key-prefix))
+           ;; todo: this should be a single-shot setup per mode.
+           (let ((map (make-sparse-keymap)))
+             (dolist (envelope (combobulate--setup-envelopes
+                                (append combobulate-manipulation-envelopes
+                                        (alist-get parser-lang combobulate-manipulation-envelopes-custom))))
+               (map-let (:function :key :extra-key) envelope
+                 (define-key map (kbd key) function)
+                 (when extra-key
+                   (define-key combobulate-key-map (kbd extra-key) function))))
+             map)))
         (run-hooks 'combobulate-after-setup-hook))
     (user-error "Combobulate cannot find a setup function for this tree sitter language.
 
