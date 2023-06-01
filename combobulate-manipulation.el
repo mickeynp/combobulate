@@ -1123,14 +1123,7 @@ buffer.
        :reset-point-on-abort t))))
 
 (defun combobulate-envelop-region (template)
-  "Insert Combobulate TEMPLATE around NODE.
-
-If MARK-NODE is non-nil, then mark the node, which will then be
-available to tempo as the `r' identifier.  If nil, the region is
-kept as-is.
-
-POINT-PLACEMENT must be one of `start', `end', or `stay'. `stay'
-does not move point to either of NODE's boundaries."
+  "Insert Combobulate TEMPLATE around active region."
   (interactive)
   (save-excursion
     (combobulate-envelope-expand-instructions template)))
