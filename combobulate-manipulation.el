@@ -1167,8 +1167,10 @@ does not move point to either of NODE's boundaries."
     (symbol-function (plist-get env :template-symbol))))
 
 (defun combobulate-apply-envelope (envelope &optional node start end)
-  "Envelop NODE near point with ENVELOPE. If START and END are set,
-envelope region from START to END.
+  "Envelop NODE near point or region from START to END with ENVELOPE.
+
+If START and END are set, envelope region from START to END
+instead of NODE.
 
 Envelopes fail if point is not \"near\" NODE. Set FORCE to
 non-nil to override this check."
