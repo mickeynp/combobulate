@@ -316,7 +316,7 @@ again to cycle indentation.")))))
              (@ (save-column "try:" n>
                              r> n>)
                 "except " (p Exception "Exception") ":" n>
-                "pass" n>))
+                "pass"))
             (:description
              "try ... finally: ..."
              :key "btf"
@@ -327,7 +327,7 @@ again to cycle indentation.")))))
              (@ (save-column "try:" n>
                              r> n>)
                 "finally:" n>
-                "pass" n>))
+                "pass"))
             (:description
              "def ...():"
              :key "bd"
