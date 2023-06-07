@@ -1173,18 +1173,17 @@ does not move point to either of NODE's boundaries."
   (when-let (env (combobulate-get-envelope-by-name name))
     (symbol-function (plist-get env :template-symbol))))
 
-(defun combobulate-apply-envelope (envelope &optional node start end)
-  "Envelop NODE near point or region from START to END with ENVELOPE.
+(defun combobulate-apply-envelope (envelope &optional node region)
+  "Envelop NODE near point or active region with ENVELOPE.
 
-If START and END are set, envelope region from START to END
-instead of NODE.
+If REGION is t, envelope region instead of NODE.
 
 Envelopes fail if point is not \"near\" NODE. Set FORCE to
 non-nil to override this check."
   (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
     (unless (and name)
       (error "Envelope `%s' is not valid." envelope))
-    (if (and (not (equal start nil))  (not (equal end nil)))
+    (if region
         (combobulate-envelop-region template)
       (with-navigation-nodes (:nodes nodes)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
@@ -1207,11 +1206,7 @@ See `combobulate-apply-envelope' for more information."
       (error "There is no such envelope registered with the name `%s'"
              envelope-name))
     (if (region-active-p)
-        (combobulate-apply-envelope
-         envelope
-         nil
-         (region-beginning)
-         (region-end))
+        (combobulate-apply-envelope envelope nil t)
       (if node
           (goto-char (cdr (combobulate-apply-envelope envelope node)))
         (let ((combobulate-envelope-static t)
