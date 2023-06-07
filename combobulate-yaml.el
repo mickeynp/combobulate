@@ -74,6 +74,12 @@
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ,(append '("comment"))
+             :position at-or-in
+             :find-immediate-parent ("block_mapping" "block_sequence" "document" "stream")))
+           :match-children t)
+          (:activation-nodes
+           ((:node
              ,(append '("block_mapping_pair" "block_sequence_item"))
              :position at-or-in
              :find-immediate-parent ("block_mapping" "block_sequence")))
