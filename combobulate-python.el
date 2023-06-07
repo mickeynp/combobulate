@@ -486,6 +486,10 @@ again to cycle indentation.")))))
                                       :all t
                                       :expand-rules (("expression" :all t)
                                                      ("primary_expression" :all t))))
+  (combobulate-production-rules-set '("tuple"
+                                      :all t
+                                      :expand-rules (("expression" :all t)
+                                                     ("primary_expression" :all t))))
   (setq combobulate-navigation-parent-child-nodes
         (append
          (combobulate-production-rules-get "_simple_statement")
