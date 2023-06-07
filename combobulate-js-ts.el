@@ -72,10 +72,7 @@ If this value is `nil', then no envelope is applied."
   :group 'combobulate-js-ts
   :type 'boolean)
 
-(defcustom combobulate-js-ts-enable-guess-close-tag t
-  "Insert the closing tag for a corresponding open tag when you press `/'."
-  :group 'combobulate-js-ts
-  :type 'boolean)
+
 
 (defcustom combobulate-js-ts-enable-attribute-envelopes t
   "Pick a sensible value for a JSX attribute when you type `='.
