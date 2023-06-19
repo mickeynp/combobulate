@@ -1125,15 +1125,14 @@ buffer.
 (defun combobulate-envelop-region (template)
   "Insert Combobulate TEMPLATE around active region."
   (interactive)
-  (save-excursion
-    ;; Reposition region so it starts and ends directly arround the
-    ;; code and not include additional white space or line brakes.
-    ;; Esp. important for white space sensitive languages.
-    (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
-    (skip-chars-forward combobulate-skip-prefix-regexp)
-    (exchange-point-and-mark)
-    (skip-chars-backward combobulate-skip-prefix-regexp)
-    (combobulate-envelope-expand-instructions template)))
+  ;; Reposition region so it starts and ends directly arround the
+  ;; code and not include additional white space or line brakes.
+  ;; Esp. important for white space sensitive languages.
+  (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
+  (skip-chars-forward combobulate-skip-prefix-regexp)
+  (exchange-point-and-mark)
+  (skip-chars-backward combobulate-skip-prefix-regexp)
+  (combobulate-envelope-expand-instructions template))
 
 (defun combobulate-envelop-node (template node mark-node point-placement)
   "Insert Combobulate TEMPLATE around NODE.
