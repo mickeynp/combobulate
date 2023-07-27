@@ -126,12 +126,13 @@ No effort is made to account for, or exclude, overlaps."
       (goto-char (combobulate-node-start node))
       (unless (combobulate-node-visible-window-p node nil t)
         (recenter))
-      (unwind-protect
-          (let ((ov (make-overlay (combobulate-node-start node)
-                                  (combobulate-node-end node))))
-            (overlay-put ov 'face 'combobulate-tree-pulse-node-face)
-            (sit-for (or wait-time combobulate-pulse-node-wait-time))
-            (delete-overlay ov))))))
+      (let ((ov (make-overlay (combobulate-node-start node)
+                              (combobulate-node-end node))))
+        (unwind-protect
+            (progn
+              (overlay-put ov 'face 'combobulate-tree-pulse-node-face)
+              (sit-for (or wait-time combobulate-pulse-node-wait-time)))
+          (delete-overlay ov))))))
 
 
 (provide 'combobulate-misc)

@@ -340,7 +340,7 @@ INSTRUCTIONS through the register system. It is accessed
 implicitly by calling `r' or `r>' without a form; or explicitly
 with `(r REGISTER [DEFAULT])' where REGISTER is `region'.
 
-The following instructions are supposed by Combobulate's envelope
+The following instructions are supported by Combobulate's envelope
 expansion:
 
  `>'
@@ -422,8 +422,8 @@ expansion:
 
    Temporarily inserts BLOCK and then asks if you want to keep
    it.  If you answer yes, the BLOCK is kept; if you answer no,
-   it is removed and Combobulate exits the repeat instructions
-   and carries on.
+   it is removed and Combobulate exits the repeat instruction
+   form and carries on.
 
    The instruction `repeat-1' is identical to `repeat' except it
    only allows at most 1 entry.

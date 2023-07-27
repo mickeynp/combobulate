@@ -33,18 +33,40 @@
 
 (require 'combobulate-settings)
 
+(transient-define-prefix combobulate-highlight ()
+  "Highlight nodes in the buffer"
+  ["Highlight"
+   ("h" "Highlight DWIM" combobulate-highlight-dwim-at-point)
+   ("q" "Highlight query" combobulate-highlight-query)
+   ("c" "Clear all highlights" combobulate-highlight-clear)])
+
 (transient-define-prefix combobulate-avy ()
   "Call avy on a collection of nodes around point"
   ["Avy"
    ("a" "Jump to a nearby node" combobulate-avy-jump)
    ("d" "Jump to a nearby defun" combobulate-avy-jump-defun)])
 
+(transient-define-prefix combobulate-xref ()
+  "Find and navigate query matches with Xref"
+  ["Xref"
+   ("b" "Xref in buffer" combobulate-xref-find-query-buffer-references)])
+
+(transient-define-prefix combobulate-query ()
+  "Querying, filtering and searching nodes"
+  ["Query Builder"
+   ("q" "Open query builder" combobulate-query-builder)
+   ("p" "Build match query for node at point" combobulate-query-builder-match-node-at-point)
+   ("r" "Build query from root node to point" combobulate-query-builder-root-to-point)])
+
 (transient-define-prefix combobulate-edit ()
   "Edit nodes with multiple cursors..."
-  ["Edit DWIM by …"
-   ("c" "Cluster" combobulate-edit-cluster-dwim)
-   ("t" "Node Type" combobulate-edit-node-type-dwim)
-   ("x" "Node Text" combobulate-edit-node-by-text-dwim)])
+  ["Edit with multiple cursors"
+   ["DWIM at Point"
+    ("c" "Cluster" combobulate-edit-cluster-dwim)
+    ("t" "Node Type" combobulate-edit-node-type-dwim)
+    ("x" "Node Text" combobulate-edit-node-by-text-dwim)]
+   ["Query"
+    ("q" "By Query" combobulate-edit-query)]])
 
 (transient-define-prefix combobulate-envelop ()
   "Envelop node on or around point with a template"
@@ -68,10 +90,9 @@
    ["Linear / Explicit"
     ("M-a" "Logical prev" combobulate-navigate-logical-previous :transient t)
     ("M-e" "Logical next" combobulate-navigate-logical-next :transient t)
-    ("a" "Avy …" combobulate-avy)]
-   ["By s-exp"
     ("C-M-f" "Forward sexp" forward-sexp :transient t)
-    ("C-M-b" "Backward sexp" backward-sexp :transient t)]
+    ("C-M-b" "Backward sexp" backward-sexp :transient t)
+    ("a" "Avy …" combobulate-avy)]
    ["Hierarchical"
     ("C-M-u" "Up into list" combobulate-navigate-up-list-maybe :transient t)
     ("C-M-d" "Down into list" combobulate-navigate-down-list-maybe :transient t)
@@ -87,6 +108,12 @@
                  ("C-M-a" "Beginning of defun" combobulate-navigate-beginning-of-defun :transient t)
                  ("C-M-e" "End of defun" combobulate-navigate-end-of-defun :transient t)]
    ]
+  ["Querying"
+   [("B" "Query Builder …" combobulate-query)
+    ("x" "Xref …" combobulate-xref)
+    ("h" "Highlight …" combobulate-highlight)]
+   [("M-n" "Next query ring entry" combobulate-query-ring-next-query :transient t)
+    ("M-p" "Previous query ring entry" combobulate-query-ring-previous-query :transient t)]]
   ["Editing and Marking"
    ["Marking"
     ("C-M-h" "Mark defun" combobulate-mark-defun :transient t)

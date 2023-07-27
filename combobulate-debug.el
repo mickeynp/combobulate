@@ -32,6 +32,8 @@
 (require 'combobulate-manipulation)
 (require 'edebug)
 
+(declare-function combobulate-setup "combobulate")
+
 (defun combobulate--show-navigable-and-parent ()
   (interactive)
   (let* ((node(combobulate--get-nearest-navigable-node))

@@ -47,9 +47,10 @@
            :name "block"
            :template
            (@ ":" n
-              y>))
-          ))
-
+              y>))))
+  (setq combobulate-navigation-context-nodes
+        '("alias_name" "anchor_name" "block_sequence_item" "plain_scalar"
+          "double_quote_scalar" "string_scalar" "single_quote_scalar"))
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function nil)
   (setq combobulate-manipulation-trim-whitespace 'backward)

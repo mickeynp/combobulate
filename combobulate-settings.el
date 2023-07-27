@@ -32,7 +32,7 @@
 (declare-function combobulate-baseline-indentation-default "combobulate-manipulation")
 
 (defgroup combobulate nil
-  "Structered Editing and Movement with Combobulate"
+  "Structured Editing and Movement with Combobulate"
   :group 'languages
   :prefix "combobulate-")
 
@@ -60,9 +60,10 @@ for all but the most esoteric requirements."
 (defcustom combobulate-proffer-default-to-command 'done
   "What should happen in a proffer prompt when an unknown key is pressed.
 
-When set to `done' the proffer UI will accept the current choice
-and commit it if you enter a key not found in
-`combobulate-proffer-map'.
+When set to `done' the proffer UI will accept the proffered
+choice and re-insert the key you just typed into the event
+loop. That means you can seamlessly type from a proffer prompt
+and not lose key strokes. This is the default behavior.
 
 If it is set to `cancel' then the selection is aborted as though
 you'd pressed `C-g'."
@@ -212,6 +213,13 @@ any other node list passed to the macro).")
 The macro `with-navigation-nodes' binds to this variable and
 locally overrides the navigation nodes by Combobulate's node
 tools.")
+
+(defvar-local combobulate-navigation-hierarchical-first-nodes nil
+  "The first node name in a cons cell used for hierarchical navigation.
+
+This is used alongside `combobulate-navigation-default-nodes' to
+aid with hierarchical navigation by precomputing the first node
+name in a cons cell.")
 
 (defvar-local combobulate-navigation-editable-nodes nil
   "Node names used to determine the correct edit procedure.
@@ -385,6 +393,46 @@ For instance:
 
 Matches all the key-portion of key-value pairs in a dictionary")
 
+(defvar-local combobulate-highlight-queries-default nil
+  "List of Combobulate-provided node queries to highlight.
+
+This list is set internally by the setup function responsible for
+configuring Combobulate in a tree-sitter buffer.
+
+Each query should be a well-formed tree-sitter query. Capture
+groups should use the name of the face to highlight with. See
+`combobulate-query-node-match-faces' for a selection of example
+faces to use.
+
+Users who wish to programmatically add their own queries should
+use `combobulate-highlight-queries-alist' instead.")
+
+(defvar-local combobulate-highlight-queries-alist nil
+  "List of node queries to highlight.
+
+The list is of the form:
+
+    \\='((:language LANGUAGE :query QUERY)
+         ...)
+
+Where LANGUAGE is a valid `treesitter-parser-language' symbol and
+QUERY is a well-formed tree-sitter query. Capture groups should
+use the name of the face to highlight with. See
+`combobulate-highlight-queries-default' for more information.")
+
+(put 'combobulate-highlight-queries-alist 'safe-local-variable #'listp)
+
+(defvar-local combobulate-navigation-context-nodes nil
+  "List of contextual nodes for use with querying and highlighting.
+
+Most language grammars have one or two nodes that are \"atoms\"
+and usually hold the literal text of the nodes around it. For
+instance function declarations or variable assignments will
+typically contain an `identifier' (or similar) node that holds
+the name of the function or the variable being assigned to.
+
+For many language's it's `identifier' or `string', but it could
+be any number of nodes.")
 
 (defvar combobulate-setup-functions-alist
   '((python . combobulate-python-setup)
@@ -392,6 +440,7 @@ Matches all the key-portion of key-value pairs in a dictionary")
     (javascript . combobulate-js-ts-setup)
     (typescript . combobulate-js-ts-setup)
     (jsx . combobulate-js-ts-setup)
+    (json . combobulate-json-setup)
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
     ;; note: private mode; not yet released.

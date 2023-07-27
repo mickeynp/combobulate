@@ -133,10 +133,59 @@ from `combobulate-manipulation-envelopes') to insert."
     (setq combobulate-sgml-whole-tag "jsx_element")
     (setq combobulate-sgml-self-closing-tag "jsx_self_closing_element")
 
+    (setq combobulate-navigation-context-nodes
+          '("string_literal" "identifier"
+            "nested_identifier" "property_identifier"
+            "shorthand_property_identifier_pattern"
+            "string_fragment" "number"))
 
     ;; NOTE This is subject to change
     (setq combobulate-manipulation-envelopes
           `((:description
+             "const [...] = useState(...)"
+             :key "r s"
+             :name "useState"
+             :template ("const"
+                        " [" (p State "State") ", "
+                        "set" (f State)
+                        "] = useState(" @ (p null "Value") ")"))
+            (:description
+             "useEffect(() => ..., [...])"
+             :key "r e"
+             :name "useEffect"
+             :template (
+                        > "useEffect(() => {" n>
+                        > @ n
+                        > "}, [" @ "])"))
+            (:description
+             "useCallback(..., [...])"
+             :key "r c"
+             :nodes ("function_declaration" "arrow_function" "generator_function_declaration")
+             :mark-node t
+             :name "useCallback"
+             :template (
+                        > "useCallback(" n>
+                        > r> n
+                        > ", [" @ "])"))
+            ;; useMemo inside a jsx_expression also
+            (:description
+             "useMemo(..., [...])"
+             :key "r M"
+             :nodes ("function_declaration" "arrow_function" "generator_function_declaration" "jsx_element" "jsx_self_closing_element")
+             :mark-node t
+             :name "useMemo"
+             :template ("useMemo(() => " > r> ", [" @ "])"))
+            (:description
+             "const ... = useCallback(..., [...])"
+             :key "r C"
+             :nodes ("function_declaration" "arrow_function" "generator_function_declaration")
+             :mark-node t
+             :name "useCallback-const"
+             :template (
+                        > "const " (p cachedFn "Cached Name") " = useCallback(() => {" n>
+                        > r> n
+                        > "}, [" @ "])"))
+            (:description
              "( ... )"
              :key "("
              :extra-key "M-("
@@ -216,6 +265,16 @@ from `combobulate-manipulation-envelopes') to insert."
     (setq combobulate-pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
     (setq combobulate-manipulation-trim-whitespace 'backward)
     (setq combobulate-manipulation-trim-empty-lines t)
+    (setq combobulate-highlight-queries-default
+          '(
+            ;; highlight the left-hand side of sequence expressions
+            ;; ("the comma operator")
+            ((arrow_function body: ((_ (sequence_expression left: (_) @combobulate-query-highlight-vibrant-veggie-face)))))
+            ;; highlight browser console object calls.
+            ((call_expression function: (member_expression object: (identifier) @name @combobulate-query-highlight-dazzling-deep-face
+                                                           property: (property_identifier)
+                                                           (:match "^console$" @name))))
+            ))
     (setq combobulate-manipulation-edit-procedures
           `((:activation-nodes
              ((:node
@@ -383,8 +442,10 @@ from `combobulate-manipulation-envelopes') to insert."
             ,@(combobulate-production-rules-get "declaration")
             ,@(combobulate-production-rules-get "statement")
             ,@(combobulate-production-rules-get "statement_block")
+            ,@(combobulate-production-rules-get "primary_expression")
+            ,@(combobulate-production-rules-get "object")
             ;; "function_declaration" "lexical_declaration"
-            ;; "export_statement"  "array""arrow_function"
+            ;; "export_statement"  "array" "arrow_function"
             "jsx_fragment" "jsx_element" "jsx_opening_element"
             "jsx_expression" "jsx_self_closing_element"))
 

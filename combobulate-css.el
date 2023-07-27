@@ -60,6 +60,9 @@
                                    n r> >
                                    n > "}" >))))
 
+  (setq combobulate-navigation-context-nodes
+        '("class_name" "property_name" "feature_name" "float_name" "integer_value"
+          "id_name" "plain_value" "color_value" "string_value"))
   (setq combobulate-pretty-print-node-name-function
         #'combobulate-css-pretty-print-node-name)
   (setq combobulate-manipulation-trim-whitespace 'backward)

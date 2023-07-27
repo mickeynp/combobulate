@@ -36,10 +36,16 @@
 ;;; for python-specific indent stuff
 (require 'python)
 
+(defvar combobulate-query-ring)
 
+(declare-function combobulate--mc-place-nodes "combobulate-contrib")
 (declare-function combobulate--mc-edit-nodes "combobulate-contrib")
 (declare-function combobulate-envelope-expand-instructions "combobulate-envelope")
 (declare-function combobulate-display-draw-node-tree "combobulate-display")
+(declare-function combobulate-query-build-nested "combobulate-query")
+(declare-function combobulate-query-pretty-print "combobulate-query")
+(declare-function combobulate-query-ring-current-query "combobulate-query")
+(declare-function combobulate-query-ring--execute "combobulate-query")
 
 (defvar combobulate-key-map)
 
@@ -327,7 +333,7 @@ filtered from the list of returned matches."
                            (combobulate-query-search
                             parent-node
                             (if (eq query-type :match-dynamic-query)
-                                (combobulate-query-build-nested-query
+                                (combobulate-query-build-nested
                                  (append ;; (list parent-node)
                                   (seq-take-while (lambda (p) (not (equal p parent-node)))
                                                   (combobulate-get-parents point-node)))
@@ -380,10 +386,9 @@ then a cons cell of this shape is returned:
       (dolist (node (save-excursion (goto-char (or pt (point)))
                                     (reverse (combobulate-all-nodes-at-point))))
         (setq procedure (ignore-errors (combobulate-procedure-start node procedures)))
-        (when procedure
-          (throw 'found procedure))))))
+        (when procedure (throw 'found procedure))))))
 
-(defun combobulate-tally-nodes (nodes)
+(defun combobulate-tally-nodes (nodes &optional skip-label)
   "Groups NODES into labels (if any) and their types and tallies them.
 
 If NODES is a list of `(@label . node)' cons cells, tally nodes by that
@@ -392,9 +397,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (concat (capitalize (substring (symbol-name label) 1))
-                            " "
-                            (combobulate-tally-nodes (mapcar 'cdr rest)))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -405,6 +410,24 @@ first; followed by the node type of each grouped label."
                              (combobulate-group-nodes nodes #'combobulate-pretty-print-node-type))
                      "; "))
     "zero"))
+
+(defun combobulate-edit-query (arg)
+  "Edit clusters of nodes by query.
+
+Uses the head of the ring `combobulate-query-ring' as the
+query. If the ring is empty, then throw an error.
+
+By default, point is placed at the start of each match. When
+called with one prefix argument, place point at the end of the
+matches. With two prefix arguments, mark the node instead."
+  (interactive "P")
+  (combobulate-query-ring--execute
+   "Edit nodes matching this query?"
+   "Placed cursors"
+   (lambda (matches _query)
+     (combobulate--mc-place-nodes matches (cond ((equal arg '(4)) 'after)
+                                                ((equal arg '(16)) 'mark)
+                                                (t 'before))))))
 
 (defun combobulate-edit-cluster-dwim (arg)
   "Edit clusters of nodes around point.
@@ -418,22 +441,30 @@ end of each edited node."
   (with-navigation-nodes (:nodes combobulate-navigation-editable-nodes
                                  :procedures combobulate-manipulation-edit-procedures)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-cluster node arg)
+        (combobulate-edit-cluster
+         node
+         (cond ((equal arg '(4)) 'after)
+               ((equal arg '(16)) 'mark)
+               (t 'before)))
       (error "Cannot find any editable clusters here"))))
 
 
 (defun combobulate-edit-node-type-dwim (arg)
   "Edit nodes of the same type by node locus.
 
-This looks for nodes of any type found in `combobulate-navigation-default-nodes'."
+This looks for nodes of any type found in
+`combobulate-navigation-default-nodes'."
   (interactive "P")
   (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-identical-nodes
-         node arg (lambda (tree-node) (and(equal (combobulate-node-type node)
-                                            (combobulate-node-type tree-node))
-                                     (equal (combobulate-node-field-name node)
-                                            (combobulate-node-field-name tree-node)))))
+         node (cond ((equal arg '(4)) 'after)
+                    ((equal arg '(16)) 'mark)
+                    (t 'before))
+         (lambda (tree-node) (and (equal (combobulate-node-type node)
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -445,15 +476,15 @@ the node at point."
   (interactive "P")
   (if-let ((node (combobulate-node-at-point nil t)))
       (combobulate-edit-identical-nodes
-       node arg (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                      (combobulate-node-text node))))
+       node (cond ((equal arg '(4)) 'after)
+                  ((equal arg '(16)) 'mark)
+                  (t 'before))
+       (lambda (tree-node) (equal (combobulate-node-text tree-node)
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
-(defun combobulate-edit-identical-nodes (node &optional point-at-end match-fn)
+(defun combobulate-edit-identical-nodes (node action &optional match-fn)
   "Edit nodes identical to NODE if they match MATCH-FN.
-
-If POINT-AT-END is non-nil, then point is placed at the end of
-the node boundary of each match instead of the beginning.
 
 The locus of editable nodes is determined by NODE's parents and
 is selectable.
@@ -487,7 +518,7 @@ a match."
               (combobulate-proxy-to-tree-node
                (combobulate-proffer-choices
                 (reverse (mapcar 'car grouped-matches))
-                (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+                (lambda (node mark-highlighted-fn _move-fn _mark-deleted-fn)
                   (princ (format "Editing %s in %s%s\n"
                                  (combobulate-pretty-print-node-type node)
                                  (combobulate-proxy-to-tree-node node)
@@ -518,30 +549,47 @@ a match."
               grouped-matches))))
        (rollback)
        (when matches
-         (combobulate--mc-edit-nodes matches point-at-end)
+         (setq matches (combobulate--mc-edit-nodes matches action))
          (combobulate-message
           (format "Editing %s in `%s'"
-                  (combobulate-tally-nodes matches)
+                  (combobulate-tally-nodes matches t)
                   (propertize
                    (combobulate-node-type group-node)
                    'face 'combobulate-active-indicator-face))))))))
 
-(defun combobulate-edit-cluster (node &optional point-at-end)
-  "Edit CLUSTER of nodes at, or around, NODE.
+(defun combobulate-edit-nodes (placement-nodes)
+  "Edit PLACEMENT-NODES.
 
-If POINT-AT-END is non-nil, then point is placed at the end of
-the node boundary of each match instead of the beginning."
+PLACEMENT-NODES is a list of cons cells. The car of each cell is
+the action, or the place to put the point or fake cursor. The cdr
+is the node itself.
+
+The action can be one of the following:
+
+- `before': place the point before the node.
+- `after': place the point after the node.
+- `mark': mark the node."
+  (let ((matches (combobulate--mc-place-nodes placement-nodes)))
+    (cond ((= (length matches) 0)
+           (combobulate-message "There are zero nodes available to edit."))
+          (t (combobulate-message
+              (concat "Editing " (combobulate-tally-nodes matches t)))))))
+
+
+(defun combobulate-edit-cluster (node action)
+  "Edit CLUSTER of nodes at, or around, NODE."
   (let ((matches))
     (pcase-let ((`((,parent-node . ,_) . ,labelled-matches) (combobulate-procedure-start node)))
-      ;; Remove `@discard' matches.
-      (setq matches (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
-                                             labelled-matches)))
-      (combobulate--mc-edit-nodes matches point-at-end)
+      (setq matches (combobulate--mc-edit-nodes
+                     ;; Remove `@discard' matches.
+                     (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
+                                              labelled-matches))
+                     action))
       (cond ((= (length matches) 0)
              (combobulate-message "There are zero nodes available to edit."))
             (t (combobulate-message
                 (concat "Editing "
-                        (combobulate-tally-nodes matches)
+                        (combobulate-tally-nodes matches t)
                         " in "  (propertize
                                  (combobulate-node-type parent-node)
                                  'face 'combobulate-active-indicator-face))))))))
@@ -935,9 +983,13 @@ point relative to the nodes in
     map)
   "Keymap for `combobulate-proffer-choices'.")
 
+(cl-defun combobulate-proffer-action-highlighter (_node mark-highlighted-fn _ _mark-deleted-fn)
+  "Helper for `combobulate-proffer-choices' that highlights NODE."
+  (funcall mark-highlighted-fn))
+
 (cl-defun combobulate-proffer-choices (nodes action-fn &key (first-choice nil)
                                              (reset-point-on-abort t) (reset-point-on-accept nil)
-                                             (prompt-description nil)
+                                             (prompt-description nil) (use-proxy-nodes t)
                                              (extra-map nil) (flash-node nil) (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
@@ -971,6 +1023,10 @@ When `:reset-point' is t, the point is reset to where it
 was when the proffer was first started. If nil, the point is not
 altered at all.
 
+`:use-proxy-nodes' is t by default. If t, then the nodes in NODES
+are wrapped in proxy nodes to guard against outdated or stale
+nodes if ACTION-FN modifies the buffer and thus the node tree.
+
 If `:flash-node' is t, then display a node tree in the echo area
 alongside the status message.
 
@@ -983,18 +1039,20 @@ buffer.
 
 `:prompt-description' is a string that is displayed in the prompt."
   (let ((proxy-nodes
-         (and nodes (combobulate-make-proxy
-                     ;; strip out duplicate nodes. That
-                     ;; includes nodes that are duplicates
-                     ;; of one another; however, we also
-                     ;; strip out nodes that share the
-                     ;; same range extent.
-                     (if unique-only
-                         (seq-uniq nodes (lambda (a b)
-                                           (or (equal a b)
-                                               (equal (combobulate-node-range a)
-                                                      (combobulate-node-range b)))))
-                       nodes))))
+         (and nodes (funcall (if use-proxy-nodes
+                                 #'combobulate-make-proxy
+                               #'identity)
+                             ;; strip out duplicate nodes. That
+                             ;; includes nodes that are duplicates
+                             ;; of one another; however, we also
+                             ;; strip out nodes that share the
+                             ;; same range extent.
+                             (if unique-only
+                                 (seq-uniq nodes (lambda (a b)
+                                                   (or (equal a b)
+                                                       (equal (combobulate-node-range a)
+                                                              (combobulate-node-range b)))))
+                               nodes))))
         (result) (state 'continue) (current-node)
         (index 0) (pt (point)) (raw-event)
         (map (if extra-map
@@ -1039,7 +1097,8 @@ buffer.
                                           (substitute-command-keys
                                            (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
                                                    (combobulate-display-indicator index (length proxy-nodes))
-                                                   (concat (or prompt-description "") " ")
+                                                   (concat (or prompt-description "")
+                                                           (propertize " → " 'face 'shadow))
                                                    (propertize (combobulate-pretty-print-node current-node) 'face
                                                                'combobulate-tree-highlighted-node-face)
                                                    (mapconcat (lambda (k)
@@ -1112,22 +1171,21 @@ buffer.
   (interactive "^p")
   (with-argument-repetition arg
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-      (combobulate-proffer-choices
-       (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
-       (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
-         (funcall mark-deleted-fn)
-         (combobulate--clone-node node (combobulate-node-start node))
-         (funcall mark-highlighted-fn)
-         (funcall move-fn)
-         (combobulate-skip-whitespace-forward))
-       :reset-point-on-abort t))))
+      (combobulate-message
+       "Cloning"
+       (combobulate-proffer-choices
+        (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
+        (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
+          (funcall mark-deleted-fn)
+          (combobulate--clone-node node (combobulate-node-start node))
+          (funcall mark-highlighted-fn)
+          (funcall move-fn)
+          (combobulate-skip-whitespace-forward))
+        :reset-point-on-abort t)))))
 
 (defun combobulate-envelop-region (template)
   "Insert Combobulate TEMPLATE around active region."
   (interactive)
-  ;; Reposition region so it starts and ends directly arround the
-  ;; code and not include additional white space or line brakes.
-  ;; Esp. important for white space sensitive languages.
   (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
   (skip-chars-forward combobulate-skip-prefix-regexp)
   (exchange-point-and-mark)
@@ -1175,10 +1233,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-apply-envelope (envelope &optional node region)
   "Envelop NODE near point or active region with ENVELOPE.
 
-If REGION is t, envelope region instead of NODE.
-
-Envelopes fail if point is not \"near\" NODE. Set FORCE to
-non-nil to override this check."
+If REGION is non-nil, envelop the region instead of NODE."
   (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
     (unless (and name)
       (error "Envelope `%s' is not valid." envelope))
@@ -1437,7 +1492,7 @@ Each member of PARTITIONS must be one of:
                 (mark-node-indent start end
                                   baseline-target
                                   (combobulate-baseline-indentation part-node))))))))
-     (combobulate-message (combobulate-tally-nodes tally))
+     (combobulate-message (combobulate-tally-nodes tally t))
      (commit))
     (combobulate--refactor-insert-copied-values combobulate-refactor--copied-values)))
 

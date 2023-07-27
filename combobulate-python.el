@@ -251,17 +251,26 @@ again to cycle indentation.")))))
       (indent-for-tab-command arg))))
 
 (defun combobulate-python-setup (_)
+  (setq combobulate-navigation-context-nodes '("identifier"))
+
   ;; do not indent envelopes.
   (setq combobulate-envelope-indent-region-function nil)
   (when combobulate-python-smart-indent
     ;; Override `indent-for-tab-command'
     (local-set-key [remap indent-for-tab-command] #'combobulate-python-indent-for-tab-command))
+  ;; install a handful of useful highlighting rules.
+  (setq combobulate-highlight-queries-default
+        '(
+          ;; highlight breakpoint function calls
+          (((call) @combobulate-query-highlight-fiery-flames-face
+            (:match "^breakpoint$" @combobulate-query-highlight-fiery-flames-face)))
+          ;; catch trailing commas that inadvertently turn expressions into tuples
+          ((expression_list (_)+ "," @hl.gold :anchor))))
   (setq indent-region-function 'combobulate-python-indent-region)
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
   (setq combobulate-manipulation-splicing-procedures
-        `(
-          (:activation-nodes
+        `((:activation-nodes
            ((:node
              ,(append (combobulate-production-rules-get "_simple_statement")
                       (combobulate-production-rules-get "_compound_statement")
@@ -496,6 +505,7 @@ again to cycle indentation.")))))
          (combobulate-production-rules-get "_compound_statement")
          (combobulate-production-rules-get "parameter")
          '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
+           "pair"
            "list" "call" "tuple" "string" "case_clause" "set")))
   (setq combobulate-navigation-logical-nodes
         (append

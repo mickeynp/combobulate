@@ -29,8 +29,9 @@
 
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
-
+(defvar mc--default-cmds-to-run-once)
 (declare-function avy-process "avy.el")
+(declare-function mc/remove-fake-cursors "multiple-cursors-core.el")
 (declare-function mc/maybe-multiple-cursors-mode "multiple-cursors-core.el")
 (declare-function mc/create-fake-cursor-at-point "multiple-cursors-core.el")
 
@@ -53,29 +54,59 @@
 (when (fboundp 'multiple-cursors-mode)
   (require 'multiple-cursors))
 
-(defun combobulate--mc-edit-nodes (nodes &optional point-at-end)
-  "Edit NODES with Multiple Cursors
+(defun combobulate--mc-place-nodes (placement-nodes &optional default-action)
+  "Edit PLACEMENT-NODES according to each node's desired placement action.
 
-Places point at the beginning of the first node unless
-POINT-AT-END is non-nil."
+Must be a list of cons cells where the car is the placement
+action and the cdr is the node.
+
+The car should be one of the following symbols:
+
+`before', which puts the point at the node start; `after', which puts the
+point at the node end; and `mark', which marks the node.
+
+If DEFAULT-ACTION is non-nil, it is used for labelled nodes that do not have
+match a placement action."
   (if (fboundp 'multiple-cursors-mode)
-      (let ((counter 0))
-        (dolist (node-point (mapcar (if point-at-end
-                                        #'combobulate-node-end
-                                      #'combobulate-node-start)
-                                    nodes))
-          (cl-incf counter)
-          (if (= counter 1)
+      (let ((counter 0) (node-point) (do-mark) (matched)
+            (default-action (or default-action 'before)))
+        (cl-flet ((apply-action (action node)
+                    (pcase action
+                      ((or 'before '@before) (setq node-point (combobulate-node-start node)))
+                      ((or 'after '@after) (setq node-point (combobulate-node-end node)))
+                      ((or 'mark '@mark) (setq node-point (combobulate-node-start node)
+                                               do-mark t))
+                      (_ nil))))
+          (mc/remove-fake-cursors)
+          (pcase-dolist (`(,action . ,node) placement-nodes)
+            (setq do-mark nil)
+            (unless (apply-action action node)
+              ;; fall back to `default-action' if we get nil back from
+              ;; `apply-action'.
+              (apply-action default-action node))
+            (push (cons action node) matched)
+            (if (= counter (- (length placement-nodes) 1))
+                (progn (goto-char node-point)
+                       (when do-mark (set-mark (combobulate-node-end node))))
               (goto-char node-point)
-            (save-excursion
-              (goto-char node-point)
-              (mc/create-fake-cursor-at-point))))
-        (dolist (ignored-command '(combobulate-edit-cluster-dwim
-                                   combobulate-edit-node-type-dwim
-                                   combobulate-edit-node-by-text-dwim))
-          (add-to-list 'mc--default-cmds-to-run-once ignored-command))
-        (mc/maybe-multiple-cursors-mode))
+              (when do-mark (set-mark (combobulate-node-end node)))
+              (mc/create-fake-cursor-at-point))
+            (cl-incf counter))
+          (dolist (ignored-command '(combobulate-edit-cluster-dwim
+                                     combobulate-edit-node-type-dwim
+                                     combobulate-edit-node-by-text-dwim
+                                     combobulate-query-builder-edit-nodes
+                                     combobulate-edit-query))
+            (add-to-list 'mc--default-cmds-to-run-once ignored-command))
+          (mc/maybe-multiple-cursors-mode)
+          matched))
     (error "Multiple cursors is not installed")))
+
+(defun combobulate--mc-edit-nodes (nodes &optional action)
+  "Edit NODES with multiple cursors placed at ACTION.
+
+Where ACTION is `before', `after', or `mark'."
+  (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes)))
 
 (provide 'combobulate-contrib)
 ;;; combobulate-contrib.el ends here

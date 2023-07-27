@@ -64,6 +64,9 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
+(defsubst combobulate-query-validate (language query)
+  (treesit-query-validate language query))
+
 (defsubst combobulate-query-capture (node query &optional beg end node-only)
   (treesit-query-capture node query beg end node-only))
 
@@ -110,6 +113,9 @@
 (defsubst combobulate-node-prev-sibling (node &optional anonymous)
   (treesit-node-prev-sibling node (not anonymous)))
 
+(defsubst combobulate-parent-while (node pred)
+  (treesit-parent-while node pred))
+
 (defsubst combobulate-parent-until (node pred)
   (treesit-parent-until node pred))
 
@@ -152,7 +158,7 @@ kept."
                         (make-combobulate-proxy-node
                          :start (set-marker (make-marker) (treesit-node-start node))
                          :end (set-marker (make-marker) (treesit-node-end node))
-                         :text (treesit-node-text node)
+                         :text (treesit-node-text node t)
                          :type (treesit-node-type node)
                          :named (treesit-node-check node 'named)
                          :field (treesit-node-field-name node)

@@ -44,6 +44,26 @@
     (make-sparse-keymap "Combobulate Envelopes")
   "Dynamically set key map of Combobulate envelopes.")
 
+(defvar combobulate-query-key-map
+  (let ((map (make-sparse-keymap "Combobulate Query")))
+    (define-key map (kbd "q") #'combobulate-query-builder)
+    (define-key map (kbd "p") #'combobulate-query-builder-match-node-at-point)
+    (define-key map (kbd "r") #'combobulate-query-builder-root-to-point)
+    map))
+
+(defvar combobulate-highlight-key-map
+  (let ((map (make-sparse-keymap "Combobulate Highlight")))
+    (define-key map (kbd "h") #'combobulate-highlight-dwim-at-point)
+    (define-key map (kbd "q") #'combobulate-highlight-query)
+    (define-key map (kbd "c") #'combobulate-highlight-clear)
+    map))
+
+
+(defvar combobulate-xref-key-map
+  (let ((map (make-sparse-keymap "Combobulate Xref")))
+    (define-key map (kbd "b") #'combobulate-xref-find-query-buffer-references)
+    map))
+
 (defvar combobulate-edit-key-map
   (let ((map (make-sparse-keymap "Combobulate Edit")))
     (define-key map (kbd "c") #'combobulate-edit-cluster-dwim)
@@ -54,10 +74,13 @@
 (defvar combobulate-options-key-map
   (let ((map (make-sparse-keymap "Combobulate Options")))
     (define-key map (kbd "j") #'combobulate-avy-jump)
-    (define-key map (kbd "t") combobulate-edit-key-map)
     (define-key map (kbd "o") #'combobulate)
     (define-key map (kbd "c") #'combobulate-clone-node-dwim)
     (define-key map (kbd "v") #'combobulate-vanish-node)
+    (define-key map (kbd "t") combobulate-edit-key-map)
+    (define-key map (kbd "x") combobulate-xref-key-map)
+    (define-key map (kbd "h") combobulate-highlight-key-map)
+    (define-key map (kbd "B") combobulate-query-key-map)
     map))
 
 (defvar combobulate-key-map
@@ -87,6 +110,12 @@
 
 (make-variable-buffer-local 'forward-sexp-function)
 
+(defun combobulate-get-rule-symbol (parser-lang)
+  (symbol-value (intern (format "combobulate-rules-%s" parser-lang))))
+
+(defun combobulate-get-inverted-rule-symbol (parser-lang)
+  (symbol-value (intern (format "combobulate-rules-%s-inverted" parser-lang))))
+
 (defun combobulate--setup-envelopes (envelopes)
   "Prepare ENVELOPES for interactive use.
 
@@ -115,12 +144,7 @@ created."
          (setf envelopes (plist-put envelope :point-placement (or point-placement 'start))))))
    envelopes))
 
-(defun combobulate-setup ()
-  "Setup combobulate in the current buffer.
-
-This can be used to reinitialize mode-specific setups if they
-have changed."
-  (interactive)
+(defun combobulate-setup-1 ()
   (if-let* ((lang (car-safe (treesit-parser-list)))
             (parser-lang (treesit-parser-language lang))
             (setup-fn (alist-get parser-lang combobulate-setup-functions-alist)))
@@ -129,13 +153,21 @@ have changed."
         (setq combobulate-navigation-rules-overrides nil)
         (setq combobulate-navigation-rules-overrides-inverted nil)
         (setq combobulate-navigation-rules
-              (symbol-value (intern (format "combobulate-rules-%s" parser-lang))))
+              (combobulate-get-rule-symbol parser-lang))
         (setq combobulate-navigation-rules-inverted
-              (symbol-value (intern (format "combobulate-rules-%s-inverted" parser-lang))))
+              (combobulate-get-inverted-rule-symbol parser-lang))
         ;; prepare the sexp functions so they use our version
         (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
         (setq-local transpose-sexps-function #'combobulate-transpose-sexp-function)
         (funcall setup-fn parser-lang)
+        ;; Handle the highlighting. For some reason we have to force
+        ;; Emacs to load the file/directory-local variables as they're
+        ;; otherwise loaded after? Perhaps this has to do with the
+        ;; fact that Combobulate is often run in a major mode hook?
+        (hack-dir-local-variables-non-file-buffer)
+        (hack-local-variables)
+        ;; install the highlighter rules
+        (combobulate-highlight-install parser-lang)
         ;; this should come after the funcall to `setup-fn' as we need
         ;; the procedures setup and ready before we continue.
         (setq-local combobulate-navigation-editable-nodes
@@ -169,6 +201,24 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
      (combobulate-message "There is either no tree sitter language in this buffer, or Combobulate does not support it.")
      (combobulate-mode -1))))
 
+(defun combobulate-setup (&optional arg)
+  "Setup combobulate in the current buffer.
+
+This can be used to reinitialize mode-specific setups if they
+have changed."
+  (interactive "P")
+  (if arg
+      (let ((prog (make-progress-reporter "Reloading Combobulate...")))
+        (dolist (buffer (buffer-list))
+          (with-current-buffer buffer
+            (when combobulate-mode
+              (combobulate-setup-1)))
+          (progress-reporter-update prog))
+        (progress-reporter-done prog))
+    (combobulate-setup-1)))
+
+
+
 ;;; internal
 (require 'combobulate-rules)
 (require 'combobulate-navigation)
@@ -178,6 +228,7 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
 (require 'combobulate-display)
 (require 'combobulate-ui)
 (require 'combobulate-misc)
+(require 'combobulate-query)
 ;;; end internal
 
 ;;; language support
@@ -186,6 +237,7 @@ Customize `combobulate-setup-functions-alist' to change the language setup alist
 (require 'combobulate-js-ts)
 (require 'combobulate-css)
 (require 'combobulate-yaml)
+(require 'combobulate-json)
 ;;; end language support
 
 (provide 'combobulate)
