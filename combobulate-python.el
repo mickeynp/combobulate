@@ -262,8 +262,7 @@ again to cycle indentation.")))))
   (setq combobulate-highlight-queries-default
         '(
           ;; highlight breakpoint function calls
-          (((call) @combobulate-query-highlight-fiery-flames-face
-            (:match "^breakpoint$" @combobulate-query-highlight-fiery-flames-face)))
+          (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
           ;; catch trailing commas that inadvertently turn expressions into tuples
           ((expression_list (_)+ "," @hl.gold :anchor))))
   (setq indent-region-function 'combobulate-python-indent-region)
