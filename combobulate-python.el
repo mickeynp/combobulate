@@ -512,11 +512,7 @@ again to cycle indentation.")))))
          (combobulate-production-rules-get "expression")
          combobulate-navigation-default-nodes))
   (setq combobulate-navigation-default-nodes
-        (seq-uniq (append
-                   (combobulate-production-rules-get "_simple_statement")
-                   (combobulate-production-rules-get "_compound_statement")
-                   combobulate-navigation-logical-nodes
-                   combobulate-navigation-parent-child-nodes))))
+        (seq-uniq (flatten-tree combobulate-rules-python))))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here
