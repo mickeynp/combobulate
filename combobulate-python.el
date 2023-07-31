@@ -513,6 +513,8 @@ again to cycle indentation.")))))
          combobulate-navigation-default-nodes))
   (setq combobulate-navigation-default-nodes
         (seq-uniq (append
+                   (combobulate-production-rules-get "_simple_statement")
+                   (combobulate-production-rules-get "_compound_statement")
                    combobulate-navigation-logical-nodes
                    combobulate-navigation-parent-child-nodes))))
 
