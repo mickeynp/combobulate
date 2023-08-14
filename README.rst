@@ -48,11 +48,27 @@ Combobulate can also place cursors (using the optional *multiple cursors* packag
 
 You can clone code and experimentally splice code, much like Paredit. Combobulate also comes with a simple code templating tool that you can use to insert or modify code, such as wrapping a code block in an ``if`` statement in Python, or a JSX element in an expression statement.
 
-
-.. There is a lot more to be said about what Combobulate can do. Read this article XXXXX for a deep dive.
-
 Getting Started with Combobulate
 --------------------------------
+
++--------------------+--------------------+
+|Language            |Supported?          |
++--------------------+--------------------+
+|CSS                 |✅                  |
++--------------------+--------------------+
+|HTML                |✅ (See notes)      |
++--------------------+--------------------+
+|JSON                |✅                  |
++--------------------+--------------------+
+|Javascript+JSX      |✅                  |
++--------------------+--------------------+
+|Typescript+TSX      |✅                  |
++--------------------+--------------------+
+|Python              |✅                  |
++--------------------+--------------------+
+|YAML                |✅                  |
++--------------------+--------------------+
+
 
 When you have installed Combobulate correctly -- see below -- then it'll turn on when you open a file in one of its supported major modes. If it does not do this, try ``M-x combobulate-mode`` to activate Combobulate's minor mode.
 
@@ -63,6 +79,8 @@ At that point, Combobulate is now working. Combobulate rebinds a wide range of c
 *Note that Combobulate may enable or disable keys depending on the major mode it is active in.*
 
 Furthermore, Combobulate ships with a Magit-like transient UI that you can access by typing ``C-c o o``. It exists primarily to teach you about Combobulate's capabilities: every key binding in it is also available without the popup.
+
+(HTML support is supported, but uses an as-yet work-in-progress and unreleased major mode to do this. More details coming soon.)
 
 Top Tips for using Combobulate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,6 +153,7 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
       (dolist (mapping '((python-mode . python-ts-mode)
                          (css-mode . css-ts-mode)
                          (typescript-mode . tsx-ts-mode)
+                         (json-mode . json-ts-mode)
                          (js-mode . js-ts-mode)
                          (css-mode . css-ts-mode)
                          (yaml-mode . yaml-ts-mode)))
@@ -151,7 +170,7 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
         ;; You can customize Combobulate's key prefix here.
         ;; Note that you may have to restart Emacs for this to take effect!
         (setq combobulate-key-prefix "C-c o")
-        
+
         ;; Optional, but recommended.
         ;;
         ;; You can manually enable Combobulate with `M-x
@@ -160,6 +179,7 @@ Also note that this example uses ``major-mode-remap-alist`` to turn your regular
                (js-ts-mode . combobulate-mode)
                (css-ts-mode . combobulate-mode)
                (yaml-ts-mode . combobulate-mode)
+               (json-ts-mode . combobulate-mode)
                (typescript-ts-mode . combobulate-mode)
                (tsx-ts-mode . combobulate-mode))
         ;; Amend this to the directory where you keep Combobulate's source
