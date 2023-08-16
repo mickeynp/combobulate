@@ -311,6 +311,7 @@ from `combobulate-manipulation-envelopes') to insert."
                                        (jsx_closing_element (identifier) @match)))))
     (setq combobulate-navigation-sibling-skip-prefix t)
     (setq combobulate-navigation-sexp-nodes '("jsx_element"
+                                              "regex"
                                               ;; NOTE: you could make a
                                               ;; legit argument that
                                               ;; you'd want to move by
