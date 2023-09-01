@@ -800,7 +800,7 @@ that technically has another immediate parent."
         (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
        ((eq direction 'self)
         (or (car (seq-filter #'combobulate-point-at-beginning-of-node-p siblings))
-            (combobulate-point-at-beginning-of-node-p node)))))))
+            (when (combobulate-point-at-beginning-of-node-p node) node)))))))
 
 (defun combobulate-nav-get-next-sibling (node)
   "Get the next sibling of NODE"

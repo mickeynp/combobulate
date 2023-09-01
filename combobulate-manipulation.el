@@ -683,8 +683,7 @@ If there are no legitimate sexp nodes around point, fall back to
 (defun combobulate--kill-node (node)
   "Kill NODE in the current buffer."
   (and node (kill-region (combobulate-node-start node)
-                         (combobulate-node-end node)))
-  (combobulate-delete-whitespace))
+                         (combobulate-node-end node))))
 
 (defun combobulate--kill-nodes (nodes)
   "Kill between the smallest and greatest range of NODES."
@@ -965,9 +964,10 @@ point relative to the nodes in
 `combobulate-navigation-default-nodes'."
   (interactive "p")
   (with-argument-repetition arg
-    (when-let ((node (combobulate--get-nearest-navigable-node)))
-      (combobulate-message "Killed" node)
-      (combobulate--kill-node node))))
+    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+      (when-let ((node (combobulate-nav-get-self-sibling (combobulate--get-nearest-navigable-node))))
+        (combobulate-message "Killed" node)
+        (combobulate--kill-node node)))))
 
 (defvar combobulate-envelope-static)
 
@@ -1492,7 +1492,7 @@ Each member of PARTITIONS must be one of:
                 (mark-node-indent start end
                                   baseline-target
                                   (combobulate-baseline-indentation part-node))))))))
-     (combobulate-message (combobulate-tally-nodes tally t))
+     (combobulate-message "Spliced." (combobulate-tally-nodes tally nil))
      (commit))
     (combobulate--refactor-insert-copied-values combobulate-refactor--copied-values)))
 
