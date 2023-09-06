@@ -717,7 +717,7 @@ considered whitespace by the mode's syntax table."
     (cons start end)))
 
 (defun combobulate-extend-region-to-whole-lines (start end)
-  "Alter the region between START and END but made up of whole lines if possible."
+  "Extend the region between START and END to whole lines."
   (dolist (pos (list start end))
     (save-excursion
       (goto-char pos)
