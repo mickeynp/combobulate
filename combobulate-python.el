@@ -282,7 +282,8 @@ again to cycle indentation.")))))
 
   (let ((statement-nodes
          (append (combobulate-production-rules-get "_compound_statement")
-                 '("block"))))
+                 (combobulate-production-rules-get "_simple_statement")
+                 '("expression_statement" "block"))))
     (setq combobulate-manipulation-envelopes
           `((:description
              "( ... )"
