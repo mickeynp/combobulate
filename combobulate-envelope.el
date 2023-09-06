@@ -39,6 +39,12 @@
 (defvar combobulate-envelope-registers nil
   "Registers of data for Combobulate envelopes.")
 
+(defvar combobulate-envelope--undo-on-quit nil
+  "If t, then undo on keyboard quit.
+
+Note that this is an internal variable and should not be set
+manually.")
+
 (defvar combobulate-envelope--registers nil
   "Internal store for Combobulate envelopes.")
 
@@ -236,7 +242,7 @@ locally bound to the context of `combobulate-refactor'."
          (condition-case nil
              ;; we start with `repeat-answer' set to `t' by default
              ;; because we want to expand `repeat-instructions'
-             ;; *first* and *then* ask prompt the user if they want
+             ;; *first* and *then*  prompt the user if they want
              ;; to keep the now-displayed instruction.
              (let ((repeat-answer t))
                (when combobulate-envelope-static
@@ -434,8 +440,15 @@ expansion:
   (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
   (let ((result) (start (point))
         (end (point-marker))
+        (change-group (prepare-change-group))
+        (should-unwind nil)
+        (is-success nil)
+        (undo-outer-limit nil)
+        (undo-limit most-positive-fixnum)
+        (undo-strong-limit most-positive-fixnum)
         (combobulate-envelope--registers combobulate-envelope-registers)
         (selected-point (point)))
+    (activate-change-group change-group)
     (when (use-region-p)
       (let ((col (current-indentation))
             (text (delete-and-extract-region (point) (mark))))
@@ -495,8 +508,23 @@ expansion:
                            :reset-point-on-abort t
                            :reset-point-on-accept nil)))
                    (rollback))))))
-           (commit))
-       (rollback)))
+           (commit)
+           (setq is-success t))
+       (rollback)
+       (unless is-success
+         ;; We cannot cancel a change group inside a
+         ;; `combobulate-refactor' (which itself uses change groups) as
+         ;; that... that seems to break Emacs. So instead we use a flag
+         ;; to indicate we unwound due to an error.
+         (setq should-unwind t))))
+    ;; Only when both `combobulate-envelope--undo-on-quit' and
+    ;; `should-unwind' is set do we cancel. The
+    ;; `combobulate-envelope--undo-on-quit' exist purely to prevent
+    ;; cancellations during proffer choices where the envelope is
+    ;; previewed.
+    (if (and should-unwind combobulate-envelope--undo-on-quit)
+        (cancel-change-group change-group)
+      (accept-change-group change-group))
     (when combobulate-envelope-indent-region-function
       (apply combobulate-envelope-indent-region-function
              (combobulate-extend-region-to-whole-lines start end)))

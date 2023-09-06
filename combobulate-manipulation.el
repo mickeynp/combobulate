@@ -1255,6 +1255,9 @@ these nodes: `%s'." name nodes))))))
 
 See `combobulate-apply-envelope' for more information."
   (let ((envelope (combobulate-get-envelope-by-name envelope-name))
+        ;; Default to true as we'll only turn this off briefly when we
+        ;; expand an envelope during a proffer preview.
+        (combobulate-envelope--undo-on-quit t)
         (chosen-node) (accepted nil))
     (unless envelope
       (error "There is no such envelope registered with the name `%s'"
@@ -1306,7 +1309,8 @@ See `combobulate-apply-envelope' for more information."
                          ;; mark deleted and highlight first. That way when we apply
                          ;; the envelope the overlays expand to match.
                          (funcall mark-deleted-fn)
-                         (let ((ov (funcall mark-highlighted-fn)))
+                         (let ((ov (funcall mark-highlighted-fn))
+                               (combobulate-envelope--undo-on-quit nil))
                            (seq-let [[start &rest end] &rest pt]
                                (combobulate-apply-envelope envelope node)
                              (goto-char pt)
