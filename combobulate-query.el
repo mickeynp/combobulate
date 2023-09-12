@@ -214,7 +214,11 @@ If this value is set, it will be used as the default query when
     ("hl.serene" . 'combobulate-query-highlight-serene-shade-face)
     ("hl.mercury" . 'combobulate-query-highlight-majestic-mercury-face)
     ("hl.rind" . 'combobulate-query-highlight-radiant-rind-face)
-    ("hl.comment" . 'font-lock-comment-face))
+    ("hl.comment" . 'font-lock-comment-face)
+    ;; for combobulate's edit nodes facility
+    ("before" . 'combobulate-query-highlight-silver-shadows-face)
+    ("after" . 'combobulate-query-highlight-regal-ripples-face)
+    ("mark" . 'region))
   "Alist of match names and the face to use.
 
 This is used to highlight matches in the target buffer by
