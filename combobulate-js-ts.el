@@ -199,7 +199,7 @@ from `combobulate-manipulation-envelopes') to insert."
              "<...> ... </...>"
              :name "tag"
              :mark-node t
-             :nodes ("jsx_element" "jsx_expression" "jsx_self_closing_element" "jsx_fragment")
+             :nodes ("jsx_element" "jsx_expression" "jsx_self_closing_element" "jsx_fragment" "jsx_text")
              :key "t"
              :template ("<" (p tag "Tag Name: ") ">" n>
                         r>
