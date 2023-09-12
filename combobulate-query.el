@@ -357,30 +357,29 @@ completion candidates for the current point."
                                   (go-down)
                                   (get-symbol))))
         (list start end
-              (sort (cond
-                     ;; it's a string - do nothing.
-                     (inside-string nil)
-                     ;; it's a match group
-                     (at-match-group-start (map-keys combobulate-query-match-face-alist))
-                     ;; it's a rule name
-                     ((or has-prefix-text at-form-start has-postfix-text at-form-end)
-                      (append (if-let (rule (assoc parent-rule-name combobulate-query-builder-rules))
-                                  (flatten-list
-                                   (cons (if parent-field-name
-                                             (or (plist-get (cadr rule) (intern (concat ":" parent-field-name)))
-                                                 combobulate-query-builder-rule-names)
-                                           (map-values (cadr rule)))
-                                         nil))
-                                combobulate-query-builder-rule-names)
-                              combobulate-query-builder-predicate-names))
-                     ;; it's a field name
-                     ((and (not at-form-start) (not at-form-end))
-                      (when-let (rule (assoc current-rule-name combobulate-query-builder-rules))
-                        (mapcar #'combobulate-query-builder-prop-name-to-field-name
-                                (seq-remove (lambda (prop) (equal prop :*unnamed*))
-                                            (map-keys (cadr rule))))))
-                     (t nil))
-                    #'string-lessp))))))
+              (cond
+               ;; it's a string - do nothing.
+               (inside-string nil)
+               ;; it's a match group
+               (at-match-group-start (map-keys combobulate-query-match-face-alist))
+               ;; it's a rule name
+               ((or has-prefix-text at-form-start has-postfix-text at-form-end)
+                (append (if-let (rule (assoc parent-rule-name combobulate-query-builder-rules))
+                            (flatten-list
+                             (cons (if parent-field-name
+                                       (or (plist-get (cadr rule) (intern (concat ":" parent-field-name)))
+                                           combobulate-query-builder-rule-names)
+                                     (map-values (cadr rule)))
+                                   nil))
+                          combobulate-query-builder-rule-names)
+                        (copy-tree combobulate-query-builder-predicate-names)))
+               ;; it's a field name
+               ((and (not at-form-start) (not at-form-end))
+                (when-let (rule (assoc current-rule-name combobulate-query-builder-rules))
+                  (mapcar #'combobulate-query-builder-prop-name-to-field-name
+                          (seq-remove (lambda (prop) (equal prop :*unnamed*))
+                                      (map-keys (cadr rule))))))
+               (t nil)))))))
 
 (defun combobulate-query-builder-change-parser ()
   "Change the parser used by `combobulate-query-mode'."
