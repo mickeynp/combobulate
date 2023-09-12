@@ -423,7 +423,10 @@ completion candidates for the current point."
       (if (= (length captures) 0)
           (with-current-buffer combobulate-query-builder-buffer-name
             (combobulate-query-builder-update-header
-             (propertize "No matches (or no @capture groups)" 'face 'font-lock-warning-face)))
+             ;; rudimentary check for capture groups.
+             (if (string-match-p "@" (combobulate-query-builder-get-query))
+                 (propertize "No matches" 'face 'font-lock-warning-face)
+               (propertize "No capture group(s) in query" 'face 'error))))
         (with-current-buffer combobulate-query-builder-buffer-name
           (combobulate-query-builder-update-header
            (propertize (format "%d match(es) found" (length captures)) 'face 'success)))
