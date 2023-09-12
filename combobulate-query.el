@@ -816,6 +816,20 @@ buffer."
     tbl)
   "Syntax table for `combobulate-query-mode'.")
 
+(defun combobulate-query-builder-copy-query-as-form ()
+  "Copy the current query as a form to the kill ring."
+  (interactive)
+  (combobulate-query-ring-save-query)
+  (kill-new (treesit-pattern-expand (combobulate-query-builder-get-query)))
+  (combobulate-message "Copied query as form to kill ring"))
+
+(defun combobulate-query-builder-copy-query ()
+  "Copy the current query to the kill ring."
+  (interactive)
+  (combobulate-query-ring-save-query)
+  (kill-new (combobulate-query-builder-get-query))
+  (combobulate-message "Copied query to kill ring"))
+
 (transient-define-prefix combobulate-query-builder-popup ()
   "Query builder."
   ["Query Builder"
@@ -823,6 +837,8 @@ buffer."
     ("n" "Copy and match node at point" combobulate-query-builder-copy-and-match-node-at-point)
     ("h" "Copy node hierarchy at point" combobulate-query-builder-copy-node-hierarchy-at-point)
     ("p" "Change parser" combobulate-query-builder-change-parser)
+    ("M-w" "Copy query as form to kill ring" combobulate-query-builder-copy-query-as-form)
+    ("w" "Copy query to kill ring" combobulate-query-builder-copy-query)
     ("+" "Fit window to buffer" fit-window-to-buffer)]
    ["History"
     ("C-s" "Save query to ring" combobulate-query-ring-save-query)
