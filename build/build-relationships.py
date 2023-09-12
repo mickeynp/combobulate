@@ -59,9 +59,17 @@ SOURCES = {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/grammar.json",
     },
+    "hoon": {
+        "nodes": "https://raw.githubusercontent.com/urbit-pilled/tree-sitter-hoon/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/urbit-pilled/tree-sitter-hoon/master/src/grammar.json",
+    },
     "toml": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-toml/master/src/node-types.json",
         "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-toml/master/src/grammar.json",
+    },
+    "elm": {
+        "nodes": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/master/src/node-types.json",
+        "grammar": "https://raw.githubusercontent.com/elm-tooling/tree-sitter-elm/master/src/grammar.json",
     },
     "json": {
         "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-json/master/src/node-types.json",
