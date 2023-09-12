@@ -1008,7 +1008,7 @@ Optional argument NO-ESCAPE disables regexp quoting."
     (:match ,(concat "^" (if no-escape
                              match-text
                            (regexp-quote match-text))
-                     "$")
+                     (if (string-match-p "\n" match-text) "" "$"))
             ,capture-group-name)))
 
 (defun combobulate-query-builder-matcher-query (match-node match-text strict-match face
