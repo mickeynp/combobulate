@@ -403,6 +403,7 @@ completion candidates for the current point."
     (overlay-put overlay 'evaporate t)
     (let ((face (or (cdr (assoc-string capture-name combobulate-query-match-face-alist))
                     (cdr (assoc capture-name combobulate-query-builder-match-capture-faces-alist))
+                    (and (facep capture-name) capture-name)
                     (let* ((default-face (nth (mod (length combobulate-query-builder-match-capture-faces-alist)
                                                    (length combobulate-query-node-match-faces))
                                               combobulate-query-node-match-faces))
