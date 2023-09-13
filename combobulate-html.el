@@ -128,7 +128,7 @@
     (self-insert-command 1 ?=)))
 
 (defun combobulate-html-pretty-print (node default-name)
-  (if (and node (equal (combobulate-node-type node) "element"))
+  (if (and node (member (combobulate-node-type node) '("element" "script_element" "style_element")))
       (format "<%s>" (thread-first node
                                    (combobulate-node-child 0)
                                    (combobulate-node-child 0)
@@ -136,8 +136,8 @@
     default-name))
 
 (defun combobulate-html-setup (_)
-  (setq combobulate-navigation-default-nodes '("element" "comment"))
-  (setq combobulate-navigation-sexp-nodes '("element" "attribute" "text"))
+  (setq combobulate-navigation-default-nodes '("element" "comment" "script_element" "style_element"))
+  (setq combobulate-navigation-sexp-nodes '("element" "attribute" "text" "script_element" "style_element"))
   (setq combobulate-navigation-context-nodes
         '("attribute_name" "attribute_value" "tag_name" "text"))
   (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute)
@@ -148,13 +148,13 @@
   (setq combobulate-sgml-close-tag "end_tag")
   (setq combobulate-sgml-whole-tag "element")
   (setq combobulate-sgml-self-closing-tag "self_closing_tag")
-
+  (setq combobulate-navigation-drag-parent-nodes '("element" "script_element" "style_element"))
   (setq combobulate-manipulation-envelopes
         '((:description
            "<...> ... </...>"
            :name "tag"
            :mark-node t
-           :nodes ("element" "self_closing_tag" "jsx_fragment")
+           :nodes ("element" "self_closing_tag" "jsx_fragment" "script_element" "style_element")
            :key "t"
            :template ("<" (p tag "Tag Name: ") ">" n>
                       r>
@@ -164,7 +164,7 @@
            :key "=e"
            :mark-node nil
            :point-placement 'stay
-           :nodes ("start_tag" "self_closing_tag")
+           :nodes ("start_tag" "self_closing_tag" "script_element" "style_element")
            :name "attr-expression"
            :template ("=" "{" @ "}"))
           (:description
@@ -183,36 +183,37 @@
            :nodes ("start_tag" "self_closing_tag")
            :name "attr-string"
            :template ("=" "\"" @ "\""))))
+
   (setq combobulate-manipulation-edit-procedures
         '((:activation-nodes
            ((:node
              "attribute"
-             :find-parent ("start_tag" "self_closing_tag")
+             :find-parent ("start_tag" "self_closing_tag" "script_element" "style_element")
              :position at-or-in))
            :match-query ((_) (attribute)+ @match))
           ;; sibling-level editing
           (:activation-nodes
            ((:node
-             ("self_closing_tag" "expression" "element" "fragment")
+             ("self_closing_tag" "expression" "element" "fragment" "script_element" "style_element")
              :position at))
            :remove-types ("comment" "text")
            :match-siblings (:keep-parent nil))
           ;; editing an element's opening/closing tag
           (:activation-nodes
            ((:node
-             "element"
+             ("element" "script_element" "style_element")
              :position in))
            :remove-types ("comment")
-           :match-query (element (start_tag (tag_name) @match)
-                                 (end_tag (tag_name) @match)))))
+           :match-query (_ (start_tag (tag_name) @match)
+                           (end_tag (tag_name) @match)))))
 
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
-             ("element")
+             ("element" "script_element" "style_element")
              :position at-or-in
-             :find-immediate-parent ("element")))
-           :match-children (:keep-types ("element")))
+             :find-immediate-parent ("element" "script_element" "style_element")))
+           :match-children (:keep-types ("element" "script_element" "style_element")))
           (:activation-nodes
            ((:node
              ("attribute")
