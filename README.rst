@@ -56,7 +56,7 @@ Getting Started with Combobulate
 +--------------------+--------------------+
 |CSS                 |✅                  |
 +--------------------+--------------------+
-|HTML                |✅ (See notes)      |
+|HTML                |✅ [1]              |
 +--------------------+--------------------+
 |JSON                |✅                  |
 +--------------------+--------------------+
@@ -80,7 +80,7 @@ At that point, Combobulate is now working. Combobulate rebinds a wide range of c
 
 Furthermore, Combobulate ships with a Magit-like transient UI that you can access by typing ``C-c o o``. It exists primarily to teach you about Combobulate's capabilities: every key binding in it is also available without the popup.
 
-(HTML support is supported, but uses an as-yet work-in-progress and unreleased major mode to do this. More details coming soon.)
+ [1] You can download my ``html-ts-mode`` `here <https://github.com/mickeynp/html-ts-mode>`__, and read more about how to build your own tree-sitter major mode by reading `Let's Write a Tree-Sitter Major Mode <https://www.masteringemacs.org/article/lets-write-a-treesitter-major-mode>`__.
 
 Top Tips for using Combobulate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
