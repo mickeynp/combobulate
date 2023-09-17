@@ -39,6 +39,7 @@
 (require 'combobulate-navigation)
 (require 'combobulate-misc)
 (require 'combobulate-interface)
+(require 'combobulate-rules)
 ;;; base mode for the query builder
 (require 'scheme)
 ;;; for plist stuff
@@ -388,14 +389,22 @@ completion candidates for the current point."
 (defun combobulate-query-builder-change-parser ()
   "Change the parser used by `combobulate-query-mode'."
   (interactive)
+  (unless (buffer-live-p combobulate-query-builder-target-buffer-name)
+    (error "Buffer `%s' is not live" combobulate-query-builder-target-buffer-name))
   (let ((parsers (mapcar (lambda (p) (cons (format "%s" p) p)) (combobulate-parser-list))))
     (setq combobulate-query-builder-parser
-          (if (length> parsers 1)
-              (cdr (assoc (completing-read "Pick a parser" parsers) parsers))
-            (cdr (car parsers))))
+          (cond
+           ((length= parsers 1) (cdr (car parsers)))
+           ((length> parsers 1)
+            (cdr (assoc (completing-read "Pick a parser" parsers) parsers)))
+           (t (if-let ((p (completing-read "There are no associated parsers. Pick a parser Combobulate knows about: "
+                                           combobulate-rules-list)))
+                  (combobulate-parser-create (intern p) combobulate-query-builder-target-buffer-name)
+                (error "No parser selected")))))
     (when combobulate-query-builder-parser
       (combobulate-message
        (format "Parser changed to `%s'" (combobulate-parser-language combobulate-query-builder-parser))))))
+
 
 (defun combobulate-query-builder--highlight-capture (capture)
   "Highlight CAPTURE in the current buffer."
@@ -892,10 +901,10 @@ highlighting and node completion."
     (when (eq target-buffer builder-buffer)
       (user-error "This buffer cannot be use as target buffer"))
     (with-current-buffer target-buffer
+      (setq combobulate-query-builder-target-buffer-name target-buffer)
       (combobulate-query-builder-change-parser)
       (add-hook 'combobulate-query-builder-after-change-functions
-                #'combobulate-query-builder--after-change nil :local)
-      (setq combobulate-query-builder-target-buffer-name target-buffer))
+                #'combobulate-query-builder--after-change nil :local))
     (with-current-buffer builder-buffer
       (erase-buffer)
       (combobulate-query-mode)
@@ -1141,7 +1150,7 @@ highlight Combobulate highlighters.")
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                   (eq feature combobulate-highlight-feature-symbol)))
+                                        (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)
