@@ -25,7 +25,6 @@
 ;;; Code:
 
 (require 'combobulate-rules)
-
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
 (require 'combobulate-interface)
@@ -33,6 +32,7 @@
 
 (declare-function combobulate--mark-node "combobulate-manipulation")
 (declare-function combobulate-indent-region "combobulate-manipulation")
+
 (defun combobulate-hoon--get-definition (node)
   (string-join
    (combobulate-query-node-text
@@ -43,24 +43,24 @@
     node
     t)
    ""))
+
 (defun combobulate-hoon-pretty-print-node-name (node default-name)
 
   (pcase (combobulate-node-type node)
     (_ (thread-first node
-                                 (combobulate-node-child 0)
-                                 (message "child %s" it)
-                                 (print)
-                                 ))
-    ))
+                     (combobulate-node-child 0)
+                     (message "child %s" it)
+                     (print)))))
+
 (defun combobulate-hoon-calculate-indent (start end)
   (let ((indent-region-function nil))
     (combobulate-indent-region start end)))
+
 (defun combobulate-hoon-setup (_)
   ;; no indent on envelopes.
   (setq combobulate-envelope-indent-region-function nil)
   (setq indent-region-function nil)
   (setq combobulate-manipulation-indent-after-edit nil)
-
   (setq combobulate-manipulation-edit-procedures
         '(;; Define location of definitions for various nodes
           ;; wrapFace: _skinWide "=" _hoonWide
@@ -109,9 +109,7 @@
            :match-query (path (_)+ @match)
            :remove-types ("comment"))
           ;; Edit definitions upon marking an edit node.
-          )
-
-        )
+          ))
 
   (setq combobulate-navigation-sexp-nodes '("_hoonWide" "_hoonTall"
                                             "gateCall" "cell"))
@@ -137,55 +135,15 @@
           (:activation-nodes
            ((:node
              ("comment")
-             :position at-or-in)
-
-	        )
+             :position at-or-in))
 	       :match-children t
-           :match-siblings (:keep-parent t :keep-siblings t))
-
-
-          ;; (:activation-nodes
-          ;;   ((:node
-          ;;     ("luslusTall" "lusbucTall" "buccolTall" "barcenTall" "barcabTall" )
-          ;;     :position at-or-in)
-          ;;   :remove-types ("tisgarTall" "tisfasTall" "tisgalTall" "comment" "Gap")
-          ;;   :match-siblings (:keep-parent t :keep-siblings t))
-
-
-          ;; ((:node
-	      ;;   "normalize"
-	      ;;   :position at-or-in
-	      ;;   :find-immediate-parent ("valueWide" "normalize")))
-
-          ;; (:node
-          ;;  ,(append
-          ;;    (combobulate-production-rules-get "cell"))
-          ;;  :position at-or-in
-          ;;  :find-immediate-parent ("cell"
-          ;;                          ))
-	      ;; (:node
-	      ;;  ,(append
-	      ;;    (combobulate-production-rules-get "term")
-	      ;;    (combobulate-production-rules-get "tapeOrCord"))
-	      ;;  :position at-or-in
-	      ;;  :find-immediate-parent ("term" "tapeOrCord")
-	      ;;  :match-children t
-	      ;;  :remove-types ("comment"))
-	      ;; ((:node
-	      ;;   ,(append (combobulate-production-rules-get "source_file")
-	      ;;            (combobulate-production-rules-get "bucgalTall")
-	      ;;            '("source_file" "gateCall" ))
-	      ;;   :position at-or-in
-	      ;;   :find-immediate-parent ("source_file" "bucgalTall"))
-          ;;  :remove-types "comment"
-          ;;  :match-children t)
-          ))
+           :match-siblings (:keep-parent t :keep-siblings t))))
 
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function nil)
   (setq combobulate-manipulation-indent-method 'first)
-  (setq combobulate-calculate-indent-function #'combobulate-baseline-indentation-default
-        )
+  (setq combobulate-calculate-indent-function
+        #'combobulate-baseline-indentation-default)
   (setq combobulate-navigation-defun-nodes '("luslusTall" "lusbucTall" "buccolTall" "barcenTall" "barcabTall" "tisfasTall" "tistarTall"))
   (setq combobulate-navigation-sexp-nodes '("cell" "gateCall" "path" "wingPath" "resolveWingWithChanges"))
   (setq combobulate-display-ignored-node-types '("Gap"))
