@@ -874,6 +874,7 @@ buffer."
     (define-key map (kbd "C-c x") #'combobulate-query-builder-find-in-xref)
     (define-key map (kbd "C-c h") #'combobulate-query-builder-copy-node-hierarchy-at-point)
     (define-key map (kbd "C-c +") #'fit-window-to-buffer)
+    (define-key map (kbd "C-c q") #'combobulate-query-builder-save-and-quit)
     (define-key map (kbd "C-c M-p") #'combobulate-query-ring-previous-query)
     (define-key map (kbd "C-c M-n") #'combobulate-query-ring-next-query)
     (define-key map (kbd "C-c C-s") #'combobulate-query-ring-save-query)
@@ -888,6 +889,15 @@ buffer."
   "Signal an error unless the query builder buffer is live."
   (unless (combobulate-query-builder-live-p)
     (user-error "No query builder buffer found")))
+
+(defun combobulate-query-builder-save-and-quit ()
+  "Save the query and quit the query builder buffer."
+  (interactive)
+  (combobulate-query-builder-live-or-error)
+  (with-current-buffer combobulate-query-builder-target-buffer-name
+    (when (yes-or-no-p "Save current query to ring ?")
+      (combobulate-query-ring-save-query)))
+  (kill-buffer combobulate-query-builder-buffer-name))
 
 ;;;###autoload
 (defun combobulate-query-builder ()
