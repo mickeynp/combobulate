@@ -238,8 +238,8 @@ have changed."
 (require 'combobulate-css)
 (require 'combobulate-yaml)
 (require 'combobulate-json)
+(require 'combobulate-hoon)
 ;;; end language support
 
 (provide 'combobulate)
 ;;; combobulate.el ends here
-

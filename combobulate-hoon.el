@@ -1,3 +1,29 @@
+;;; combobulate-hoon.el --- Hoon mode support for Combobulate  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2023  Jake Miller
+
+;; Author: Jake Miller
+;; Keywords:
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;;
+
+;;; Code:
+
 (require 'combobulate-rules)
 
 (require 'combobulate-settings)
@@ -38,7 +64,7 @@
   (setq combobulate-manipulation-edit-procedures
         '(;; Define location of definitions for various nodes
           ;; wrapFace: _skinWide "=" _hoonWide
- 	  (:meta-node-arrow "⇒")
+ 	      (:meta-node-arrow "⇒")
           ;; Determine name and body of the noted definitions
           (:name (-lhs$ _               ; Ignore auxiliary LHS $
                         reason:(_ /***/
@@ -46,8 +72,8 @@
                         decl:+
                         name))
 
-	  (:body (or _- rhs:** decl (gap)* _+?)
-	         (map symref (= mvar:@mvar:start-point (•1 conj:left-brace))))
+	      (:body (or _- rhs:** decl (gap)* _+?)
+	             (map symref (= mvar:@mvar:start-point (•1 conj:left-brace))))
           ;; edit expressions in cells
           (:activation-nodes
            ((:node "cell" :position at-or-in))
@@ -94,66 +120,66 @@
                                                    "equality" "mold"
                                                    "cell" "gateCall"))
   (setq combobulate-navigation-sibling-procedures
-      `((:activation-nodes
-         ((:nod
-           ,(combobulate-production-rules-get "barcabTall")
-           :find-immmediate-parent ("barcabTall")
-           :position at-or-in)
-          (:node
-           ,(combobulate-production-rules-get "luslusTall")
-           :find-immmediate-parent ("luslusTall")
-           :position at-or-in)
-          )
-         :remove-types ("Gap")
-         :match-children t
-         :match-siblings (:keep-parent t :keep-siblings t))
+        `((:activation-nodes
+           ((:nod
+             ,(combobulate-production-rules-get "barcabTall")
+             :find-immmediate-parent ("barcabTall")
+             :position at-or-in)
+            (:node
+             ,(combobulate-production-rules-get "luslusTall")
+             :find-immmediate-parent ("luslusTall")
+             :position at-or-in)
+            )
+           :remove-types ("Gap")
+           :match-children t
+           :match-siblings (:keep-parent t :keep-siblings t))
 
-           (:activation-nodes
-            ((:node
-              ("comment")
-              :position at-or-in)
+          (:activation-nodes
+           ((:node
+             ("comment")
+             :position at-or-in)
 
-	     )
-	    :match-children t
-            :match-siblings (:keep-parent t :keep-siblings t))
-
-
-        ;; (:activation-nodes
-        ;;   ((:node
-        ;;     ("luslusTall" "lusbucTall" "buccolTall" "barcenTall" "barcabTall" )
-        ;;     :position at-or-in)
-        ;;   :remove-types ("tisgarTall" "tisfasTall" "tisgalTall" "comment" "Gap")
-        ;;   :match-siblings (:keep-parent t :keep-siblings t))
+	        )
+	       :match-children t
+           :match-siblings (:keep-parent t :keep-siblings t))
 
 
-        ;; ((:node
-	;;   "normalize"
-	;;   :position at-or-in
-	;;   :find-immediate-parent ("valueWide" "normalize")))
+          ;; (:activation-nodes
+          ;;   ((:node
+          ;;     ("luslusTall" "lusbucTall" "buccolTall" "barcenTall" "barcabTall" )
+          ;;     :position at-or-in)
+          ;;   :remove-types ("tisgarTall" "tisfasTall" "tisgalTall" "comment" "Gap")
+          ;;   :match-siblings (:keep-parent t :keep-siblings t))
 
-        ;; (:node
-        ;;  ,(append
-        ;;    (combobulate-production-rules-get "cell"))
-        ;;  :position at-or-in
-        ;;  :find-immediate-parent ("cell"
-        ;;                          ))
-	;; (:node
-	;;  ,(append
-	;;    (combobulate-production-rules-get "term")
-	;;    (combobulate-production-rules-get "tapeOrCord"))
-	;;  :position at-or-in
-	;;  :find-immediate-parent ("term" "tapeOrCord")
-	;;  :match-children t
-	;;  :remove-types ("comment"))
-	;; ((:node
-	;;   ,(append (combobulate-production-rules-get "source_file")
-	;;            (combobulate-production-rules-get "bucgalTall")
-	;;            '("source_file" "gateCall" ))
-	;;   :position at-or-in
-	;;   :find-immediate-parent ("source_file" "bucgalTall"))
-        ;;  :remove-types "comment"
-        ;;  :match-children t)
-        ))
+
+          ;; ((:node
+	      ;;   "normalize"
+	      ;;   :position at-or-in
+	      ;;   :find-immediate-parent ("valueWide" "normalize")))
+
+          ;; (:node
+          ;;  ,(append
+          ;;    (combobulate-production-rules-get "cell"))
+          ;;  :position at-or-in
+          ;;  :find-immediate-parent ("cell"
+          ;;                          ))
+	      ;; (:node
+	      ;;  ,(append
+	      ;;    (combobulate-production-rules-get "term")
+	      ;;    (combobulate-production-rules-get "tapeOrCord"))
+	      ;;  :position at-or-in
+	      ;;  :find-immediate-parent ("term" "tapeOrCord")
+	      ;;  :match-children t
+	      ;;  :remove-types ("comment"))
+	      ;; ((:node
+	      ;;   ,(append (combobulate-production-rules-get "source_file")
+	      ;;            (combobulate-production-rules-get "bucgalTall")
+	      ;;            '("source_file" "gateCall" ))
+	      ;;   :position at-or-in
+	      ;;   :find-immediate-parent ("source_file" "bucgalTall"))
+          ;;  :remove-types "comment"
+          ;;  :match-children t)
+          ))
 
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function nil)
@@ -162,13 +188,13 @@
         )
   (setq combobulate-navigation-defun-nodes '("luslusTall" "lusbucTall" "buccolTall" "barcenTall" "barcabTall" "tisfasTall" "tistarTall"))
   (setq combobulate-navigation-sexp-nodes '("cell" "gateCall" "path" "wingPath" "resolveWingWithChanges"))
-    (setq combobulate-display-ignored-node-types '("Gap"))
+  (setq combobulate-display-ignored-node-types '("Gap"))
   (setq combobulate-navigation-default-nodes
         (seq-uniq (append
                    combobulate-navigation-logical-nodes
                    combobulate-navigation-parent-child-nodes
-		   combobulate-navigation-defun-nodes
-		   combobulate-navigation-sexp-nodes)))
+		           combobulate-navigation-defun-nodes
+		           combobulate-navigation-sexp-nodes)))
   (setq combobulate-navigation-parent-child-nodes
         (append
          '("luslusTall" "cell" "gateCall" "path" "wingPath" "resolveWingWithChanges" "barcabTall")))
@@ -180,3 +206,4 @@
              :position at-or-in))
            :match-siblings (:keep-parent nil)))))
 (provide 'combobulate-hoon)
+;;; combobulate-hoon.el ends here
