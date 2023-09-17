@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; mode: python -*-
 
 import requests
 from pathlib import Path
@@ -13,61 +12,13 @@ import logging
 from dataclasses import dataclass
 from pprint import pprint as pp
 from typing import List
+import configparser
 
 logging.basicConfig()
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-SOURCES = {
-    "yaml": {
-        "nodes": "https://raw.githubusercontent.com/ikatyang/tree-sitter-yaml/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/ikatyang/tree-sitter-yaml/master/src/grammar.json",
-    },
-    "tsx": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/tsx/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/tsx/src/grammar.json",
-    },
-    "css": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-css/master/src/grammar.json",
-    },
-    "typescript": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/typescript/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-typescript/master/typescript/src/grammar.json",
-    },
-    "javascript": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
-    },
-    "jsx": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-javascript/master/src/grammar.json",
-    },
-    "go": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-go/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-go/master/src/grammar.json",
-    },
-    "python": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-python/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-python/master/src/grammar.json",
-    },
-    "c": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-c/master/src/grammar.json",
-    },
-    "html": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-html/master/src/grammar.json",
-    },
-    "toml": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-toml/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-toml/master/src/grammar.json",
-    },
-    "json": {
-        "nodes": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-json/master/src/node-types.json",
-        "grammar": "https://raw.githubusercontent.com/tree-sitter/tree-sitter-json/master/src/grammar.json",
-    },
-}
+
 
 DEFAULT_FIELD_NAME = "*unnamed*"
 
@@ -212,8 +163,8 @@ def download_source(source, output_filename, url):
     return d
 
 
-def download_all_sources():
-    for source, files in SOURCES.items():
+def download_all_sources(sources):
+    for source, files in sources.items():
         download_source(source, f"{source}-nodes.json", files["nodes"])
         download_source(source, f"{source}-grammar.json", files["grammar"])
 
@@ -221,19 +172,44 @@ def download_all_sources():
 def write_elisp_file(forms):
     log.info("Writing forms to file")
     with Path("../combobulate-rules.el").open("w") as f:
+        def newline():
+            f.write("\n")
+        def write_form(form, header: str|None=None, footer: str|None=None):
+            if header:
+                f.write(f";; START {header}")
+                newline()
+            f.write(form)
+            newline()
+            if footer:
+                f.write(f";; END {footer}")
+                newline()
+        langs = []
         for src, (form, inv_form) in forms:
+            langs.append(src)
             if not form:
                 log.error("Skipping %s as it is empty", src)
                 continue
-            f.write(f";; START Auto-generated production rules for `{src}'\n")
-            f.write(form)
-            f.write("\n")
-            f.write("\n")
-            f.write(inv_form)
-            f.write("\n")
-            f.write(f";; END production rules for {src}\n")
-            f.write("\n" * 5)
-        f.write("(provide 'combobulate-rules)\n")
+            write_form(form, header=f"Production rules for {src}", footer=f"Production rules for {src}")
+            write_form(inv_form, header=f"Inverse production rules for {src}", footer=f"Inverse production rules for {src}")
+            newline()
+        write_form(sexp(
+            [
+                Symbol("defconst"),
+                Symbol(f"combobulate-rules-list"),
+                "\n",
+                Quote(sexp(sexp(sorted(langs)))),
+                "\n",
+                LispString("A list of all the languages that have production rules."),
+                "\n",
+            ]
+        ), header="Auto-generated list of all languages", footer="Auto-generated list of all languages")
+        newline()
+        write_form(sexp(
+            [
+                Symbol("provide"),
+                Quote(Symbol("combobulate-rules")),
+            ]
+        ))
 
 
 def parse_source(language, source):
@@ -242,18 +218,30 @@ def parse_source(language, source):
     rules, inv_rules = process_rules(data)
     return generate_sexp(rules, inv_rules, language, source)
 
+def read_sources(sources_file: str) -> dict:
+    # Create a ConfigParser object
+    sources = {}
+    config = configparser.ConfigParser()
+    config.read(sources_file)
+    for section in config.sections():
+        sources[section] = dict(config[section])
+    return sources
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--download", action="store_true", help="Download sources first", default=False
     )
+    parser.add_argument(
+        "--sources-file", action="store", help="Sources file", default="sources.ini"
+    )
     args = parser.parse_args()
     forms = []
+    sources = read_sources(args.sources_file)
     if args.download:
-        download_all_sources()
+        download_all_sources(sources)
 
-    for src, files in SOURCES.items():
+    for src, files in sources.items():
         forms.append((src, parse_source(src, Path(f"{src}-nodes.json"))))
     write_elisp_file(forms)
 
