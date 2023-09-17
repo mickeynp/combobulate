@@ -190,6 +190,7 @@ created."
 
 Customize `combobulate-setup-functions-alist' to change the language setup alist.")))
 
+;;;###autoload
 (define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs
 
 \\{combobulate-key-map}"
