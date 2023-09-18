@@ -450,14 +450,7 @@ from `combobulate-manipulation-envelopes') to insert."
             "jsx_fragment" "jsx_element" "jsx_opening_element"
             "jsx_expression" "jsx_self_closing_element"))
 
-    (setq combobulate-navigation-default-nodes
-          (append combobulate-navigation-parent-child-nodes
-                  `("jsx_attribute" "ternary_expression" "type_arguments" "string"
-                    "arrow_function" "jsx_text" "function_declaration"
-                    ,@(combobulate-production-rules-get "primary_expression")
-                    ,@(combobulate-production-rules-get "object")
-                    ,@(combobulate-production-rules-get "statement")
-                    ,@(combobulate-production-rules-get "declaration"))))
+    (setq combobulate-navigation-default-nodes (seq-uniq (flatten-tree combobulate-rules-tsx-inverted)))
     (setq combobulate-navigation-logical-nodes
           (seq-uniq (flatten-tree combobulate-rules-tsx-inverted)))))
 
