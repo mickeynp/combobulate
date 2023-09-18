@@ -929,6 +929,8 @@ To use, call \\[combobulate-query-builder]."
           (mapcar #'combobulate-query-builder-prop-name-to-field-name
                   (seq-remove (lambda (prop) (equal prop :*unnamed*))
                               (seq-uniq (mapcan #'map-keys (mapcar #'cadr (combobulate-get-rule-symbol parser-lang-name)))))))
+    (setq-local comment-start ";"
+                comment-end "")
     (setq-local completion-at-point-functions '(combobulate-query-builder-completion-at-point-function))
     (combobulate-query-builder-update-header "Ready")
     (setq-local combobulate-query-builder-font-lock-keywords
