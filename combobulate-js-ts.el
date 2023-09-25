@@ -72,8 +72,6 @@ If this value is `nil', then no envelope is applied."
   :group 'combobulate-js-ts
   :type 'boolean)
 
-
-
 (defcustom combobulate-js-ts-enable-attribute-envelopes t
   "Pick a sensible value for a JSX attribute when you type `='.
 
@@ -116,8 +114,6 @@ from `combobulate-manipulation-envelopes') to insert."
       ("function_declaration" (combobulate-js-ts--get-function-name node))
       ("lexical_declaration" (combobulate-js-ts--get-declaration-name node))
       (_ default-name))))
-
-
 
 (defun combobulate-js-ts-setup (lang)
   (let ((is-ts (member lang '(tsx typescript))))
@@ -431,9 +427,12 @@ from `combobulate-manipulation-envelopes') to insert."
                ,(append (combobulate-production-rules-get "object")
                         (combobulate-production-rules-get "statement")
                         (combobulate-production-rules-get "declaration")
+                        ;; for classes
+                        (combobulate-production-rules-get "class_body")
                         '("program" "switch_case"))
                :position at-or-in
-               :find-immediate-parent ("statement_block" "switch_body" "program")))
+               :find-immediate-parent ("statement_block" "switch_body" "program"
+                                       "class_body")))
              :remove-types ("comment")
              :match-children t)))
 
