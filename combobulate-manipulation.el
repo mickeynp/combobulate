@@ -1171,17 +1171,16 @@ buffer.
   (interactive "^p")
   (with-argument-repetition arg
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-      (combobulate-message
-       "Cloning"
-       (combobulate-proffer-choices
-        (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
-        (lambda (node mark-highlighted-fn move-fn mark-deleted-fn)
-          (funcall mark-deleted-fn)
-          (combobulate--clone-node node (combobulate-node-start node))
-          (funcall mark-highlighted-fn)
-          (funcall move-fn)
-          (combobulate-skip-whitespace-forward))
-        :reset-point-on-abort t)))))
+      (when-let ((node (combobulate-proffer-choices
+                        (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
+                        (lambda (_node mark-highlighted-fn move-fn mark-deleted-fn)
+                          (funcall mark-deleted-fn)
+                          (funcall mark-highlighted-fn)
+                          (funcall move-fn)
+                          (combobulate-skip-whitespace-forward))
+                        :reset-point-on-abort t)))
+        (combobulate-message "Cloning" node)
+        (combobulate--clone-node node (combobulate-node-start node))))))
 
 (defun combobulate-envelop-region (template)
   "Insert Combobulate TEMPLATE around active region."
