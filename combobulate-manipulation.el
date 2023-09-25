@@ -803,7 +803,9 @@ If NO-TRAILING-NEWLINE is t, then no trailing newline is inserted
 after NODE-OR-TEXT."
   (let* ((col (save-excursion (goto-char position)
                               (current-column)))
-         (node-text))
+         (node-text)
+         (newline-insert (and (or (eq mode 'newline) (null mode))
+                              (combobulate-before-point-blank-p position))))
     (cond
      ((stringp node-or-text)
       (setq node-text (combobulate-indent-string node-or-text col t)))
@@ -832,14 +834,16 @@ after NODE-OR-TEXT."
             (node-col (save-excursion
                         (combobulate--goto-node node-or-text)
                         (current-indentation))))
-        (setq node-text (combobulate-indent-string
-                         ;; the first line may not include all of its
-                         ;; indentation because the node extents won't
-                         ;; include it. This fixes it so it does.
-                         (combobulate-indent-string-first-line
-                          (concat (combobulate-node-text node-or-text) sequence-separator)
-                          node-col)
-                         (- col node-col)))))
+        (setq node-text (if newline-insert
+                            (combobulate-indent-string
+                             ;; the first line may not include all of its
+                             ;; indentation because the node extents won't
+                             ;; include it. This fixes it so it does.
+                             (combobulate-indent-string-first-line
+                              (concat (combobulate-node-text node-or-text) sequence-separator)
+                              node-col)
+                             (- col node-col))
+                          (concat (combobulate-node-text node-or-text) sequence-separator)))))
      (t (error "Cannot place node or text `%s'" node-or-text)))
     (goto-char position)
     ;; If a node has nothing but whitespace preceding it, then it's a
@@ -847,8 +851,7 @@ after NODE-OR-TEXT."
     ;; nodes that exist, usually, on a line of their own. That is on
     ;; contrast to inline-delimited nodes that are placed to the left
     ;; or right on a line with other nodes.
-    (if (and (or (eq mode 'newline) (null mode))
-             (combobulate-before-point-blank-p position))
+    (if newline-insert
         ;; newline-delimited node
         (progn
           (unless no-trailing-newline (split-line 0))
