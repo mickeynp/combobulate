@@ -1,4 +1,4 @@
-;; START Auto-generated production rules for `yaml'
+;; START Auto-generated production rules for `yaml' -*- lexical-binding: t; -*-
 (defconst combobulate-rules-yaml 
  '(("alias" (:*unnamed* ("alias_name"))) 
  ("anchor" (:*unnamed* ("anchor_name"))) 

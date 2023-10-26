@@ -37,6 +37,7 @@
 (require 'python)
 
 (defvar combobulate-query-ring)
+(defvar combobulate-envelope--undo-on-quit)
 
 (declare-function combobulate--mc-place-nodes "combobulate-contrib")
 (declare-function combobulate--mc-edit-nodes "combobulate-contrib")

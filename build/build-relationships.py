@@ -225,7 +225,8 @@ def write_elisp_file(forms):
             if not form:
                 log.error("Skipping %s as it is empty", src)
                 continue
-            f.write(f";; START Auto-generated production rules for `{src}'\n")
+            f.write(f";; START Auto-generated production rules for `{src}'"
+                    " -*- lexical-binding: t -*-\n")
             f.write(form)
             f.write("\n")
             f.write("\n")

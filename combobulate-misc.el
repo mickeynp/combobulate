@@ -43,11 +43,11 @@
 
 (defmacro combobulate-alist-append (key value alist)
   "Append to KEY (or create) KEY with VALUE in ALIST."
-  `(map-put ,alist ,key (cons ,value (map-elt ,alist ,key))))
+  `(map-put! ,alist ,key (cons ,value (map-elt ,alist ,key))))
 
 (defmacro combobulate-alist-set (key value alist)
   "Append to KEY (or create) KEY with VALUE in ALIST."
-  `(map-put ,alist ,key (cons ,value nil)))
+  `(map-put! ,alist ,key (cons ,value nil)))
 
 (defun combobulate-message (message &rest args)
   "Display MESSAGE and pretty print NODE"
