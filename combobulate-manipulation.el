@@ -1397,7 +1397,7 @@ more than one."
        (seq-drop-while #'combobulate-node-in-region-p nodes)
        ;; do not mark `node' for deletion; highlight `node'; or
        ;; move point to `node'.
-       (lambda (node &rest _) (combobulate--mark-node node nil beginning-of-line))
+       (lambda (node &rest _) (combobulate--mark-node node t beginning-of-line))
        :reset-point-on-abort t
        :reset-point-on-accept nil
        ;; HACK: This allows repetition of the command that
