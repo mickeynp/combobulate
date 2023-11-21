@@ -267,7 +267,7 @@ from `combobulate-manipulation-envelopes') to insert."
             ;; ("the comma operator")
             ((arrow_function body: ((_ (sequence_expression left: (_) @hl.veggie)))))
             ;; highlight browser console object calls.
-            ((call_expression function: (member_expression object: (identifier) @name @hl.gold
+            ((call_expression function: (member_expression object: (identifier) @name @hl.serene
                                                            property: (property_identifier)
                                                            (:match "^console$" @name))))
             ))
