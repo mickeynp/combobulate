@@ -78,7 +78,7 @@ match a placement action."
                                                do-mark t))
                       (_ nil))))
           (mc/remove-fake-cursors)
-          (pcase-dolist (`(,action . ,node) placement-nodes)
+          (pcase-dolist (`(,action . ,node) (reverse placement-nodes))
             (setq do-mark nil)
             (unless (apply-action action node)
               ;; fall back to `default-action' if we get nil back from
