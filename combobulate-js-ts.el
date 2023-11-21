@@ -265,9 +265,9 @@ from `combobulate-manipulation-envelopes') to insert."
           '(
             ;; highlight the left-hand side of sequence expressions
             ;; ("the comma operator")
-            ((arrow_function body: ((_ (sequence_expression left: (_) @combobulate-query-highlight-vibrant-veggie-face)))))
+            ((arrow_function body: ((_ (sequence_expression left: (_) @hl.veggie)))))
             ;; highlight browser console object calls.
-            ((call_expression function: (member_expression object: (identifier) @name @combobulate-query-highlight-dazzling-deep-face
+            ((call_expression function: (member_expression object: (identifier) @name @hl.serene
                                                            property: (property_identifier)
                                                            (:match "^console$" @name))))
             ))
