@@ -1404,9 +1404,13 @@ more than one."
        ;; `combobulate-mark-node-dwim' is bound to, but this should be
        ;; built into `combobulate-proffer-choices'. Furthermore, is
        ;; `where-is-internal' really the best way to do this?
-       :extra-map (mapcar (lambda (key) (cons key 'next))
-                          (where-is-internal #'combobulate-mark-node-dwim
-                                             combobulate-key-map))
+       :extra-map (append
+                   (mapcar (lambda (key) (cons key 'next))
+                           (where-is-internal #'combobulate-mark-node-dwim
+                                              combobulate-key-map))
+                   ;; `M-h' (default) will expand the region; `M-H'
+                   ;; contracts it.
+                   (list (cons "\M-H" 'prev)))
        :flash-node t
        :first-choice first-choice))))
 
