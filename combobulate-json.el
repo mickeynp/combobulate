@@ -66,14 +66,6 @@
              :position at-or-in))
            :match-query
            ((_) @discard (object ((_) ","? )+ @keep)))))
-  ;; Required for the top-most splicing procedure: we remove
-  ;; `statement_block' because it interferes with splicing. However,
-  ;; it is also a key part in inferring relationships between certain
-  ;; specialized node types like `lexical_declaration'. So this
-  ;; snippet tweaks the inverted production rules so it recognizes the
-  ;; right thing
-
-  (setq combobulate-navigation-drag-parent-nodes '("object" "array"))
   (setq combobulate-navigation-defun-nodes '("document"))
 
   (setq combobulate-navigation-sibling-procedures

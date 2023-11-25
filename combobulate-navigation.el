@@ -1006,6 +1006,10 @@ NODE is found or all depths have been searched."
       (with-navigation-nodes (:nodes production-rules)
         (combobulate-get-expanded-children parent-node combobulate-navigation-rules-overrides)))))
 
+(defun combobulate-production-rules-exists-p (node-type)
+  "Return t if NODE-TYPE exists in `combobulate-navigation-rules'."
+  (car (assoc node-type combobulate-navigation-rules)))
+
 (defun combobulate-production-rules-get (node-type &optional fields)
   "Get production rules for NODE-TYPE and maybe from its FIELDS.
 

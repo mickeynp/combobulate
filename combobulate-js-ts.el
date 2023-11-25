@@ -353,88 +353,66 @@ from `combobulate-manipulation-envelopes') to insert."
                            (list "statement" "for_statement")
                            combobulate-navigation-rules-overrides-inverted)
 
-    (setq combobulate-navigation-drag-parent-nodes
-          '("jsx_element" "jsx_expression"
-            "jsx_fragment"
-            "jsx_self_closing_element"
-            "pair"  "named_imports"
-            "object" "export_statement" "program"
-            "enum_body" "object_type"
-            "object_pattern" "array"
-            "switch_body" "switch_case"
-            "formal_parameters" "arguments"
-            "array_pattern" "statement_block"
-            "jsx_opening_element"))
-    (combobulate-production-rules-set '("jsx_element" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
-    (combobulate-production-rules-set '("jsx_fragment" :remove-types ("jsx_text") :included-fields (:*unnamed*)))
-    (combobulate-production-rules-set '("jsx_opening_element" :included-fields (:attribute)))
-    (combobulate-production-rules-set '("jsx_self_closing_element" :included-fields (:attribute)))
-    (combobulate-production-rules-set '("switch_case" :included-fields (:body)))
-    (combobulate-production-rules-set '("export_statement" :included-fields (:*unnamed*)))
-    (combobulate-production-rules-set '("program" :expand-rules (("statement" :all t) ("declaration" :all t))))
-    (combobulate-production-rules-set '("statement_block" :expand-rules (("statement" :all t) ("declaration" :all t))))
-    (dolist (node-type '("arguments" "array"))
-      (combobulate-production-rules-set `(,node-type :keep-types ("member_expression")
-                                                     :expand-rules (("expression" :all t)
-                                                                    ("primary_expression" :all t)))))
-    (combobulate-production-rules-set '("array_pattern" :expand-rules (("pattern" :all t))))
-
     (setq combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"
                                                "class_declaration" "method_definition"))
 
-    (setq combobulate-navigation-sibling-procedures
-          `(;; for lists, arrays, objects, etc.
-            (:activation-nodes
-             ((:node
-               ("import_specifier")
-               :position at-or-in
-               :find-parent ("named_imports"))
-              (:node
-               ,(append
-                 (combobulate-production-rules-get "object_pattern")
-                 (when is-ts (combobulate-production-rules-get "object_type"))
-                 (combobulate-production-rules-get "object")
-                 (combobulate-production-rules-get "expression")
-                 (combobulate-production-rules-get "primary_expression"))
-               :position at-or-in
-               :find-immediate-parent ("object" "object_type" "import_specifier" "object_pattern" "array" "arguments")))
-             :remove-types ("comment")
-             :match-children t)
-            ;; for jsx
-            (:activation-nodes
-             ((:node
-               ;; attributes can only appear in particular JSX elements,
-               ;; so we need a distinct rule for them.
-               ("jsx_attribute")
-               :position at-or-in
-               :find-immediate-parent
-               ("jsx_opening_element" "jsx_self_closing_element")))
-             :match-children (:all nil :keep-types ("jsx_attribute"))
-             :remove-types ("comment"))
-            (:activation-nodes
-             ((:node
-               ,(seq-difference (combobulate-production-rules-get "jsx_element")
-                                '("jsx_closing_element" "jsx_opening_element" "jsx_text"))
-               :position at-or-in
-               :find-immediate-parent
-               ,(seq-difference (combobulate-production-rules-get "jsx_element")
-                                '("jsx_text" "jsx_closing_element" "jsx_opening_element"))))
-             :remove-types ("comment" "jsx_text" "jsx_closing_element" "jsx_opening_element")
-             :match-children t)
-            ;; for general navigation
-            (:activation-nodes
-             ((:node
-               ,(append (combobulate-production-rules-get "object")
-                        (combobulate-production-rules-get "statement")
-                        (combobulate-production-rules-get "declaration")
-                        ;; for classes
-                        (combobulate-production-rules-get "class_body")
-                        '("program" "switch_case"))
-               :position at-or-in
-               :find-immediate-parent ("statement_block" "switch_body" "program"
-                                       "class_body")))
-             :remove-types ("comment")
-             :match-children t)))
+    (let ((parent-child-types
+           ;; note types where the relationship is simple:
+           ;; find any production rule child of each
+           ;; node-type and then resolve its immediate
+           ;; parent to be one of the node-types.
+           '("object" "object_type" "import_specifier" "object_pattern" "array"
+             "arguments" "formal_parameters" "expression" "primary_expression"
+             "tuple_type" "union_type" "intersection_type" "type_arguments" "array_pattern"
+             "type_arguments")))
+      (setq combobulate-navigation-sibling-procedures
+            `(;; for lists, arrays, objects, etc.
+              (:activation-nodes
+               ((:node
+                 ("import_specifier")
+                 :position at-or-in
+                 :find-parent ("named_imports"))
+                (:node
+                 ,(flatten-list (mapcar #'combobulate-production-rules-get parent-child-types))
+                 :position at-or-in
+                 :find-immediate-parent ,(seq-filter #'combobulate-production-rules-exists-p parent-child-types)))
+               :remove-types ("comment")
+               :match-children t)
+              ;; for jsx
+              (:activation-nodes
+               ((:node
+                 ;; attributes can only appear in particular JSX elements,
+                 ;; so we need a distinct rule for them.
+                 ("jsx_attribute")
+                 :position at-or-in
+                 :find-immediate-parent
+                 ("jsx_opening_element" "jsx_self_closing_element")))
+               :match-children (:all nil :keep-types ("jsx_attribute"))
+               :remove-types ("comment"))
+              (:activation-nodes
+               ((:node
+                 ,(seq-difference (combobulate-production-rules-get "jsx_element")
+                                  '("jsx_closing_element" "jsx_opening_element" "jsx_text"))
+                 :position at-or-in
+                 :find-immediate-parent
+                 ,(seq-difference (combobulate-production-rules-get "jsx_element")
+                                  '("jsx_text" "jsx_closing_element" "jsx_opening_element"))))
+               :remove-types ("comment" "jsx_text" "jsx_closing_element" "jsx_opening_element")
+               :match-children t)
+              ;; for general navigation
+              (:activation-nodes
+               ((:node
+                 ,(append (combobulate-production-rules-get "object")
+                          (combobulate-production-rules-get "statement")
+                          (combobulate-production-rules-get "declaration")
+                          ;; for classes
+                          (combobulate-production-rules-get "class_body")
+                          '("program" "switch_case"))
+                 :position at-or-in
+                 :find-immediate-parent ("statement_block" "switch_body" "program"
+                                         "class_body")))
+               :remove-types ("comment")
+               :match-children t))))
 
     (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
     (setq combobulate-navigation-parent-child-nodes

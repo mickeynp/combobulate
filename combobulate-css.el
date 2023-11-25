@@ -81,9 +81,8 @@
                 (combobulate-production-rules-get "selectors")
                 (combobulate-production-rules-get "arguments")))
   (setq combobulate-manipulation-splicing-procedures nil)
-  (setq combobulate-navigation-parent-child-nodes '("rule_set" "media_statement" "stylesheet"))
-  (setq combobulate-navigation-drag-parent-nodes
-        '("block" "arguments" "stylesheet" "declaration"))
+  (setq combobulate-navigation-parent-child-nodes (combobulate-production-rules-get "stylesheet"))
+
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node

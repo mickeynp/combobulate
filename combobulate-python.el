@@ -265,7 +265,7 @@ again to cycle indentation.")))))
           (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
           ;; catch trailing commas that inadvertently turn expressions into tuples
           ((expression_list (_)+ "," @hl.gold :anchor))))
-  (setq indent-region-function 'combobulate-python-indent-region)
+  (setq indent-region-function #'combobulate-python-indent-region)
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
   (setq combobulate-manipulation-splicing-procedures
@@ -412,13 +412,6 @@ again to cycle indentation.")))))
   (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "decorated_definition" "lambda"))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
                                             "for_in_clause" "string" "decorated_definition"))
-  (setq combobulate-navigation-drag-parent-nodes '("if_statement" "function_definition"
-                                                   "module" "match_statement" "dictionary"
-                                                   "case_clause" "list" "while_statement" "tuple"
-                                                   "try_statement" "class_definition"
-                                                   "argument_list" "import_from_statement"
-                                                   "with_statement" "else_clause"
-                                                   "for_statement" "parameters"))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
@@ -455,53 +448,7 @@ again to cycle indentation.")))))
              :find-immediate-parent ("case_clause" "match_statement" "module" "block")))
            :remove-types nil ;; ("comment")
            :match-children t)))
-  (combobulate-production-rules-set '("argument_list"
-                                      :included-fields (:*unnamed*)
-                                      :expand-rules (("expression" :all t)
-                                                     ("primary_expression" :all t))))
-  (combobulate-production-rules-set '("function_definition"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("class_definition"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("parameters"
-                                      :included-fields (:*unnamed*)
-                                      :expand-rules (("parameter" :all t))))
-  (combobulate-production-rules-set '("if_statement"
-                                      :included-fields (:consequence :alternative)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("for_statement"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("match_statement"
-                                      :included-fields (:alternative)))
-  (combobulate-production-rules-set '("try_statement"
-                                      :included-fields (:body :*unnamed*)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("while_statement"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("with_statement"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("else_clause"
-                                      :included-fields (:body)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("case_clause"
-                                      :included-fields (:consequence)
-                                      :expand-nodes (("block" :all t))))
-  (combobulate-production-rules-set '("import_from_statement"
-                                      :included-fields (:name)
-                                      :expand-rules (("dotted_name" :all t))))
-  (combobulate-production-rules-set '("list"
-                                      :all t
-                                      :expand-rules (("expression" :all t)
-                                                     ("primary_expression" :all t))))
-  (combobulate-production-rules-set '("tuple"
-                                      :all t
-                                      :expand-rules (("expression" :all t)
-                                                     ("primary_expression" :all t))))
+
   (setq combobulate-navigation-parent-child-nodes
         (append
          (combobulate-production-rules-get "_simple_statement")
