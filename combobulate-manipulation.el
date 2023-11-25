@@ -46,7 +46,7 @@
 (declare-function combobulate-query-pretty-print "combobulate-query")
 (declare-function combobulate-query-ring-current-query "combobulate-query")
 (declare-function combobulate-query-ring--execute "combobulate-query")
-
+(defvar combobulate-envelope--undo-on-quit)
 (defvar combobulate-key-map)
 
 (defun combobulate--refactor-insert-copied-values (values)
@@ -1224,7 +1224,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
+                               combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
