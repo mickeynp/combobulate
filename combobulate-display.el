@@ -185,11 +185,10 @@
                         (seq-uniq
                          (seq-remove #'combobulate-node-blank-p
                                      (seq-filter #'combobulate-navigable-node-p
-                                                 (or (combobulate-get-immediate-siblings-of-node start-node)
-                                                     (list
-                                                      (combobulate-node-prev-sibling start-node)
-                                                      start-node
-                                                      (combobulate-node-next-sibling start-node))))))))))
+                                                 (list
+                                                  (combobulate-node-prev-sibling start-node)
+                                                  start-node
+                                                  (combobulate-node-next-sibling start-node)))))))))
     (combobulate-ztree-append-child
      ztree
      (if grand-parent children (cons children nil)))))
