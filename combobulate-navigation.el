@@ -926,27 +926,6 @@ If START-NODE is set, use it in lieu of `combobulate-root-node'."
       nil)))
 
 
-(defun combobulate-get-immediate-siblings-of-node (node)
-  "Find siblings of NODE."
-  (when-let* ((children (combobulate-find-siblings node combobulate-navigation-default-nodes))
-              ;; find `node' in `children'. It may be a smaller node of one
-              ;; of `children' so we want to find the actual node in
-              ;; `children'.
-              (ctx-node (seq-find (lambda (match-node)
-                                    (combobulate-node-contains-node-p node match-node))
-                                  children))
-              (ctx-node-pos (seq-position children ctx-node #'combobulate-node-eq)))
-    (list
-     ;; previous sibling
-     (nth (1- ctx-node-pos) children)
-     ;; `node' but (possibly the parent of it) as found in
-     ;; `children'. This is important because we may be given `node'
-     ;; which is "if" and thus part of "if_statement", the actual node
-     ;; we want.
-     ctx-node
-     ;; next sibling
-     (nth (1+ ctx-node-pos) children))))
-
 (defun combobulate-find-node-in-subtree (tree node &optional starting-offset)
   "Find the subtree containing NODE in TREE.
 
@@ -972,29 +951,6 @@ NODE is found or all depths have been searched."
           (throw 'done subtree))
         (cl-incf offset)))))
 
-
-(defun combobulate-find-siblings (node parent-node-types)
-  "Given NODE find its siblings from a parent of PARENT-NODE-TYPES."
-  (when-let ((nodes (seq-filter (lambda (match-node)
-                                  (and (member (combobulate-node-type match-node) parent-node-types)
-                                       ;; (combobulate-node-on-or-before-point-p match-node)
-                                       (or (combobulate-node-before-point-p match-node)
-                                           ;; dumb hack. if a node
-                                           ;; begins at `point-min'
-                                           ;; then it might fail the
-                                           ;; previous check. However,
-                                           ;; if you expand the check
-                                           ;; to include nodes that
-                                           ;; are before `point-min'
-                                           ;; (not feasible) it may
-                                           ;; not find the actual root
-                                           ;; node.
-                                           (and (= (combobulate-node-start match-node) (point-min))
-                                                (not (combobulate-node-parent match-node))))
-                                       ;; (> (combobulate-node-end match-node) (combobulate-node-end node))
-                                       ))
-                                (combobulate-get-parents node))))
-    (combobulate-get-expanded-children (car nodes))))
 
 (defun combobulate-get-siblings-of-node (node &optional skip-self-similar)
   (let* ((p (combobulate-get-specific-parent-type node combobulate-navigation-default-nodes
