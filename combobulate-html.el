@@ -148,7 +148,6 @@
   (setq combobulate-sgml-close-tag "end_tag")
   (setq combobulate-sgml-whole-tag "element")
   (setq combobulate-sgml-self-closing-tag "self_closing_tag")
-  (setq combobulate-navigation-drag-parent-nodes '("element" "script_element" "style_element"))
   (setq combobulate-manipulation-envelopes
         '((:description
            "<...> ... </...>"

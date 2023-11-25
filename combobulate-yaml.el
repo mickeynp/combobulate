@@ -68,7 +68,6 @@
   (setq combobulate-navigation-sibling-skip-prefix t)
   (setq combobulate-navigation-sexp-nodes '("flow_node" "block_node"))
   (setq combobulate-manipulation-splicing-procedures nil)
-  (setq combobulate-navigation-drag-parent-nodes '("block_node" "block_sequence" "stream"))
   (setq combobulate-navigation-defun-nodes '("stream" "block_node"))
   (setq combobulate-navigation-logical-nodes '("stream" "flow_node" "block_node"
                                                "block_mapping_pair"))
@@ -88,18 +87,7 @@
            :match-children t)))
   (setq combobulate-navigation-parent-child-nodes
         '("block_sequence" "block_sequence_item" "block_node" "block_mapping_pair"))
-  (combobulate-production-rules-set '("block_mapping_pair"
-                                      :remove-types ("anchor")
-                                      :expand-nodes (("block_mapping" :all t))))
-  (combobulate-production-rules-set '("block_node"
-                                      :remove-types ("anchor")
-                                      :expand-nodes (("block_mapping" :all t))))
-  (combobulate-production-rules-set '("document"
-                                      :expand-nodes (("block_node" :all t))))
-  (combobulate-production-rules-set '("stream"
-                                      :expand-nodes (("document" :all t)
-                                                     ("block_node" :all t)
-                                                     ("block_mapping" :all t))))
+
   (setq combobulate-navigation-default-nodes
         '("block_sequence" "block_node" "block_mapping_pair")))
 

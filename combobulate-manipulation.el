@@ -1608,25 +1608,15 @@ Whether this function does anything or not depends on
 If the current node has no siblings in the specified direction,
 an error is raised. If the operation is successful, the cursor is
 moved to the modified node."
-  (with-navigation-nodes (:nodes combobulate-navigation-drag-parent-nodes)
-    (let* ((up (eq direction 'up))
-           (node (or (combobulate-node-at-point) (error "No navigable node")))
-           (siblings (combobulate-get-immediate-siblings-of-node node)))
-      (pcase-let ((`(,prev-sibling ,current-node ,next-sibling) siblings))
-        (if current-node
-            (combobulate--goto-node current-node)
-          (error "Cannot drag from this position"))
-        (save-excursion
-          (if up
-              (progn
-                (when (equal current-node prev-sibling)
-                  (error "Cannot drag up"))
-                (and current-node prev-sibling
-                     (combobulate--swap-node-regions current-node prev-sibling)))
-            (and current-node next-sibling (combobulate--swap-node-regions current-node next-sibling)))))
-      ;; move in the direction of the node
-      (setq siblings (combobulate-get-immediate-siblings-of-node (combobulate-node-at-point)))
-      (if up (car siblings) (car (last siblings))))))
+  (let* ((up (eq direction 'up))
+         (node (or (combobulate--get-nearest-navigable-node) (error "No navigable node")))
+         (sibling (combobulate--get-sibling node (if up 'backward 'forward)))
+         (self (combobulate--get-sibling node 'self)))
+    (unless sibling
+      (error "No sibling node to swap with in that direction"))
+    (combobulate--goto-node sibling)
+    (save-excursion (combobulate--swap-node-regions self sibling))
+    (combobulate--get-sibling (combobulate--get-nearest-navigable-node) 'self)))
 
 (defun combobulate-baseline-indentation-default (pos)
   (save-excursion
@@ -1835,13 +1825,13 @@ beginning of the line."
 (defun combobulate-drag-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-drag-parent-nodes)
+    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
       (combobulate-visual-move-to-node (combobulate--drag 'up)))))
 
 (defun combobulate-drag-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-drag-parent-nodes)
+    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
       (combobulate-visual-move-to-node (combobulate--drag 'down)))))
 
 (provide 'combobulate-manipulation)
