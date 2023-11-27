@@ -69,6 +69,7 @@ If DEFAULT-ACTION is non-nil, it is used for labelled nodes that do not have
 match a placement action."
   (if (fboundp 'multiple-cursors-mode)
       (let ((counter 0) (node-point) (do-mark) (matched)
+            (reversed-nodes (reverse placement-nodes))
             (default-action (or default-action 'before)))
         (cl-flet ((apply-action (action node)
                     (pcase action
@@ -78,7 +79,8 @@ match a placement action."
                                                do-mark t))
                       (_ nil))))
           (mc/remove-fake-cursors)
-          (pcase-dolist (`(,action . ,node) (reverse placement-nodes))
+          (goto-char (combobulate-node-start (cdar reversed-nodes)))
+          (pcase-dolist (`(,action . ,node) reversed-nodes)
             (setq do-mark nil)
             (unless (apply-action action node)
               ;; fall back to `default-action' if we get nil back from
