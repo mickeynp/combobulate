@@ -86,6 +86,13 @@
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ,(combobulate-production-rules-get "declaration")
+             :position at-or-in
+             :find-immediate-parent ("declaration")))
+           :remove-types ("property_name")
+           :match-children t)
+          (:activation-nodes
+           ((:node
              ,(append
                (combobulate-production-rules-get "feature_query")
                (combobulate-production-rules-get "arguments"))

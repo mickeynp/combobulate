@@ -414,6 +414,16 @@ again to cycle indentation.")))))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ;; `tuple_pattern' has a `pattern' meta-rule, and we want
+             ;; *its* child types
+             ,(combobulate-production-rules-get "pattern")
+             :position at-or-in
+             :find-parent ("tuple_pattern"))
+            (:node
+             ("string_content" "interpolation")
+             :position at-or-in
+             :find-immediate-parent ("string"))
+            (:node
              ,(combobulate-production-rules-get "import_from_statement")
              :position at-or-in
              :find-immediate-parent ("import_from_statement"))
@@ -435,8 +445,7 @@ again to cycle indentation.")))))
                (combobulate-production-rules-get "primary_expression"))
              :position at-or-in
              :find-immediate-parent ("parameters" "argument_list")))
-           :match-children t
-           :remove-types ("comment"))
+           :match-children t)
           (:activation-nodes
            ((:node
              ,(append (combobulate-production-rules-get "_simple_statement")
@@ -445,7 +454,7 @@ again to cycle indentation.")))))
                       '("module" "comment" "case_clause"))
              :position at-or-in
              :find-immediate-parent ("case_clause" "match_statement" "module" "block")))
-           :remove-types nil ;; ("comment")
+           :remove-types nil
            :match-children t)))
 
   (setq combobulate-navigation-parent-child-nodes
