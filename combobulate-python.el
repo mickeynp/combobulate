@@ -260,8 +260,7 @@ again to cycle indentation.")))))
     (local-set-key [remap indent-for-tab-command] #'combobulate-python-indent-for-tab-command))
   ;; install a handful of useful highlighting rules.
   (setq combobulate-highlight-queries-default
-        '(
-          ;; highlight breakpoint function calls
+        '(;; highlight breakpoint function calls
           (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
           ;; catch trailing commas that inadvertently turn expressions into tuples
           ((expression_list (_)+ "," @hl.gold :anchor))))
