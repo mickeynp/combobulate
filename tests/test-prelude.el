@@ -24,13 +24,161 @@
 
 ;;; Code:
 
+
+
+(defvar combobulate--test-point-categories '((outline . ("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨" "⑩"))))
+
+(defvar-local combobulate-test-point-overlays nil
+  "List of overlays used to display point helpers in test fixture buffers.
+
+Format is an alist of (OVERLAY-STRING-CHAR . (OVERLAY NUMBER CATEGORY ORIG-PT)).")
+
+(defun combobulate--with-test-overlays (&optional fn)
+  "Call FN for each overlay related to Combobulate's test fixtures.
+
+If FN is nil, just return the overlays."
+  (let ((ovs (seq-filter
+              (lambda (ov)
+                (overlay-get ov 'combobulate-test))
+              (car (overlay-lists)))))
+    (when fn
+      (dolist (ov ovs)
+        (funcall fn ov)))
+    ovs))
+
+(defun combobulate--test-get-overlay-by-number (number)
+  "Get the overlay at point."
+  (let ((match))
+    (combobulate--with-test-overlays
+     (lambda (ov)
+       (when (eq (overlay-get ov 'combobulate-test-number) number)
+         (setq match ov))))
+    match))
+
+(defun combobulate--test-get-overlay-at-point (number)
+  "Get the overlay at point."
+  (when-let (ov (combobulate--test-get-overlay-by-number number))
+    (when (= (overlay-start ov) (point)) ov)))
+
+(defun combobulate--test-delete-overlay (&optional number)
+  "Delete overlays related to Combobulate's test fixtures with NUMBER.
+
+If NUMBER is nil, delete all `combobulate-test' overlays."
+  (combobulate--with-test-overlays
+   (lambda (ov)
+     (when (or (not number)
+               (equal (overlay-get ov 'combobulate-test-number) number))
+       (delete-overlay ov)))))
+
+(defun combobulate-test-delete-all-overlays ()
+  "Delete all overlays related to Combobulate's test fixtures."
+  (interactive)
+  (save-excursion
+    (setq combobulate-test-point-overlays nil)
+    (combobulate-test-update-file-local-variable)
+    (combobulate--test-delete-overlay)))
+
+(defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
+  ;; This is the character want to display
+  (let* ((pt (or orig-pt (point)))
+         (ov (make-overlay pt (1+ pt))))
+    (overlay-put ov 'display string-char)
+    (overlay-put ov 'combobulate-test t)
+    (overlay-put ov 'combobulate-test-number number)
+    (overlay-put ov 'combobulate-test-category category)
+    (overlay-put ov 'face 'combobulate-refactor-cursor-face)
+    ov))
+
+(defun combobulate--test-place-category-overlay (number category &optional orig-pt)
+  (combobulate--test-place-overlay
+   (nth (1- number) (alist-get category combobulate--test-point-categories))
+   number 'outline orig-pt))
+
+
+(defun combobulate-test-place-next-overlay (arg &optional category)
+  "Place the next numbered overlay."
+  (interactive "P")
+  (save-excursion
+    (let* ((category (or category 'outline))
+           (ovs (combobulate--with-test-overlays))
+           (next-number (or arg (1+ (seq-max (or (mapcar (lambda (ov)
+                                                           (overlay-get ov 'combobulate-test-number))
+                                                         ovs)
+                                                 '(0)))))))
+      (when (>= next-number 10)
+        (error "Too many overlays"))
+      (combobulate--test-delete-overlay next-number)
+      (combobulate--test-place-category-overlay next-number category (point))
+      (combobulate-test-update-file-local-variable))))
+
+(defun combobulate-test-update-file-local-variable ()
+  "Update the file-local variable with the current overlays.
+
+This function will repeatedly write out the variable to the
+buffer until the overlay position markers stabilise as a result
+of updating the prop line."
+  (interactive)
+  (save-excursion
+    (let ((attempts-left 10))
+      (delete-file-local-variable-prop-line 'eval)
+      (add-file-local-variable-prop-line 'eval '(combobulate-test-fixture-mode t) nil)
+      ;; repeatedly write out the variable until the overlay position
+      ;; markers stabilise. I could just compare prev/next,
+      ;; but... eh... this is fine... I guess..
+      (while (> attempts-left 0)
+        (setq attempts-left (1- attempts-left))
+        (setq-local combobulate-test-point-overlays
+                    (mapcar (lambda (ov)
+                              (list (overlay-get ov 'combobulate-test-number)
+                                    (overlay-get ov 'combobulate-test-category)
+                                    (overlay-start ov)))
+                            (combobulate--with-test-overlays)))
+        (add-file-local-variable-prop-line 'combobulate-test-point-overlays combobulate-test-point-overlays nil)))))
+
+(defun combobulate-test-apply-file-local-variable ()
+  "Apply the file-local variable to the current buffer."
+  (interactive)
+  (when-let ((v (assoc 'combobulate-test-point-overlays file-local-variables-alist)))
+    (setq-local combobulate-test-point-overlays (cdr v))
+    (combobulate--test-delete-overlay)
+    (pcase-dolist (`(,number ,category ,pt ) combobulate-test-point-overlays)
+      (combobulate--test-place-category-overlay number category pt))))
+
+(defvar combobulate-test-fixture-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-p") #'combobulate-test-place-next-overlay)
+    (define-key map (kbd "C-c C-a") #'combobulate-test-apply-file-local-variable)
+    (define-key map (kbd "C-c C-u") #'combobulate-test-update-file-local-variable)
+    (define-key map (kbd "C-c C-d") #'combobulate-test-delete-all-overlays)
+    map))
+
+(define-minor-mode combobulate-test-fixture-mode "Load Combobulate's test fixture overlays"
+  :init-value nil
+  :lighter "Comb-Test"
+  :keymap combobulate-test-fixture-mode-map
+  (when combobulate-test-fixture-mode
+    ;; hacky, but ensures that formatters aren't run which can muck up
+    ;; the overlay positions in the file mode variable
+    (setq-local before-save-hook nil)
+    (setq-local after-save-hook nil)
+    (setq-local after-change-functions nil)
+    (combobulate-test-apply-file-local-variable)))
+
+(put 'combobulate-test-point-overlays 'safe-local-variable #'listp)
+(add-to-list 'safe-local-eval-forms '(combobulate-test-fixture-mode t))
+
 (defun combobulate-test-skip-to-match (expr)
   (when-let (v (re-search-forward expr nil nil 1))
     (goto-char (match-beginning 0))
     nil))
 
-(cl-defmacro combobulate-test ((&key (setup nil) language mode) &rest body)
-  ""
+(cl-defmacro combobulate-test ((&key (setup nil) (fixture nil) language mode) &rest body)
+  "Run a combobulate test with a preconfigured buffer.
+
+SETUP is a list of forms to run before the test body. FIXTURE is
+the path to a file to load into the buffer before running the
+test. LANGUAGE is the language to use for the treesitter parser.
+MODE is the major mode to use for the buffer."
   (declare (indent 1) (debug (sexp body)))
   `(with-temp-buffer
      (let ((positions '()))
@@ -40,9 +188,20 @@
        (combobulate-setup)
        (switch-to-buffer (current-buffer))
        (with-current-buffer (current-buffer)
-         (font-lock-fontify-buffer))
-       (let ((offset 0))
          (erase-buffer)
+         (when ,fixture
+           (unless (file-exists-p ,fixture)
+             (error "Fixture file %s does not exist" ,fixture))
+           ;; load the fixture file
+           (insert-file-contents ,fixture)
+           ;; ensure everything's applied properly
+           (combobulate-test-fixture-mode 1)
+           (hack-local-variables)
+           (hack-local-variables-apply))
+         (font-lock-fontify-buffer))
+       (let ((offset 0)
+             ;; disables flashing nodes to echo area etc.
+             (combobulate-flash-node nil))
          (dolist (statement (append ,setup ',body))
            (pcase statement
              ((pred stringp) (insert statement))
@@ -57,9 +216,25 @@
              ('tab (indent-for-tab-command))
              ('navigate-up (combobulate-navigate-up))
              ('navigate-down (combobulate-navigate-down))
+             ;; (`(cycle-through-markers ,category ,fn)
+             ;;  (let ((ordered-ovs))
+             ;;    (dotimes (number (length combobulate-test-point-overlays))
+             ;;      (push (combobulate--test-get-overlay-by-number number) ordered-ovs))
+             ;;    (dolist (ov ordered-ovs)
+             ;;      (goto-char (overlay-start ov))
+             ;;      (funcall #',fn)
+             ;;      )))
+             ((or `(assert-at-marker ,number) `(assert-at-marker ,number ,category))
+              (should (combobulate--test-get-overlay-at-point number)))
+             ((or `(goto-marker ,number) `(goto-marker ,number ,category))
+              (let ((ov (combobulate--test-get-overlay-by-number number)))
+                (should ov)
+                (goto-char (overlay-start ov))))
              ('debug-show
               (pop-to-buffer (current-buffer))
               (font-lock-fontify-buffer)
+              (message "Stopped. `C-M-c' to resume. Current point: %s" (point))
+              (pulse-momentary-highlight-one-line (point) 'highlight)
               (recursive-edit))
              (`(position= ,name)
               (unless (= (alist-get name positions) (point))
@@ -91,7 +266,7 @@
                   :expected line
                   :fail-reason "Line incorrect"
                   :condition (= (combobulate-test-get-line) line)))))
-             (_ (eval statement))))))))
+             (_ (eval statement t))))))))
 
 (defun combobulate-test-compare-structure (a b)
   (let ((ta (flatten-tree a))
