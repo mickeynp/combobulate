@@ -27,7 +27,7 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'bookmark)
-
+(require 'ert)
 ;;; required to make major modes load
 (require 'treesit)
 (require 'typescript-ts-mode)
@@ -243,6 +243,21 @@ Returns nil if no match is found."
           "."
           (file-name-extension fn)))
 
+(defun combobulate-ert-diff-fixture ()
+  "Diff the current test with the fixture."
+  (interactive)
+  (unless (eq major-mode 'ert-results-mode)
+    (user-error "Not in ert-results-mode"))
+  (let* ((test (ert--results-test-at-point-no-redefinition t))
+         (stats ert--results-stats)
+         (pos (ert--stats-test-pos stats test))
+         (result (aref (ert--stats-test-results stats) pos)))
+    (apply #'ediff-files
+           (plist-get (cdadr (cl-etypecase result
+                               (ert-test-failed-condition
+                                (ert-test-result-with-condition-condition result))))
+                      :files))))
+
 (defun combobulate-test-compare-string-with-file (buf fn)
   "Compare the contents of of BUF with FN."
   ;; TODO: this is a bit of a hack, but sometimes the editing
@@ -255,13 +270,28 @@ Returns nil if no match is found."
 		  (insert ?\n)))))
     (should (file-exists-p fn))
     (let ((current-contents (with-current-buffer buf
-                              (buffer-string)
-                              (ensure-final-newline)))
+                              (ensure-final-newline)
+                              (buffer-substring-no-properties (point-min) (point-max))))
           (file-contents (with-temp-buffer
                            (insert-file-contents fn)
-                           (buffer-string)
-                           (ensure-final-newline))))
-      (should (string= current-contents file-contents)))))
+                           (ensure-final-newline)
+                           (buffer-substring-no-properties (point-min) (point-max)))))
+      (unless (string= current-contents file-contents)
+        ;; save both file and buffer to two temporary files
+        (let ((buf-fn (make-temp-file "combobulate-test-buf"))
+              (file-fn (make-temp-file "combobulate-test-fixture")))
+          (with-current-buffer buf
+            (insert current-contents))
+          (with-temp-file file-fn
+            (insert file-contents))
+          (ert-fail
+           (list
+            nil
+            :fail-reason "File contents differ"
+            :point (point)
+            :files (list buf-fn file-fn)
+            :fixture-fn fn
+            :statement `(string= current-contents file-contents))))))))
 
 (defun combobulate-test-get-fixture-directory ()
   "Get the directory for the fixture files."
@@ -287,7 +317,7 @@ doesn't exist."
       (make-directory dir t))
     dir))
 
-(defun combobulate-test-fixture-action-function (number action-fn fixture-fn subdir)
+(defun combobulate-test-fixture-action-function (number action-fn fixture-fn)
   "Run ACTION-FN on the fixture file, and compare the result with the fixture file."
   (combobulate-test-compare-string-with-file
    (current-buffer)
