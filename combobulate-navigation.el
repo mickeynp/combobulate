@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate--get-nearest-navigable-node ()
@@ -693,9 +693,9 @@ of the node."
 (defun combobulate-nav-get-smallest-node-at-point (&optional end)
   "Returns the smallest navigable node at point, possibly from the END"
   (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
-                                  (funcall (if end #'combobulate-point-at-end-of-node-p
-                                             #'combobulate-point-at-beginning-of-node-p)
-                                           node)))
+                             (funcall (if end #'combobulate-point-at-end-of-node-p
+                                        #'combobulate-point-at-beginning-of-node-p)
+                                      node)))
               (combobulate-all-nodes-at-point)))
 
 (defun combobulate-nav-forward (&optional skip-prefix)
@@ -735,8 +735,8 @@ of the node."
                               (flatten-tree (combobulate-build-sparse-tree
                                              'backward combobulate-navigation-default-nodes
                                              (lambda (n) (or (<= (combobulate-node-end n)
-                                                                 (point))
-                                                             (combobulate-point-in-node-range-p n))))))))
+                                                            (point))
+                                                        (combobulate-point-in-node-range-p n))))))))
               (first-node (pop tree)))
     (seq-find #'combobulate-node-before-point-p tree)))
 
@@ -1771,8 +1771,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                            (cons 'match (cons (list child) nil))
-                          (cons 'no-match (cons nil nil)))))
+                       (cons 'match (cons (list child) nil))
+                     (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking

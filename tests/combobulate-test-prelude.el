@@ -1,4 +1,4 @@
-;;; test-prelude.el --- prelude for combobulate tests  -*- lexical-binding: t; -*-
+;;; combobulate-test-prelude.el --- prelude for combobulate tests  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Mickey Petersen
 
@@ -24,9 +24,25 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl-lib))
+(require 'bookmark)
+
+;;; required to make major modes load
+(require 'treesit)
+(require 'typescript-ts-mode)
+(require 'css-mode)
+(require 'python)
+(require 'js)
+(require 'yaml-ts-mode)
+(require 'json-ts-mode)
 
 
-(defvar combobulate--test-point-categories '((outline . ("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨" "⑩"))))
+(defvar combobulate--test-point-categories '((outline . ("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨" "⑩")))
+  "Alist of categories and their overlay characters.
+
+The overlay characters are used to indicate combobulate test
+point markers in a buffer..")
 
 (defvar-local combobulate-test-point-overlays nil
   "List of overlays used to display point helpers in test fixture buffers.
@@ -79,7 +95,12 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
     (combobulate--test-delete-overlay)))
 
 (defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
-  ;; This is the character want to display
+  "Place a numbered overlay at point.
+
+STRING-CHAR is the character to display.  NUMBER is the number to
+display.  CATEGORY is the category of overlay to display.
+ORIG-PT is the point to display the overlay at. If it is nil, the
+current point is used."
   (let* ((pt (or orig-pt (point)))
          (ov (make-overlay pt (1+ pt))))
     (overlay-put ov 'display string-char)
@@ -90,10 +111,21 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
     ov))
 
 (defun combobulate--test-place-category-overlay (number category &optional orig-pt)
+  "Place a numbered overlay at point.
+
+NUMBER is the number to display.  CATEGORY is the category of
+overlay to display.  ORIG-PT is the point to display the
+overlay at. If it is nil, the current point is used."
   (combobulate--test-place-overlay
    (nth (1- number) (alist-get category combobulate--test-point-categories))
    number 'outline orig-pt))
 
+(defun combobulate-test-go-to-overlay (arg)
+  "Go to a point marker overlay, ARG, in the current buffer."
+  (interactive "P")
+  (let ((ov (combobulate--test-get-overlay-by-number (or arg 1))))
+    (when ov
+      (goto-char (overlay-start ov)))))
 
 (defun combobulate-test-place-next-overlay (arg &optional category)
   "Place the next numbered overlay."
@@ -168,9 +200,97 @@ of updating the prop line."
 (add-to-list 'safe-local-eval-forms '(combobulate-test-fixture-mode t))
 
 (defun combobulate-test-skip-to-match (expr)
+  "Skip to the next match of EXPR.
+
+Returns nil if no match is found."
   (when-let (v (re-search-forward expr nil nil 1))
     (goto-char (match-beginning 0))
     nil))
+
+
+(defun combobulate-test-generate-fixture-diff-filename (fn action-string number suffix)
+  "Generate a filename for a fixture diff file."
+  (concat (file-name-sans-extension (file-name-base fn))
+          "." (format "%s~%s~%s" action-string number suffix) "."
+          (file-name-extension fn)))
+
+(defun combobulate-test-compare-string-with-file (buf fn)
+  "Compare the contents of of BUF with FN."
+  ;; TODO: this is a bit of a hack, but sometimes the editing
+  ;; procedures can leave the file without a trailing newline. This
+  ;; fixes that
+  (cl-flet ((ensure-final-newline ()
+              (save-excursion
+                (unless (/= (char-after (1- (point-max))) ?\n)
+		  (goto-char (point-max))
+		  (insert ?\n)))))
+    (should (file-exists-p fn))
+    (let ((current-contents (with-current-buffer buf
+                              (buffer-string)
+                              (ensure-final-newline)))
+          (file-contents (with-temp-buffer
+                           (insert-file-contents fn)
+                           (buffer-string)
+                           (ensure-final-newline))))
+      (should (string= current-contents file-contents)))))
+
+(defun combobulate-test-get-fixture-directory ()
+  "Get the directory for the fixture files."
+  (expand-file-name "./tests/fixtures/"))
+
+(defun combobulate-test-get-test-directory ()
+  "Get the directory for the test files."
+  (expand-file-name "./"))
+
+(defun combobulate-test-get-fixture-deltas-directory (&optional action-subdir ensure-dir)
+  "Get the directory for the fixture deltas.
+
+If ACTION-SUBDIR is non-nil, then the directory will be
+<fixture-directory>/<action-subdir>/, otherwise it will be
+<fixture-directory>/.
+
+If ENSURE-DIR is non-nil, then the directory will be created if it
+doesn't exist."
+  (let* ((dir (if action-subdir
+                  (expand-file-name (format "./fixture-deltas/%s/" action-subdir))
+                (expand-file-name "./fixture-deltas/"))))
+    (when ensure-dir
+      (make-directory dir t))
+    dir))
+
+(defun combobulate-test-fixture-action-function (number action-fn fixture-fn subdir)
+  "Run ACTION-FN on the fixture file, and compare the result with the fixture file."
+  (combobulate-test-compare-string-with-file
+   (current-buffer)
+   (concat (combobulate-test-get-fixture-deltas-directory (symbol-name action-fn))
+           (combobulate-test-generate-fixture-diff-filename
+            fixture-fn
+            (symbol-name action-fn)
+            number
+            "after"))))
+
+(cl-defun combobulate-for-each-marker (action-fn &key (reverse nil))
+  "Execute ACTION-FN for each marker in the current buffer.
+
+The point is first moved to the start of the first marker. After
+that, all remaining point markers are visited in order of their
+given number. ACTION-FN is executed *before* each marker is
+visited; then, the new position of point is checked to ensure it
+matches the position of the next marker.
+
+If REVERSE is non-nil, execute ACTION-FN in reverse order."
+  (let ((ordered-ovs))
+    (dotimes (number (length combobulate-test-point-overlays))
+      (when-let (ov (combobulate--test-get-overlay-by-number (1+ number)))
+        (push ov ordered-ovs)))
+    (unless reverse
+      (setq ordered-ovs (reverse ordered-ovs)))
+    (let ((first-ov (pop ordered-ovs)))
+      (goto-char (overlay-start first-ov))
+      (should (= (point) (overlay-start first-ov)))
+      (dolist (ov ordered-ovs)
+        (funcall action-fn)
+        (should (= (point) (overlay-start ov)))))))
 
 (cl-defmacro combobulate-test ((&key (setup nil) (fixture nil) language mode) &rest body)
   "Run a combobulate test with a preconfigured buffer.
@@ -197,8 +317,7 @@ MODE is the major mode to use for the buffer."
            ;; ensure everything's applied properly
            (combobulate-test-fixture-mode 1)
            (hack-local-variables)
-           (hack-local-variables-apply))
-         (font-lock-fontify-buffer))
+           (hack-local-variables-apply)))
        (let ((offset 0)
              ;; disables flashing nodes to echo area etc.
              (combobulate-flash-node nil))
@@ -349,4 +468,4 @@ function foo() {
     goto-first-char))
 
 (provide 'combobulate-test-prelude)
-;;; test-prelude.el ends here
+;;; combobulate-test-prelude.el ends here

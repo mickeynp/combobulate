@@ -26,29 +26,6 @@
 ;;; Code:
 
 
-(cl-defun combobulate-for-each-marker (action-fn &key (reverse nil))
-  "Execute ACTION-FN for each marker in the current buffer.
-
-The point is first moved to the start of the first marker. After
-that, all remaining point markers are visited in order of their
-given number. ACTION-FN is executed *before* each marker is
-visited; then, the new position of point is checked to ensure it
-matches the position of the next marker.
-
-If REVERSE is non-nil, execute ACTION-FN in reverse order."
-  (let ((ordered-ovs))
-    (dotimes (number (length combobulate-test-point-overlays))
-      (when-let (ov (combobulate--test-get-overlay-by-number (1+ number)))
-        (push ov ordered-ovs)))
-    (unless reverse
-      (setq ordered-ovs (reverse ordered-ovs)))
-    (let ((first-ov (pop ordered-ovs)))
-      (goto-char (overlay-start first-ov))
-      (should (= (point) (overlay-start first-ov)))
-      (dolist (ov ordered-ovs)
-        (funcall action-fn)
-        (should (= (point) (overlay-start ov)))))))
-
 ;;; Python
 
 (ert-deftest combobulate-test-sibling-python-def-block ()

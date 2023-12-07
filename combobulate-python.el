@@ -414,15 +414,18 @@ again to cycle indentation.")))))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:node
+             ("string_content" "interpolation")
+             :position at-or-in
+             :find-immediate-parent ("string")))
+           :remove-types ("string_start" "string_end")
+           :match-children t)
+          (:activation-nodes
+           ((:node
              ;; `tuple_pattern' has a `pattern' meta-rule, and we want
              ;; *its* child types
              ,(combobulate-production-rules-get "pattern")
              :position at-or-in
              :find-parent ("tuple_pattern"))
-            (:node
-             ("string_content" "interpolation")
-             :position at-or-in
-             :find-immediate-parent ("string"))
             (:node
              ,(combobulate-production-rules-get "import_from_statement")
              :position at-or-in

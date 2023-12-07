@@ -1,0 +1,17 @@
+/* -*- combobulate-test-point-overlays: ((1 outline 172) (2 outline 223) (3 outline 309)); eval: (combobulate-test-fixture-mode t); -*- */
+
+@media (min-width: 1024px) {
+  .testimonial.right {
+    float: right;
+    width: 250px;
+    margin-left: 2rem;
+  }
+  .testimonial.middle {
+    margin-left: 2rem;
+  }
+  .testimonial.right-xl {
+    float: right;
+    width: 450px;
+    margin-left: 2rem;
+  }
+}

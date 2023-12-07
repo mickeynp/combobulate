@@ -1,0 +1,5 @@
+/* -*- combobulate-test-point-overlays: ((1 outline 177) (2 outline 183) (3 outline 190)); eval: (combobulate-test-fixture-mode t); -*- */
+
+.flex-center > div {
+  width: clamp(90ch, 95vw, 180ch);
+}
