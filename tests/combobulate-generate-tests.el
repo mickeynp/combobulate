@@ -72,7 +72,7 @@ pass with `should'."
                ,(if command-error
                     `(should-error (,action-fn))
                   `(,action-fn))
-               (combobulate-test-fixture-action-function ,number #',action-fn ,fixture-fn ,subdir))))
+               (combobulate-test-fixture-action-function ,number #',action-fn ,fixture-fn))))
          t))
        "\n" "\n"))))
 
@@ -93,6 +93,7 @@ pass with `should'."
              (after-buf))
         (copy-file fixture-fn after-fn t)
         (setq after-buf (find-file-noselect after-fn))
+        (message "🔍 Executing %s on %s" action-fn fixture-fn)
         (with-current-buffer after-buf
           (combobulate-mode)
           (combobulate-setup)
@@ -157,9 +158,11 @@ directory."
                  ((pred stringp) (file-expand-wildcards (concat "./fixtures/" wildcard-or-list)))
                  ((pred listp) wildcard-or-list)
                  (_ (error "Invalid wildcard-or-list: %s" wildcard-or-list))))
-        (dolist (action-fn cmd-fns)
-          (funcall test-executor-fn fixture-fn action-fn output-buffer)))
-      (save-buffer 0))))
+        (if (string-match-p "^#" (file-name-base fixture-fn))
+            (message "⚠ Skipping fixture as it is an auto save file %s" fixture-fn)
+          (dolist (action-fn cmd-fns)
+            (funcall test-executor-fn fixture-fn action-fn output-buffer)))
+        (save-buffer 0)))))
 
 ;;; Generators
 

@@ -11,7 +11,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-up")
     (goto-marker 1)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 1 #'combobulate-splice-up "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-splice-up "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-up-component-jsx-number-2 ()
@@ -21,7 +21,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-up")
     (goto-marker 2)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 2 #'combobulate-splice-up "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-splice-up "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-up-component-jsx-number-3 ()
@@ -31,7 +31,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-up")
     (goto-marker 3)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 3 #'combobulate-splice-up "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-splice-up "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-up-component-jsx-number-4 ()
@@ -41,7 +41,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-up")
     (goto-marker 4)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 4 #'combobulate-splice-up "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 4 #'combobulate-splice-up "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-down-component-jsx-number-1 ()
@@ -51,7 +51,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-down")
     (goto-marker 1)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 1 #'combobulate-splice-down "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-splice-down "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-down-component-jsx-number-2 ()
@@ -61,7 +61,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-down")
     (goto-marker 2)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 2 #'combobulate-splice-down "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-splice-down "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-down-component-jsx-number-3 ()
@@ -71,7 +71,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-down")
     (goto-marker 3)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 3 #'combobulate-splice-down "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-splice-down "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-splice-down-component-jsx-number-4 ()
@@ -81,7 +81,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-splice-down")
     (goto-marker 4)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 4 #'combobulate-splice-down "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 4 #'combobulate-splice-down "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-vanish-node-component-jsx-number-1 ()
@@ -91,7 +91,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-vanish-node")
     (goto-marker 1)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 1 #'combobulate-vanish-node "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-vanish-node "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-vanish-node-component-jsx-number-2 ()
@@ -101,7 +101,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-vanish-node")
     (goto-marker 2)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 2 #'combobulate-vanish-node "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-vanish-node "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-vanish-node-component-jsx-number-3 ()
@@ -111,7 +111,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-vanish-node")
     (goto-marker 3)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 3 #'combobulate-vanish-node "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-vanish-node "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-vanish-node-component-jsx-number-4 ()
@@ -121,7 +121,7 @@
     '("tsx" "tsx-ts-mode" "combobulate-vanish-node")
     (goto-marker 4)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 4 #'combobulate-vanish-node "./fixtures/component-jsx.tsx" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 4 #'combobulate-vanish-node "./fixtures/component-jsx.tsx")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-up-nested-blocks-number-1 ()
@@ -131,7 +131,7 @@
     '("python" "python-ts-mode" "combobulate-splice-up")
     (goto-marker 1)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 1 #'combobulate-splice-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-splice-up "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-up-nested-blocks-number-2 ()
@@ -141,7 +141,7 @@
     '("python" "python-ts-mode" "combobulate-splice-up")
     (goto-marker 2)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 2 #'combobulate-splice-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-splice-up "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-up-nested-blocks-number-3 ()
@@ -151,7 +151,7 @@
     '("python" "python-ts-mode" "combobulate-splice-up")
     (goto-marker 3)
     (combobulate-splice-up)
-    (combobulate-test-fixture-action-function 3 #'combobulate-splice-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-up/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-splice-up "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-down-nested-blocks-number-1 ()
@@ -161,7 +161,7 @@
     '("python" "python-ts-mode" "combobulate-splice-down")
     (goto-marker 1)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 1 #'combobulate-splice-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-splice-down "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-down-nested-blocks-number-2 ()
@@ -171,7 +171,7 @@
     '("python" "python-ts-mode" "combobulate-splice-down")
     (goto-marker 2)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 2 #'combobulate-splice-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-splice-down "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-splice-down-nested-blocks-number-3 ()
@@ -181,7 +181,7 @@
     '("python" "python-ts-mode" "combobulate-splice-down")
     (goto-marker 3)
     (combobulate-splice-down)
-    (combobulate-test-fixture-action-function 3 #'combobulate-splice-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-splice-down/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-splice-down "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-vanish-node-nested-blocks-number-1 ()
@@ -191,7 +191,7 @@
     '("python" "python-ts-mode" "combobulate-vanish-node")
     (goto-marker 1)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 1 #'combobulate-vanish-node "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 1 #'combobulate-vanish-node "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-vanish-node-nested-blocks-number-2 ()
@@ -201,7 +201,7 @@
     '("python" "python-ts-mode" "combobulate-vanish-node")
     (goto-marker 2)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 2 #'combobulate-vanish-node "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 2 #'combobulate-vanish-node "./fixtures/nested-blocks.py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-vanish-node-nested-blocks-number-3 ()
@@ -211,6 +211,6 @@
     '("python" "python-ts-mode" "combobulate-vanish-node")
     (goto-marker 3)
     (combobulate-vanish-node)
-    (combobulate-test-fixture-action-function 3 #'combobulate-vanish-node "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-vanish-node/")))
+    (combobulate-test-fixture-action-function 3 #'combobulate-vanish-node "./fixtures/nested-blocks.py")))
 
 
