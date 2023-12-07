@@ -1187,6 +1187,68 @@
     (combobulate-test-fixture-action-function 5 #'combobulate-drag-up "./fixtures/module-statements.tsx" "../fixture-deltas/combobulate-drag-up/")))
 
 
+(ert-deftest combobulate-test-python-combobulate-drag-down-nested-blocks-number-1 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-down")
+    (goto-marker 1)
+    (combobulate-drag-down)
+    (combobulate-test-fixture-action-function 1 #'combobulate-drag-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-down/")))
+
+
+(ert-deftest combobulate-test-python-combobulate-drag-down-nested-blocks-number-2 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-down")
+    (goto-marker 2)
+    (combobulate-drag-down)
+    (combobulate-test-fixture-action-function 2 #'combobulate-drag-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-down/")))
+
+
+(ert-deftest combobulate-test-python-combobulate-drag-down-nested-blocks-number-3 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-down")
+    (goto-marker 3)
+    (should-error
+     (combobulate-drag-down))
+    (combobulate-test-fixture-action-function 3 #'combobulate-drag-down "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-down/")))
+
+
+(ert-deftest combobulate-test-python-combobulate-drag-up-nested-blocks-number-1 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-up")
+    (goto-marker 1)
+    (should-error
+     (combobulate-drag-up))
+    (combobulate-test-fixture-action-function 1 #'combobulate-drag-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-up/")))
+
+
+(ert-deftest combobulate-test-python-combobulate-drag-up-nested-blocks-number-2 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-up")
+    (goto-marker 2)
+    (combobulate-drag-up)
+    (combobulate-test-fixture-action-function 2 #'combobulate-drag-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-up/")))
+
+
+(ert-deftest combobulate-test-python-combobulate-drag-up-nested-blocks-number-3 ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '("python" "python-ts-mode" "combobulate-drag-up")
+    (goto-marker 3)
+    (combobulate-drag-up)
+    (combobulate-test-fixture-action-function 3 #'combobulate-drag-up "./fixtures/nested-blocks.py" "../fixture-deltas/combobulate-drag-up/")))
+
+
 (ert-deftest combobulate-test-python-combobulate-drag-down-python-dict-number-1 ()
   (combobulate-test
       (:language python :mode python-ts-mode :fixture "./fixtures/python-dict.py")
