@@ -186,9 +186,9 @@ created."
                    (define-key combobulate-key-map (kbd extra-key) function))))
              map)))
         (run-hooks 'combobulate-after-setup-hook))
-    (user-error "Combobulate cannot find a setup function for this tree sitter language.
+    (user-error "Combobulate cannot find a setup function for this tree sitter language and major mode: %s (%s).
 
-Customize `combobulate-setup-functions-alist' to change the language setup alist.")))
+Customize `combobulate-setup-functions-alist' to change the language setup alist." parser-lang major-mode)))
 
 ;;;###autoload
 (define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs

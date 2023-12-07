@@ -94,13 +94,11 @@ pass with `should'."
         (copy-file fixture-fn after-fn t)
         (setq after-buf (find-file-noselect after-fn))
         (with-current-buffer after-buf
-          ;; (combobulate-test-execute-action-from-number number action-fn)
+          (combobulate-mode)
+          (combobulate-setup)
+          (setq command-error nil)
           (condition-case nil
-              (progn
-                (combobulate-mode)
-                (combobulate-setup)
-                (setq command-error nil)
-                (combobulate-test-execute-action-from-number number action-fn))
+              (combobulate-test-execute-action-from-number number action-fn)
             (error (progn (setq command-error t)
                           (message "🚫 Action function exited with an error. Generating error test %s on %s" action-fn fixture-fn))))
           (combobulate-test-generate-ert-test
@@ -166,7 +164,7 @@ directory."
 ;;; Generators
 
 ;; Generate tests for all dragging nodes up or down.
-;; (combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn #'combobulate-drag-down #'combobulate-drag-up)
+(combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn #'combobulate-drag-down #'combobulate-drag-up)
 (combobulate-test-generate-tests
  '("./fixtures/component-jsx.tsx"
    "./fixtures/def-block"

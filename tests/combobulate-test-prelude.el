@@ -176,12 +176,40 @@ of updating the prop line."
     (pcase-dolist (`(,number ,category ,pt ) combobulate-test-point-overlays)
       (combobulate--test-place-category-overlay number category pt))))
 
+(defun combobulate-test-visit-fixture-deltas ()
+  (interactive)
+  ;; search the ./test/fixture-deltas directory for files starting with our buffer-file-name
+  (let* ((file-name (file-name-nondirectory buffer-file-name))
+         (files (file-expand-wildcards (concat (expand-file-name (concat (file-name-directory buffer-file-name)
+                                                                         "../fixture-deltas/"))
+                                               "**/"
+                                               file-name
+                                               "*" ))))
+    (if (not files)
+        (message "No fixture deltas found for %s" file-name)
+      ;; the files are all named fn[command@...] and we want to group by command
+      (let ((grouped-cmd-files (seq-group-by (lambda (file)
+                                               (let ((base (file-name-base file)))
+                                                 (string-match (macroexpand `(rx ,file-name "[" (group (1+ (not "@"))) "@")) base)
+                                                 (when-let (cmd (match-string 1 base))
+                                                   cmd)))
+                                             files)))
+        (delete-other-windows)
+        (mapc (lambda (buf) (display-buffer buf `(display-buffer-in-direction
+                                             . ((direction . right)
+                                                (window-width . 0.2)))))
+              (mapcar #'find-file-noselect
+                      (alist-get (completing-read "Pick command " (seq-uniq (mapcar #'car grouped-cmd-files) #'string=))
+                                 grouped-cmd-files nil nil #'string=)))
+        (balance-windows-area)))))
+
 (defvar combobulate-test-fixture-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-p") #'combobulate-test-place-next-overlay)
     (define-key map (kbd "C-c C-a") #'combobulate-test-apply-file-local-variable)
     (define-key map (kbd "C-c C-u") #'combobulate-test-update-file-local-variable)
     (define-key map (kbd "C-c C-d") #'combobulate-test-delete-all-overlays)
+    (define-key map (kbd "C-c v") #'combobulate-test-visit-fixture-deltas)
     map))
 
 (define-minor-mode combobulate-test-fixture-mode "Load Combobulate's test fixture overlays"
@@ -210,8 +238,9 @@ Returns nil if no match is found."
 
 (defun combobulate-test-generate-fixture-diff-filename (fn action-string number suffix)
   "Generate a filename for a fixture diff file."
-  (concat (file-name-base fn)
-          "[" (format "%s~%s~%s" action-string number suffix) "]"
+  (concat (file-name-nondirectory fn)
+          "[" (format "%s@%s~%s" action-string number suffix) "]"
+          "."
           (file-name-extension fn)))
 
 (defun combobulate-test-compare-string-with-file (buf fn)
