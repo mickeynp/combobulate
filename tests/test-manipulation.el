@@ -24,7 +24,8 @@
 
 ;;; Code:
 
-(load-library "./test-prelude")
+(require 'combobulate-test-prelude)
+
 
 (ert-deftest combobulate-test-edit-procedures ()
   (combobulate-test (:language python :mode python-ts-mode :setup combobulate-test-python)

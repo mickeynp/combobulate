@@ -20,9 +20,8 @@
 
 ;;; Code:
 
-(load-library "./test-prelude")
-
-
+(require 'combobulate-test-prelude)
+(require 'combobulate)
 (ert-deftest combobulate-test-query-simple-1 ()
   (combobulate-test (:language python :mode python-ts-mode :setup combobulate-test-python)
     (let ((node (combobulate-node-at-point '("try_statement")))
