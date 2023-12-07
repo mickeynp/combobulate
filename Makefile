@@ -27,6 +27,10 @@ download-relationships:
 	cd build ; \
 	python build-relationships.py --download
 
+.PHONY:	clear-tests
+clear-tests:
+	rm -vrf tests/fixture-deltas/
+	rm -v tests/*.gen.el
 .PHONY:	build-tests
 build-tests:
 	$(EMACS_CMD) -l tests/combobulate-generate-tests.el
