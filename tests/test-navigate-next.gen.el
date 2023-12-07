@@ -100,6 +100,14 @@
     (combobulate-for-each-marker #'combobulate-navigate-next :reverse nil)))
 
 
+(ert-deftest combobulate-test-python-combobulate-navigate-next-nested-blocks ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '(python python-ts-mode combobulate-navigate-next)
+    (combobulate-for-each-marker #'combobulate-navigate-next :reverse nil)))
+
+
 (ert-deftest combobulate-test-python-combobulate-navigate-next-python-dict ()
   (combobulate-test
       (:language python :mode python-ts-mode :fixture "./fixtures/python-dict.py")

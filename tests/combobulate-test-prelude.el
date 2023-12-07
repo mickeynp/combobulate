@@ -210,8 +210,8 @@ Returns nil if no match is found."
 
 (defun combobulate-test-generate-fixture-diff-filename (fn action-string number suffix)
   "Generate a filename for a fixture diff file."
-  (concat (file-name-sans-extension (file-name-base fn))
-          "." (format "%s~%s~%s" action-string number suffix) "."
+  (concat (file-name-base fn)
+          "[" (format "%s~%s~%s" action-string number suffix) "]"
           (file-name-extension fn)))
 
 (defun combobulate-test-compare-string-with-file (buf fn)

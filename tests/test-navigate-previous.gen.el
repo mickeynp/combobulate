@@ -100,6 +100,14 @@
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 
+(ert-deftest combobulate-test-python-combobulate-navigate-previous-nested-blocks ()
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture "./fixtures/nested-blocks.py")
+    :tags
+    '(python python-ts-mode combobulate-navigate-previous)
+    (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
+
+
 (ert-deftest combobulate-test-python-combobulate-navigate-previous-python-dict ()
   (combobulate-test
       (:language python :mode python-ts-mode :fixture "./fixtures/python-dict.py")

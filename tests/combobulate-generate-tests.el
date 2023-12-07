@@ -121,7 +121,7 @@ pass with `should'."
     (kill-buffer buf)))
 
 
-(defun combobulate-test-generate-tests (wildcard-pattern test-name test-executor-fn &rest cmd-fns)
+(defun combobulate-test-generate-tests (wildcard-or-list test-name test-executor-fn &rest cmd-fns)
   "Generate tests for CMD-FNS on TEST-NAME.
 
 TEST-EXECUTOR-FN is a function that takes a fixture filename, the
@@ -154,7 +154,11 @@ directory."
       (insert "(require 'combobulate)\n\n")
       (insert "(require 'combobulate-test-prelude)\n\n")
       (emacs-lisp-mode)
-      (dolist (fixture-fn (file-expand-wildcards (concat "./fixtures/" wildcard-pattern)))
+      (dolist (fixture-fn
+               (pcase wildcard-or-list
+                 ((pred stringp) (file-expand-wildcards (concat "./fixtures/" wildcard-or-list)))
+                 ((pred listp) wildcard-or-list)
+                 (_ (error "Invalid wildcard-or-list: %s" wildcard-or-list))))
         (dolist (action-fn cmd-fns)
           (funcall test-executor-fn fixture-fn action-fn output-buffer)))
       (save-buffer 0))))
@@ -162,6 +166,14 @@ directory."
 ;;; Generators
 
 ;; Generate tests for all dragging nodes up or down.
-(combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn #'combobulate-drag-down #'combobulate-drag-up)
-
+;; (combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn #'combobulate-drag-down #'combobulate-drag-up)
+(combobulate-test-generate-tests
+ '("./fixtures/component-jsx.tsx"
+   "./fixtures/def-block"
+   "./fixtures/nested-blocks.py")
+ "splice"
+ #'combobulate-test-execute-test-fn
+ #'combobulate-splice-up
+ #'combobulate-splice-down
+ #'combobulate-vanish-node)
 (provide 'combobulate-generate-tests)
