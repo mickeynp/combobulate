@@ -76,7 +76,7 @@
   ;; command that started the whole thing.
   (dolist (ignored-command '(combobulate-edit-cluster-dwim
                              combobulate-edit-node-type-dwim
-                             combobulate-edit-siblings-dwim
+                             combobulate-edit-node-siblings-dwim
                              combobulate-edit-node-by-text-dwim
                              combobulate-query-builder-edit-nodes
                              combobulate-edit-query))

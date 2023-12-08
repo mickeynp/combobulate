@@ -429,7 +429,7 @@ matches. With two prefix arguments, mark the node instead."
                                                 ((equal arg '(16)) 'mark)
                                                 (t 'before))))))
 
-(defun combobulate-edit-siblings-dwim (arg)
+(defun combobulate-edit-node-siblings-dwim (arg)
   "Edit all siblings of the current node.
 
 This looks for nodes of any type found in
@@ -521,7 +521,7 @@ a match."
                               ;; would end up with several multiple
                               ;; cursors at the exact same position.
                               (lambda (node-a node-b) (equal (combobulate-node-range node-a)
-                                                             (combobulate-node-range node-b)))))
+                                                        (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)
@@ -1240,7 +1240,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                               combobulate-manipulation-envelopes-custom))
+                          combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)

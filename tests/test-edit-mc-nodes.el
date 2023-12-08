@@ -72,10 +72,10 @@
                      tsx-ts-mode
                      "./fixtures/mc-edit/identifiers-named-c.tsx")))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-siblings-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-edit-node-siblings-dwim ()
   :tags '(multiple-cursors manipulation)
   (combobulate-with-stubbed-proffer-choices (:choice 0)
-    (with-stubbed-mc #'combobulate-edit-siblings-dwim
+    (with-stubbed-mc #'combobulate-edit-node-siblings-dwim
                      css
                      css-ts-mode
                      "./fixtures/mc-edit/property.css")))

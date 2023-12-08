@@ -69,6 +69,7 @@
     (define-key map (kbd "c") #'combobulate-edit-cluster-dwim)
     (define-key map (kbd "t") #'combobulate-edit-node-type-dwim)
     (define-key map (kbd "x") #'combobulate-edit-node-by-text-dwim)
+    (define-key map (kbd "s") #'combobulate-edit-node-siblings-dwim)
     map))
 
 (defvar combobulate-options-key-map
