@@ -143,6 +143,42 @@ overlay at. If it is nil, the current point is used."
       (combobulate--test-place-category-overlay next-number category (point))
       (combobulate-test-update-file-local-variable))))
 
+(cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choice 0) (error-if-missing t) (call-action-fn t)
+                                                             (replacement-action-fn nil))
+                                                       &rest body)
+  "Stub out `combobulate-proffer-choices' to return CHOICE.
+
+CHOICE is 0-based.
+
+If ERROR-IF-MISSING is non-nil, signal an error if CHOICE is
+greater than the number of nodes.
+
+If CALL-ACTION-FN is non-nil, call the action function with the
+node.
+
+If REPLACEMENT-ACTION-FN is non-nil, use it instead of the action
+function."
+  (declare (indent 1) (debug (sexp body)))
+  `(let ((choice-node))
+     (cl-letf (((symbol-function 'combobulate-proffer-choices)
+                (cl-defun stub-proffer-actions (nodes action-fn &key (first-choice nil)
+                                                      (reset-point-on-abort t) (reset-point-on-accept nil)
+                                                      (prompt-description nil) (use-proxy-nodes t)
+                                                      (extra-map nil) (flash-node nil) (unique-only t))
+                  (when ,call-action-fn
+                    (and ,error-if-missing (should (<= ,choice (length nodes))))
+                    (let ((picked-node (nth ,choice nodes)))
+                      (setq choice-node (combobulate-make-proxy picked-node))
+                      (combobulate-refactor
+                       (funcall (or ,replacement-action-fn action-fn)
+                                choice-node
+                                (apply-partially #'mark-node-highlighted choice-node)
+                                (apply-partially #'combobulate-move-to-node choice-node)
+                                (apply-partially #'mark-node-deleted choice-node))
+                       (rollback))))
+                  choice-node)))
+       ,@body)))
+
 (defun combobulate-test-update-file-local-variable ()
   "Update the file-local variable with the current overlays.
 

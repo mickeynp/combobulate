@@ -521,7 +521,7 @@ a match."
                               ;; would end up with several multiple
                               ;; cursors at the exact same position.
                               (lambda (node-a node-b) (equal (combobulate-node-range node-a)
-                                                        (combobulate-node-range node-b)))))
+                                                             (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)

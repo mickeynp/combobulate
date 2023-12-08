@@ -68,27 +68,24 @@
 
 (defun combobulate--mc-clear-cursors ()
   "Clear multiple cursors."
-  (when (combobulate--mc-active)
-    (mc/remove-fake-cursors)))
+  (mc/remove-fake-cursors))
 
 (defun combobulate--mc-enable ()
   "Enable multiple cursors."
-  (when (combobulate--mc-active)
-    ;; abysmal MC hack to prevent MC from triggering on the damned
-    ;; command that started the whole thing.
-    (dolist (ignored-command '(combobulate-edit-cluster-dwim
-                               combobulate-edit-node-type-dwim
-                               combobulate-edit-siblings-dwim
-                               combobulate-edit-node-by-text-dwim
-                               combobulate-query-builder-edit-nodes
-                               combobulate-edit-query))
-      (add-to-list 'mc--default-cmds-to-run-once ignored-command))
-    (mc/maybe-multiple-cursors-mode)))
+  ;; abysmal MC hack to prevent MC from triggering on the damned
+  ;; command that started the whole thing.
+  (dolist (ignored-command '(combobulate-edit-cluster-dwim
+                             combobulate-edit-node-type-dwim
+                             combobulate-edit-siblings-dwim
+                             combobulate-edit-node-by-text-dwim
+                             combobulate-query-builder-edit-nodes
+                             combobulate-edit-query))
+    (add-to-list 'mc--default-cmds-to-run-once ignored-command))
+  (mc/maybe-multiple-cursors-mode))
 
 (defun combobulate--mc-place-cursor ()
   "Place a cursor at the current node."
-  (when (combobulate--mc-active)
-    (mc/create-fake-cursor-at-point)))
+  (mc/create-fake-cursor-at-point))
 
 (defun combobulate--mc-place-nodes (placement-nodes &optional default-action)
   "Edit PLACEMENT-NODES according to each node's desired placement action.
