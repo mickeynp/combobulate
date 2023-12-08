@@ -31,39 +31,6 @@
   (require 'multiple-cursors))
 
 
-
-(defun combobulate--mc-assert-is-supported ()
-  (unless (fboundp 'multiple-cursors-mode)
-    (error "Multiple cursors is not installed or activated.")))
-
-(defun combobulate--mc-active ()
-  "Return non-nil if multiple cursors mode is active."
-  (and (fboundp 'multiple-cursors-mode)
-       multiple-cursors-mode))
-
-(defun combobulate--mc-clear-cursors ()
-  "Clear multiple cursors."
-  (when (combobulate--mc-active)
-    (mc/remove-fake-cursors)))
-
-(defun combobulate--mc-enable ()
-  "Enable multiple cursors."
-  (when (combobulate--mc-active)
-    ;; abysmal MC hack to prevent MC from triggering on the damned
-    ;; command that started the whole thing.
-    (dolist (ignored-command '(combobulate-edit-cluster-dwim
-                               combobulate-edit-node-type-dwim
-                               combobulate-edit-siblings-dwim
-                               combobulate-edit-node-by-text-dwim
-                               combobulate-query-builder-edit-nodes
-                               combobulate-edit-query))
-      (add-to-list 'mc--default-cmds-to-run-once ignored-command))
-    (mc/maybe-multiple-cursors-mode)))
-
-(defun combobulate--mc-place-cursor ()
-  "Place a cursor at the current node."
-  (when (combobulate--mc-active)
-    (mc/create-fake-cursor-at-point)))
 (defmacro with-stubbed-mc (edit-fn language mode fixture)
   `(let ((stub/combobulate--mc-clear-cursors)
          (stub/combobulate--mc-enable)
@@ -95,15 +62,31 @@
    #'combobulate-edit-cluster-dwim
    python
    python-ts-mode
-   "./fixtures/python-dict.py"))
+   "./fixtures/mc-edit/python-dict-keys.py"))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-cluster-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-edit-node-by-text-dwim ()
   :tags '(multiple-cursors manipulation)
-  (with-stubbed-mc
-   #'combobulate-edit-cluster-dwim
-   python
-   python-ts-mode
-   "./fixtures/python-dict.py"))
+  (combobulate-with-stubbed-proffer-choices (:choice 0)
+    (with-stubbed-mc #'combobulate-edit-node-by-text-dwim
+                     tsx
+                     tsx-ts-mode
+                     "./fixtures/mc-edit/identifiers-named-c.tsx")))
+
+(ert-deftest combobulate-test-mc-combobulate-edit-siblings-dwim ()
+  :tags '(multiple-cursors manipulation)
+  (combobulate-with-stubbed-proffer-choices (:choice 0)
+    (with-stubbed-mc #'combobulate-edit-siblings-dwim
+                     css
+                     css-ts-mode
+                     "./fixtures/mc-edit/property.css")))
+
+(ert-deftest combobulate-test-mc-combobulate-edit-node-type-dwim ()
+  :tags '(multiple-cursors manipulation)
+  (combobulate-with-stubbed-proffer-choices (:choice 0)
+    (with-stubbed-mc #'combobulate-edit-node-type-dwim
+                     python
+                     python-ts-mode
+                     "./fixtures/mc-edit/python-dict-values.py")))
 
 (provide 'test-edit-mc-nodes)
 ;;; test-edit-mc-nodes.el ends here

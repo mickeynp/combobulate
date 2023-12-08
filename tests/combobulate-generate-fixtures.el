@@ -102,12 +102,14 @@ test will be generated for both forward and backward movement."
 (combobulate-test-generate-tests
  "*" "navigate-next"
  (apply-partially #'combobulate-test-generate-movement-ert-test nil)
- #'combobulate-navigate-next)
+ '(combobulate-navigate-next)
+ "sibling/")
 
 (combobulate-test-generate-tests
  "*" "navigate-previous"
  (apply-partially #'combobulate-test-generate-movement-ert-test t)
- #'combobulate-navigate-previous)
+ '(combobulate-navigate-previous)
+ "sibling/")
 
 (provide 'generate-fixtures)
 ;;; generate-fixtures.el ends here

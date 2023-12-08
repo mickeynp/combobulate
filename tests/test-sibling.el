@@ -29,112 +29,112 @@
 ;;; Python
 
 (ert-deftest combobulate-test-sibling-python-def-block ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/def-block.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/def-block.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-def-parameters ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/def-parameters.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/def-parameters.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-module-statements ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/module-statements.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/module-statements.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 ;;; Typescript
 
 (ert-deftest combobulate-test-sibling-typescript-component-jsx ()
-  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/component-jsx.tsx")
+  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/sibling/component-jsx.tsx")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-typescript-module-statements ()
-  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/module-statements.tsx")
+  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/sibling/module-statements.tsx")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-typescript-def-function-block ()
-  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/def-function-block.tsx")
+  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/sibling/def-function-block.tsx")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-typescript-def-function-object-args ()
-  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/def-function-object-args.tsx")
+  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/sibling/def-function-object-args.tsx")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-typescript-def-function-type-args ()
-  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/def-function-type-args.tsx")
+  (combobulate-test (:language tsx :mode tsx-ts-mode :fixture "./fixtures/sibling/def-function-type-args.tsx")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-css-property ()
-  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/css-property.css")
+  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/sibling/css-property.css")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-css-declaration ()
-  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/css-declaration.css")
+  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/sibling/css-declaration.css")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 
 (ert-deftest combobulate-test-sibling-css-css-nested-statements ()
-  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/css-nested-statements.css")
+  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/sibling/css-nested-statements.css")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-css-css-function-arg ()
-  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/css-function-arg.css")
+  (combobulate-test (:language css :mode css-ts-mode :fixture "./fixtures/sibling/css-function-arg.css")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 
 (ert-deftest combobulate-test-sibling-yaml-yaml-block-mapping ()
-  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/yaml-block-mapping.yaml")
+  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/sibling/yaml-block-mapping.yaml")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-yaml-yaml-block-mapping-pairs ()
-  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/yaml-block-mapping-pairs.yaml")
+  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/sibling/yaml-block-mapping-pairs.yaml")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-yaml-yaml-sequence ()
-  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/yaml-sequence.yaml")
+  (combobulate-test (:language yaml :mode yaml-ts-mode :fixture "./fixtures/sibling/yaml-sequence.yaml")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 
 (ert-deftest combobulate-test-sibling-python-python-list ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-list.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-list.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-python-tuple ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-tuple.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-tuple.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-python-tuple-pattern ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-tuple-pattern.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-tuple-pattern.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-python-set ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-set.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-set.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-python-dict ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-dict.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-dict.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 
 (ert-deftest combobulate-test-sibling-python-python-match-case ()
-  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/python-match-case.py")
+  (combobulate-test (:language python :mode python-ts-mode :fixture "./fixtures/sibling/python-match-case.py")
     (combobulate-for-each-marker #'combobulate-navigate-next)
     (combobulate-for-each-marker #'combobulate-navigate-previous :reverse t)))
 

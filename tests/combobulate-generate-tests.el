@@ -124,12 +124,19 @@ pass with `should'."
     (kill-buffer buf)))
 
 
-(defun combobulate-test-generate-tests (wildcard-or-list test-name test-executor-fn &rest cmd-fns)
+(defun combobulate-test-generate-tests (wildcard-or-list test-name test-executor-fn cmd-fns &optional fixture-sub-dir)
   "Generate tests for CMD-FNS on TEST-NAME.
 
 TEST-EXECUTOR-FN is a function that takes a fixture filename, the
 CMD-FNS and an output buffer and builds the fixture delta (if
 any) and the ert test.
+
+WILDCARD-OR-LIST is either a wildcard string or a list of
+filenames.  If it is a wildcard string, it is expanded to a list
+of filenames.  If it is a list of filenames, it is used as-is.
+
+FIXTURE-SUB-DIR is the subdirectory of the fixtures
+directory. Used only when wildcards are used.
 
 CMD-FNS is a list of functions to execute on the fixture file.
 The functions are executed in order and the resulting buffer
@@ -151,6 +158,8 @@ directory."
          (target-fn (concat (combobulate-test-get-test-directory) (format "test-%s.gen.el" test-name)))
          (output-buffer (find-file-literally target-fn)))
     (message "Generating tests in %s to `%s'" (buffer-file-name output-buffer) target-fn)
+    ;; assert fixture-sub-dir ends with a slash.
+
     (with-current-buffer output-buffer
       (erase-buffer)
       (insert ";; This file is generated auto generated. Do not edit directly.\n\n")
@@ -159,7 +168,10 @@ directory."
       (emacs-lisp-mode)
       (dolist (fixture-fn
                (pcase wildcard-or-list
-                 ((pred stringp) (file-expand-wildcards (concat "./fixtures/" wildcard-or-list)))
+                 ((pred stringp)
+                  (unless (string-suffix-p "/" fixture-sub-dir)
+                    (error "fixture-sub-dir must end with a slash"))
+                  (file-expand-wildcards (concat "./fixtures/" fixture-sub-dir wildcard-or-list)))
                  ((pred listp) wildcard-or-list)
                  (_ (error "Invalid wildcard-or-list: %s" wildcard-or-list))))
         (if (string-match-p "^#" (file-name-base fixture-fn))
@@ -171,14 +183,15 @@ directory."
 ;;; Generators
 
 ;; Generate tests for all dragging nodes up or down.
-(combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn #'combobulate-drag-down #'combobulate-drag-up)
+(combobulate-test-generate-tests "*" "drag" #'combobulate-test-execute-test-fn '(combobulate-drag-down combobulate-drag-up) "sibling/")
 (combobulate-test-generate-tests
- '("./fixtures/component-jsx.tsx"
-   "./fixtures/def-block"
-   "./fixtures/nested-blocks.py")
+ '("./fixtures/sibling/component-jsx.tsx"
+   "./fixtures/sibling/def-block"
+   "./fixtures/sibling/nested-blocks.py")
  "splice"
  #'combobulate-test-execute-test-fn
- #'combobulate-splice-up
- #'combobulate-splice-down
- #'combobulate-vanish-node)
+ '(combobulate-splice-up
+   combobulate-splice-down
+   combobulate-vanish-node))
+
 (provide 'combobulate-generate-tests)
