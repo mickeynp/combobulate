@@ -429,6 +429,22 @@ matches. With two prefix arguments, mark the node instead."
                                                 ((equal arg '(16)) 'mark)
                                                 (t 'before))))))
 
+(defun combobulate-edit-siblings-dwim (arg)
+  "Edit all siblings of the current node.
+
+This looks for nodes of any type found in
+`combobulate-navigation-default-nodes'."
+  (interactive "P")
+  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes
+                                 :procedures combobulate-navigation-sibling-procedures)
+
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
+                                    (cond ((equal arg '(4)) 'after)
+                                          ((equal arg '(16)) 'mark)
+                                          (t 'before)))
+      (error "Cannot find any editable nodes here"))))
+
 (defun combobulate-edit-cluster-dwim (arg)
   "Edit clusters of nodes around point.
 
@@ -489,7 +505,7 @@ the node at point."
 The locus of editable nodes is determined by NODE's parents and
 is selectable.
 
-MATCH-FN takes one argument, a node, and returns non-nil if it is
+MATCH-FN takes one argument, a node, and should return non-nil if it is
 a match."
   (let ((matches)
         ;; default to 1 "match" as there's no point in creating
@@ -1224,7 +1240,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
+                               combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
