@@ -64,7 +64,8 @@
    ["DWIM at Point"
     ("c" "Cluster" combobulate-edit-cluster-dwim)
     ("t" "Node Type" combobulate-edit-node-type-dwim)
-    ("x" "Node Text" combobulate-edit-node-by-text-dwim)]
+    ("x" "Node Text" combobulate-edit-node-by-text-dwim)
+    ("s" "Sibling" combobulate-edit-node-siblings-dwim)]
    ["Query"
     ("q" "By Query" combobulate-edit-query)]])
 
