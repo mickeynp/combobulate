@@ -79,9 +79,7 @@
       `[,@(mapcar (lambda (envelope)
                     (map-let (:key :description :function) envelope
                       `(,key ,description ,function)))
-                  combobulate-manipulation-envelopes)]
-      )
-     )])
+                  combobulate-manipulation-envelopes)]))])
 
 
 (transient-define-prefix combobulate ()
