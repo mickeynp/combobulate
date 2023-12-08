@@ -1121,27 +1121,28 @@ highlight Combobulate highlighters.")
 
 (defun combobulate-highlight-install (language)
   "Install the font lock rules for LANGUAGE in the current buffer."
-  (combobulate-highlight-setup)
-  ;; do the user-defined rules...
-  (dolist (rule combobulate-highlight-queries-alist)
-    (when (eq language (plist-get rule :language))
+  (when combobulate-mode
+    (combobulate-highlight-setup)
+    ;; do the user-defined rules...
+    (dolist (rule combobulate-highlight-queries-alist)
+      (when (eq language (plist-get rule :language))
+        (combobulate-highlight-install-query
+         (combobulate-query-builder-expand-match-face
+          (combobulate-query-builder-to-string (plist-get rule :query)))
+         language)))
+    ;; next, the system-supplied rules...
+    (dolist (rule combobulate-highlight-queries-default)
       (combobulate-highlight-install-query
        (combobulate-query-builder-expand-match-face
-        (combobulate-query-builder-to-string (plist-get rule :query)))
-       language)))
-  ;; next, the system-supplied rules...
-  (dolist (rule combobulate-highlight-queries-default)
-    (combobulate-highlight-install-query
-     (combobulate-query-builder-expand-match-face
-      (combobulate-query-builder-to-string rule))
-     language)))
+        (combobulate-query-builder-to-string rule))
+       language))))
 
 (defun combobulate-highlight-clear ()
   "Clear all Combobulate highlight in the current buffer."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)
