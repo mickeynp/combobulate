@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-
 DEFAULT_FIELD_NAME = "*unnamed*"
 
 
@@ -172,9 +171,11 @@ def download_all_sources(sources):
 def write_elisp_file(forms):
     log.info("Writing forms to file")
     with Path("../combobulate-rules.el").open("w") as f:
+
         def newline():
             f.write("\n")
-        def write_form(form, header: str|None=None, footer: str|None=None):
+
+        def write_form(form, header: str | None = None, footer: str | None = None):
             if header:
                 f.write(f";; START {header}")
                 newline()
@@ -183,33 +184,50 @@ def write_elisp_file(forms):
             if footer:
                 f.write(f";; END {footer}")
                 newline()
+
         langs = []
         for src, (form, inv_form) in forms:
             langs.append(src)
             if not form:
                 log.error("Skipping %s as it is empty", src)
                 continue
-            write_form(form, header=f"Production rules for {src}", footer=f"Production rules for {src}")
-            write_form(inv_form, header=f"Inverse production rules for {src}", footer=f"Inverse production rules for {src}")
+            write_form(
+                form,
+                header=f"Production rules for {src}",
+                footer=f"Production rules for {src}",
+            )
+            write_form(
+                inv_form,
+                header=f"Inverse production rules for {src}",
+                footer=f"Inverse production rules for {src}",
+            )
             newline()
-        write_form(sexp(
-            [
-                Symbol("defconst"),
-                Symbol(f"combobulate-rules-list"),
-                "\n",
-                Quote(sexp(sexp(sorted(langs)))),
-                "\n",
-                LispString("A list of all the languages that have production rules."),
-                "\n",
-            ]
-        ), header="Auto-generated list of all languages", footer="Auto-generated list of all languages")
+        write_form(
+            sexp(
+                [
+                    Symbol("defconst"),
+                    Symbol(f"combobulate-rules-list"),
+                    "\n",
+                    Quote(sexp(sexp(sorted(langs)))),
+                    "\n",
+                    LispString(
+                        "A list of all the languages that have production rules."
+                    ),
+                    "\n",
+                ]
+            ),
+            header="Auto-generated list of all languages",
+            footer="Auto-generated list of all languages",
+        )
         newline()
-        write_form(sexp(
-            [
-                Symbol("provide"),
-                Quote(Symbol("combobulate-rules")),
-            ]
-        ))
+        write_form(
+            sexp(
+                [
+                    Symbol("provide"),
+                    Quote(Symbol("combobulate-rules")),
+                ]
+            )
+        )
 
 
 def parse_source(language, source):
@@ -217,6 +235,7 @@ def parse_source(language, source):
     data = load_node_types(source)
     rules, inv_rules = process_rules(data)
     return generate_sexp(rules, inv_rules, language, source)
+
 
 def read_sources(sources_file: str) -> dict:
     # Create a ConfigParser object
@@ -226,6 +245,7 @@ def read_sources(sources_file: str) -> dict:
     for section in config.sections():
         sources[section] = dict(config[section])
     return sources
+
 
 def main():
     parser = argparse.ArgumentParser()
