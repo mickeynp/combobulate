@@ -52,7 +52,7 @@ Format is an alist of (OVERLAY-STRING-CHAR . (OVERLAY NUMBER CATEGORY ORIG-PT)).
 (defun combobulate--with-test-overlays (&optional fn)
   "Call FN for each overlay related to Combobulate's test fixtures.
 
-If FN is nil, just return the overlays."
+If FN is nil, just return the overlays. "
   (let ((ovs (seq-filter
               (lambda (ov)
                 (overlay-get ov 'combobulate-test))
@@ -351,6 +351,35 @@ If REVERSE is non-nil, execute ACTION-FN in reverse order."
         (funcall action-fn)
         (should (= (point) (overlay-start ov)))))))
 
+(defun combobulate-test-1 (statements)
+  (let ((modified))
+    (dolist (statement statements)
+      (pcase statement
+        ((pred stringp) (push `(insert ,statement) modified))
+        ('bob (push `(goto-char (point-min)) modified))
+        ('goto-first-char (push `(progn (goto-char (point-min)) (skip-chars-forward " \n")) modified))
+        ('n> (push '(newline-and-indent) modified))
+        ('<- (push '(python-indent-dedent-line-backspace 1) modified))
+        ('back (push '(forward-char -1) modified))
+        ('forward (push '(forward-char 1) modified))
+        ('tab (push '(indent-for-tab-command) modified))
+        ((or `(assert-at-marker ,number) `(assert-at-marker ,number ,category))
+         (push `(should (combobulate--test-get-overlay-at-point ,number)) modified))
+        ((or `(goto-marker ,number) `(goto-marker ,number ,category))
+         (push `(let ((ov (combobulate--test-get-overlay-by-number ,number)))
+                  (should ov)
+                  (goto-char (overlay-start ov)))
+               modified))
+        ('debug-show
+         (push `(progn (pop-to-buffer (current-buffer))
+                       (font-lock-fontify-buffer)
+                       (message "Stopped. `C-M-c' to resume. Current point: %s" (point))
+                       (pulse-momentary-highlight-one-line (point) 'highlight)
+                       (recursive-edit))
+               modified))
+        (_ (push statement modified))))
+    (reverse modified)))
+
 (cl-defmacro combobulate-test ((&key (setup nil) (fixture nil) language mode) &rest body)
   "Run a combobulate test with a preconfigured buffer.
 
@@ -359,92 +388,32 @@ the path to a file to load into the buffer before running the
 test. LANGUAGE is the language to use for the treesitter parser.
 MODE is the major mode to use for the buffer."
   (declare (indent 1) (debug (sexp body)))
-  `(with-temp-buffer
-     (let ((positions '()))
-       (funcall #',mode)
-       (treesit-parser-create ',language)
-       (combobulate-mode)
-       (combobulate-setup)
-       (switch-to-buffer (current-buffer))
-       (with-current-buffer (current-buffer)
-         (erase-buffer)
-         (when ,fixture
-           (unless (file-exists-p ,fixture)
-             (error "Fixture file %s does not exist" ,fixture))
-           ;; load the fixture file
-           (insert-file-contents ,fixture)
-           ;; ensure everything's applied properly
-           (combobulate-test-fixture-mode 1)
-           (hack-local-variables)
-           (hack-local-variables-apply)))
-       (let ((offset 0)
-             ;; disables flashing nodes to echo area etc.
-             (combobulate-flash-node nil))
-         (dolist (statement (append ,setup ',body))
-           (pcase statement
-             ((pred stringp) (insert statement))
-             (`(save-position ,name) (push (cons name (point)) positions))
-             ('bob (goto-char (point-min)))
-             ('goto-first-char (goto-char (point-min)) (skip-chars-forward " \n"))
-             ('set-offset (setq offset (python-test-get-column)))
-             ('n> (newline-and-indent))
-             ('<- (python-indent-dedent-line-backspace 1))
-             ('back (forward-char -1))
-             ('forward (forward-char 1))
-             ('tab (indent-for-tab-command))
-             ('navigate-up (combobulate-navigate-up))
-             ('navigate-down (combobulate-navigate-down))
-             ;; (`(cycle-through-markers ,category ,fn)
-             ;;  (let ((ordered-ovs))
-             ;;    (dotimes (number (length combobulate-test-point-overlays))
-             ;;      (push (combobulate--test-get-overlay-by-number number) ordered-ovs))
-             ;;    (dolist (ov ordered-ovs)
-             ;;      (goto-char (overlay-start ov))
-             ;;      (funcall #',fn)
-             ;;      )))
-             ((or `(assert-at-marker ,number) `(assert-at-marker ,number ,category))
-              (should (combobulate--test-get-overlay-at-point number)))
-             ((or `(goto-marker ,number) `(goto-marker ,number ,category))
-              (let ((ov (combobulate--test-get-overlay-by-number number)))
-                (should ov)
-                (goto-char (overlay-start ov))))
-             ('debug-show
-              (pop-to-buffer (current-buffer))
-              (font-lock-fontify-buffer)
-              (message "Stopped. `C-M-c' to resume. Current point: %s" (point))
-              (pulse-momentary-highlight-one-line (point) 'highlight)
-              (recursive-edit))
-             (`(position= ,name)
-              (unless (= (alist-get name positions) (point))
-                (ert-fail
-                 (list
-                  nil
-                  :fail-reason "Current point does not match expected position"
-                  :point (point)
-                  :statement statement
-                  :expected (alist-get name positions)
-                  :condition (= (alist-get name positions) (point))))))
-             (`(col= ,col)
-              (unless (= (combobulate-test-get-column) col)
-                (ert-fail
-                 (list
-                  nil
-                  :fail-reason "Column incorrect"
-                  :column (combobulate-test-get-column)
-                  :statement statement
-                  :expected col
-                  :condition (= (combobulate-test-get-column) col)))))
-             (`(line= ,line)
-              (unless (= (combobulate-test-get-line) line)
-                (ert-fail
-                 (list
-                  nil
-                  :line (combobulate-test-get-line)
-                  :statement statement
-                  :expected line
-                  :fail-reason "Line incorrect"
-                  :condition (= (combobulate-test-get-line) line)))))
-             (_ (eval statement t))))))))
+  (let ((setup-stmts (symbol-value setup)))
+    `(with-temp-buffer
+       (let ((positions '()))
+         (funcall #',mode)
+         (treesit-parser-create ',language)
+         (combobulate-mode)
+         (combobulate-setup)
+         (switch-to-buffer (current-buffer))
+         (with-current-buffer (current-buffer)
+           (erase-buffer)
+           (when ,fixture
+             (unless (file-exists-p ,fixture)
+               (error "Fixture file %s does not exist" ,fixture))
+             ;; load the fixture file
+             (insert-file-contents ,fixture)
+             ;; ensure everything's applied properly
+             (combobulate-test-fixture-mode 1)
+             (hack-local-variables)
+             (hack-local-variables-apply)))
+         (let ((offset 0)
+               ;; disables flashing nodes to echo area etc.
+               (combobulate-flash-node nil)
+               ;; disable noisy BS in python
+               (python-indent-guess-indent-offset-verbose nil))
+           ,@(combobulate-test-1 setup-stmts)
+           ,@(combobulate-test-1 body))))))
 
 (defun combobulate-test-compare-structure (a b)
   (let ((ta (flatten-tree a))

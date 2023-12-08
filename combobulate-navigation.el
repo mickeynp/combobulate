@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate--get-nearest-navigable-node ()
@@ -773,6 +773,11 @@ of the node."
   "Return all siblings of NODE."
   (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive
                       (combobulate-node-start node)))))
+
+(defun combobulate-nav-get-siblings (node)
+  "Return all navigable siblings of NODE."
+  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+    (combobulate--get-siblings node)))
 
 (defun combobulate--get-sibling (node direction)
   "Returns the sibling node of NODE in the specified DIRECTION.
@@ -1771,8 +1776,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                       (cons 'match (cons (list child) nil))
-                     (cons 'no-match (cons nil nil)))))
+                            (cons 'match (cons (list child) nil))
+                          (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking
