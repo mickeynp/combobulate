@@ -411,6 +411,12 @@ first; followed by the node type of each grouped label."
                      "; "))
     "zero"))
 
+(defun combobulate--edit-node-determine-action (arg)
+  "Determine which action ARG should map to."
+  (cond ((equal arg '(4)) 'after)
+        ((equal arg '(16)) 'mark)
+        (t 'before)))
+
 (defun combobulate-edit-query (arg)
   "Edit clusters of nodes by query.
 
@@ -425,31 +431,28 @@ matches. With two prefix arguments, mark the node instead."
    "Edit nodes matching this query?"
    "Placed cursors"
    (lambda (matches _query)
-     (combobulate--mc-place-nodes matches (cond ((equal arg '(4)) 'after)
-                                                ((equal arg '(16)) 'mark)
-                                                (t 'before))))))
+     (combobulate--mc-place-nodes matches (combobulate--edit-node-determine-action arg)))))
 
 (defun combobulate-edit-node-siblings-dwim (arg)
   "Edit all siblings of the current node.
 
-This looks for nodes of any type found in
-`combobulate-navigation-default-nodes'."
+Combobulate will use its definition of siblings as per
+\\[combobulate-navigate-next] and
+\\[combobulate-navigate-previous]."
   (interactive "P")
   (with-navigation-nodes (:nodes combobulate-navigation-default-nodes
                                  :procedures combobulate-navigation-sibling-procedures)
 
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
-                                    (cond ((equal arg '(4)) 'after)
-                                          ((equal arg '(16)) 'mark)
-                                          (t 'before)))
+                                    (combobulate--edit-node-determine-action arg))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-cluster-dwim (arg)
-  "Edit clusters of nodes around point.
+  "Precisely edit targeted clusters of nodes.
 
 This looks for clusters of nodes to edit in
-`combobulate-navigation-editable-nodes'.
+`combobulate-manipulation-edit-procedures'.
 
 If you specify a prefix ARG, then the points are placed at the
 end of each edited node."
@@ -459,9 +462,7 @@ end of each edited node."
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-cluster
          node
-         (cond ((equal arg '(4)) 'after)
-               ((equal arg '(16)) 'mark)
-               (t 'before)))
+         (combobulate--edit-node-determine-action arg))
       (error "Cannot find any editable clusters here"))))
 
 
@@ -474,9 +475,7 @@ This looks for nodes of any type found in
   (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-identical-nodes
-         node (cond ((equal arg '(4)) 'after)
-                    ((equal arg '(16)) 'mark)
-                    (t 'before))
+         node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
                                     (combobulate-node-type tree-node))
                              (equal (combobulate-node-field-name node)
@@ -492,9 +491,7 @@ the node at point."
   (interactive "P")
   (if-let ((node (combobulate-node-at-point nil t)))
       (combobulate-edit-identical-nodes
-       node (cond ((equal arg '(4)) 'after)
-                  ((equal arg '(16)) 'mark)
-                  (t 'before))
+       node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
                              (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
