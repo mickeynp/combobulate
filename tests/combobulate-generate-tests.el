@@ -114,7 +114,11 @@ pass with `should'."
           ;; avoid mode-related hook bullshit from triggering on save.
           (fundamental-mode)
           (let ((require-final-newline t))
-            (save-buffer 0)))
+            (save-buffer 0)
+            (save-excursion
+              (unless (/= (char-after (1- (point-max))) ?\n)
+		(goto-char (point-max))
+		(insert ?\n)))))
         (let ((kill-buffer-query-functions nil))
           (kill-buffer after-buf))))
     (kill-buffer buf)))
