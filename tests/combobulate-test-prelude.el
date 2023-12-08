@@ -264,10 +264,10 @@ Returns nil if no match is found."
   ;; procedures can leave the file without a trailing newline. This
   ;; fixes that
   (cl-flet ((ensure-final-newline ()
-              (save-excursion
-                (unless (/= (char-after (1- (point-max))) ?\n)
-		  (goto-char (point-max))
-		  (insert ?\n)))))
+              (save-excursion (goto-char (1- (point-max)))
+		              (unless (looking-at "\n")
+                                (goto-char (point-max))
+                                (insert ?\n)))))
     (should (file-exists-p fn))
     (let ((current-contents (with-current-buffer buf
                               (ensure-final-newline)
@@ -280,7 +280,7 @@ Returns nil if no match is found."
         ;; save both file and buffer to two temporary files
         (let ((buf-fn (make-temp-file "combobulate-test-buf"))
               (file-fn (make-temp-file "combobulate-test-fixture")))
-          (with-current-buffer buf
+          (with-temp-file buf-fn
             (insert current-contents))
           (with-temp-file file-fn
             (insert file-contents))
