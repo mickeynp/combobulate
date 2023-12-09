@@ -1,14 +1,14 @@
-
+IMG ?= combobulate
+TAG ?= dev
+DOCKER_CMD ?= docker run --rm -w /opt/ $(DOCKER_ARGS) $(IMG):$(TAG)
 EMACS_CMD = emacs \
-	--chdir tests/ \
 	--batch \
 	--no-init-file \
+	--eval '(princ default-directory)' \
 	--eval '(setq load-prefer-newer t)' \
-	--eval "(add-to-list 'load-path \"$(PWD)/tests/\")" \
-	--eval "(add-to-list 'load-path \"$(PWD)\")" \
-	--eval "(load \"combobulate-test-prelude\")" \
-	-L ':.' \
-	-L "$(PWD)/tests"
+	--chdir ./tests/ \
+	-L .. \
+	-L .
 
 .PHONY:	byte-compile
 byte-compile:
@@ -34,8 +34,8 @@ clean-tests:
 
 .PHONY:	build-tests
 build-tests: clean-tests
-	$(EMACS_CMD) -l tests/combobulate-generate-tests.el
-	$(EMACS_CMD) -l tests/combobulate-generate-fixtures.el
+	$(EMACS_CMD) -l combobulate-generate-tests.el
+	$(EMACS_CMD) -l combobulate-generate-fixtures.el
 
 ELFILES := $(sort $(shell find ${srcdir} tests/ -name "test-*.el" ! -name ".*" -print))
 
@@ -46,4 +46,14 @@ run-tests:
 	--eval "(setq ert-summarize-tests-batch-and-exit nil)" \
 	-f 'ert-run-tests-batch-and-exit'
 
+.PHONY:	docker-build
+docker-build:
+	docker build -t $(IMG):$(TAG) .
 
+.PHONY:	docker-build-tests
+docker-build-tests:
+	$(DOCKER_CMD) build-tests
+
+.PHONY:	docker-run-tests
+docker-run-tests:
+	$(DOCKER_CMD) build-tests run-tests
