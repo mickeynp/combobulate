@@ -65,23 +65,20 @@ test point markers."
       (pop-to-buffer fixture-buf))))
 
 
-(defun combobulate-test-generate-movement-ert-test (reverse fixture-fn action-fn output-buf)
-  "Generate an ert test designed for movement for ACTION-FN on FIXTURE-FN.
+(defun combobulate-test-generate-movement-ert-test (reverse _test-builder-fn fixture-filename action-fn action-fn-name output-buffer)
+  "Generate an ert test designed for movement for ACTION-FN on FIXTURE-FILENAME.
 
 The test is generated in OUTPUT-BUF. If REVERSE is non-nil, the
 test will be generated for both forward and backward movement."
-  (let* ((action-fn-name (symbol-name action-fn))
-         (test-name nil)
-         (fixture-buf (find-file-noselect fixture-fn))
+  (let* ((test-name nil)
+         (fixture-buf (find-file-noselect fixture-filename))
          (fixture-language) (fixture-major-mode))
     (with-current-buffer fixture-buf
       (setq fixture-language (combobulate-parser-language (car (combobulate-parser-list)))
             fixture-major-mode major-mode))
-    (setq test-name (intern (format "combobulate-test-%s-%s-%s"
-                                    (symbol-name fixture-language)
-                                    action-fn-name
-                                    (file-name-base fixture-fn))))
-    (with-current-buffer output-buf
+    (setq test-name (combobulate-test-generate-ert-test-name
+                     fixture-language action-fn-name fixture-filename))
+    (with-current-buffer output-buffer
       (insert
        (string-replace
         ;; I cannot work out how to get prin1 to print () instead of
@@ -91,7 +88,7 @@ test will be generated for both forward and backward movement."
         (prin1-to-string
          (pp
           `(ert-deftest ,test-name 'EMPTY
-             (combobulate-test (:language ,fixture-language :mode ,fixture-major-mode :fixture ,fixture-fn)
+             (combobulate-test (:language ,fixture-language :mode ,fixture-major-mode :fixture ,fixture-filename)
                :tags ',(list fixture-language fixture-major-mode action-fn)
                (combobulate-for-each-marker #',action-fn :reverse ,reverse))))
          t))
@@ -99,17 +96,5 @@ test will be generated for both forward and backward movement."
 
 ;;; Generators
 
-(combobulate-test-generate-tests
- "*" "navigate-next"
- (apply-partially #'combobulate-test-generate-movement-ert-test nil)
- '(combobulate-navigate-next)
- "sibling/")
-
-(combobulate-test-generate-tests
- "*" "navigate-previous"
- (apply-partially #'combobulate-test-generate-movement-ert-test t)
- '(combobulate-navigate-previous)
- "sibling/")
-
-(provide 'generate-fixtures)
+(provide 'combobulate-generate-fixtures)
 ;;; generate-fixtures.el ends here

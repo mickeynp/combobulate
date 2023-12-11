@@ -28,14 +28,13 @@ download-relationships:
 	python build-relationships.py --download
 
 .PHONY:	clean-tests
-clean-tests:
+clean-tests: 
 	rm -vrf tests/fixture-deltas/ || true
 	rm -v tests/*.gen.el || true
 
 .PHONY:	build-tests
 build-tests: clean-tests
-	$(EMACS_CMD) -l combobulate-generate-tests.el
-	$(EMACS_CMD) -l combobulate-generate-fixtures.el
+	$(EMACS_CMD) -l generate-tests.el
 
 ELFILES := $(sort $(shell find ${srcdir} tests/ -name "test-*.el" ! -name ".*" -print))
 

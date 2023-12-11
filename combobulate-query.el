@@ -1109,8 +1109,9 @@ highlight Combobulate highlighters.")
   ;; font lock feature list. This is I think the only way to inject
   ;; custom font lock rules into the tree-sitter-powered font lock
   ;; engine.
-  (unless (member combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))
-    (push combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))))
+  (when treesit-font-lock-feature-list
+    (unless (member combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))
+      (push combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list)))))
 
 (defun combobulate-highlight-query ()
   (interactive)
@@ -1161,7 +1162,7 @@ highlight Combobulate highlighters.")
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                   (eq feature combobulate-highlight-feature-symbol)))
+                                        (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

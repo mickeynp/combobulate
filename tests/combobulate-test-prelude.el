@@ -353,14 +353,14 @@ doesn't exist."
       (make-directory dir t))
     dir))
 
-(defun combobulate-test-fixture-action-function (number action-fn fixture-fn)
-  "Run ACTION-FN on the fixture file, and compare the result with the fixture file."
+(defun combobulate-compare-action-with-fixture-delta (number action-fn-name fixture-fn)
+  "Compare the output from the current buffer to a fixture-delta file."
   (combobulate-test-compare-string-with-file
    (current-buffer)
-   (concat (combobulate-test-get-fixture-deltas-directory (symbol-name action-fn))
+   (concat (combobulate-test-get-fixture-deltas-directory action-fn-name)
            (combobulate-test-generate-fixture-diff-filename
             fixture-fn
-            (symbol-name action-fn)
+            action-fn-name
             number
             "after"))))
 
