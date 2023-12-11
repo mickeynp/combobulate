@@ -227,7 +227,9 @@ locally bound to the context of `combobulate-refactor'."
            (forward-line 0)
            (insert (combobulate-indent-string
                     default
-                    (current-indentation) t)))
+                    :first-line-operation 'absolute
+                    :first-line-amount (current-indentation)
+                    :rest-lines-operation 'relative)))
           (t (insert default))))
         ;;; "string"
         ;;

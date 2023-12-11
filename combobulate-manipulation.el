@@ -749,47 +749,103 @@ considered whitespace by the mode's syntax table."
 
 (defun combobulate-indent-string-first-line (text target-col)
   "Corrects the indentation of the first line of TEXT to TARGET-COL."
-  (let ((lines (split-string text "\n")))
-    (string-join
-     (cons (combobulate-indent-string
-            (combobulate-indent-string--strip-whitespace (car lines))
-            target-col)
-           (cdr lines))
-     "\n")))
+  (combobulate-indent-string text :first-line-operation 'absolute :first-line-amount target-col))
 
 (defun combobulate-indent-string--strip-whitespace (s &optional count)
-  "Strip S of whitespace, possibly up to COUNT whitespace characters."
+  "Strip S of whitespace, possibly up to COUNT whitespace characters.
+
+If COUNT is nil, then all whitespace is stripped."
   (string-trim-left
    s (if count (rx-to-string `(** 0 ,(abs count) space))
        (rx bol (* space)))))
 
 (defun combobulate-indent-string--count-whitespace (s)
+  "Count the number of whitespace characters at the beginning of S."
   (- (length s) (length (combobulate-indent-string--strip-whitespace s))))
 
-(defun combobulate-indent-string (text target-col &optional absolute)
-  "Ensure the indent of TEXT is set to TARGET-COL.
+(defun combobulate-indent-string-1 (line operation amount)
+  "Indent LINE by AMOUNT.
 
-If ABSOLUTE is t, then every line is adjusted like this:
+If OPERATION is `add', then AMOUNT is added to the current
+indentation.
 
-The first line of text is used as the zero point and indented to
-TARGET-COL, and every subsequent line's indentation is indented
-relative to that one such that their relative indentation to the
-first line is preserved."
+If OPERATION is `subtract', then AMOUNT is subtracted from the
+current indentation.
+
+If OPERATION is `absolute', then AMOUNT is used as the new
+indentation."
+  ;; operation must be: `add', `subtract', `absolute'.
+  (cl-assert (member operation '(add subtract absolute)))
+  ;; see if we can invert operations if the amount warrants it.
+  (cond
+   ((and (eq operation 'add) (< amount 0))
+    (setq operation 'subtract
+          amount (- amount)))
+   ((and (eq operation 'subtract) (< amount 0))
+    (setq operation 'add
+          amount (- amount))))
+  (let ((current-indent (combobulate-indent-string--count-whitespace line))
+        (line-without-indent (combobulate-indent-string--strip-whitespace line)))
+    (cond ((eq operation 'add)
+           ;; if the amount is zero, then there is nothing to add.
+           (if (= amount 0) line
+             (concat (make-string (+ current-indent amount) ? ) line-without-indent)))
+          ((eq operation 'subtract)
+           ;; check for whether we're subtracting more than we
+           ;; have. If so, then we subtract the exact amount we need.
+           (cond ((>= current-indent amount)
+                  (concat (make-string (- current-indent amount) ? ) line-without-indent))
+                 (t
+                  (concat (make-string 0 ? ) line-without-indent))))
+          ((eq operation 'absolute)
+           (concat (make-string amount ? ) line-without-indent)))))
+
+(cl-defun combobulate-indent-string (text &key (first-line-operation nil)
+                                          (first-line-amount 0)
+                                          (rest-lines-operation nil)
+                                          (rest-lines-amount 0))
+  "Indent TEXT specifically for the first and rest of the lines.
+
+FIRST-LINE-OPERATION is the operation to perform on the first
+line of TEXT. It can be `add', `subtract', or `absolute'.
+
+FIRST-LINE-AMOUNT is the amount to add, subtract, or set the
+first line's indentation to.
+
+REST-LINES-OPERATION is the operation to perform on the rest of
+the lines of TEXT. It can be `relative', `add', `subtract', or
+`absolute'. `relative' means that the indentation of the rest of
+the lines is relative to the first line's *changed*
+indentation. In other words, if the first line's indentation is
+changed by 2 spaces, then the rest of the lines' indentation will
+be changed by 2 spaces (in the same direction) as well.
+
+REST-LINES-AMOUNT is the amount to add, subtract, or set the rest
+of the lines' indentation to. It cannot be used with `relative'."
+  (cl-assert (member first-line-operation '(add subtract absolute nil)))
+  (cl-assert (member rest-lines-operation '(relative add subtract absolute nil)))
+  ;; `rest-lines-amount'  cannot be used with `relative'.
+  (cl-assert (or (not (eq rest-lines-operation 'relative))
+                 (and (eq rest-lines-operation 'relative)
+                      (eq rest-lines-amount 0))))
   (let* ((lines (split-string text "\n"))
-         (baseline-col (combobulate-indent-string--count-whitespace (car lines))))
-    ;; calculate the indentation at the beginning of the line, if
-    ;; any.
-    (string-join
-     (mapcar (lambda (line)
-               (if absolute
-                   (combobulate-indent-string
-                    (combobulate-indent-string--strip-whitespace line baseline-col)
-                    target-col nil)
-                 (if (> target-col 0)
-                     (concat (make-string target-col ? ) line)
-                   (combobulate-indent-string--strip-whitespace line target-col))))
-             lines)
-     "\n")))
+         ;; indentation of the first line before we modify it
+         (first-line-indentation (combobulate-indent-string--count-whitespace (car lines)))
+         (first-line (if first-line-operation
+                         (combobulate-indent-string-1
+                          (car lines)
+                          first-line-operation first-line-amount)
+                       (car lines)))
+         (new-first-line-indentation (combobulate-indent-string--count-whitespace first-line))
+         (rest-lines (if rest-lines-operation
+                         (mapcar (lambda (line)
+                                   (if (eq rest-lines-operation 'relative)
+                                       (combobulate-indent-string-1 line 'add (- new-first-line-indentation
+                                                                                 first-line-indentation))
+                                     (combobulate-indent-string-1 line rest-lines-operation rest-lines-amount)))
+                                 (cdr lines))
+                       (cdr lines))))
+    (string-join (cons first-line rest-lines) "\n")))
 
 (defun combobulate--clone-node (node position)
   "Clone NODE and place it at POSITION."
@@ -821,7 +877,11 @@ after NODE-OR-TEXT."
                               (combobulate-before-point-blank-p position))))
     (cond
      ((stringp node-or-text)
-      (setq node-text (combobulate-indent-string node-or-text col t)))
+      (setq node-text (combobulate-indent-string
+                       node-or-text
+                       :first-line-amount col
+                       :first-line-operation 'absolute
+                       :rest-lines-amount 'relative)))
      ((or (combobulate-node-p node-or-text)
           (combobulate-proxy-node-p node-or-text))
       (let ((sequence-separator
@@ -855,7 +915,8 @@ after NODE-OR-TEXT."
                              (combobulate-indent-string-first-line
                               (concat (combobulate-node-text node-or-text) sequence-separator)
                               node-col)
-                             (- col node-col))
+                             :first-line-amount (- col node-col)
+                             :first-line-operation 'add)
                           (concat (combobulate-node-text node-or-text) sequence-separator)))))
      (t (error "Cannot place node or text `%s'" node-or-text)))
     (goto-char position)
@@ -1211,8 +1272,8 @@ buffer.
   "Insert Combobulate TEMPLATE around NODE.
 
 If MARK-NODE is non-nil, then mark the node, which will then be
-available to tempo as the `r' identifier.  If nil, the region is
-kept as-is.
+available to the envelope as the `r' identifier.  If nil, the
+region is kept as-is.
 
 POINT-PLACEMENT must be one of `start', `end', or `stay'. `stay'
 does not move point to either of NODE's boundaries."
