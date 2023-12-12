@@ -131,7 +131,7 @@ locally bound to the context of `combobulate-refactor'."
            (setq pass-through-instructions
                  (nconc pass-through-instructions
                         (cdr (combobulate-envelope-expand-instructions-1 rest mark-field))))
-           (move-to-column col)))
+           (move-to-column col t)))
         ;;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
         ;;
         ;; Prompts the user with PROMPT and stores the returned value

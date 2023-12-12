@@ -28,6 +28,7 @@
 (require 'combobulate-test-prelude)
 (require 'combobulate-generate-tests)
 (require 'combobulate-generate-fixtures)
+(require 'combobulate-generate-envelopes)
 
 
 (combobulate-test-generate-tests
@@ -58,6 +59,14 @@
    combobulate-splice-down
    combobulate-vanish-node))
 
+(let ((combobulate-test-fixture-delta-subdir "envelope/"))
+  (combobulate-test-generate-tests
+   '("./fixtures/envelope/blank.py")
+   "envelope"
+   #'combobulate-test-execute-fixture-test-fn
+   (make-envelope-tests)
+   "envelope/"
+   #'combobulate-test-build-envelope-test))
 
 (provide 'gen-tests)
 ;;; gen-tests.el ends here

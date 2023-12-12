@@ -53,19 +53,29 @@
                   (file-name-base fixture-filename)
                   number)))
 
-(defun combobulate-test-build-ert-stub (test-name language mode fixture-filename action-fn-name body)
+(defvar combobulate--test-build-fixture-delta-filename nil)
+(defun combobulate-test-build-ert-stub (test-name language mode fixture-filename action-fn-name number body)
+  "Build an ert test for ACTION-FN on FIXTURE-FILENAME at NUMBER.
+
+The test is built from the stub template in `combobulate-test-ert-stub'.
+
+The variable `combobulate--test-build-fixture-delta-filename'
+contains the delta filename target."
   (insert
-   (string-replace
-    ;; I cannot work out how to get prin1 to print () instead of nil.p
-    "'EMPTY"
-    "()"
-    (prin1-to-string
-     (pp
-      `(ert-deftest ,test-name 'EMPTY
-         (combobulate-test (:language ,language :mode ,mode :fixture ,fixture-filename)
-           :tags ',(list language mode action-fn-name)
-           ,@body)))
-     t))
+   (thread-last
+     (prin1-to-string
+      (pp
+       `(ert-deftest ,test-name 'EMPTY
+          ,(format "Test `%s' on `%s' at point marker number `%s'." action-fn-name fixture-filename number)
+          :tags ',(list language mode action-fn-name)
+          (combobulate-test (:language ,language :mode ,mode :fixture ,fixture-filename)
+            ,@body)))
+      t)
+     (string-replace
+      ;; I cannot work out how to get prin1 to print () instead of nil.
+      "'EMPTY"
+      "()"
+      ))
    "\n" "\n"))
 
 (defun combobulate-test-build-ert-test (test-name language mode fixture-filename number action-fn
@@ -77,11 +87,13 @@
    mode
    fixture-filename
    action-fn-name
+   number
    `((goto-marker ,number)
      ,(if command-error
           `(should-error (,action-fn))
         `(,action-fn))
-     (combobulate-compare-action-with-fixture-delta ,number ,action-fn-name ,fixture-filename))))
+     (combobulate-compare-action-with-fixture-delta
+      ,(combobulate-test-get-fixture-delta-filename fixture-filename action-fn-name number)))))
 
 (defun combobulate-test-execute-fixture-test-fn (test-builder-fn fixture-filename action-fn action-fn-name output-buffer)
   "Execute ACTION-FN with FIXTURE-FILENAME for each overlay and output to OUTPUT-BUFFER."
@@ -138,6 +150,7 @@
     (kill-buffer buf)))
 
 
+
 (defun combobulate-test-generate-tests (wildcard-or-list test-name test-executor-fn cmd-fns &optional fixture-sub-dir test-builder-fn)
   "Generate tests for CMD-FNS on TEST-NAME.
 
@@ -158,41 +171,42 @@ state is compared to the fixture file.  The resulting buffer
 state is saved as a fixture delta file in the fixture deltas
 directory."
   (interactive)
-  (let* (;; required to ensure the right major mode is chosen.
-         (major-mode-remap-alist '((python-mode . python-ts-mode)
-                                   (css-mode . css-ts-mode)
-                                   (typescript-mode . tsx-ts-mode)
-                                   (js2-mode . js-ts-mode)
-                                   (bash-mode . bash-ts-mode)
-                                   (css-mode . css-ts-mode)
-                                   (yaml-mode . yaml-ts-mode)
-                                   (json-mode . json-ts-mode)))
-         (combobulate-flash-node nil)
-         (delay-mode-hooks t)
-         (target-fn (concat (combobulate-test-get-test-directory) (format "test-%s.gen.el" test-name)))
-         (output-buffer (find-file-literally target-fn)))
-    (message "Generating tests in %s to `%s'" (buffer-file-name output-buffer) target-fn)
-    ;; assert fixture-sub-dir ends with a slash.
-    (with-current-buffer output-buffer
-      (erase-buffer)
-      (insert ";; This file is generated auto generated. Do not edit directly.\n\n")
-      (insert "(require 'combobulate)\n\n")
-      (insert "(require 'combobulate-test-prelude)\n\n")
-      (emacs-lisp-mode)
-      (dolist (fixture-filename
-               (pcase wildcard-or-list
-                 ((pred stringp)
-                  (unless (string-suffix-p "/" fixture-sub-dir)
-                    (error "fixture-sub-dir must end with a slash"))
-                  (file-expand-wildcards (concat "./fixtures/" fixture-sub-dir wildcard-or-list)))
-                 ((pred listp) wildcard-or-list)
-                 (_ (error "Invalid wildcard-or-list: %s" wildcard-or-list))))
-        (if (string-match-p "^#" (file-name-base fixture-filename))
-            (message "⚠ Skipping fixture as it is an auto save file %s" fixture-filename)
-          (pcase-dolist ((or `(,action-name . ,action-fn) `,action-fn) cmd-fns)
-            (funcall test-executor-fn (or test-builder-fn #'combobulate-test-build-ert-test) fixture-filename
-                     action-fn (or action-name (symbol-name action-fn)) output-buffer)))
-        (save-buffer 0)))))
+  (save-window-excursion
+    (save-excursion
+      (let* (;; required to ensure the right major mode is chosen.
+             (major-mode-remap-alist '((python-mode . python-ts-mode)
+                                       (css-mode . css-ts-mode)
+                                       (typescript-mode . tsx-ts-mode)
+                                       (js2-mode . js-ts-mode)
+                                       (bash-mode . bash-ts-mode)
+                                       (css-mode . css-ts-mode)
+                                       (yaml-mode . yaml-ts-mode)
+                                       (json-mode . json-ts-mode)))
+             (combobulate-flash-node nil)
+             (target-fn (concat (combobulate-test-get-test-directory) (format "test-%s.gen.el" test-name)))
+             (output-buffer (find-file-literally target-fn)))
+        (message "Generating tests in %s to `%s'" (buffer-file-name output-buffer) target-fn)
+        ;; assert fixture-sub-dir ends with a slash.
+        (with-current-buffer output-buffer
+          (erase-buffer)
+          (insert ";; This file is generated auto generated. Do not edit directly.\n\n")
+          (insert "(require 'combobulate)\n\n")
+          (insert "(require 'combobulate-test-prelude)\n\n")
+          (emacs-lisp-mode)
+          (dolist (fixture-filename
+                   (pcase wildcard-or-list
+                     ((pred stringp)
+                      (unless (string-suffix-p "/" fixture-sub-dir)
+                        (error "fixture-sub-dir must end with a slash"))
+                      (file-expand-wildcards (concat "./fixtures/" fixture-sub-dir wildcard-or-list)))
+                     ((pred listp) wildcard-or-list)
+                     (_ (error "Invalid wildcard-or-list: %s" wildcard-or-list))))
+            (if (string-match-p "^#" (file-name-base fixture-filename))
+                (message "⚠ Skipping fixture as it is an auto save file %s" fixture-filename)
+              (pcase-dolist ((or `(,action-name . ,action-fn) `,action-fn) cmd-fns)
+                (funcall test-executor-fn (or test-builder-fn #'combobulate-test-build-ert-test) fixture-filename
+                         action-fn (or action-name (symbol-name action-fn)) output-buffer)))
+            (save-buffer 0)))))))
 
 ;;; Generators
 

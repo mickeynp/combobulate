@@ -102,7 +102,7 @@ display.  CATEGORY is the category of overlay to display.
 ORIG-PT is the point to display the overlay at. If it is nil, the
 current point is used."
   (let* ((pt (or orig-pt (point)))
-         (ov (make-overlay pt (1+ pt))))
+         (ov (make-overlay pt (1+ pt) nil t nil)))
     (overlay-put ov 'display string-char)
     (overlay-put ov 'combobulate-test t)
     (overlay-put ov 'combobulate-test-number number)
@@ -272,12 +272,14 @@ Returns nil if no match is found."
     nil))
 
 
+
 (defun combobulate-test-generate-fixture-diff-filename (fn action-string number suffix)
   "Generate a filename for a fixture diff file."
-  (concat (file-name-nondirectory fn)
-          "[" (format "%s@%s~%s" action-string number suffix) "]"
-          "."
-          (file-name-extension fn)))
+  (concat
+   (file-name-nondirectory fn)
+   "[" (format "%s@%s~%s" action-string number suffix) "]"
+   "."
+   (file-name-extension fn)))
 
 (defun combobulate-ert-diff-fixture ()
   "Diff the current test with the fixture."
@@ -337,6 +339,9 @@ Returns nil if no match is found."
   "Get the directory for the test files."
   (expand-file-name "./"))
 
+(defvar combobulate-test-fixture-delta-subdir ""
+  "Additional subdirectory for fixture deltas.")
+
 (defun combobulate-test-get-fixture-deltas-directory (&optional action-subdir ensure-dir)
   "Get the directory for the fixture deltas.
 
@@ -346,23 +351,25 @@ If ACTION-SUBDIR is non-nil, then the directory will be
 
 If ENSURE-DIR is non-nil, then the directory will be created if it
 doesn't exist."
-  (let* ((dir (if action-subdir
-                  (expand-file-name (format "./fixture-deltas/%s/" action-subdir))
-                (expand-file-name "./fixture-deltas/"))))
+  (let* ((dir (concat
+               (if action-subdir
+                   (format "./fixture-deltas/%s/" (concat combobulate-test-fixture-delta-subdir action-subdir))
+                 (concat "./fixture-deltas/" combobulate-test-fixture-delta-subdir)))))
     (when ensure-dir
       (make-directory dir t))
     dir))
 
-(defun combobulate-compare-action-with-fixture-delta (number action-fn-name fixture-fn)
+(defun combobulate-test-get-fixture-delta-filename (fixture-fn action-fn-name number)
+  (concat (combobulate-test-get-fixture-deltas-directory action-fn-name)
+          (combobulate-test-generate-fixture-diff-filename
+           fixture-fn
+           action-fn-name
+           number
+           "after")))
+
+(defun combobulate-compare-action-with-fixture-delta (fixture-delta-fn)
   "Compare the output from the current buffer to a fixture-delta file."
-  (combobulate-test-compare-string-with-file
-   (current-buffer)
-   (concat (combobulate-test-get-fixture-deltas-directory action-fn-name)
-           (combobulate-test-generate-fixture-diff-filename
-            fixture-fn
-            action-fn-name
-            number
-            "after"))))
+  (combobulate-test-compare-string-with-file (current-buffer) fixture-delta-fn))
 
 (cl-defun combobulate-for-each-marker (action-fn &key (reverse nil))
   "Execute ACTION-FN for each marker in the current buffer.
@@ -406,6 +413,7 @@ If REVERSE is non-nil, execute ACTION-FN in reverse order."
                   (should ov)
                   (goto-char (overlay-start ov)))
                modified))
+        ('delete-markers (combobulate--test-delete-overlay))
         ('debug-show
          (push `(progn (pop-to-buffer (current-buffer))
                        (font-lock-fontify-buffer)
@@ -424,32 +432,34 @@ the path to a file to load into the buffer before running the
 test. LANGUAGE is the language to use for the treesitter parser.
 MODE is the major mode to use for the buffer."
   (declare (indent 1) (debug (sexp body)))
-  (let ((setup-stmts (symbol-value setup)))
+  (let ((setup-stmts (symbol-value setup))
+        (python-indent-guess-indent-offset-verbose nil))
     `(with-temp-buffer
-       (let ((positions '()))
-         (funcall #',mode)
-         (treesit-parser-create ',language)
-         (combobulate-mode)
-         (combobulate-setup)
-         (switch-to-buffer (current-buffer))
-         (with-current-buffer (current-buffer)
-           (erase-buffer)
-           (when ,fixture
-             (unless (file-exists-p ,fixture)
-               (error "Fixture file %s does not exist" ,fixture))
-             ;; load the fixture file
-             (insert-file-contents ,fixture)
-             ;; ensure everything's applied properly
-             (combobulate-test-fixture-mode 1)
-             (hack-local-variables)
-             (hack-local-variables-apply)))
-         (let ((offset 0)
-               ;; disables flashing nodes to echo area etc.
-               (combobulate-flash-node nil)
-               ;; disable noisy BS in python
-               (python-indent-guess-indent-offset-verbose nil))
-           ,@(combobulate-test-1 setup-stmts)
-           ,@(combobulate-test-1 body))))))
+       (delay-mode-hooks
+         (let ((positions '()))
+           (funcall #',mode)
+           (treesit-parser-create ',language)
+           (combobulate-mode)
+           (combobulate-setup)
+           (switch-to-buffer (current-buffer))
+           (with-current-buffer (current-buffer)
+             (erase-buffer)
+             (when ,fixture
+               (unless (file-exists-p ,fixture)
+                 (error "Fixture file %s does not exist" ,fixture))
+               ;; load the fixture file
+               (insert-file-contents ,fixture)
+               ;; ensure everything's applied properly
+               (combobulate-test-fixture-mode 1)
+               (hack-local-variables)
+               (hack-local-variables-apply)))
+           (let ((offset 0)
+                 ;; disables flashing nodes to echo area etc.
+                 (combobulate-flash-node nil)
+                 ;; disable noisy BS in python
+                 (python-indent-guess-indent-offset-verbose nil))
+             ,@(combobulate-test-1 setup-stmts)
+             ,@(combobulate-test-1 body)))))))
 
 (defun combobulate-test-compare-structure (a b)
   (let ((ta (flatten-tree a))

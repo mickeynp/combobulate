@@ -28,7 +28,7 @@ download-relationships:
 	python build-relationships.py --download
 
 .PHONY:	clean-tests
-clean-tests: 
+clean-tests:
 	rm -vrf tests/fixture-deltas/ || true
 	rm -v tests/*.gen.el || true
 
@@ -50,9 +50,9 @@ docker-build:
 	docker build -t $(IMG):$(TAG) .
 
 .PHONY:	docker-build-tests
-docker-build-tests:
+docker-build-tests: docker-build
 	$(DOCKER_CMD) build-tests
 
 .PHONY:	docker-run-tests
-docker-run-tests:
-	$(DOCKER_CMD) build-tests run-tests
+docker-run-tests: docker-build
+	$(DOCKER_CMD) build-tests build-tests run-tests
