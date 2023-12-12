@@ -99,10 +99,10 @@ If the value is missing then return DEFAULT."
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
           (combobulate--refactor-get-all-overlays))))
 
-(defun combobulate-envelope-expand-instructions-1 (instructions &optional mark-field)
+(defun combobulate-envelope-expand-instructions-1 (instructions &optional parent-mark-field)
   "Internal function that expands INSTRUCTIONS.
 
-MARK-FIELD must be the `mark-field' (or a similar function)
+PARENT-MARK-FIELD must be `mark-field' (or a similar function)
 locally bound to the context of `combobulate-refactor'."
   (let ((buf (current-buffer))
         (pass-through-instructions)
@@ -130,7 +130,7 @@ locally bound to the context of `combobulate-refactor'."
          (let ((col (current-column)))
            (setq pass-through-instructions
                  (nconc pass-through-instructions
-                        (cdr (combobulate-envelope-expand-instructions-1 rest mark-field))))
+                        (cdr (combobulate-envelope-expand-instructions-1 rest parent-mark-field))))
            (move-to-column col t)))
         ;;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
         ;;
@@ -143,7 +143,7 @@ locally bound to the context of `combobulate-refactor'."
              (and `(p ,tag ,prompt ,transformer-fn)))
          (when (and transformer-fn (not (functionp transformer-fn)))
            (error "Prompt has invalid transformer function `%s'" transformer-fn))
-         (funcall mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn)
+         (funcall parent-mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn)
          (push (cons 'prompt
                      (lambda () (unless combobulate-envelope-static
                              (let ((new-text))
@@ -163,7 +163,7 @@ locally bound to the context of `combobulate-refactor'."
              (and `(f ,tag) (let transformer-fn nil))
              (and `(field ,tag ,transformer-fn))
              (and `(f ,tag ,transformer-fn)))
-         (funcall mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
+         (funcall parent-mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
         ;;; `@'
         ;;
         ;; Push a `point-marker' that will serve as a possible
@@ -260,6 +260,9 @@ locally bound to the context of `combobulate-refactor'."
                   ;; knowing that it won't block for user input.
                   (seq-let [[inst-start &rest inst-end] &rest _]
                       (let ((combobulate-envelope-static t))
+                        ;; Observe htat we use #'mark-field and not
+                        ;; `mark-field' here. We want the function
+                        ;; local to this `combobulate-refactor'.
                         (combobulate-envelope-expand-instructions-1 repeat-instructions #'mark-field))
                     ;; mark the range as highlighted, so it's
                     ;; easier to see its extent; and as deleted,
@@ -289,10 +292,11 @@ locally bound to the context of `combobulate-refactor'."
                                   (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                         (progn (commit)
                                (setq pass-through-instructions
-                                     (nconc pass-through-instructions
-                                            (cdr (combobulate-envelope-expand-instructions-1
-                                                  repeat-instructions
-                                                  #'mark-field))))
+                                     (append pass-through-instructions
+                                             (cdr (combobulate-envelope-expand-instructions-1
+                                                   repeat-instructions
+                                                   ;; No #' here; use the variable-defined mark-field
+                                                   parent-mark-field))))
                                (cl-decf max-repeat)
                                (commit))
                       (commit))))))
@@ -304,6 +308,53 @@ locally bound to the context of `combobulate-refactor'."
            ;; and undoes everything.
            (quit (combobulate-message "Keyboard quit. Undoing expansion."))))))
     (cons (cons start (point-marker)) pass-through-instructions)))
+
+(defun combobulate-envelope-expand-post-run-instructions (result mark-node-cusor mark-field)
+  "Expand the POST-RUN-INSTRUCTIONS in RESULT.
+
+This function is called by `combobulate-envelope-expand' after
+the user has accepted the expansion of the template."
+  (let ((selected-point))
+    (dolist (grouping (seq-group-by #'car result))
+      (pcase grouping
+        (`(prompt . ,prompts)
+         (mapc #'funcall (mapcar #'cdr prompts)))
+        ;; (`(choice . ,choices)
+        ;;  (combobulate-refactor
+        ;;   (let ((node) (nodes))
+        ;;     (pcase-dolist (`(choice ,pt ,text) choices)
+        ;;       (save-excursion
+        ;;         (goto-char pt)
+        ;;         (insert text)
+        ;;         (push (setq node (make-combobulate-proxy-node
+        ;;                           :start pt
+        ;;                           :end (+ pt (length text))
+        ;;                           :text text
+        ;;                           :named t
+        ;;                           :node "Choice"
+        ;;                           :pp "Choice"))
+        ;;               nodes)
+        ;;         (mark-node-highlighted node)))
+        ;;     (rollback))))
+        (`(point . ,points)
+         (combobulate-refactor
+          (let ((nodes (mapcar (lambda (pt-instruction)
+                                 (combobulate-make-proxy-point-node (cadr pt-instruction)))
+                               points)))
+            ;; insert cursor overlays at all point markers to make
+            ;; them easier to identify.
+            (mapc #'mark-node-cursor nodes)
+            (setq selected-point
+                  (combobulate-node-start
+                   (combobulate-proffer-choices
+                    nodes
+                    (lambda (_ _ move-fn _)
+                      (funcall move-fn))
+                    :first-choice combobulate-envelope-static
+                    :reset-point-on-abort t
+                    :reset-point-on-accept nil)))
+            (rollback))))))
+    selected-point))
 
 (defun combobulate-envelope-expand-instructions (instructions)
   "Expand an envelope of INSTRUCTIONS at point.
@@ -471,45 +522,7 @@ expansion:
            ;; Some instructions are meant to be run at the very end, after
            ;; all recursive expansions have taken place. Proffered point
            ;; locations are one such example.
-           (dolist (grouping (seq-group-by #'car result))
-             (pcase grouping
-               (`(prompt . ,prompts)
-                (mapc #'funcall (mapcar #'cdr prompts)))
-               ;; (`(choice . ,choices)
-               ;;  (combobulate-refactor
-               ;;   (let ((node) (nodes))
-               ;;     (pcase-dolist (`(choice ,pt ,text) choices)
-               ;;       (save-excursion
-               ;;         (goto-char pt)
-               ;;         (insert text)
-               ;;         (push (setq node (make-combobulate-proxy-node
-               ;;                           :start pt
-               ;;                           :end (+ pt (length text))
-               ;;                           :text text
-               ;;                           :named t
-               ;;                           :node "Choice"
-               ;;                           :pp "Choice"))
-               ;;               nodes)
-               ;;         (mark-node-highlighted node)))
-               ;;     (rollback))))
-               (`(point . ,points)
-                (combobulate-refactor
-                 (let ((nodes (mapcar (lambda (pt-instruction)
-                                        (combobulate-make-proxy-point-node (cadr pt-instruction)))
-                                      points)))
-                   ;; insert cursor overlays at all point markers to make
-                   ;; them easier to identify.
-                   (mapc #'mark-node-cursor nodes)
-                   (setq selected-point
-                         (combobulate-node-start
-                          (combobulate-proffer-choices
-                           nodes
-                           (lambda (_ _ move-fn _)
-                             (funcall move-fn))
-                           :first-choice combobulate-envelope-static
-                           :reset-point-on-abort t
-                           :reset-point-on-accept nil)))
-                   (rollback))))))
+           (combobulate-envelope-expand-post-run-instructions result #'mark-node-cursor #'mark-field)
            (commit)
            (setq is-success t))
        (rollback)

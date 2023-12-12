@@ -143,6 +143,57 @@ overlay at. If it is nil, the current point is used."
       (combobulate--test-place-category-overlay next-number category (point))
       (combobulate-test-update-file-local-variable))))
 
+(cl-defmacro combobulate-with-stubbed-prompt-expansion (&rest body)
+  "Stub out the prompt expansion function for testing purposes.
+
+This is a macro that stubs out the prompt expansion function
+`combobulate-envelope-prompt-expansion' for testing purposes.  It
+temporarily replaces the function with a lambda that returns the
+first value in the list `combobulate-envelope-prompt-expansion-actions'.
+
+This macro is intended to be used in conjunction with
+`combobulate-with-stubbed-envelope-prompt'."
+  (declare (indent 1) (debug (sexp body)))
+  `(cl-letf (((symbol-function 'combobulate-envelope-prompt-expansion)
+              (lambda (prompt)
+                (pcase (pop combobulate-envelope-prompt-expansion-actions)
+                  ('yes t)
+                  ('no nil)
+                  ((and (pred consp) fn) (funcall (car fn)))
+                  ((and (pred functionp) fn) (funcall fn))
+                  ((and (pred null)) (error "Expected prompt action but none available"))
+                  (_ (error "Unknown prompt action"))))))
+     ,@body))
+
+(cl-defmacro combobulate-with-stubbed-envelope-prompt (&rest body)
+  "Stub out the envelope prompt function for testing purposes.
+
+This is a macro that stubs out the envelope prompt function
+`combobulate-envelope-prompt' for testing purposes.  It
+temporarily replaces the function with a lambda that returns the
+first value in the list `combobulate-envelope-prompt-actions'
+and then pops it off the list.  This allows us to simulate
+multiple calls to the prompt function with different values.
+
+The body of the macro is executed with the stubbed function in
+place.
+
+The `combobulate-envelope-prompt-actions' list may contain either
+a string or a cons cell.  If it is a string, then the string is
+returned as the prompt value.  If is a symbol, it is treated as
+though it is a function and called."
+  (declare (indent 1) (debug (sexp body)))
+  `(cl-letf (((symbol-function 'combobulate-envelope-prompt)
+              (lambda (prompt default-value &optional buffer update-fn)
+                (pcase (pop combobulate-envelope-prompt-actions)
+                  ((and (pred stringp) value) (funcall update-fn)
+                   value)
+                  ((and (pred consp) fn) (funcall (car fn)))
+                  ((and (pred functionp) fn) (funcall fn))
+                  ((and (pred null)) (error "Expected prompt action but none available"))
+                  (_ (error "Unknown prompt action"))))))
+     ,@body))
+
 (cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choice 0) (error-if-missing t) (call-action-fn t)
                                                              (replacement-action-fn nil))
                                                        &rest body)
@@ -395,8 +446,26 @@ If REVERSE is non-nil, execute ACTION-FN in reverse order."
         (should (= (point) (overlay-start ov)))))))
 
 (defun combobulate-test-1 (statements)
-  (let ((modified))
-    (dolist (statement statements)
+  "Execute a series of statements in the current buffer.
+
+Each statement is either a string, or a symbol. If it is a
+string, it is inserted into the buffer. If it is a symbol, it is
+executed as a function. The following symbols are supported:
+
+- `bob': go to the beginning of the buffer
+- `goto-first-char': go to the first non-whitespace character
+- `n>': insert a newline and indent
+- `<-': dedent the current line
+- `back': move the point back one character
+- `forward': move the point forward one character
+- `tab': call `insert-for-tab-command'
+- `assert-at-marker': assert that the point is at the given marker
+- `goto-marker': go to the given marker (without asserting)
+- `debug-show': show the buffer in a new window and pause execution."
+  (let ((modified) (stop-after-each-statement current-prefix-arg))
+    (dolist (statement (if stop-after-each-statement
+                           (seq-reduce (lambda (a b) (append (list 'debug-show) (list b) a)) statements nil)
+                         statements))
       (pcase statement
         ((pred stringp) (push `(insert ,statement) modified))
         ('bob (push `(goto-char (point-min)) modified))
@@ -425,28 +494,43 @@ If REVERSE is non-nil, execute ACTION-FN in reverse order."
     (reverse modified)))
 
 (cl-defmacro combobulate-test ((&key (setup nil) (fixture nil) language mode) &rest body)
-  "Run a combobulate test with a preconfigured buffer.
+  "Run a combobulate test with a preconfigured buffer to execute BODY.
 
-SETUP is a list of forms to run before the test body. FIXTURE is
-the path to a file to load into the buffer before running the
-test. LANGUAGE is the language to use for the treesitter parser.
-MODE is the major mode to use for the buffer."
+SETUP is a list of forms to run before the test body.
+
+FIXTURE is the path (absolute or relative from the `tests/'
+directory) to a file to load into the buffer before running the
+test.
+
+LANGUAGE is the language to use for the tree-sitter parser and
+must match exactly.  MODE is the major mode to use for the
+buffer.
+
+The test BODY is executed in the context of the buffer.  The
+buffer will have `combobulate-mode' enabled and
+`combobulate-setup' will be called. Additionally, a number of
+macros are available for use in the test body."
   (declare (indent 1) (debug (sexp body)))
-  (let ((setup-stmts (symbol-value setup))
-        (python-indent-guess-indent-offset-verbose nil))
+  (let ((setup-stmts (symbol-value setup)))
     `(with-temp-buffer
        (delay-mode-hooks
-         (let ((positions '()))
+         (let ((positions '())
+               ;; disable noisy BS in python
+               (python-indent-guess-indent-offset-verbose nil))
            (funcall #',mode)
            (treesit-parser-create ',language)
            (combobulate-mode)
            (combobulate-setup)
            (switch-to-buffer (current-buffer))
            (with-current-buffer (current-buffer)
+             ;; the default directory must be set explicitly. Here
+             ;; we'll use the root of the ./tests/ directory by
+             ;; looking for the combobulate-test-prelude file
+             (setq default-directory (file-name-directory (locate-library "combobulate-test-prelude")))
              (erase-buffer)
              (when ,fixture
                (unless (file-exists-p ,fixture)
-                 (error "Fixture file %s does not exist" ,fixture))
+                 (error "Fixture file %s does not exist (default-directory: %s)" ,fixture ,default-directory))
                ;; load the fixture file
                (insert-file-contents ,fixture)
                ;; ensure everything's applied properly
@@ -455,9 +539,7 @@ MODE is the major mode to use for the buffer."
                (hack-local-variables-apply)))
            (let ((offset 0)
                  ;; disables flashing nodes to echo area etc.
-                 (combobulate-flash-node nil)
-                 ;; disable noisy BS in python
-                 (python-indent-guess-indent-offset-verbose nil))
+                 (combobulate-flash-node nil))
              ,@(combobulate-test-1 setup-stmts)
              ,@(combobulate-test-1 body)))))))
 

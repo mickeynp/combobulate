@@ -4,19 +4,141 @@
 
 (require 'combobulate-test-prelude)
 
-(ert-deftest combobulate-test-python-prompt-once-blank-1 ()
-  "Test `prompt-once' on `./fixtures/envelope/blank.py' at point marker number `1'."
-  :tags '(python python-ts-mode "prompt-once")
+(ert-deftest combobulate-test-python-repeat-simple-blank-1 ()
+  "Test `repeat-simple' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "repeat-simple")
   (combobulate-test
       (:language python :mode python-ts-mode :fixture
                  "./fixtures/envelope/blank.py")
     (goto-marker 1) delete-markers
-    (let ((combobulate-envelope-registers '((some-prompt . "foo"))))
-      (combobulate-envelope-expand-instructions
-       '("a = " (p some-prompt "Pick a value"))))
-    debug-show
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-prompt-actions '("blah"))
+                 (combobulate-envelope-prompt-expansion-actions
+                  '(yes yes no)))
+              (combobulate-envelope-expand-instructions
+               '((repeat "if 1:" n> "a = "
+                         (p repeating-prompt "Pick a value") n>
+                         "b = 1" n>))))))
     (combobulate-compare-action-with-fixture-delta
-     "./fixture-deltas/envelope/prompt-once/blank.py[prompt-once@1~after].py")))
+     "./fixture-deltas/envelope/repeat-simple/blank.py[repeat-simple@1~after].py")))
+
+
+(ert-deftest combobulate-test-python-field-before-prompt-blank-1
+    ()
+  "Test `field-before-prompt' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "field-before-prompt")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let ((combobulate-envelope-prompt-actions '("blah")))
+              (combobulate-envelope-expand-instructions
+               '("a = " (f some-prompt) n> "b = "
+                 (p some-prompt "Pick a value"))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/field-before-prompt/blank.py[field-before-prompt@1~after].py")))
+
+
+(ert-deftest
+    combobulate-test-python-prompt-manual-keyboard-quit-blank-1 ()
+  "Test `prompt-manual-keyboard-quit' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "prompt-manual-keyboard-quit")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-prompt-actions
+                  '("foo" keyboard-quit)))
+              (combobulate-envelope-expand-instructions
+               '("a = " (p some-prompt "Pick a value") n> "b = "
+                 (p another-prompt "Pick a value"))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/prompt-manual-keyboard-quit/blank.py[prompt-manual-keyboard-quit@1~after].py")))
+
+
+(ert-deftest combobulate-test-python-prompt-manual-input-twice-blank-1
+    ()
+  "Test `prompt-manual-input-twice' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "prompt-manual-input-twice")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-prompt-actions
+                  '("simulated prompt value" "second value")))
+              (combobulate-envelope-expand-instructions
+               '("a = " (p some-prompt "Pick a value") n> "b = "
+                 (p another-prompt "Pick a second value"))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/prompt-manual-input-twice/blank.py[prompt-manual-input-twice@1~after].py")))
+
+
+(ert-deftest combobulate-test-python-prompt-manual-input-once-blank-1
+    ()
+  "Test `prompt-manual-input-once' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "prompt-manual-input-once")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-prompt-actions
+                  '("simulated prompt value")))
+              (combobulate-envelope-expand-instructions
+               '("a = " (p some-prompt "Pick a value"))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/prompt-manual-input-once/blank.py[prompt-manual-input-once@1~after].py")))
+
+
+(ert-deftest combobulate-test-python-prompt-register-reused-blank-1
+    ()
+  "Test `prompt-register-reused' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "prompt-register-reused")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-registers
+                  '((some-prompt . "this is a prompt value"))))
+              (combobulate-envelope-expand-instructions
+               '("a = " (p some-prompt "Pick a value") n> "b = "
+                 (f some-prompt))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/prompt-register-reused/blank.py[prompt-register-reused@1~after].py")))
+
+
+(ert-deftest combobulate-test-python-prompt-register-once-blank-1
+    ()
+  "Test `prompt-register-once' on `./fixtures/envelope/blank.py' at point marker number `1'."
+  :tags '(python python-ts-mode "prompt-register-once")
+  (combobulate-test
+      (:language python :mode python-ts-mode :fixture
+                 "./fixtures/envelope/blank.py")
+    (goto-marker 1) delete-markers
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-registers
+                  '((some-prompt . "foo"))))
+              (combobulate-envelope-expand-instructions
+               '("a = " (p some-prompt "Pick a value"))))))
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/envelope/prompt-register-once/blank.py[prompt-register-once@1~after].py")))
 
 
 (ert-deftest
@@ -29,9 +151,11 @@
       (:language python :mode python-ts-mode :fixture
                  "./fixtures/envelope/blank.py")
     (goto-marker 1) delete-markers
-    (let ((combobulate-envelope-registers))
-      (combobulate-envelope-expand-instructions
-       '("if True:" n> (r some-register "foo"))))
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let ((combobulate-envelope-registers))
+              (combobulate-envelope-expand-instructions
+               '("if True:" n> (r some-register "foo"))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-missing-register-with-default/blank.py[insert-missing-register-with-default@1~after].py")))
 
@@ -46,11 +170,13 @@
       (:language python :mode python-ts-mode :fixture
                  "./fixtures/envelope/blank.py")
     (goto-marker 1) delete-markers
-    (let
-        ((combobulate-envelope-registers
-          '((some-register . "my_register = 1"))))
-      (combobulate-envelope-expand-instructions
-       '("if True:" n> (r some-register))))
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-registers
+                  '((some-register . "my_register = 1"))))
+              (combobulate-envelope-expand-instructions
+               '("if True:" n> (r some-register))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-region-register-2-then-indent/blank.py[insert-region-register-2-then-indent@1~after].py")))
 
@@ -64,8 +190,13 @@
       (:language python :mode python-ts-mode :fixture
                  "./fixtures/envelope/blank.py")
     (goto-marker 1) delete-markers
-    (let ((combobulate-envelope-registers '((region . "random = 1"))))
-      (combobulate-envelope-expand-instructions '("if True:" n> r)))
+    (combobulate-with-stubbed-prompt-expansion
+        (combobulate-with-stubbed-envelope-prompt
+            (let
+                ((combobulate-envelope-registers
+                  '((region . "random = 1"))))
+              (combobulate-envelope-expand-instructions
+               '("if True:" n> r)))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-region-register-then-indent/blank.py[insert-region-register-then-indent@1~after].py")))
 
@@ -194,6 +325,5 @@
     (combobulate-envelope-expand-instructions '("test string"))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/string-basic/blank.py[string-basic@1~after].py")))
-
 
 

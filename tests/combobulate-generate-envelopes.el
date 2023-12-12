@@ -82,9 +82,17 @@
                ("field-before-prompt" ("a = " (f some-prompt) n>
                                        "b = " (p some-prompt "Pick a value"))
                 ((combobulate-envelope-prompt-actions '("blah"))))
+               ;; repeat
+               ("repeat-simple" ((repeat "if 1:" n>
+                                         "a = " (p repeating-prompt "Pick a value") n>
+                                         "b = 1" n>))
+                ((combobulate-envelope-prompt-actions '("blah"))
+                 (combobulate-envelope-prompt-expansion-actions '(yes yes no))))))
       (push (pcase instruction
               (`(,name ,instruction  ,rest)
-               (cons name `(let ,rest (combobulate-envelope-expand-instructions '(,@instruction)))))
+               (cons name `(combobulate-with-stubbed-prompt-expansion
+                               (combobulate-with-stubbed-envelope-prompt
+                                   (let ,rest (combobulate-envelope-expand-instructions '(,@instruction)))))))
               (`(,name . ,instruction)
                (cons name `(combobulate-envelope-expand-instructions ',@instruction))))
             tests))
