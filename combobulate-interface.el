@@ -147,7 +147,7 @@
 
 Only some fields are kept: relationships to other nodes are not
 kept."
-  start end text type named field node pp)
+  start end text type named field node pp extra)
 
 
 (defun combobulate-make-proxy (nodes)
@@ -163,7 +163,8 @@ kept."
                          :named (treesit-node-check node 'named)
                          :field (treesit-node-field-name node)
                          :node node
-                         :pp (combobulate-pretty-print-node node))
+                         :pp (combobulate-pretty-print-node node)
+                         :extra nil)
                       node))
                   (if (consp nodes) nodes (list nodes)))))
     (if (consp nodes)

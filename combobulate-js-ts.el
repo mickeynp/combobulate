@@ -229,8 +229,8 @@ from `combobulate-manipulation-envelopes') to insert."
            :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment")
            :name "ternary"
            :template ("{" @ "null" >
-                      n > " ? " @ r>
-                      n > " : " "null" >
+                      n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
+                      n > " : " (choice* :name "alternative" :missing ("null") :rest (r>))
                       n > "}" >))
           (:description
            "...={ ... }"
@@ -273,7 +273,7 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-manipulation-edit-procedures
         `((:activation-nodes
            ((:node
-             ("named_imports" "object" "formal_parameters" "array" "object_type" "arguments")
+             ("named_imports" "object" "formal_parameters" "array" "object_type" "arguments" "object_pattern")
              :position at-or-in))
            :remove-types ("comment")
            :match-query ((_) (_)+ @match))

@@ -165,6 +165,14 @@ vector or an escaped string."
   "Face for prompts and fields during editing or refactoring."
   :group 'combobulate-faces)
 
+(defface combobulate-refactor-choice-face '((t (:background "aquamarine4" :foreground "aquamarine1")))
+  "Face for choices during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-inactive-choice-face '((t (:background "azure4" :foreground "azure1")))
+  "Face for choices during editing or refactoring."
+  :group 'combobulate-faces)
+
 (defface combobulate-refactor-cursor-face '((t (:background "VioletRed4" :foreground "VioletRed1")))
   "Face for fake cursors during editing or refactoring."
   :group 'combobulate-faces)

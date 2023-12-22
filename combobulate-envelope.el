@@ -82,7 +82,7 @@ use. If it is nil, then `current-buffer' is used."
 (defun combobulate-envelope-get-register (register &optional default)
   "Retrieve the value of REGISTER from `combobulate-envelope--registers'.
 
-If the value is missing then return DEFAULT."
+If the register does not exist, return DEFAULT or nil."
   (map-elt combobulate-envelope--registers register default))
 
 (defun combobulate-envelope-prompt-expansion (prompt)
@@ -105,31 +105,35 @@ If the value is missing then return DEFAULT."
 PARENT-MARK-FIELD must be `mark-field' (or a similar function)
 locally bound to the context of `combobulate-refactor'."
   (let ((buf (current-buffer))
-        (pass-through-instructions)
+        (post-instructions)
         (start (point)))
     (dolist (sub-instruction instructions)
       (pcase sub-instruction
-        ;; (`(choice . ,rest)
-        ;;  (let ((combobulate-envelope-static t)
-        ;;        (expansion-text))
-        ;;    (save-excursion
-        ;;      (combobulate-refactor
-        ;;       (seq-let [[inst-start &rest inst-end] &rest _]
-        ;;           (combobulate-envelope-expand-instructions-1 rest #'mark-field)
-        ;;         (setq expansion-text (buffer-substring-no-properties inst-start inst-end))
-        ;;         (remove-overlays inst-start inst-end)
-        ;;         (delete-region inst-start inst-end)
-        ;;         (rollback))))
-        ;;    (push `(choice ,(point-marker) ,expansion-text)
-        ;;          pass-through-instructions)))
+        ((or (and `(choice . ,rest)
+                  (let name nil)
+                  (let missing nil)
+                  (let rest-instructions rest))
+             (and `(choice* . ,rest)
+                  (let name (plist-get rest :name))
+                  (let missing (plist-get rest :missing))
+                  (let rest-instructions (plist-get rest :rest))))
+         ;; check if we're already in static display mode: if we are,
+         ;; do nothing; that should stop nested choices from being
+         ;; expanded.
+         (unless combobulate-envelope-static
+           (let ((combobulate-envelope-static t))
+             (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
+                            ,(apply-partially #'combobulate-envelope-expand-instructions-1
+                                              rest-instructions parent-mark-field))
+                   post-instructions))))
         ;;; `(save-column BLOCK)'
         ;;
         ;; Records the `current-column' of `point' when it enters
         ;; BLOCK and resets `point' to that column when after exiting.
         (`(save-column . ,rest)
          (let ((col (current-column)))
-           (setq pass-through-instructions
-                 (nconc pass-through-instructions
+           (setq post-instructions
+                 (nconc post-instructions
                         (cdr (combobulate-envelope-expand-instructions-1 rest parent-mark-field))))
            (move-to-column col t)))
         ;;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
@@ -146,16 +150,15 @@ locally bound to the context of `combobulate-refactor'."
          (funcall parent-mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn)
          (push (cons 'prompt
                      (lambda () (unless combobulate-envelope-static
-                             (let ((new-text))
-                               (unless (setq new-text (combobulate-envelope-get-register tag))
-                                 (setq new-text (combobulate-envelope-prompt
-                                                 prompt tag nil
-                                                 (lambda ()
-                                                   (combobulate-envelope--update-prompts
-                                                    buf tag (minibuffer-contents)))))
-                                 (push (cons tag new-text) combobulate-envelope--registers))
+                             (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                 (combobulate-envelope-prompt
+                                                  prompt tag nil
+                                                  (lambda ()
+                                                    (combobulate-envelope--update-prompts
+                                                     buf tag (minibuffer-contents)))))))
+                               (push (cons tag new-text) combobulate-envelope--registers)
                                (combobulate-envelope--update-prompts buf tag new-text)))))
-               pass-through-instructions))
+               post-instructions))
         ;;; `(field TAG)' or `(f TAG)'
         ;;
         ;; If there is a matching prompt TAG, update its text to that value.
@@ -168,7 +171,7 @@ locally bound to the context of `combobulate-refactor'."
         ;;
         ;; Push a `point-marker' that will serve as a possible
         ;; placement point for point after expansion.
-        ('@ (push `(point ,(point-marker)) pass-through-instructions))
+        ('@ (push `(point ,(point-marker)) post-instructions))
         ;;; `n' or `n>'
         ;;
         ;; Calls `newline' or `newline-and-indent'
@@ -291,8 +294,8 @@ locally bound to the context of `combobulate-refactor'."
                               (or combobulate-envelope-static
                                   (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                         (progn (commit)
-                               (setq pass-through-instructions
-                                     (append pass-through-instructions
+                               (setq post-instructions
+                                     (append post-instructions
                                              (cdr (combobulate-envelope-expand-instructions-1
                                                    repeat-instructions
                                                    ;; No #' here; use the variable-defined mark-field
@@ -307,42 +310,113 @@ locally bound to the context of `combobulate-refactor'."
            ;; `combobulate-refactor' captures the uncaught error
            ;; and undoes everything.
            (quit (combobulate-message "Keyboard quit. Undoing expansion."))))))
-    (cons (cons start (point-marker)) pass-through-instructions)))
 
-(defun combobulate-envelope-expand-post-run-instructions (result mark-node-cusor mark-field)
-  "Expand the POST-RUN-INSTRUCTIONS in RESULT.
+    ;; ((start . end) . post-instructions)
+    (let ((pm (point-marker))
+          (post-instructions (combobulate-envelope-expand-post-run-instructions
+                              post-instructions
+                              parent-mark-field
+                              ;; categoires to expand right now. Note that we intentionally
+                              ;; exclude `point' as they should only be run once everything
+                              ;; else is finalised: they are literally the only thing to run
+                              ;; after everything else is done.
+                              '(prompt choice repeat))))
+      (message "post-instructions: %S" post-instructions)
+      (cons (cons start pm) post-instructions))))
 
-This function is called by `combobulate-envelope-expand' after
-the user has accepted the expansion of the template."
-  (let ((selected-point))
-    (dolist (grouping (seq-group-by #'car result))
-      (pcase grouping
+(defun combobulate-envelope-render-preview (parent-mark-range-deleted parent-rollback all-nodes node mark-highlighted-fn move-fn mark-deleted-fn)
+  (funcall move-fn)
+  (let ((marker (point-marker))
+        (ov (funcall mark-highlighted-fn))
+        (combobulate-envelope-static t)
+        (combobulate-envelope--undo-on-quit nil))
+    (combobulate-refactor
+     (dolist (node (seq-difference all-nodes (list node)))
+       (let ((extra (combobulate-proxy-node-extra node)))
+         (save-excursion
+           (goto-char (combobulate-node-start node))
+           (seq-let [[start &rest end] &rest pt]
+               (combobulate-envelope-expand-instructions-1 (car extra) #'mark-field)
+             (funcall parent-mark-range-deleted start end)))))
+     (seq-let [[start &rest end] &rest pt]
+         (combobulate-envelope-expand-instructions-1 (cdr (combobulate-proxy-node-extra node)) #'mark-field)
+
+       (setf (combobulate-proxy-node-end node) end)
+       (setf (combobulate-proxy-node-start node) marker)
+       (move-overlay ov marker end))
+     (rollback))))
+
+(cl-defun combobulate-envelope-expand-post-run-instructions (collected-instructions mark-field categories)
+  "Execute COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
+
+CATEGORIES is a list of instructions to expand now. Valid choices are:
+`prompt', `choice', `repeat' and `point'. All other categories
+are ignored.
+
+Every instruction in COLLECTED-INSTRUCTIONS is of the form
+
+   (TYPE . REST)
+
+Where TYPE is one of the CATEGORIES and REST could be anything,
+depending on TYPE. The instructions are grouped by TYPE and
+executed in the order presented in CATEGORIES.
+
+Where MARK-FIELD is the inherited `combobulate-refactor'
+functions that were set globally when the envelope expansion
+procedure first began. "
+  (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
+        (result))
+    (dolist (category categories)
+      (pcase (assoc category grouped-instructions)
         (`(prompt . ,prompts)
          (mapc #'funcall (mapcar #'cdr prompts)))
-        ;; (`(choice . ,choices)
-        ;;  (combobulate-refactor
-        ;;   (let ((node) (nodes))
-        ;;     (pcase-dolist (`(choice ,pt ,text) choices)
-        ;;       (save-excursion
-        ;;         (goto-char pt)
-        ;;         (insert text)
-        ;;         (push (setq node (make-combobulate-proxy-node
-        ;;                           :start pt
-        ;;                           :end (+ pt (length text))
-        ;;                           :text text
-        ;;                           :named t
-        ;;                           :node "Choice"
-        ;;                           :pp "Choice"))
-        ;;               nodes)
-        ;;         (mark-node-highlighted node)))
-        ;;     (rollback))))
+        (`(choice . ,choices)
+         (let ((node) (nodes))
+           (combobulate-refactor
+            (pcase-dolist (`(choice ,pt ,name ,missing ,rest-envelope ,text) choices)
+              (push (make-combobulate-proxy-node
+                     :start pt
+                     :end pt
+                     :text text
+                     :named t
+                     :type "Choice"
+                     :pp (format "Choice: %s" name)
+                     :extra (cons missing rest-envelope))
+                    nodes)
+              (rollback))
+            (when-let (selected-node
+                       (combobulate-proffer-choices
+                        nodes
+                        (apply-partially #'combobulate-envelope-render-preview #'mark-range-deleted #'rollback nodes)
+                        ;; ordinarily, we'd want to filter out nodes
+                        ;; that have identical node ranges. However,
+                        ;; with choices, we may well have multiple
+                        ;; choices in a row, each occupying the exact
+                        ;; same range, but nevertheless expanding to
+                        ;; vastly different things.
+                        :unique-only nil
+                        :reset-point-on-abort nil
+                        :reset-point-on-accept nil))
+
+              ;; commit the changes made in the render preview. that
+              ;; includes the ranges marked for deletion.
+              (commit)
+              (dolist (node (seq-difference nodes (list selected-node)))
+                (let ((extra (combobulate-proxy-node-extra node)))
+                  (save-excursion
+                    (goto-char (combobulate-node-start node))
+                    (combobulate-envelope-expand-instructions-1 (car extra) mark-field))))
+              (delete-region (combobulate-node-start selected-node)
+                             (combobulate-node-end selected-node))
+              (setq result (combobulate-envelope-expand-instructions-1
+                            (cdr (combobulate-proxy-node-extra selected-node)) mark-field)))
+            (rollback))))
         (`(point . ,points)
          (combobulate-refactor
           (let ((nodes (mapcar (lambda (pt-instruction)
                                  (combobulate-make-proxy-point-node (cadr pt-instruction)))
                                points)))
-            ;; insert cursor overlays at all point markers to make
-            ;; them easier to identify.
+            ;; insert cursor overlays at all point markers t                    ;; them easier to identif.
             (mapc #'mark-node-cursor nodes)
             (setq selected-point
                   (combobulate-node-start
@@ -354,9 +428,9 @@ the user has accepted the expansion of the template."
                     :reset-point-on-abort t
                     :reset-point-on-accept nil)))
             (rollback))))))
-    selected-point))
+    result))
 
-(defun combobulate-envelope-expand-instructions (instructions)
+(defun combobulate-envelope-expand-instructions (instructions &optional registers)
   "Expand an envelope of INSTRUCTIONS at point.
 
 Combobulate envelopes work in much the same way as Tempo or
@@ -499,7 +573,7 @@ expansion:
         (undo-outer-limit nil)
         (undo-limit most-positive-fixnum)
         (undo-strong-limit most-positive-fixnum)
-        (combobulate-envelope--registers combobulate-envelope-registers)
+        (combobulate-envelope--registers (append registers combobulate-envelope-registers))
         (selected-point (point)))
     (activate-change-group change-group)
     (when (use-region-p)
@@ -522,7 +596,7 @@ expansion:
            ;; Some instructions are meant to be run at the very end, after
            ;; all recursive expansions have taken place. Proffered point
            ;; locations are one such example.
-           (combobulate-envelope-expand-post-run-instructions result #'mark-node-cursor #'mark-field)
+           (combobulate-envelope-expand-post-run-instructions result #'mark-field '(point))
            (commit)
            (setq is-success t))
        (rollback)

@@ -194,15 +194,16 @@ though it is a function and called."
                   (_ (error "Unknown prompt action"))))))
      ,@body))
 
-(cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choice 0) (error-if-missing t) (call-action-fn t)
+(cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choices (0)) (error-if-missing t) (call-action-fn t)
                                                              (replacement-action-fn nil))
                                                        &rest body)
-  "Stub out `combobulate-proffer-choices' to return CHOICE.
+  "Stub out `combobulate-proffer-choices' to return one choice at a
+time out of CHOICES.
 
-CHOICE is 0-based.
+CHOICES are 0-based and picked in order.
 
-If ERROR-IF-MISSING is non-nil, signal an error if CHOICE is
-greater than the number of nodes.
+If ERROR-IF-MISSING is non-nil, signal an error if the choice in
+CHOICES is greater than the number of nodes.
 
 If CALL-ACTION-FN is non-nil, call the action function with the
 node.
@@ -210,15 +211,16 @@ node.
 If REPLACEMENT-ACTION-FN is non-nil, use it instead of the action
 function."
   (declare (indent 1) (debug (sexp body)))
-  `(let ((choice-node))
+  `(let ((choice-node) (current-choice) (remaining-choices ,choices))
      (cl-letf (((symbol-function 'combobulate-proffer-choices)
                 (cl-defun stub-proffer-actions (nodes action-fn &key (first-choice nil)
                                                       (reset-point-on-abort t) (reset-point-on-accept nil)
                                                       (prompt-description nil) (use-proxy-nodes t)
                                                       (extra-map nil) (flash-node nil) (unique-only t))
+                  (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
-                    (and ,error-if-missing (should (<= ,choice (length nodes))))
-                    (let ((picked-node (nth ,choice nodes)))
+                    (and ,error-if-missing (should (<= current-choice (length nodes))))
+                    (let ((picked-node (nth current-choice nodes)))
                       (setq choice-node (combobulate-make-proxy picked-node))
                       (combobulate-refactor
                        (funcall (or ,replacement-action-fn action-fn)
@@ -283,8 +285,8 @@ of updating the prop line."
                                              files)))
         (delete-other-windows)
         (mapc (lambda (buf) (display-buffer buf `(display-buffer-in-direction
-                                             . ((direction . right)
-                                                (window-width . 0.2)))))
+                                                  . ((direction . right)
+                                                     (window-width . 0.2)))))
               (mapcar #'find-file-noselect
                       (alist-get (completing-read "Pick command " (seq-uniq (mapcar #'car grouped-cmd-files) #'string=))
                                  grouped-cmd-files nil nil #'string=)))
@@ -485,7 +487,9 @@ executed as a function. The following symbols are supported:
         ('delete-markers (combobulate--test-delete-overlay))
         ('debug-show
          (push `(progn (pop-to-buffer (current-buffer))
+                       (font-lock-mode 1)
                        (font-lock-fontify-buffer)
+                       (font-lock-flush)
                        (message "Stopped. `C-M-c' to resume. Current point: %s" (point))
                        (pulse-momentary-highlight-one-line (point) 'highlight)
                        (recursive-edit))

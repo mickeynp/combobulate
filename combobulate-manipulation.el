@@ -167,7 +167,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      ,--markers))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -182,8 +182,8 @@
                                       (and a b
                                            (overlayp a)
                                            (overlayp b)
-                                           (> (overlay-start a)
-                                              (overlay-end b))))
+                                           (> (or (overlay-start a) 0)
+                                              (or (overlay-end b) 0))))
                                     ,--markers))
                     ;; clean up.
                     (mapc (lambda (ov) (delete-overlay ov))
@@ -397,9 +397,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (let ((string-label (symbol-name label)))
-                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -477,9 +477,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -493,7 +493,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -518,7 +518,7 @@ a match."
                               ;; would end up with several multiple
                               ;; cursors at the exact same position.
                               (lambda (node-a node-b) (equal (combobulate-node-range node-a)
-                                                        (combobulate-node-range node-b)))))
+                                                             (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)
@@ -1175,7 +1175,7 @@ buffer.
                                            (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
                                                    (combobulate-display-indicator index (length proxy-nodes))
                                                    (concat (or prompt-description "")
-                                                           (propertize " → " 'face 'shadow))
+                                                           (and prompt-description (propertize " → " 'face 'shadow)))
                                                    (propertize (combobulate-pretty-print-node current-node) 'face
                                                                'combobulate-tree-highlighted-node-face)
                                                    (mapconcat (lambda (k)
