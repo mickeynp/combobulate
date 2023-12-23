@@ -315,16 +315,28 @@ again to cycle indentation.")))))
              ("if " @ ":" n>
               r>))
             (:description
+             "if ...: ... else: ..."
+             :key "bI"
+             :mark-node t
+             :nodes ,statement-nodes
+             :name "nest-if-else"
+             :template
+             ("if " @ ":" n>
+              (choice* :name "consequence" :missing ("pass") :rest (r>))
+              < "else:" n>
+              (choice* :name "alternative" :missing ("pass") :rest (r>))))
+            (:description
              "try ... except ...: ..."
              :key "bte"
              :mark-node t
              :nodes ,statement-nodes
              :name "nest-try-except"
              :template
-             (@ (save-column "try:" n>
-                             r> n>)
-                "except " (p Exception "Exception") ":" n>
-                "pass"))
+             (@ "try:" n>
+                r>
+                <
+                (repeat "except " (p Exception "Exception") ":" n>
+                        "pass")))
             (:description
              "try ... finally: ..."
              :key "btf"

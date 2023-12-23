@@ -4,106 +4,6 @@
 
 (require 'combobulate-test-prelude)
 
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/component.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions nil)
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelop-node
-     '("{" @ "null" >
-       n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
-       n > " : " (choice* :name "alternative" :missing ("<" (p other "SOME TAG") "/>") :rest (r>))
-       n > "}" >)
-     (combobulate-node-at-point '("jsx_element"))
-     t 'before))
-  debug-show)
-
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" n>
-       "BEFORE"
-       (choice "one") (choice "two")
-       "AFTER"
-       (choice "")
-       "</div>" n>
-       "}")))
-  debug-show)
-
-
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" n>
-       "<" ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" (f subtag) ">")
-       "Middle text"
-       (choice "Some random text")
-       "</"  ">"  n>
-       "</div>" n>
-       "}")))
-  debug-show)
-
-
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" @ n>
-       (choice "Hello World" @)
-       (choice "<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
-               "Middle text"
-               (choice "Some random text --- oh, and here's a tag:" @ (f tag))
-               "</" (f tag) ">")
-       "</div>" n>
-       "}")))
-  debug-show)
-
-;;with choice*
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" @ n>
-       (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
-       (choice* :name "complex" :rest
-                ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
-                 "Middle text"
-                 (choice "Some random text --- oh, and here's a tag:" @ (f tag))
-                 "</" (f tag) ">")
-                :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
-       "</div>" n>
-       "}")))
-  debug-show)
-
 (ert-deftest combobulate-test-python-repeat-simple-blank-1 ()
   "Test `repeat-simple' on `./fixtures/envelope/blank.py' at point marker number `1'."
   :tags '(python python-ts-mode "repeat-simple")
@@ -117,10 +17,12 @@
                 ((combobulate-envelope-prompt-actions '("blah"))
                  (combobulate-envelope-prompt-expansion-actions
                   '(yes yes no)))
-              (combobulate-envelope-expand-instructions
-               '((repeat "if 1:" n> "a = "
-                         (p repeating-prompt "Pick a value") n>
-                         "b = 1" n>))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '((repeat "if 1:" n> "a = "
+                           (p repeating-prompt "Pick a value") n>
+                           "b = 1" n>)))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/repeat-simple/blank.py[repeat-simple@1~after].py")))
 
@@ -136,9 +38,11 @@
     (combobulate-with-stubbed-prompt-expansion
         (combobulate-with-stubbed-envelope-prompt
             (let ((combobulate-envelope-prompt-actions '("blah")))
-              (combobulate-envelope-expand-instructions
-               '("a = " (f some-prompt) n> "b = "
-                 (p some-prompt "Pick a value"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (f some-prompt) n> "b = "
+                   (p some-prompt "Pick a value")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/field-before-prompt/blank.py[field-before-prompt@1~after].py")))
 
@@ -156,9 +60,11 @@
             (let
                 ((combobulate-envelope-prompt-actions
                   '("foo" keyboard-quit)))
-              (combobulate-envelope-expand-instructions
-               '("a = " (p some-prompt "Pick a value") n> "b = "
-                 (p another-prompt "Pick a value"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (p some-prompt "Pick a value") n> "b = "
+                   (p another-prompt "Pick a value")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/prompt-manual-keyboard-quit/blank.py[prompt-manual-keyboard-quit@1~after].py")))
 
@@ -176,9 +82,11 @@
             (let
                 ((combobulate-envelope-prompt-actions
                   '("simulated prompt value" "second value")))
-              (combobulate-envelope-expand-instructions
-               '("a = " (p some-prompt "Pick a value") n> "b = "
-                 (p another-prompt "Pick a second value"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (p some-prompt "Pick a value") n> "b = "
+                   (p another-prompt "Pick a second value")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/prompt-manual-input-twice/blank.py[prompt-manual-input-twice@1~after].py")))
 
@@ -196,8 +104,10 @@
             (let
                 ((combobulate-envelope-prompt-actions
                   '("simulated prompt value")))
-              (combobulate-envelope-expand-instructions
-               '("a = " (p some-prompt "Pick a value"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (p some-prompt "Pick a value")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/prompt-manual-input-once/blank.py[prompt-manual-input-once@1~after].py")))
 
@@ -215,9 +125,11 @@
             (let
                 ((combobulate-envelope-registers
                   '((some-prompt . "this is a prompt value"))))
-              (combobulate-envelope-expand-instructions
-               '("a = " (p some-prompt "Pick a value") n> "b = "
-                 (f some-prompt))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (p some-prompt "Pick a value") n> "b = "
+                   (f some-prompt)))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/prompt-register-reused/blank.py[prompt-register-reused@1~after].py")))
 
@@ -235,8 +147,10 @@
             (let
                 ((combobulate-envelope-registers
                   '((some-prompt . "foo"))))
-              (combobulate-envelope-expand-instructions
-               '("a = " (p some-prompt "Pick a value"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("a = " (p some-prompt "Pick a value")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/prompt-register-once/blank.py[prompt-register-once@1~after].py")))
 
@@ -254,8 +168,10 @@
     (combobulate-with-stubbed-prompt-expansion
         (combobulate-with-stubbed-envelope-prompt
             (let ((combobulate-envelope-registers))
-              (combobulate-envelope-expand-instructions
-               '("if True:" n> (r some-register "foo"))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("if True:" n> (r some-register "foo")))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-missing-register-with-default/blank.py[insert-missing-register-with-default@1~after].py")))
 
@@ -275,8 +191,10 @@
             (let
                 ((combobulate-envelope-registers
                   '((some-register . "my_register = 1"))))
-              (combobulate-envelope-expand-instructions
-               '("if True:" n> (r some-register))))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("if True:" n> (r some-register)))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-region-register-2-then-indent/blank.py[insert-region-register-2-then-indent@1~after].py")))
 
@@ -295,8 +213,10 @@
             (let
                 ((combobulate-envelope-registers
                   '((region . "random = 1"))))
-              (combobulate-envelope-expand-instructions
-               '("if True:" n> r)))))
+              (combobulate-with-stubbed-proffer-choices
+                  (:choices combobulate-envelope-proffer-choices)
+                (combobulate-envelope-expand-instructions
+                 '("if True:" n> r))))))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/insert-region-register-then-indent/blank.py[insert-region-register-then-indent@1~after].py")))
 
@@ -425,5 +345,6 @@
     (combobulate-envelope-expand-instructions '("test string"))
     (combobulate-compare-action-with-fixture-delta
      "./fixture-deltas/envelope/string-basic/blank.py[string-basic@1~after].py")))
+
 
 

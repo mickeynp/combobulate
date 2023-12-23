@@ -31,10 +31,93 @@
   (require 'cl-lib))
 
 
-(defun make-envelope-tests ()
-  (let ((tests))
-    (dolist (instruction
-             '(;; test string insertion
+;; (combobulate-test
+;;     (:language tsx :mode tsx-ts-mode :fixture
+;;                "./fixtures/envelope/blank.tsx")
+;;   (goto-marker 1) delete-markers
+;;   (let
+;;       ((combobulate-envelope-prompt-actions '("blah"))
+;;        (combobulate-envelope-prompt-expansion-actions
+;;         '(yes yes no)))
+;;     (combobulate-envelope-expand-instructions
+;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+;;        "return <div>" n>
+;;        "BEFORE"
+;;        (choice "one") (choice "two")
+;;        "AFTER"
+;;        (choice "")
+;;        "</div>" n>
+;;        "}")))
+;;   debug-show)
+
+
+;; (combobulate-test
+;;     (:language tsx :mode tsx-ts-mode :fixture
+;;                "./fixtures/envelope/blank.tsx")
+;;   (goto-marker 1) delete-markers
+;;   (let
+;;       ((combobulate-envelope-prompt-actions '("blah"))
+;;        (combobulate-envelope-prompt-expansion-actions
+;;         '(yes yes no)))
+;;     (combobulate-envelope-expand-instructions
+;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+;;        "return <div>" n>
+;;        "<" ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" (f subtag) ">")
+;;        "Middle text"
+;;        (choice "Some random text")
+;;        "</"  ">"  n>
+;;        "</div>" n>
+;;        "}")))
+;;   debug-show)
+
+
+(combobulate-test
+    (:language tsx :mode tsx-ts-mode :fixture
+               "./fixtures/envelope/blank.tsx")
+  (goto-marker 1) delete-markers
+  (let
+      ((combobulate-envelope-prompt-actions '("blah"))
+       (combobulate-envelope-prompt-expansion-actions
+        '(yes yes no)))
+    (combobulate-envelope-expand-instructions
+     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+       "return <div>" @ n>
+       (choice "Hello World" @)
+       (choice "<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
+               "Middle text"
+               (choice "Some random text --- oh, and here's a tag:" @ (f tag))
+               "</" (f tag) ">")
+       "</div>" n>
+       "}")))
+  debug-show)
+
+;; ;;with choice*
+;; (combobulate-test
+;;     (:language tsx :mode tsx-ts-mode :fixture
+;;                "./fixtures/envelope/blank.tsx")
+;;   (goto-marker 1) delete-markers
+;;   (let
+;;       ((combobulate-envelope-prompt-actions '("blah"))
+;;        (combobulate-envelope-prompt-expansion-actions
+;;         '(yes yes no)))
+;;     (combobulate-envelope-expand-instructions
+;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+;;        "return <div>" @ n>
+;;        (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
+;;        (choice* :name "complex" :rest
+;;                 ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
+;;                  "Middle text"
+;;                  (choice "Some random text --- oh, and here's a tag:" @ (f tag))
+;;                  "</" (f tag) ">")
+;;                 :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
+;;        "</div>" n>
+;;        "}")))
+;;   debug-show)
+
+(defvar combobulate-envelope-proffer-choices nil)
+
+(defvar combobulate-envelope-tests
+  `((python . (;; test string insertion
                ("string-basic"  ("test string"))
                ("string-multiple"  ("a" "b" "c"))
                ;; newline / indentation
@@ -88,11 +171,32 @@
                                          "b = 1" n>))
                 ((combobulate-envelope-prompt-actions '("blah"))
                  (combobulate-envelope-prompt-expansion-actions '(yes yes no))))))
+    (tsx . (;; complex choice
+            ("choice*-with-complex-missing-field"
+             ("{" @ "null" >
+              n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
+              n > " : " (choice* :name "alternative" :missing ("<" (p other "SOME TAG") "/>") :rest (r>))
+              n > "}" >)
+             ((combobulate-envelope-proffer-choices '(0))
+
+              (combobulate-envelope-registers '((region . "<div>Some jsx element</div>")))
+              (combobulate-envelope-prompt-actions '("mytag"))))
+            ;; simple choice
+            ("choice-simple-0" ("{a + " (choice "1") (choice "2") "}")
+             ((combobulate-envelope-proffer-choices '(0))))
+            ("choice-simple-1" ("{a + " (choice "1") (choice "2") "}")
+             ((combobulate-envelope-proffer-choices '(1))))))))
+
+(defun make-envelope-tests (language)
+  (let ((tests))
+    (dolist (instruction (alist-get language combobulate-envelope-tests))
       (push (pcase instruction
               (`(,name ,instruction  ,rest)
                (cons name `(combobulate-with-stubbed-prompt-expansion
                                (combobulate-with-stubbed-envelope-prompt
-                                   (let ,rest (combobulate-envelope-expand-instructions '(,@instruction)))))))
+                                   (let ,rest
+                                     (combobulate-with-stubbed-proffer-choices (:choices combobulate-envelope-proffer-choices)
+                                       (combobulate-envelope-expand-instructions '(,@instruction))))))))
               (`(,name . ,instruction)
                (cons name `(combobulate-envelope-expand-instructions ',@instruction))))
             tests))

@@ -99,13 +99,14 @@ If the register does not exist, return DEFAULT or nil."
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
           (combobulate--refactor-get-all-overlays))))
 
-(defun combobulate-envelope-expand-instructions-1 (instructions &optional parent-mark-field)
+(defun combobulate-envelope-expand-instructions-1 (instructions &optional parent-mark-field categories)
   "Internal function that expands INSTRUCTIONS.
 
 PARENT-MARK-FIELD must be `mark-field' (or a similar function)
 locally bound to the context of `combobulate-refactor'."
   (let ((buf (current-buffer))
         (post-instructions)
+        (end (point-marker))
         (start (point)))
     (dolist (sub-instruction instructions)
       (pcase sub-instruction
@@ -134,7 +135,8 @@ locally bound to the context of `combobulate-refactor'."
          (let ((col (current-column)))
            (setq post-instructions
                  (nconc post-instructions
-                        (cdr (combobulate-envelope-expand-instructions-1 rest parent-mark-field))))
+                        (cdr (combobulate-envelope-expand-instructions-1
+                              rest parent-mark-field '(repeat prompt)))))
            (move-to-column col t)))
         ;;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
         ;;
@@ -181,6 +183,9 @@ locally bound to the context of `combobulate-refactor'."
         ;;
         ;; Call `indent-according-to-mode'
         ('> (indent-according-to-mode))
+        ('< (let ((col (- (current-column) 4)))
+              (newline)
+              (move-to-column col t)))
         ;;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
         ;;
         ;; Inserts the register REGISTER (retreived from
@@ -310,41 +315,42 @@ locally bound to the context of `combobulate-refactor'."
            ;; `combobulate-refactor' captures the uncaught error
            ;; and undoes everything.
            (quit (combobulate-message "Keyboard quit. Undoing expansion."))))))
-
     ;; ((start . end) . post-instructions)
-    (let ((pm (point-marker))
-          (post-instructions (combobulate-envelope-expand-post-run-instructions
-                              post-instructions
-                              parent-mark-field
-                              ;; categoires to expand right now. Note that we intentionally
-                              ;; exclude `point' as they should only be run once everything
-                              ;; else is finalised: they are literally the only thing to run
-                              ;; after everything else is done.
-                              '(prompt choice repeat))))
-      (message "post-instructions: %S" post-instructions)
-      (cons (cons start pm) post-instructions))))
+    (let ((post-instructions
+           (combobulate-envelope-expand-post-run-instructions
+            post-instructions
+            parent-mark-field
+            ;; categoires to expand right now. Note that we intentionally
+            ;; exclude `point' as they should only be run once everything
+            ;; else is finalised: they are literally the only thing to run
+            ;; after everything else is done.
+            (or categories '(prompt repeat choice)))))
+      (cons (cons start (car post-instructions)) (cdr post-instructions)))))
 
-(defun combobulate-envelope-render-preview (parent-mark-range-deleted parent-rollback all-nodes node mark-highlighted-fn move-fn mark-deleted-fn)
+(defun combobulate-envelope-render-preview (parent-mark-range-deleted
+                                            parent-rollback all-nodes node
+                                            mark-highlighted-fn move-fn mark-deleted-fn)
   (funcall move-fn)
-  (let ((marker (point-marker))
-        (ov (funcall mark-highlighted-fn))
-        (combobulate-envelope-static t)
-        (combobulate-envelope--undo-on-quit nil))
-    (combobulate-refactor
-     (dolist (node (seq-difference all-nodes (list node)))
-       (let ((extra (combobulate-proxy-node-extra node)))
-         (save-excursion
-           (goto-char (combobulate-node-start node))
-           (seq-let [[start &rest end] &rest pt]
-               (combobulate-envelope-expand-instructions-1 (car extra) #'mark-field)
-             (funcall parent-mark-range-deleted start end)))))
-     (seq-let [[start &rest end] &rest pt]
-         (combobulate-envelope-expand-instructions-1 (cdr (combobulate-proxy-node-extra node)) #'mark-field)
+  ;; (let ((marker (point-marker))
+  ;;       (ov (funcall mark-highlighted-fn))
+  ;;       (combobulate-envelope-static t)
+  ;;       (combobulate-envelope--undo-on-quit nil))
+  ;;   (combobulate-refactor
+  ;;    (dolist (node all-nodes)
+  ;;      (let ((extra (combobulate-proxy-node-extra node)))
+  ;;        (save-excursion
+  ;;          (goto-char (combobulate-node-start node))
+  ;;          (seq-let [[start &rest end] &rest pt]
+  ;;              (combobulate-envelope-expand-instructions-1 (car extra) #'mark-field)
+  ;;            (funcall parent-mark-range-deleted start end)))))
+  ;;    (seq-let [[start &rest end] &rest pt]
+  ;;        (combobulate-envelope-expand-instructions-1 (cdr (combobulate-proxy-node-extra node)) #'mark-field)
 
-       (setf (combobulate-proxy-node-end node) end)
-       (setf (combobulate-proxy-node-start node) marker)
-       (move-overlay ov marker end))
-     (rollback))))
+  ;;      (setf (combobulate-proxy-node-end node) end)
+  ;;      (setf (combobulate-proxy-node-start node) (max start marker))
+  ;;      (move-overlay ov marker end))
+  ;;    (rollback)))
+  )
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (collected-instructions mark-field categories)
   "Execute COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
@@ -364,8 +370,13 @@ executed in the order presented in CATEGORIES.
 Where MARK-FIELD is the inherited `combobulate-refactor'
 functions that were set globally when the envelope expansion
 procedure first began. "
+  ;; loop over COLLECTION-INSTRUCTIONS and remove any that aren't in CATEGORIES.
   (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
+        (remaining-instructions)
+        (start (point))
+        (end (point-marker))
         (result))
+    (setq remaining-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
     (dolist (category categories)
       (pcase (assoc category grouped-instructions)
         (`(prompt . ,prompts)
@@ -416,7 +427,6 @@ procedure first began. "
           (let ((nodes (mapcar (lambda (pt-instruction)
                                  (combobulate-make-proxy-point-node (cadr pt-instruction)))
                                points)))
-            ;; insert cursor overlays at all point markers t                    ;; them easier to identif.
             (mapc #'mark-node-cursor nodes)
             (setq selected-point
                   (combobulate-node-start
@@ -427,8 +437,9 @@ procedure first began. "
                     :first-choice combobulate-envelope-static
                     :reset-point-on-abort t
                     :reset-point-on-accept nil)))
+            (push (cons 'selected-point selected-point) remaining-instructions)
             (rollback))))))
-    result))
+    (cons end remaining-instructions)))
 
 (defun combobulate-envelope-expand-instructions (instructions &optional registers)
   "Expand an envelope of INSTRUCTIONS at point.
@@ -596,7 +607,9 @@ expansion:
            ;; Some instructions are meant to be run at the very end, after
            ;; all recursive expansions have taken place. Proffered point
            ;; locations are one such example.
-           (combobulate-envelope-expand-post-run-instructions result #'mark-field '(point))
+           (let ((post-run-instructions (combobulate-envelope-expand-post-run-instructions result #'mark-field '(point))))
+             (pcase-dolist (`('selected-point . ,pt) post-run-instructions)
+               (setq selected-point pt)))
            (commit)
            (setq is-success t))
        (rollback)

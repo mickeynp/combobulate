@@ -194,7 +194,7 @@ though it is a function and called."
                   (_ (error "Unknown prompt action"))))))
      ,@body))
 
-(cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choices (0)) (error-if-missing t) (call-action-fn t)
+(cl-defmacro combobulate-with-stubbed-proffer-choices ((&key (choices nil) (error-if-missing t) (call-action-fn t)
                                                              (replacement-action-fn nil))
                                                        &rest body)
   "Stub out `combobulate-proffer-choices' to return one choice at a
@@ -217,6 +217,7 @@ function."
                                                       (reset-point-on-abort t) (reset-point-on-accept nil)
                                                       (prompt-description nil) (use-proxy-nodes t)
                                                       (extra-map nil) (flash-node nil) (unique-only t))
+                  (cl-assert remaining-choices)
                   (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))

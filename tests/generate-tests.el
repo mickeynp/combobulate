@@ -62,9 +62,16 @@
 (let ((combobulate-test-fixture-delta-subdir "envelope/"))
   (combobulate-test-generate-tests
    '("./fixtures/envelope/blank.py")
-   "envelope"
+   "envelope-python"
    #'combobulate-test-execute-fixture-test-fn
-   (make-envelope-tests)
+   (make-envelope-tests 'python)
+   "envelope/"
+   #'combobulate-test-build-envelope-test)
+  (combobulate-test-generate-tests
+   '("./fixtures/envelope/component.tsx")
+   "envelope-tsx"
+   #'combobulate-test-execute-fixture-test-fn
+   (make-envelope-tests 'tsx)
    "envelope/"
    #'combobulate-test-build-envelope-test))
 
