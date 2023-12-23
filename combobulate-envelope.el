@@ -149,18 +149,21 @@ locally bound to the context of `combobulate-refactor'."
              (and `(p ,tag ,prompt ,transformer-fn)))
          (when (and transformer-fn (not (functionp transformer-fn)))
            (error "Prompt has invalid transformer function `%s'" transformer-fn))
-         (funcall parent-mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn)
-         (push (cons 'prompt
-                     (lambda () (unless combobulate-envelope-static
-                             (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                 (combobulate-envelope-prompt
-                                                  prompt tag nil
-                                                  (lambda ()
-                                                    (combobulate-envelope--update-prompts
-                                                     buf tag (minibuffer-contents)))))))
-                               (push (cons tag new-text) combobulate-envelope--registers)
-                               (combobulate-envelope--update-prompts buf tag new-text)))))
-               post-instructions))
+         (let ((prompt-point (point)))
+           (funcall parent-mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+           (push (cons 'prompt
+                       (lambda () (save-excursion
+                               (goto-char prompt-point)
+                               (unless combobulate-envelope-static
+                                 (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                     (combobulate-envelope-prompt
+                                                      prompt tag nil
+                                                      (lambda ()
+                                                        (combobulate-envelope--update-prompts
+                                                         buf tag (minibuffer-contents)))))))
+                                   (push (cons tag new-text) combobulate-envelope--registers)
+                                   (combobulate-envelope--update-prompts buf tag new-text))))))
+                 post-instructions)))
         ;;; `(field TAG)' or `(f TAG)'
         ;;
         ;; If there is a matching prompt TAG, update its text to that value.
@@ -380,7 +383,7 @@ procedure first began. "
     (dolist (category categories)
       (pcase (assoc category grouped-instructions)
         (`(prompt . ,prompts)
-         (mapc #'funcall (mapcar #'cdr prompts)))
+         (save-excursion (mapc #'funcall (mapcar #'cdr prompts))))
         (`(choice . ,choices)
          (let ((node) (nodes))
            (combobulate-refactor
