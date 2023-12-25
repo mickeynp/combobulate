@@ -91,28 +91,28 @@
        "}")))
   debug-show)
 
-;; ;;with choice*
-;; (combobulate-test
-;;     (:language tsx :mode tsx-ts-mode :fixture
-;;                "./fixtures/envelope/blank.tsx")
-;;   (goto-marker 1) delete-markers
-;;   (let
-;;       ((combobulate-envelope-prompt-actions '("blah"))
-;;        (combobulate-envelope-prompt-expansion-actions
-;;         '(yes yes no)))
-;;     (combobulate-envelope-expand-instructions
-;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-;;        "return <div>" @ n>
-;;        (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
-;;        (choice* :name "complex" :rest
-;;                 ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
-;;                  "Middle text"
-;;                  (choice "Some random text --- oh, and here's a tag:" @ (f tag))
-;;                  "</" (f tag) ">")
-;;                 :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
-;;        "</div>" n>
-;;        "}")))
-;;   debug-show)
+;;with choice*
+(combobulate-test
+    (:language tsx :mode tsx-ts-mode :fixture
+               "./fixtures/envelope/blank.tsx")
+  (goto-marker 1) delete-markers
+  (let
+      ((combobulate-envelope-prompt-actions '("blah"))
+       (combobulate-envelope-prompt-expansion-actions
+        '(yes yes no)))
+    (combobulate-envelope-expand-instructions
+     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+       "return <div>" @ n>
+       (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
+       (choice* :name "complex" :rest
+                ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
+                 "Middle text"
+                 (choice "Some random text --- oh, and here's a tag:" @ (f tag))
+                 "</" (f tag) ">")
+                :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
+       "</div>" n>
+       "}")))
+  debug-show)
 
 (defvar combobulate-envelope-proffer-choices nil)
 

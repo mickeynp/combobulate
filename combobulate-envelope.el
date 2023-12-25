@@ -302,12 +302,11 @@ locally bound to the context of `combobulate-refactor'."
                               (or combobulate-envelope-static
                                   (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                         (progn (commit)
-                               (setq post-instructions
-                                     (append post-instructions
-                                             (cdr (combobulate-envelope-expand-instructions-1
-                                                   repeat-instructions
-                                                   ;; No #' here; use the variable-defined mark-field
-                                                   parent-mark-field))))
+                               (let ((sub-inst (combobulate-envelope-expand-instructions-1
+                                                repeat-instructions
+                                                ;; No #' here; use the variable-defined mark-field
+                                                #'parent-mark-field)))
+                                 (setq post-instructions (append post-instructions (cdr sub-inst))))
                                (cl-decf max-repeat)
                                (commit))
                       (commit))))))
@@ -411,11 +410,9 @@ procedure first began. "
                         :unique-only nil
                         :reset-point-on-abort nil
                         :reset-point-on-accept nil))
-
               ;; commit the changes made in the render preview. that
               ;; includes the ranges marked for deletion.
-              (commit)
-              (dolist (node (seq-difference nodes (list selected-node)))
+              (dolist (node nodes)
                 (let ((extra (combobulate-proxy-node-extra node)))
                   (save-excursion
                     (goto-char (combobulate-node-start node))
