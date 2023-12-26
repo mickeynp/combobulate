@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 
 (defun combobulate-test-get-column ()
   (current-column))
