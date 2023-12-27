@@ -221,15 +221,17 @@ function."
                   (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
-                    (let ((picked-node (nth current-choice nodes)))
+                    (let ((picked-node (nth current-choice nodes))
+                          (stubbed-refactor-id (combobulate-refactor-setup)))
                       (setq choice-node (combobulate-make-proxy picked-node))
-                      (combobulate-refactor
-                       (funcall (or ,replacement-action-fn action-fn)
-                                choice-node
-                                (apply-partially #'mark-node-highlighted choice-node)
-                                (apply-partially #'combobulate-move-to-node choice-node)
-                                (apply-partially #'mark-node-deleted choice-node))
-                       (rollback))))
+                      (combobulate-refactor (:id stubbed-refactor-id)
+                        ;; signature: (index current-node proxy-nodes refactor-id)
+                        (funcall (or ,replacement-action-fn action-fn)
+                                 current-choice
+                                 choice-node
+                                 nodes
+                                 stubbed-refactor-id)
+                        (rollback))))
                   choice-node)))
        ,@body)))
 

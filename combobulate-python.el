@@ -344,10 +344,11 @@ again to cycle indentation.")))))
              :nodes ,statement-nodes
              :name "nest-try-finally"
              :template
-             (@ (save-column "try:" n>
-                             r> n>)
+             (@ "try:" n>
+                (choice* :missing ("pass") :rest (r>))
+                <
                 "finally:" n>
-                "pass"))
+                (choice* :missing ("pass") :rest (r>))))
             (:description
              "def ...():"
              :key "bd"

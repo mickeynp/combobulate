@@ -115,27 +115,31 @@
 ;;     markers))
 
 (defvar combobulate-refactor--copied-values nil)
+(defvar combobulate-refactor--active-sessions nil
+  "A list of active `combobulate-refactor' sessions.")
 
-(defmacro combobulate-refactor (&rest body)
-  (declare (indent nil) (debug (form body)))
-  (let ((--markers (gensym)))
-    `(let ((,--markers nil))
+(defun combobulate-refactor--get-active-session (id)
+  "Get the active `combobulate-refactor' session with the given ID."
+  (assoc id combobulate-refactor--active-sessions))
+
+(defun combobulate-refactor-setup (&optional id)
+  "Setup a `combobulate-refactor' session with the given ID."
+  (let ((id (or id (gensym "combobulate-refactor-"))))
+    ;; only spawn a new session if one doesn't already exist.
+    (unless (combobulate-refactor--get-active-session id)
+      (push (cons id nil) combobulate-refactor--active-sessions))
+    id))
+
+(cl-defmacro combobulate-refactor ((&key (id nil)) &rest body)
+  (declare (indent defun) (debug (sexp body)))
+  (let ((--session (gensym))
+        ;; non-nil if we're entering a session that already exists.
+        (--pre-existing-session (gensym)))
+    `(let ((,--pre-existing-session (combobulate-refactor--get-active-session ,id))
+           (,--session (combobulate-refactor-setup ,id)))
        (cl-flet* ((add-marker (ov &optional end)
-                    (if end
-                        (setq ,--markers (cons ov ,--markers))
-                      (push ov ,--markers))
+                    (push ov (alist-get ,--session combobulate-refactor--active-sessions))
                     ov)
-                  ;; (ordered-apply (&rest markers)
-                  ;;   (add-marker
-                  ;;    (let* ((ov-start (overlay-start (car markers)))
-                  ;;           (ov-end (overlay-end (car markers)))
-                  ;;           (new-ov (make-overlay ov-start ov-end))
-                  ;;           (n (seq-uniq (apply #'append
-                  ;;                               (mapcar (lambda (o) (overlay-get o 'combobulate-refactor-actions))
-                  ;;                                       markers)))))
-                  ;;      (overlay-put new-ov 'combobulate-refactor-actions n)
-                  ;;      (mapc #'delete-overlay markers)
-                  ;;      new-ov)))
                   (mark-range-move (beg end position)
                     (add-marker (combobulate--refactor-mark-move beg end position)))
                   (mark-range-deleted (beg end)
@@ -168,13 +172,12 @@
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
                                (combobulate--refactor-update-field ov tag text)))
-                     ,--markers))
+                     (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
                   (rollback ()
-                    (mapc (lambda (ov) (delete-overlay ov))
-                          ,--markers)
-                    (setq ,--markers nil))
+                    (mapc (lambda (ov) (delete-overlay ov)) (alist-get ,--session combobulate-refactor--active-sessions))
+                    (setq combobulate-refactor--active-sessions (assq-delete-all ,--session combobulate-refactor--active-sessions)))
                   (commit ()
                     (setq combobulate-refactor--copied-values nil)
                     (mapc (lambda (ov) (combobulate--refactor-commit ov t))
@@ -184,19 +187,18 @@
                                            (overlayp b)
                                            (> (or (overlay-start a) 0)
                                               (or (overlay-end b) 0))))
-                                    ,--markers))
+                                    (alist-get ,--session combobulate-refactor--active-sessions)))
                     ;; clean up.
-                    (mapc (lambda (ov) (delete-overlay ov))
-                          ,--markers)
-                    (setq ,--markers nil)))
+                    (rollback)))
          (condition-case nil
              (prog1 (atomic-change-group
                       ,@body)
-               (when ,--markers
-                 (error "Uncommitted changes: %s"
-                        (prog1 ,--markers
-                          (combobulate--refactor-clear-overlays
-                           (combobulate--refactor-get-all-overlays))))))
+               (when (and (alist-get ,--session combobulate-refactor--active-sessions)
+                          (not ,--pre-existing-session))
+                 (error "Uncommitted changes in `%s': %s"
+                        ,--session
+                        (combobulate--refactor-clear-overlays
+                         (combobulate--refactor-get-all-overlays)))))
            (quit (rollback)))))))
 
 (defun combobulate-procedure-get-activation-nodes (procedures)
@@ -524,51 +526,53 @@ a match."
       (when (> (length matches) ct)
         (setq ct (length matches))
         (push (cons start-node matches) grouped-matches)))
-    (combobulate-refactor
-     (let ((matches
-            (cdr
-             (assoc
-              (combobulate-proxy-to-tree-node
-               (combobulate-proffer-choices
-                (reverse (mapcar 'car grouped-matches))
-                (lambda (node mark-highlighted-fn _move-fn _mark-deleted-fn)
-                  (princ (format "Editing %s in %s%s\n"
-                                 (combobulate-pretty-print-node-type node)
-                                 (combobulate-proxy-to-tree-node node)
-                                 (and (combobulate-node-field-name node)
-                                      (format " (%s)"
-                                              (combobulate-node-field-name node)))))
-                  ;; rollback the outer
-                  ;; `combobulate-refactor' call so
-                  ;; the node cursors we place below
-                  ;; are properly erased.
-                  (rollback)
-                  ;; place a fake cursor at every
-                  ;; node to indicate where the
-                  ;; matching nodes are.
-                  (mapc #'mark-node-cursor
-                        (cdr (assoc (combobulate-proxy-to-tree-node node)
-                                    grouped-matches)))
-                  ;; indicate the locus of editing
-                  ;; by highlighting the entire node
-                  ;; boundary.
-                  (setq group-node node)
-                  (funcall mark-highlighted-fn))
-                :unique-only nil
-                :prompt-description
-                (format "Edit %s in"
-                        (propertize (combobulate-pretty-print-node-type node)
-                                    'face 'combobulate-tree-branch-face))))
-              grouped-matches))))
-       (rollback)
-       (when matches
-         (setq matches (combobulate--mc-edit-nodes matches action))
-         (combobulate-message
-          (format "Editing %s in `%s'"
-                  (combobulate-tally-nodes matches t)
-                  (propertize
-                   (combobulate-node-type group-node)
-                   'face 'combobulate-active-indicator-face))))))))
+    (combobulate-refactor ()
+      (let ((matches
+             (cdr
+              (assoc
+               (combobulate-proxy-to-tree-node
+                (combobulate-proffer-choices
+                 (reverse (mapcar 'car grouped-matches))
+                 (lambda (index current-node proxy-nodes refactor-id)
+                   (combobulate-refactor (:id refactor-id)
+                     (rollback)
+                     (mark-node-highlighted current-node)
+                     (princ (format "Editing %s in %s%s\n"
+                                    (combobulate-pretty-print-node-type current-node)
+                                    (combobulate-proxy-to-tree-node current-node)
+                                    (and (combobulate-node-field-name current-node)
+                                         (format " (%s)"
+                                                 (combobulate-node-field-name current-node)))))
+                     ;; rollback the outer
+                     ;; `combobulate-refactor' call so
+                     ;; the node cursors we place below
+                     ;; are properly erased.
+                     ;; place a fake cursor at every
+                     ;; node to indicate where the
+                     ;; matching nodes are.
+                     (mapc #'mark-node-cursor
+                           (cdr (assoc (combobulate-proxy-to-tree-node node)
+                                       grouped-matches)))
+                     ;; indicate the locus of editing
+                     ;; by highlighting the entire node
+                     ;; boundary.
+                     (setq group-node node)
+                     (mark-node-highlighted current-node)))
+                 :unique-only nil
+                 :prompt-description
+                 (format "Edit %s in"
+                         (propertize (combobulate-pretty-print-node-type node)
+                                     'face 'combobulate-tree-branch-face))))
+               grouped-matches))))
+        (rollback)
+        (when matches
+          (setq matches (combobulate--mc-edit-nodes matches action))
+          (combobulate-message
+           (format "Editing %s in `%s'"
+                   (combobulate-tally-nodes matches t)
+                   (propertize
+                    (combobulate-node-type group-node)
+                    'face 'combobulate-active-indicator-face))))))))
 
 (defun combobulate-edit-nodes (placement-nodes)
   "Edit PLACEMENT-NODES.
@@ -1060,14 +1064,20 @@ point relative to the nodes in
     map)
   "Keymap for `combobulate-proffer-choices'.")
 
-(cl-defun combobulate-proffer-action-highlighter (_node mark-highlighted-fn _ _mark-deleted-fn)
+(cl-defun combobulate-proffer-action-highlighter (index current-node proxy-nodes refactor-id)
   "Helper for `combobulate-proffer-choices' that highlights NODE."
-  (funcall mark-highlighted-fn))
+  (combobulate-refactor (:id refactor-id)
+    (mark-node-highlighted current-node)))
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key (first-choice nil)
                                              (reset-point-on-abort t) (reset-point-on-accept nil)
                                              (prompt-description nil) (use-proxy-nodes t)
-                                             (extra-map nil) (flash-node nil) (unique-only t))
+                                             (extra-map nil)
+                                             (flash-node nil)
+                                             (accept-action 'rollback)
+                                             (cancel-action 'commit)
+                                             (switch-action 'rollback)
+                                             (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
 Interactively, a user is expected to choose a node in NODES or
@@ -1132,6 +1142,7 @@ buffer.
                                nodes))))
         (result) (state 'continue) (current-node)
         (index 0) (pt (point)) (raw-event)
+        (refactor-id (combobulate-refactor-setup))
         (map (if extra-map
                  (let ((map (make-sparse-keymap)))
                    (set-keymap-parent map combobulate-proffer-map)
@@ -1145,91 +1156,94 @@ buffer.
                 (while (eq state 'continue)
                   (catch 'next
                     (setq current-node (nth index proxy-nodes))
-                    (combobulate-refactor
-                     (funcall action-fn current-node
-                              (apply-partially #'mark-node-highlighted current-node)
-                              (apply-partially #'combobulate-move-to-node current-node)
-                              (apply-partially #'mark-node-deleted current-node))
-                     ;; if we have just one item, or if
-                     ;; `:first-choice' is non-nil, we pick the first
-                     ;; item in `proxy-nodes'
-                     (if (or (= (length proxy-nodes) 1) first-choice)
-                         (progn (rollback)
-                                (setq state 'accept))
-                       (setq result
-                             (condition-case nil
-                                 ;; `lookup-key' is funny and it only
-                                 ;; takes a vector of an event.
-                                 (lookup-key
-                                  map
-                                  (vector
-                                   ;; we need to preserve the raw
-                                   ;; event. If we want the event
-                                   ;; read by `read-event' to pass
-                                   ;; through to the event loop
-                                   ;; unscathed then we need the raw
-                                   ;; version.
-                                   (setq raw-event
-                                         (read-event
-                                          (substitute-command-keys
-                                           (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
-                                                   (combobulate-display-indicator index (length proxy-nodes))
-                                                   (concat (or prompt-description "")
-                                                           (and prompt-description (propertize " → " 'face 'shadow)))
-                                                   (propertize (combobulate-pretty-print-node current-node) 'face
-                                                               'combobulate-tree-highlighted-node-face)
-                                                   (mapconcat (lambda (k)
-                                                                (propertize (key-description k) 'face 'help-key-binding))
-                                                              ;; messy; is this really the best way?
-                                                              (where-is-internal 'next map)
-                                                              ", ")
-                                                   (if (and flash-node combobulate-flash-node)
-                                                       (concat "\n"
-                                                               (or (combobulate-display-draw-node-tree
-                                                                    (combobulate-proxy-to-tree-node current-node))
-                                                                   ""))
-                                                     "")))
-                                          nil nil))))
-                               ;; if `condition-case' traps a quit
-                               ;; error, then map it into the symbol
-                               ;; `cancel', which corresponds to the
-                               ;; equivalent event in the state
-                               ;; machine below.
-                               (quit 'cancel)))
-                       (pcase result
-                         ('prev
-                          (commit)
-                          (setq index (mod (1- index) (length proxy-nodes)))
-                          (throw 'next nil))
-                         ('next
-                          (commit)
-                          (setq index (mod (1+ index) (length proxy-nodes)))
-                          (throw 'next nil))
-                         ('done
-                          (rollback)
-                          (combobulate-message "Committing" current-node)
-                          (setq state 'accept))
-                         ((pred functionp)
-                          (funcall result)
-                          (rollback)
-                          (throw 'next nil))
-                         ('cancel
-                          (combobulate-message "Cancelling...")
-                          (setq state 'abort)
-                          (rollback)
-                          (keyboard-quit))
-                         (_
-                          (combobulate-message "Committing...")
-                          ;; pushing `raw-event' to
-                          ;; `unread-command-events' allows for a
-                          ;; seamless exit out of the proffer prompt
-                          ;; by preserving the character the user
-                          ;; typed to 'break out' of `read-event'
-                          ;; earlier.
-                          (push raw-event unread-command-events)
-                          (rollback)
-                          (setq state 'accept)))))))))
-          (quit nil))
+                    (combobulate-refactor (:id refactor-id)
+                      (cl-flet ((refactor-action (action)
+                                  (cond ((eq action 'commit)
+                                         (commit))
+                                        ((eq action 'rollback)
+                                         (rollback))
+                                        (t (error "Unknown action: %s" action)))))
+                        (funcall action-fn index current-node proxy-nodes refactor-id)
+                        ;; if we have just one item, or if
+                        ;; `:first-choice' is non-nil, we pick the first
+                        ;; item in `proxy-nodes'
+                        (if (or (= (length proxy-nodes) 1) first-choice)
+                            (progn (refactor-action accept-action)
+                                   (setq state 'accept))
+                          (setq result
+                                (condition-case nil
+                                    ;; `lookup-key' is funny and it only
+                                    ;; takes a vector of an event.
+                                    (lookup-key
+                                     map
+                                     (vector
+                                      ;; we need to preserve the raw
+                                      ;; event. If we want the event
+                                      ;; read by `read-event' to pass
+                                      ;; through to the event loop
+                                      ;; unscathed then we need the raw
+                                      ;; version.
+                                      (setq raw-event
+                                            (read-event
+                                             (substitute-command-keys
+                                              (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
+                                                      (combobulate-display-indicator index (length proxy-nodes))
+                                                      (concat (or prompt-description "")
+                                                              (and prompt-description (propertize " → " 'face 'shadow)))
+                                                      (propertize (combobulate-pretty-print-node current-node) 'face
+                                                                  'combobulate-tree-highlighted-node-face)
+                                                      (mapconcat (lambda (k)
+                                                                   (propertize (key-description k) 'face 'help-key-binding))
+                                                                 ;; messy; is this really the best way?
+                                                                 (where-is-internal 'next map)
+                                                                 ", ")
+                                                      (if (and flash-node combobulate-flash-node)
+                                                          (concat "\n"
+                                                                  (or (combobulate-display-draw-node-tree
+                                                                       (combobulate-proxy-to-tree-node current-node))
+                                                                      ""))
+                                                        "")))
+                                             nil nil))))
+                                  ;; if `condition-case' traps a quit
+                                  ;; error, then map it into the symbol
+                                  ;; `cancel', which corresponds to the
+                                  ;; equivalent event in the state
+                                  ;; machine below.
+                                  (quit 'cancel)))
+                          (pcase result
+                            ('prev
+                             (refactor-action switch-action)
+                             (setq index (mod (1- index) (length proxy-nodes)))
+                             (throw 'next nil))
+                            ('next
+                             (refactor-action switch-action)
+                             (setq index (mod (1+ index) (length proxy-nodes)))
+                             (throw 'next nil))
+                            ('done
+                             (refactor-action accept-action)
+                             (combobulate-message "Committing" current-node)
+                             (setq state 'accept))
+                            ((pred functionp)
+                             (funcall result)
+                             (refactor-action accept-action)
+                             (throw 'next nil))
+                            ('cancel
+                             (combobulate-message "Cancelling...")
+                             (setq state 'abort)
+                             (refactor-action cancel-action)
+                             (keyboard-quit))
+                            (_
+                             (combobulate-message "Committing...")
+                             ;; pushing `raw-event' to
+                             ;; `unread-command-events' allows for a
+                             ;; seamless exit out of the proffer prompt
+                             ;; by preserving the character the user
+                             ;; typed to 'break out' of `read-event'
+                             ;; earlier.
+                             (push raw-event unread-command-events)
+                             (refactor-action accept-action)
+                             (setq state 'accept))))))))))
+          (quit (refactor-action cancel-action)))
       (error "There are no choices to make"))
     ;; Determine where point is placed on exit and whether we return
     ;; the current node or not.
@@ -1250,11 +1264,12 @@ buffer.
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
       (when-let ((node (combobulate-proffer-choices
                         (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
-                        (lambda (_node mark-highlighted-fn move-fn mark-deleted-fn)
-                          (funcall mark-deleted-fn)
-                          (funcall mark-highlighted-fn)
-                          (funcall move-fn)
-                          (combobulate-skip-whitespace-forward))
+                        (lambda (index current-node proxy-nodes refactor-id)
+                          (combobulate-refactor (:id refactor-id)
+                            (mark-node-deleted current-node)
+                            (mark-node-highlighted current-node)
+                            (combobulate-move-to-node current-node)
+                            (combobulate-skip-whitespace-forward)))
                         :reset-point-on-abort t)))
         (combobulate-message "Cloning" node)
         (combobulate--clone-node node (combobulate-node-start node))))))
@@ -1381,19 +1396,20 @@ See `combobulate-apply-envelope' for more information."
                                         (cons (combobulate-node-at-point)
                                               (combobulate-get-parents (combobulate-node-at-point))))
                           (list (combobulate-make-proxy-point-node))))
-                       (lambda (node mark-highlighted-fn _ mark-deleted-fn)
+                       (lambda (index current-node proxy-nodes refactor-id)
                          ;; mark deleted and highlight first. That way when we apply
                          ;; the envelope the overlays expand to match.
-                         (funcall mark-deleted-fn)
-                         (let ((ov (funcall mark-highlighted-fn))
-                               (combobulate-envelope--undo-on-quit nil))
-                           (seq-let [[start &rest end] &rest pt]
-                               (combobulate-apply-envelope envelope node)
-                             (goto-char pt)
-                             ;; lil' hack. The extent of the node is not
-                             ;; the same as the envelope we just
-                             ;; applied.
-                             (move-overlay ov start end))))
+                         (combobulate-refactor (:id refactor-id)
+                           (mark-node-deleted current-node)
+                           (let ((ov (mark-node-highlighted current-node))
+                                 (combobulate-envelope--undo-on-quit nil))
+                             (seq-let [[start &rest end] &rest pt]
+                                 (combobulate-apply-envelope envelope current-node)
+                               (goto-char pt)
+                               ;; lil' hack. The extent of the node is not
+                               ;; the same as the envelope we just
+                               ;; applied.
+                               (move-overlay ov start end)))))
                        :reset-point-on-abort t
                        :reset-point-on-accept nil))
                 (setq accepted t)
@@ -1473,7 +1489,11 @@ more than one."
        (seq-drop-while #'combobulate-node-in-region-p nodes)
        ;; do not mark `node' for deletion; highlight `node'; or
        ;; move point to `node'.
-       (lambda (node &rest _) (combobulate--mark-node node t beginning-of-line))
+       (lambda (index current-node proxy-nodes refactor-id)
+         (combobulate-refactor (:id refactor-id)
+           (combobulate--mark-node current-node t beginning-of-line)
+           (when-let (next-node (nth (1+ index) proxy-nodes))
+             (mark-node-highlighted next-node))))
        :reset-point-on-abort t
        :reset-point-on-accept nil
        ;; HACK: This allows repetition of the command that
@@ -1557,27 +1577,27 @@ Each member of PARTITIONS must be one of:
          (baseline-target nil)
          (tally)
          (matches (or matches (cdr procedure))))
-    (combobulate-refactor
-     (pcase-dolist (`(,action . ,node) matches)
-       (pcase action
-         ('@discard
-          (mark-node-deleted node)
-          (setq baseline-target (combobulate-baseline-indentation node))
-          (push (cons action node) tally))
-         ('@keep
-          (pcase-dolist (`(,position . ,part-node)
-                         (combobulate--partition-by-position point-node (list node)))
-            (when (member position partitions)
-              (push (cons action node) tally)
-              (pcase-let ((`(,start ,end) (combobulate-extend-region-to-whole-lines
-                                           (combobulate-node-start part-node)
-                                           (combobulate-node-end part-node))))
-                (mark-copy start end)
-                (mark-node-indent start end
-                                  baseline-target
-                                  (combobulate-baseline-indentation part-node))))))))
-     (combobulate-message "Spliced." (combobulate-tally-nodes tally nil))
-     (commit))
+    (combobulate-refactor ()
+      (pcase-dolist (`(,action . ,node) matches)
+        (pcase action
+          ('@discard
+           (mark-node-deleted node)
+           (setq baseline-target (combobulate-baseline-indentation node))
+           (push (cons action node) tally))
+          ('@keep
+           (pcase-dolist (`(,position . ,part-node)
+                          (combobulate--partition-by-position point-node (list node)))
+             (when (member position partitions)
+               (push (cons action node) tally)
+               (pcase-let ((`(,start ,end) (combobulate-extend-region-to-whole-lines
+                                            (combobulate-node-start part-node)
+                                            (combobulate-node-end part-node))))
+                 (mark-copy start end)
+                 (mark-node-indent start end
+                                   baseline-target
+                                   (combobulate-baseline-indentation part-node))))))))
+      (combobulate-message "Spliced." (combobulate-tally-nodes tally nil))
+      (commit))
     (combobulate--refactor-insert-copied-values combobulate-refactor--copied-values)))
 
 (defun combobulate-move-past-close-and-reindent (&optional arg)
@@ -1607,16 +1627,16 @@ Each member of PARTITIONS must be one of:
                 (error "No valid sibling node.")))))
     (save-excursion
       (let ((pos))
-        (combobulate-refactor
-         (mark-range-move
-          (combobulate-node-start source-node)
-          (combobulate-node-end source-node)
-          (progn
-            (combobulate-move-to-node target-node)
-            (back-to-indentation)
-            (split-line 1)
-            (setq pos (point-marker))))
-         (commit))
+        (combobulate-refactor ()
+          (mark-range-move
+           (combobulate-node-start source-node)
+           (combobulate-node-end source-node)
+           (progn
+             (combobulate-move-to-node target-node)
+             (back-to-indentation)
+             (split-line 1)
+             (setq pos (point-marker))))
+          (commit))
         (delete-blank-lines)
         (goto-char pos)
         (delete-blank-lines)))))
@@ -1634,21 +1654,21 @@ Each member of PARTITIONS must be one of:
                 (error "No valid sibling node.")))))
     (save-excursion
       (let ((pos-col))
-        (combobulate-refactor
-         (mark-range-move
-          (combobulate-node-start target-node)
-          (combobulate-node-end target-node)
-          (progn
-            (setq pos-col (current-indentation))
-            ;; find the right place to place the newline and indent.
-            (if point-sibling
-                (combobulate-move-to-node point-sibling t)
-              (end-of-line))
-            (when (combobulate-after-point-blank-p (point))
-              (newline)
-              (indent-to pos-col))
-            (point)))
-         (commit))))))
+        (combobulate-refactor ()
+          (mark-range-move
+           (combobulate-node-start target-node)
+           (combobulate-node-end target-node)
+           (progn
+             (setq pos-col (current-indentation))
+             ;; find the right place to place the newline and indent.
+             (if point-sibling
+                 (combobulate-move-to-node point-sibling t)
+               (end-of-line))
+             (when (combobulate-after-point-blank-p (point))
+               (newline)
+               (indent-to pos-col))
+             (point)))
+          (commit))))))
 
 (defun combobulate-yoink-forward (arg)
   (interactive "^p")
