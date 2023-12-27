@@ -351,7 +351,7 @@ start."
    :named t
    :node nil
    :field nil
-   :pp ""))
+   :pp "Point"))
 
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
