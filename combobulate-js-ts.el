@@ -229,8 +229,8 @@ from `combobulate-manipulation-envelopes') to insert."
            :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment")
            :name "ternary"
            :template ("{" @ "null" >
-                      n> " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
-                      n> " : " @ (choice* :name "alternative" :missing ("null") :rest (r>))
+                      n> " ? " @ > (choice* :name "consequence" :missing ("null" >) :rest (r>))
+                      n> " : " @ > (choice* :name "alternative" :missing ("null" >) :rest (r>))
                       n> "}" >))
           (:description
            "...={ ... }"

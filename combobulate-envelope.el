@@ -49,7 +49,7 @@ manually.")
   "Internal store for Combobulate envelopes.")
 
 (defvar combobulate-envelope-static nil
-  "When non-nil, interactive commands are ignored.")
+  "When zero, interactive envelope commands are ignored.")
 
 (defvar combobulate-envelope-refactor-id nil
   "The ID of the current refactor.")
@@ -111,6 +111,18 @@ If the register does not exist, return DEFAULT or nil."
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (sub-instruction instructions)
         (pcase sub-instruction
+          ;; `(choice instructions)'
+          ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
+          ;;
+          ;; Presents a prompt to the user to choose between any of
+          ;; the choices in the same block. `choice' is the simplest,
+          ;; and `choice*' is more complex.
+          ;;
+          ;; `choice*' allows you to specify a name for the choice; it
+          ;; is shown in the prompt. The `:missing' keyword argument
+          ;; is a string that is shown if the user does not pick that
+          ;; choice. `:rest' is the instructions to execute if the
+          ;; user picks that choice.
           ((or (and `(choice . ,rest)
                     (let name nil)
                     (let missing nil)
@@ -119,15 +131,11 @@ If the register does not exist, return DEFAULT or nil."
                     (let name (plist-get rest :name))
                     (let missing (plist-get rest :missing))
                     (let rest-instructions (plist-get rest :rest))))
-           ;; check if we're already in static display mode: if we are,
-           ;; do nothing; that should stop nested choices from being
-           ;; expanded.
-           (unless combobulate-envelope-static
-             (let ((combobulate-envelope-static t))
-               (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
-                              ,(apply-partially #'combobulate-envelope-expand-instructions-1
-                                                rest-instructions))
-                     post-instructions))))
+           (let ((combobulate-envelope-static t))
+             (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
+                            ,(apply-partially #'combobulate-envelope-expand-instructions-1
+                                              rest-instructions))
+                   post-instructions)))
           ;; `(save-column BLOCK)'
           ;;
           ;; Records the `current-column' of `point' when it enters
@@ -180,13 +188,21 @@ If the register does not exist, return DEFAULT or nil."
           ('@ (push `(point ,(point-marker)) post-instructions))
           ;; `n' or `n>'
           ;;
-          ;; Calls `newline' or `newline-and-indent'
+          ;; Calls `newline', or `newline' then `indent-according-to-mode'.
+          ;;
+          ;; Never `newline-and-indent' because it strips horizontal
+          ;; space, which is unhelpful.
           ('n (newline))
           ('n> (newline) (indent-according-to-mode))
           ;; `>'
           ;;
           ;; Call `indent-according-to-mode'
           ('> (indent-according-to-mode))
+
+          ;; `<'
+          ;;
+          ;; For whitespace-sensitive languages, this is a way to move
+          ;; back one level of indentation.
           ('< (let ((col (- (current-column) 4)))
                 (newline)
                 (move-to-column col t)))
@@ -236,12 +252,24 @@ If the register does not exist, return DEFAULT or nil."
             ;; works well with the likes of Python where crass,
             ;; region-based indentation will never work.
             ((and (not combobulate-envelope-indent-region-function) indent)
-             (forward-line 0)
+             ;; ordinarily, we do not need to worry about changing the
+             ;; start/end point markers, as inserting text will
+             ;; advance the point markers correctly. However, in
+             ;; python and suchlike, we cannot 'just' indent the
+             ;; region register; instead, we must carefully fix its
+             ;; indentation so it matches correctly: this must happen
+             ;; from the beginning of the line. Therefore, we change
+             ;; the start point marker to match.
+             (let ((curr-col (current-indentation)))
+               (forward-line 0)
+               (setf start (point)))
              (insert (combobulate-indent-string
                       default
                       :first-line-operation 'absolute
                       :first-line-amount (current-indentation)
-                      :rest-lines-operation 'relative)))
+                      :rest-lines-operation 'relative))
+             ;; required?!
+             (setf end (point)))
             (t (insert default))))
           ;; "string"
           ;;
@@ -325,8 +353,14 @@ If the register does not exist, return DEFAULT or nil."
         (rollback)))))
 
 (defun combobulate-envelope-render-preview (index current-node proxy-nodes refactor-id)
+  "Render a preview of the envelope at INDEX.
+
+Unlike most proffer preview functions, this one assumes that
+`accept-action' passed to `combobulate-proffer-choices' is
+`commit' and not its usual value of `rollback'."
   (combobulate-refactor (:id refactor-id)
     (let ((marker (point-marker))
+          (pt)
           (combobulate-envelope-static t)
           (combobulate-envelope--undo-on-quit nil))
       (dolist (node proxy-nodes)
@@ -339,15 +373,17 @@ If the register does not exist, return DEFAULT or nil."
                   (t (setq expand-envelope missing)))
             (seq-let [[start &rest end] &rest pt]
                 (combobulate-refactor (:id combobulate-envelope-refactor-id)
+                  (when is-current-node (setq pt (point)))
                   (prog1
                       (combobulate-envelope-expand-instructions-1 expand-envelope)
+                    (when pt (goto-char pt))
                     (rollback)))
               (mark-range-deleted start end)
               (when is-current-node
                 (mark-range-highlighted start end)))))))))
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (collected-instructions categories)
-  "Execute COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
+  "Expand each COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
 
 CATEGORIES is a list of instructions to expand now. Valid choices are:
 `prompt', `choice', `repeat' and `point'. All other categories
@@ -361,15 +397,15 @@ Where TYPE is one of the CATEGORIES and REST could be anything,
 depending on TYPE. The instructions are grouped by TYPE and
 executed in the order presented in CATEGORIES.
 
-Where MARK-FIELD is the inherited `combobulate-refactor'
-functions that were set globally when the envelope expansion
-procedure first began. "
-  ;; loop over COLLECTION-INSTRUCTIONS and remove any that aren't in CATEGORIES.
+Any unfilfilled instructions in COLLECTED-INSTRUCTIONS that did
+not feature in CATEGORIES are returned."
   (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
         (remaining-instructions)
         (start (point))
         (end (point-marker))
         (result))
+    ;; strip out instructions that we weren't asked to process: return
+    ;; them instead.
     (setq remaining-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (category categories)
@@ -400,18 +436,36 @@ procedure first began. "
                          ;; same range, but nevertheless expanding to
                          ;; vastly different things.
                          :unique-only nil
+                         ;; pass whatever the value of
+                         ;; `combobulate-envelope-static' is to the
+                         ;; proffer function. If it's non-nil, then
+                         ;; the caller of this function does not
+                         ;; intend for the user to make a choice;
+                         ;; instead, the first is picked
+                         ;; automatically. The automatic choice is
+                         ;; made because we want to expand some
+                         ;; instructions (like prompt and choice)
+                         ;; without actually triggering a user
+                         ;; interaction
+                         :first-choice combobulate-envelope-static
                          :reset-point-on-abort nil
                          :reset-point-on-accept nil
+                         ;; `combobulate-envelope-render-preview'
+                         ;; inserts text for potentially many nodes,
+                         ;; which would be preserved if the normal
+                         ;; accept action -- rollback -- were used
+                         ;; instead.
                          :accept-action 'commit))
+               ;; for each node in the node list we just proferred,
+               ;; figure out which one was picked by the user and fill
+               ;; it with its instructions. Then backfill the choices
+               ;; we didn't make with the missing value (if any)
                (dolist (node nodes)
-                 (let ((expand-envelope) (is-selected-node))
+                 (let ((expand-envelope))
                    (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                      (combobulate-move-to-node node)
-                     (cond ((equal node selected-node)
-                            (setq expand-envelope rest-envelope
-                                  is-selected-node t))
-                           (t (setq expand-envelope missing)))
-                     (combobulate-envelope-expand-instructions-1 expand-envelope)))))))
+                     (combobulate-envelope-expand-instructions-1
+                      (if (equal node selected-node) rest-envelope missing))))))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
@@ -424,9 +478,15 @@ procedure first began. "
                      (lambda (index current-node proxy-nodes refactor-id)
                        (combobulate-refactor (:id refactor-id)
                          (combobulate-move-to-node current-node)))
+                     ;; as above, if we're in static mode, we do not
+                     ;; prompt the user to pick a cursor
                      :first-choice combobulate-envelope-static
                      :reset-point-on-abort t
                      :reset-point-on-accept nil)))
+             ;; This is a special post-run instructions that we only
+             ;; ever action once we've exited the entire envelope
+             ;; instruction loop. It is the final action carried out
+             ;; at the very end.
              (push (cons 'selected-point selected-point) remaining-instructions)
              (rollback)))))
       (rollback))
