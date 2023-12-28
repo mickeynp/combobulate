@@ -216,7 +216,11 @@ function."
                 (cl-defun stub-proffer-actions (nodes action-fn &key (first-choice nil)
                                                       (reset-point-on-abort t) (reset-point-on-accept nil)
                                                       (prompt-description nil) (use-proxy-nodes t)
-                                                      (extra-map nil) (flash-node nil) (unique-only t))
+                                                      (extra-map nil) (flash-node nil) (unique-only t)
+                                                      (accept-action 'rollback)
+                                                      (cancel-action 'commit)
+                                                      (switch-action 'commit)
+                                                      &allow-other-keys)
                   (cl-assert remaining-choices)
                   (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
@@ -231,7 +235,9 @@ function."
                                  choice-node
                                  nodes
                                  stubbed-refactor-id)
-                        (rollback))))
+                        (if (eq accept-action 'rollback)
+                            (rollback)
+                          (commit)))))
                   choice-node)))
        ,@body)))
 

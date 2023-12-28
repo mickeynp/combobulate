@@ -66,7 +66,7 @@
 
 (ert-deftest combobulate-test-mc-combobulate-edit-node-by-text-dwim ()
   :tags '(multiple-cursors manipulation)
-  (combobulate-with-stubbed-proffer-choices (:choice 0)
+  (combobulate-with-stubbed-proffer-choices (:choices '(0))
     (with-stubbed-mc #'combobulate-edit-node-by-text-dwim
                      tsx
                      tsx-ts-mode
@@ -74,7 +74,7 @@
 
 (ert-deftest combobulate-test-mc-combobulate-edit-node-siblings-dwim ()
   :tags '(multiple-cursors manipulation)
-  (combobulate-with-stubbed-proffer-choices (:choice 0)
+  (combobulate-with-stubbed-proffer-choices (:choices '(0))
     (with-stubbed-mc #'combobulate-edit-node-siblings-dwim
                      css
                      css-ts-mode
@@ -82,7 +82,7 @@
 
 (ert-deftest combobulate-test-mc-combobulate-edit-node-type-dwim ()
   :tags '(multiple-cursors manipulation)
-  (combobulate-with-stubbed-proffer-choices (:choice 0)
+  (combobulate-with-stubbed-proffer-choices (:choices '(0))
     (with-stubbed-mc #'combobulate-edit-node-type-dwim
                      python
                      python-ts-mode

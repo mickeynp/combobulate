@@ -3,7 +3,7 @@
 function Foo({ a, b }: { a: number, b: number }) {
   return <div>{null
     ? <div>Some jsx element</div>
- : <mytag/>
+    : <mytag/>
   }</div>
 }
 

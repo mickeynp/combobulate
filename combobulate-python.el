@@ -333,10 +333,10 @@ again to cycle indentation.")))))
              :name "nest-try-except"
              :template
              (@ "try:" n>
-                (choice r>)
+                (choice* :missing ("pass") :rest (r>))
                 <
-                (repeat n> "except " (p Exception "Exception") ":" n>
-                        (choice* :missing ("pass") :rest (r>)))))
+                "except " (p Exception "Exception") ":" n>
+                (choice* :missing ("pass" n>) :rest (r> n))))
             (:description
              "try ... finally: ..."
              :key "btf"

@@ -300,14 +300,13 @@ If the register does not exist, return DEFAULT or nil."
                      ;; knowing that it won't block for user input.
                      (seq-let [[inst-start &rest inst-end] &rest _]
                          (let ((combobulate-envelope-static t))
-                           (combobulate-envelope-expand-instructions-1 repeat-instructions))
+                           (combobulate-envelope-expand-instructions-1 repeat-instructions '(prompt repeat)))
                        ;; mark the range as highlighted, so it's
                        ;; easier to see its extent; and as deleted,
                        ;; so that -- due to how we're using
                        ;; `combobulate-refactor' -- we can delete
                        ;; the expansion immediately after the
                        ;; prompt.
-
                        ;; BUG: if
                        ;; `combobulate-envelope-expand-instructions-1'
                        ;; ends up calling `save-column' as its last form
@@ -329,7 +328,7 @@ If the register does not exist, return DEFAULT or nil."
                                      (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                            (progn (commit)
                                   (let ((sub-inst (combobulate-envelope-expand-instructions-1
-                                                   repeat-instructions)))
+                                                   repeat-instructions '(prompt repeat))))
                                     (setq post-instructions (append post-instructions (cdr sub-inst))))
                                   (cl-decf max-repeat)
                                   (commit))

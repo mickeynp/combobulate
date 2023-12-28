@@ -71,48 +71,48 @@
 ;;   debug-show)
 
 
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" @ n>
-       (choice "Hello World" @)
-       (choice "<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
-               "Middle text"
-               (choice "Some random text --- oh, and here's a tag:" @ (f tag))
-               "</" (f tag) ">")
-       "</div>" n>
-       "}")))
-  debug-show)
+;; (combobulate-test
+;;     (:language tsx :mode tsx-ts-mode :fixture
+;;                "./fixtures/envelope/blank.tsx")
+;;   (goto-marker 1) delete-markers
+;;   (let
+;;       ((combobulate-envelope-prompt-actions '("blah"))
+;;        (combobulate-envelope-prompt-expansion-actions
+;;         '(yes yes no)))
+;;     (combobulate-envelope-expand-instructions
+;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+;;        "return <div>" @ n>
+;;        (choice "Hello World" @)
+;;        (choice "<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
+;;                "Middle text"
+;;                (choice "Some random text --- oh, and here's a tag:" @ (f tag))
+;;                "</" (f tag) ">")
+;;        "</div>" n>
+;;        "}")))
+;;   debug-show)
 
 ;;with choice*
-(combobulate-test
-    (:language tsx :mode tsx-ts-mode :fixture
-               "./fixtures/envelope/blank.tsx")
-  (goto-marker 1) delete-markers
-  (let
-      ((combobulate-envelope-prompt-actions '("blah"))
-       (combobulate-envelope-prompt-expansion-actions
-        '(yes yes no)))
-    (combobulate-envelope-expand-instructions
-     '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
-       "return <div>" @ n>
-       (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
-       (choice* :name "complex" :rest
-                ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
-                 "Middle text"
-                 (choice "Some random text --- oh, and here's a tag:" @ (f tag))
-                 "</" (f tag) ">")
-                :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
-       "</div>" n>
-       "}")))
-  debug-show)
+;; (combobulate-test
+;;     (:language tsx :mode tsx-ts-mode :fixture
+;;                "./fixtures/envelope/blank.tsx")
+;;   (goto-marker 1) delete-markers
+;;   (let
+;;       ((combobulate-envelope-prompt-actions '("blah"))
+;;        (combobulate-envelope-prompt-expansion-actions
+;;         '(yes yes no)))
+;;     (combobulate-envelope-expand-instructions
+;;      '("function MyComponent({ a, b}: {a: number, b: string}) {" n>
+;;        "return <div>" @ n>
+;;        (choice* :name "simple" :rest ("Hello World" @) :missing ("Goodbye World"))
+;;        (choice* :name "complex" :rest
+;;                 ("<"(p tag "tag") ">" (choice "<" (p subtag "sub-tag") ">" "SUB SOMETHING ELSE" "</" @ (f subtag) ">")
+;;                  "Middle text"
+;;                  (choice "Some random text --- oh, and here's a tag:" @ (f tag))
+;;                  "</" (f tag) ">")
+;;                 :missing ("<"(p tag "tag") ">" Blah "</" (f tag) ">"))
+;;        "</div>" n>
+;;        "}")))
+;;   debug-show)
 
 (defvar combobulate-envelope-proffer-choices nil)
 
@@ -177,8 +177,8 @@
               n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
               n > " : " (choice* :name "alternative" :missing ("<" (p other "SOME TAG") "/>") :rest (r>))
               n > "}" >)
-             ((combobulate-envelope-proffer-choices '(0))
-
+             (;; first is the choice; second is the point.
+              (combobulate-envelope-proffer-choices '(0 0))
               (combobulate-envelope-registers '((region . "<div>Some jsx element</div>")))
               (combobulate-envelope-prompt-actions '("mytag"))))
             ;; simple choice
@@ -195,7 +195,10 @@
                (cons name `(combobulate-with-stubbed-prompt-expansion
                                (combobulate-with-stubbed-envelope-prompt
                                    (let ,rest
-                                     (combobulate-with-stubbed-proffer-choices (:choices combobulate-envelope-proffer-choices)
+                                     (combobulate-with-stubbed-proffer-choices
+                                         (:choices (if (boundp 'combobulate-envelope-proffer-choices)
+                                                       combobulate-envelope-proffer-choices
+                                                     nil))
                                        (combobulate-envelope-expand-instructions '(,@instruction))))))))
               (`(,name . ,instruction)
                (cons name `(combobulate-envelope-expand-instructions ',@instruction))))
