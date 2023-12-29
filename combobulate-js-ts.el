@@ -261,15 +261,13 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default
-        '(
-          ;; highlight the left-hand side of sequence expressions
+        '(;; highlight the left-hand side of sequence expressions
           ;; ("the comma operator")
           ((arrow_function body: ((_ (sequence_expression left: (_) @hl.veggie)))))
           ;; highlight browser console object calls.
           ((call_expression function: (member_expression object: (identifier) @name @hl.serene
                                                          property: (property_identifier)
-                                                         (:match "^console$" @name))))
-          ))
+                                                         (:match "^console$" @name))))))
   (setq combobulate-manipulation-edit-procedures
         `((:activation-nodes
            ((:node
