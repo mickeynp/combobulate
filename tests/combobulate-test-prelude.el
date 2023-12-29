@@ -378,8 +378,8 @@ Returns nil if no match is found."
                            (buffer-substring-no-properties (point-min) (point-max)))))
       (unless (string= current-contents file-contents)
         ;; save both file and buffer to two temporary files
-        (let ((buf-fn (make-temp-file "combobulate-test-buf"))
-              (file-fn (make-temp-file "combobulate-test-fixture")))
+        (let ((buf-fn (make-temp-file "combobulate-test-actual@"))
+              (file-fn (make-temp-file "combobulate-test-expected@")))
           (with-temp-file buf-fn
             (insert current-contents))
           (with-temp-file file-fn
