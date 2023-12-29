@@ -190,7 +190,7 @@
                                     (alist-get ,--session combobulate-refactor--active-sessions)))
                     ;; clean up.
                     (rollback)))
-         (condition-case nil
+         (condition-case err
              (prog1 (atomic-change-group
                       ,@body)
                (when (and (alist-get ,--session combobulate-refactor--active-sessions)
@@ -199,7 +199,7 @@
                         ,--session
                         (combobulate--refactor-clear-overlays
                          (combobulate--refactor-get-all-overlays)))))
-           (quit (rollback)))))))
+           (quit (rollback) (signal (car err) (cdr err))))))))
 
 (defun combobulate-procedure-get-activation-nodes (procedures)
   "Given a list of PROCEDURES, return a merged list of all activation nodes."
@@ -247,7 +247,7 @@ Returns a list of parents ordered closest to farthest."
                     (combobulate-point-in-node-range-p point-node)))
                ((eq pos 'in)
                 (combobulate-point-in-node-range-p point-node)
-                ;; `combobulate-point-in-node-range-p' is t if
+                ;; `combobulate-point-in-node-range-p' is non-nil if
                 ;; we're at the start of the node, but that is
                 ;; not allowed here.
                 (not (combobulate-point-at-beginning-of-node-p point-node)))
@@ -872,7 +872,7 @@ If MODE is non-nil, then it must be either `newline' or
 a new line. If MODE is `inline' then it is places inline
 alongside other nodes around POSITION.
 
-If NO-TRAILING-NEWLINE is t, then no trailing newline is inserted
+If NO-TRAILING-NEWLINE is non-nil, then no trailing newline is inserted
 after NODE-OR-TEXT."
   (let* ((col (save-excursion (goto-char position)
                               (current-column)))
@@ -987,11 +987,11 @@ See `combobulate--mark-extent' for argument explanations."
 (defun combobulate--delete-node (node &optional correct-indentation delete-blank-lines)
   "Deletes NODE in the current buffer and returns its text.
 
-If CORRECT-INDENTATION is t, then the node's first-line
+If CORRECT-INDENTATION is non-nil, then the node's first-line
 indentation is set according to its current indentation in the
 buffer.
 
-If DELETE-BLANK-LINES is t, then all blank lines left behind by
+If DELETE-BLANK-LINES is non-nil, then all blank lines left behind by
 the deleted node are removed."
   (when node
     (combobulate--delete-text (combobulate-node-start node)
@@ -1062,7 +1062,15 @@ point relative to the nodes in
     (define-key map [S-iso-lefttab] 'prev)
     (define-key map (kbd "S-<tab>") 'prev)
     map)
-  "Keymap for `combobulate-proffer-choices'.")
+  "Keymap for `combobulate-proffer-choices'.
+
+You can bind regular commands to keys like a normal map, or you
+can bind one of the following special symbols:
+
+The symbol `done' will accept the current choice and exit. The
+symbol `next' will move to the next choice. The symbol `prev'
+will move to the previous choice. The symbol `cancel' will cancel
+the current choice and exit.")
 
 (cl-defun combobulate-proffer-action-highlighter (index current-node proxy-nodes refactor-id)
   "Helper for `combobulate-proffer-choices' that highlights NODE."
@@ -1071,75 +1079,91 @@ point relative to the nodes in
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key (first-choice nil)
                                              (reset-point-on-abort t) (reset-point-on-accept nil)
-                                             (prompt-description nil) (use-proxy-nodes t)
+                                             (prompt-description nil)
                                              (extra-map nil)
                                              (flash-node nil)
                                              (accept-action 'rollback)
                                              (cancel-action 'commit)
                                              (switch-action 'rollback)
+                                             (signal-on-abort nil)
                                              (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
-Interactively, a user is expected to choose a node in NODES or
-abandon the selection process altogether (see
-`combobulate-proffer-map'.) If there is exactly one node in
-NODES, then it is automatically selected.
+Interactively let the user select one of the nodes in NODES and
+preview the transformation Combobulate would apply if they accept
+that choice. The active node is rendered with ACTION-FN to allow
+the user to see what they are selecting and the possible
+transformation that will take place if they accept the choice.
+
+The user can then select the node with RET, or abort the
+selection with C-g. The user can also cycle through the nodes
+with TAB and S-TAB. See `combobulate-proffer-map'.
+
+If there is exactly one node in NODES, then it is automatically
+selected and no user interaction is required.
 
 ACTION-FN must be a function that takes four arguments:
 
-   (CURRENT-NODE MARK-HIGHLIGHTED-FN MOVE-TO-NODE-FN MARK-DELETED-FN)
+   (INDEX CURRENT-NODE PROXY-NODES REFACTOR-ID)
 
-Where CURRENT-NODE is the proffered node out of NODES.  The three
-additional arguments are optional; callers must optionally
-`funcall' each one in the order that best makes sense for the
-ACTION-FN.
+Where INDEX is the current index of the node in PROXY-NODES,
+which is the same as CURRENT-NODE. PROXY-NODES is a list of proxy
+nodes available to the user to choose from. REFACTOR-ID is a
+unique identifier for the current refactoring operation. Use
+`combobulate-refactor' with the REFACTOR-ID to manipulate the
+state of the refactoring operation.
 
-MARK-HIGHLIGHTED-FN instructs `combobulate-refactor' to highlight
-CURRENT-NODE. MOVE-TO-NODE-FN moves point to the beginning of
-CURRENT-NODE. And MARK-DELETED-FN tells `combobulate-refactor' to
-mark the node for deletion if a successful `commit' call takes
-place.
+Setting `:first-choice' to non-nil prevents the system from
+proffering choices at all; instead, the first choice is
+automatically picked, if there is a choice to make.
 
-The caller is responsible for invoking these functions in the
-correct order (or not at all, if they are not required.)
+When `:reset-point-on-abort' or `:reset-point-on-accept' is
+non-nil, the point is reset to where it was when the proffer was
+first started depending on the outcome of the proffer.
 
-Setting `:first-choice' to t prevents the system from proffering
-choices at all; instead, the first choice is automatically picked.
+If `:flash-node' is non-nil, then display a node tree in the echo
+area alongside the status message.
 
-When `:reset-point' is t, the point is reset to where it
-was when the proffer was first started. If nil, the point is not
-altered at all.
-
-`:use-proxy-nodes' is t by default. If t, then the nodes in NODES
-are wrapped in proxy nodes to guard against outdated or stale
-nodes if ACTION-FN modifies the buffer and thus the node tree.
-
-If `:flash-node' is t, then display a node tree in the echo area
-alongside the status message.
-
-If t, `:unique-only' filters out duplicate nodes *and*
+If non-nil, `:unique-only' filters out duplicate nodes *and*
 nodes that share the same range extent. I.e., a `block' and a
 `statement' node that effectively encompass the same range in the
 buffer.
 
-`:extra-map' is a list of cons cells consisting of (KEY . COMMAND).
+`:extra-map' is a list of cons cells consisting of (KEY
+. COMMAND). The extra keys are mapped into the proffer map,
+`combobulate-proffer-map'.
+
+`:accept-action' is a symbol that determines what happens when
+the user accepts a choice. The following symbols are supported:
+
+  `rollback' - Rollback the refactoring operation.
+  `commit' - Commit the refactoring operation.
+
+`:cancel-action' and `:switch-action' is the same as
+`:accept-action', but for when the user cancels the choice or
+interactively switches to a different node.
+
+`:signal-on-abort' is a symbol that determines what happens when
+the user aborts the choice. The following symbols are supported:
+
+  `error' - Signal an error.
+  `message' - Display a message in the echo area.
 
 `:prompt-description' is a string that is displayed in the prompt."
   (let ((proxy-nodes
-         (and nodes (funcall (if use-proxy-nodes
-                                 #'combobulate-make-proxy
-                               #'identity)
-                             ;; strip out duplicate nodes. That
-                             ;; includes nodes that are duplicates
-                             ;; of one another; however, we also
-                             ;; strip out nodes that share the
-                             ;; same range extent.
-                             (if unique-only
-                                 (seq-uniq nodes (lambda (a b)
-                                                   (or (equal a b)
-                                                       (equal (combobulate-node-range a)
-                                                              (combobulate-node-range b)))))
-                               nodes))))
+         (and nodes
+              (funcall #'combobulate-make-proxy
+                       ;; strip out duplicate nodes. That
+                       ;; includes nodes that are duplicates
+                       ;; of one another; however, we also
+                       ;; strip out nodes that share the
+                       ;; same range extent.
+                       (if unique-only
+                           (seq-uniq nodes (lambda (a b)
+                                             (or (equal a b)
+                                                 (equal (combobulate-node-range a)
+                                                        (combobulate-node-range b)))))
+                         nodes))))
         (result) (state 'continue) (current-node)
         (index 0) (pt (point)) (raw-event)
         (refactor-id (combobulate-refactor-setup))
@@ -1150,7 +1174,7 @@ buffer.
                    map)
                combobulate-proffer-map)))
     (if proxy-nodes
-        (condition-case nil
+        (condition-case err
             (with-undo-amalgamate
               (catch 'exit
                 (while (eq state 'continue)
@@ -1171,7 +1195,7 @@ buffer.
                             (progn (refactor-action accept-action)
                                    (setq state 'accept))
                           (setq result
-                                (condition-case nil
+                                (condition-case err
                                     ;; `lookup-key' is funny and it only
                                     ;; takes a vector of an event.
                                     (lookup-key
@@ -1243,7 +1267,8 @@ buffer.
                              (push raw-event unread-command-events)
                              (refactor-action accept-action)
                              (setq state 'accept))))))))))
-          (quit (refactor-action cancel-action)))
+          (quit (when signal-on-abort
+                  (signal (car err) (cdr err)))))
       (error "There are no choices to make"))
     ;; Determine where point is placed on exit and whether we return
     ;; the current node or not.
@@ -1356,7 +1381,8 @@ See `combobulate-apply-envelope' for more information."
     (if (region-active-p)
         (combobulate-apply-envelope envelope nil t)
       (if node
-          (goto-char (cdr (combobulate-apply-envelope envelope node)))
+          (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
+            (goto-char target-pt))
         (let ((combobulate-envelope-static t)
               (envelope-nodes (plist-get envelope :nodes))
               (change-group (prepare-change-group))
@@ -1446,10 +1472,10 @@ The exact node that is marked will depend on the location of
 point relative to the nodes in
 `combobulate-navigation-default-nodes'.
 
-If BEGINNING-OF-LINE is t, then the marked node has its point and
+If BEGINNING-OF-LINE is non-nil, then the marked node has its point and
 mark extended, if possible, to the whole line.
 
-Setting FIRST-CHOICE to t disables proffered choices if there is
+Setting FIRST-CHOICE to non-nil disables proffered choices if there is
 more than one."
   (interactive "^p")
   (with-argument-repetition arg

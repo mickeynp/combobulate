@@ -29,7 +29,6 @@ download-relationships:
 
 .PHONY:	clean-tests
 clean-tests:
-	rm -vrf tests/fixture-deltas/ || true
 	rm -v tests/*.gen.el || true
 
 .PHONY:	build-tests

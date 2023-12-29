@@ -198,7 +198,6 @@ If the register does not exist, return DEFAULT or nil."
           ;;
           ;; Call `indent-according-to-mode'
           ('> (indent-according-to-mode))
-
           ;; `<'
           ;;
           ;; For whitespace-sensitive languages, this is a way to move
@@ -373,8 +372,7 @@ Unlike most proffer preview functions, this one assumes that
             (seq-let [[start &rest end] &rest pt]
                 (combobulate-refactor (:id combobulate-envelope-refactor-id)
                   (when is-current-node (setq pt (point)))
-                  (prog1
-                      (combobulate-envelope-expand-instructions-1 expand-envelope)
+                  (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
                     (when pt (goto-char pt))
                     (rollback)))
               (mark-range-deleted start end)
@@ -447,6 +445,7 @@ not feature in CATEGORIES are returned."
                          ;; without actually triggering a user
                          ;; interaction
                          :first-choice combobulate-envelope-static
+                         :signal-on-abort t
                          :reset-point-on-abort nil
                          :reset-point-on-accept nil
                          ;; `combobulate-envelope-render-preview'
@@ -470,18 +469,19 @@ not feature in CATEGORIES are returned."
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
                                 points)))
              (mapc #'mark-node-cursor nodes)
-             (setq selected-point
-                   (combobulate-node-start
-                    (combobulate-proffer-choices
-                     nodes
-                     (lambda (index current-node proxy-nodes refactor-id)
-                       (combobulate-refactor (:id refactor-id)
-                         (combobulate-move-to-node current-node)))
-                     ;; as above, if we're in static mode, we do not
-                     ;; prompt the user to pick a cursor
-                     :first-choice combobulate-envelope-static
-                     :reset-point-on-abort t
-                     :reset-point-on-accept nil)))
+             (if-let (selected-node (combobulate-proffer-choices
+                                     nodes
+                                     (lambda (index current-node proxy-nodes refactor-id)
+                                       (combobulate-refactor (:id refactor-id)
+                                         (combobulate-move-to-node current-node)))
+                                     ;; as above, if we're in static mode, we do not
+                                     ;; prompt the user to pick a cursor
+                                     :first-choice combobulate-envelope-static
+                                     :signal-on-abort t
+                                     :reset-point-on-abort t
+                                     :reset-point-on-accept nil))
+                 (setq selected-point (combobulate-node-start selected-node))
+               (setq selected-point nil))
              ;; This is a special post-run instructions that we only
              ;; ever action once we've exited the entire envelope
              ;; instruction loop. It is the final action carried out
@@ -629,8 +629,7 @@ expansion:
   (let ((result) (start (point))
         (end (point-marker))
         (change-group (prepare-change-group))
-        (should-unwind nil)
-        (is-success nil)
+        (state 'start)
         (undo-outer-limit nil)
         (undo-limit most-positive-fixnum)
         (undo-strong-limit most-positive-fixnum)
@@ -647,8 +646,9 @@ expansion:
       ;; deactivate the mark as the region would otherwise interfere
       ;; with the expansion.
       (setq mark-active nil))
+    (cl-assert (eq state 'start))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
-      (unwind-protect
+      (condition-case nil
           (progn
             ;; HACK: passing `mark-field' (from `combobulate-refactor')
             ;; around like this is a messy work-around because of how
@@ -662,20 +662,16 @@ expansion:
               (pcase-dolist (`('selected-point . ,pt) post-run-instructions)
                 (setq selected-point pt)))
             (commit)
-            (setq is-success t))
-        (rollback)
-        (unless is-success
-          ;; We cannot cancel a change group inside a
-          ;; `combobulate-refactor' (which itself uses change groups) as
-          ;; that... that seems to break Emacs. So instead we use a flag
-          ;; to indicate we unwound due to an error.
-          (setq should-unwind t))))
-    ;; Only when both `combobulate-envelope--undo-on-quit' and
-    ;; `should-unwind' is set do we cancel. The
-    ;; `combobulate-envelope--undo-on-quit' exist purely to prevent
-    ;; cancellations during proffer choices where the envelope is
-    ;; previewed.
-    (if (and should-unwind combobulate-envelope--undo-on-quit)
+            (setq state 'success))
+        (quit
+         (rollback)
+         (setq state 'error))))
+    ;; Only when both `combobulate-envelope--undo-on-quit' and `state'
+    ;; is error is set do we cancel the change group. The
+    ;; `combobulate-envelope--undo-on-quit' variable is there to
+    ;; prevent cancellations during proffer choices where the envelope
+    ;; is previewed.
+    (if (and (eq state 'error) combobulate-envelope--undo-on-quit)
         (cancel-change-group change-group)
       (accept-change-group change-group))
     (when combobulate-envelope-indent-region-function
