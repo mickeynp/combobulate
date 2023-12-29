@@ -215,7 +215,7 @@ function."
      (cl-letf (((symbol-function 'combobulate-proffer-choices)
                 (cl-defun stub-proffer-actions (nodes action-fn &key (first-choice nil)
                                                       (reset-point-on-abort t) (reset-point-on-accept nil)
-                                                      (prompt-description nil) (use-proxy-nodes t)
+                                                      (prompt-description nil)
                                                       (extra-map nil) (flash-node nil) (unique-only t)
                                                       (accept-action 'rollback)
                                                       (cancel-action 'commit)

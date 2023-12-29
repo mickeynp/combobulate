@@ -59,6 +59,14 @@
    combobulate-splice-down
    combobulate-vanish-node))
 
+(combobulate-test-generate-tests
+ '("./fixtures/up-down/module-statements.tsx"
+   "./fixtures/up-down/nested-jsx.tsx")
+ "navigate-up"
+ (apply-partially #'combobulate-test-generate-movement-ert-test nil)
+ '(combobulate-navigate-up
+   combobulate-navigate-up-list-maybe))
+
 (let ((combobulate-test-fixture-delta-subdir "envelope/"))
   (combobulate-test-generate-tests
    '("./fixtures/envelope/blank.py")
