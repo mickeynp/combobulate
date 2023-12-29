@@ -418,6 +418,7 @@ from `combobulate-manipulation-envelopes') to insert."
           ,@(combobulate-production-rules-get "statement")
           ,@(combobulate-production-rules-get "statement_block")
           ,@(combobulate-production-rules-get "primary_expression")
+          ,@(combobulate-production-rules-get "class")
           ,@(combobulate-production-rules-get "object")
           ;; "function_declaration" "lexical_declaration"
           ;; "export_statement"  "array" "arrow_function"
