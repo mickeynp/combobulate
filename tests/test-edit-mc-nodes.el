@@ -82,7 +82,7 @@
 
 (ert-deftest combobulate-test-mc-combobulate-edit-node-type-dwim ()
   :tags '(multiple-cursors manipulation)
-  (combobulate-with-stubbed-proffer-choices (:choices '(0))
+  (combobulate-with-stubbed-proffer-choices (:choices '(1))
     (with-stubbed-mc #'combobulate-edit-node-type-dwim
                      python
                      python-ts-mode
