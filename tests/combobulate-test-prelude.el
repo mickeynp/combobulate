@@ -137,7 +137,7 @@ overlay at. If it is nil, the current point is used."
                                                            (overlay-get ov 'combobulate-test-number))
                                                          ovs)
                                                  '(0)))))))
-      (when (>= next-number 10)
+      (when (> next-number 10)
         (error "Too many overlays"))
       (combobulate--test-delete-overlay next-number)
       (combobulate--test-place-category-overlay next-number category (point))
