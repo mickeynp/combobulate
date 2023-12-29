@@ -176,11 +176,13 @@ kept."
   (when proxy-node
     ;; if we are holding on to a valid treesit node then just pass
     ;; that on provided it's still useful.
-    (if t
-        ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
-        ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
-        ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
-        (save-excursion
+    (cond
+     ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
+     ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
+     ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
+     ;; check if proxy-node is even a proxy node
+     ((not (combobulate-proxy-node-p proxy-node)) proxy-node)
+     (t (save-excursion
           (combobulate--goto-node proxy-node)
           (car-safe (seq-filter (lambda (pt-node)
                                   (and
@@ -194,8 +196,7 @@ kept."
                                        t)))
                                 (combobulate-filter-nodes
                                  (combobulate-all-nodes-at-point)
-                                 :keep-types (list (combobulate-node-type proxy-node))))))
-      (combobulate-proxy-node-node proxy-node))))
+                                 :keep-types (list (combobulate-node-type proxy-node))))))))))
 
 
 (provide 'combobulate-interface)
