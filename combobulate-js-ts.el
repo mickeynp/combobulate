@@ -198,7 +198,7 @@ from `combobulate-manipulation-envelopes') to insert."
            :key "t"
            :template ("<" (p tag "Tag Name: ") ">" n>
                       r>
-                      n> "</" (field tag) ">"))
+                      n "</" (field tag) ">" >))
           (:description
            "<> ... </>"
            :name "fragment"
