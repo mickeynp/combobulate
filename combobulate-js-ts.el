@@ -281,11 +281,10 @@ from `combobulate-manipulation-envelopes') to insert."
              :position at-or-in))
            :remove-types ("comment")
            :match-query ((_) name: (array_pattern (_)+  @match)))
-          ((:node
-            (:activation-nodes
-             "jsx_attribute"
-             :find-parent ("jsx_opening_element" "jsx_self_closing_element")
-             :position at-or-in))
+          (:activation-nodes
+           ((:node ("jsx_attribute")
+                   :find-parent ("jsx_opening_element" "jsx_self_closing_element")
+                   :position at-or-in))
            :match-query ((_) (jsx_attribute)+ @match))
           ;; sibling-level editing
           (:activation-nodes
