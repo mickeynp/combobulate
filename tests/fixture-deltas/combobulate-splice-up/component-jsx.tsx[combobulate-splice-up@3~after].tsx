@@ -4,6 +4,5 @@ const test = () => (
   <something>
     {1 + 2}
     {3 + 4}
-  </foo>
 
   </something>)

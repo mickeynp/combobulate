@@ -5,6 +5,5 @@ const test = () => (
     <bar>quux</bar>
     {1 + 2}
     {3 + 4}
-  </foo>
 
   </something>)

@@ -2,7 +2,6 @@
 
 const test = () => (
   <something>
-    <foo>
-      <bar>baz</bar> <bar>quux</bar>
+    <bar>baz</bar> <bar>quux</bar>
 
   </something>)
