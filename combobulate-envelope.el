@@ -367,17 +367,17 @@ Unlike most proffer preview functions, this one assumes that
             (combobulate-move-to-node node)
             (cond ((equal node current-node)
                    (setq expand-envelope rest-envelope
-                         is-current-node t))
+                         is-current-node t
+                         pt (point)))
                   (t (setq expand-envelope missing)))
             (seq-let [[start &rest end] &rest pt]
                 (combobulate-refactor (:id combobulate-envelope-refactor-id)
-                  (when is-current-node (setq pt (point)))
                   (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
-                    (when pt (goto-char pt))
                     (rollback)))
               (mark-range-deleted start end)
               (when is-current-node
-                (mark-range-highlighted start end)))))))))
+                (mark-range-highlighted start end))))))
+      (when pt (goto-char pt)))))
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (collected-instructions categories)
   "Expand each COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
