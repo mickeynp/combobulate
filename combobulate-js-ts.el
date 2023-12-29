@@ -323,9 +323,16 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-manipulation-splicing-procedures
         `((:activation-nodes
            ((:node
+             ("jsx_fragment" "jsx_element" "jsx_self_closing_element" "jsx_expression"
+              "jsx_text")
+             :find-base-rule-parent (:remove-types ("statement_block"))
+             :position at-or-in))
+           :match-siblings (:keep-parent nil :keep-siblings t)
+           :remove-types ("jsx_opening_element" "jsx_closing_element"))
+          (:activation-nodes
+           ((:node
              ,(append
-               '("jsx_fragment" "jsx_element" "jsx_self_closing_element" "jsx_expression"
-                 "lexical_declaration")
+               '("lexical_declaration")
                (combobulate-production-rules-get "if_statement")
                (combobulate-production-rules-get "declaration")
                (combobulate-production-rules-get "statement"))
