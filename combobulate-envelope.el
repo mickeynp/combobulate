@@ -670,7 +670,7 @@ expansion:
         (undo-limit most-positive-fixnum)
         (undo-strong-limit most-positive-fixnum)
         (combobulate-envelope--registers (append registers combobulate-envelope-registers))
-        (combobulate-envelope-refactor-id (combobulate-refactor-setup "foo"))
+        (combobulate-envelope-refactor-id (combobulate-refactor-setup))
         (selected-point (point)))
     (activate-change-group change-group)
     (when (use-region-p)
