@@ -171,7 +171,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -399,9 +399,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (let ((string-label (symbol-name label)))
-                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -479,9 +479,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -495,7 +495,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -520,7 +520,7 @@ a match."
                               ;; would end up with several multiple
                               ;; cursors at the exact same position.
                               (lambda (node-a node-b) (equal (combobulate-node-range node-a)
-                                                        (combobulate-node-range node-b)))))
+                                                             (combobulate-node-range node-b)))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)
@@ -1338,7 +1338,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
+                               combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
@@ -1513,16 +1513,18 @@ more than one."
                             nodes))))
       (combobulate-proffer-choices
        (seq-drop-while #'combobulate-node-in-region-p nodes)
-       ;; do not mark `node' for deletion; highlight `node'; or
-       ;; move point to `node'.
        (lambda (index current-node proxy-nodes refactor-id)
          (combobulate-refactor (:id refactor-id)
+           ;; highlight the current node so the user can see the
+           ;; extent of the region.
            (combobulate--mark-node current-node t beginning-of-line)
+           ;; also, if it exists, mark the *next* node in the list
+           ;; with a highlight outline
            (when-let (next-node (nth (1+ index) proxy-nodes))
              (mark-node-highlighted next-node))))
        :reset-point-on-abort t
        :reset-point-on-accept nil
-       ;; HACK: This allows repetition of the command that
+       ;; This allows repetition of the command that
        ;; `combobulate-mark-node-dwim' is bound to, but this should be
        ;; built into `combobulate-proffer-choices'. Furthermore, is
        ;; `where-is-internal' really the best way to do this?

@@ -162,16 +162,16 @@ If the register does not exist, return DEFAULT or nil."
              (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
              (push (cons 'prompt
                          (lambda () (save-excursion
-                                 (goto-char prompt-point)
-                                 (unless combobulate-envelope-static
-                                   (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                       (combobulate-envelope-prompt
-                                                        prompt tag nil
-                                                        (lambda ()
-                                                          (combobulate-envelope--update-prompts
-                                                           buf tag (minibuffer-contents)))))))
-                                     (push (cons tag new-text) combobulate-envelope--registers)
-                                     (combobulate-envelope--update-prompts buf tag new-text))))))
+                                      (goto-char prompt-point)
+                                      (unless combobulate-envelope-static
+                                        (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                            (combobulate-envelope-prompt
+                                                             prompt tag nil
+                                                             (lambda ()
+                                                               (combobulate-envelope--update-prompts
+                                                                buf tag (minibuffer-contents)))))))
+                                          (push (cons tag new-text) combobulate-envelope--registers)
+                                          (combobulate-envelope--update-prompts buf tag new-text))))))
                    post-instructions)))
           ;; `(field TAG)' or `(f TAG)'
           ;;
