@@ -188,6 +188,11 @@ If the register does not exist, return DEFAULT or nil."
           ;; Push a `point-marker' that will serve as a possible
           ;; placement point for point after expansion.
           ('@ (push `(point ,(point-marker)) post-instructions))
+          ;; `@@'
+          ;;
+          ;; Push a `point' that will serve as a possible
+          ;; placement point for point after expansion.
+          ('@@ (push `(point ,(point)) post-instructions))
           ;; `n' or `n>'
           ;;
           ;; Calls `newline', or `newline' then `indent-according-to-mode'.
@@ -204,7 +209,9 @@ If the register does not exist, return DEFAULT or nil."
           ;;
           ;; For whitespace-sensitive languages, this is a way to move
           ;; back one level of indentation.
-          ('< (let ((col (- (current-column) 4)))
+          ('< (let ((col (or (and combobulate-envelope-deindent-function
+                                  (funcall combobulate-envelope-deindent-function))
+                             0)))
                 (newline)
                 (move-to-column col t)))
           ;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
@@ -465,8 +472,10 @@ not feature in CATEGORIES are returned."
                  (let ((expand-envelope))
                    (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                      (combobulate-move-to-node node)
-                     (combobulate-envelope-expand-instructions-1
-                      (if (equal node selected-node) rest-envelope missing))))))))
+                     (setq remaining-instructions
+                           (append remaining-instructions
+                                   (cdr (combobulate-envelope-expand-instructions-1
+                                         (if (equal node selected-node) rest-envelope missing)))))))))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
@@ -612,11 +621,18 @@ expansion:
    Like a prompt, but only inserts the text belonging to its
    prompt named TAG.
 
- `@'
 
-   Insert a point marker at point. After expansion, your point is
-   placed at this location. If there is more than one, then you
-   are asked to pick the one to jump to.
+ `@'
+   Insert a point marker at point. Point markers move with the
+   text being inserted, which is probably what you want. After
+   expansion, your point is placed at this location. If there is
+   more than one, then you are asked to pick the one to jump to.
+
+ `@@'
+
+   Track the absolute position of point. This is useful if you
+   want to place point at a specific location after expansion,
+   and because `@' does not put your point where you want it to.
 
  `n'
  `n>'
@@ -686,15 +702,13 @@ expansion:
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (condition-case nil
           (progn
-            ;; HACK: passing `mark-field' (from `combobulate-refactor')
-            ;; around like this is a messy work-around because of how
-            ;; `cl-flet' scoping works.
             (setq result (cdr (combobulate-envelope-expand-instructions-1 instructions)))
             (set-marker end (point))
             ;; Some instructions are meant to be run at the very end, after
             ;; all recursive expansions have taken place. Proffered point
             ;; locations are one such example.
-            (let ((post-run-instructions (cdr (combobulate-envelope-expand-post-run-instructions result '(point)))))
+            (let ((post-run-instructions (cdr (combobulate-envelope-expand-post-run-instructions
+                                               result '(point)))))
               (pcase-dolist (`('selected-point . ,pt) post-run-instructions)
                 (setq selected-point pt)))
             (commit)
@@ -703,7 +717,7 @@ expansion:
          (rollback)
          (setq state 'error))))
     ;; Only when both `combobulate-envelope--undo-on-quit' and `state'
-    ;; is error is set do we cancel the change group. The
+    ;; is `error' is set do we cancel the change group. The
     ;; `combobulate-envelope--undo-on-quit' variable is there to
     ;; prevent cancellations during proffer choices where the envelope
     ;; is previewed.

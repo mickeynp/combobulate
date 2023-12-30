@@ -190,6 +190,11 @@ Returns a non-nil value to indicate the indentation took place."
       (* python-indent-offset (length calculated-indentation)))))
 
 
+(defun combobulate-python-envelope-deindent-level ()
+  "Determine the next-closest indentation level to deindent to."
+  (car-safe (last (seq-take-while (lambda (num) (< num (current-column)))
+                                  (python-indent-calculate-levels)))))
+
 (defun combobulate-python-indent-determine-next-level ()
   "Determine the next indentation level.
 
@@ -332,11 +337,11 @@ again to cycle indentation.")))))
              :nodes ,statement-nodes
              :name "nest-try-except"
              :template
-             (@ "try:" n>
-                (choice* :missing ("pass") :rest (r>))
-                <
-                "except " (p Exception "Exception") ":" n>
-                (choice* :missing ("pass" n>) :rest (r> n))))
+             ("try:" n>
+              (choice* :missing (@@ "pass") :rest (@@ r>))
+              <
+              "except " (p Exception "Exception") ":" n>
+              (choice* :missing (@@ "pass" n>) :rest (@@ r> n))))
             (:description
              "try ... finally: ..."
              :key "btf"
@@ -421,6 +426,7 @@ again to cycle indentation.")))))
 
   (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
+  (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
   (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "decorated_definition" "lambda"))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
                                             "for_in_clause" "string" "decorated_definition"))

@@ -364,6 +364,12 @@ sub-types, such as `expression' into `(identifier string number
 Note that this defaults to `indent-region', but that may work
 well in indentation-sensitive languages like YAML or Python.")
 
+(defvar-local combobulate-envelope-deindent-function nil
+  "Function to call to calculate the previous indentation level of point.
+
+This is little use to anything except whitspace-sensitive
+languages like YAML and Python.")
+
 (defvar combobulate-envelope-symbol-prefix "combobulate-envelop-"
   "Prefix to use for symbol functions and variables for envelopes.")
 
