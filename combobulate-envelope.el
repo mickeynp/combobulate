@@ -21,7 +21,9 @@
 ;;; Commentary:
 
 ;; Code templating and snippet expansions that work similarly to
-;; `tempo', `skeleton', etc.
+;; `tempo' and `skeleton', albeit with far more features. See
+;; `combobulate-envelope-expand-instructions' for how to write
+;; envelope templates.
 
 ;;; Code:
 
@@ -162,16 +164,16 @@ If the register does not exist, return DEFAULT or nil."
              (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
              (push (cons 'prompt
                          (lambda () (save-excursion
-                                      (goto-char prompt-point)
-                                      (unless combobulate-envelope-static
-                                        (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                            (combobulate-envelope-prompt
-                                                             prompt tag nil
-                                                             (lambda ()
-                                                               (combobulate-envelope--update-prompts
-                                                                buf tag (minibuffer-contents)))))))
-                                          (push (cons tag new-text) combobulate-envelope--registers)
-                                          (combobulate-envelope--update-prompts buf tag new-text))))))
+                                 (goto-char prompt-point)
+                                 (unless combobulate-envelope-static
+                                   (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                       (combobulate-envelope-prompt
+                                                        prompt tag nil
+                                                        (lambda ()
+                                                          (combobulate-envelope--update-prompts
+                                                           buf tag (minibuffer-contents)))))))
+                                     (push (cons tag new-text) combobulate-envelope--registers)
+                                     (combobulate-envelope--update-prompts buf tag new-text))))))
                    post-instructions)))
           ;; `(field TAG)' or `(f TAG)'
           ;;
@@ -342,10 +344,11 @@ If the register does not exist, return DEFAULT or nil."
       (prog1 (let ((post-instructions
                     (combobulate-envelope-expand-post-run-instructions
                      post-instructions
-                     ;; categoires to expand right now. Note that we intentionally
-                     ;; exclude `point' as they should only be run once everything
-                     ;; else is finalised: they are literally the only thing to run
-                     ;; after everything else is done.
+                     ;; categories to expand right now. Note that we
+                     ;; intentionally exclude `point' as the default
+                     ;; as they should only be run once everything
+                     ;; else is finalised: they are literally the only
+                     ;; thing to run after everything else is done.
                      (or categories '(prompt repeat choice)))))
                (cons (cons start (car post-instructions)) (cdr post-instructions)))
         (rollback)))))
@@ -495,7 +498,9 @@ not feature in CATEGORIES are returned."
   "Expand an envelope of INSTRUCTIONS at point.
 
 Combobulate envelopes work in much the same way as Tempo or
-Skeletons but with a handful of differences:
+Skeletons, but Combobulate's envelopes are more powerful.
+
+Here are some of the differences:
 
 1. Prompts are executed in the minibuffer, much like the
 aforementioned tools, but they also update interactively as you
@@ -518,7 +523,9 @@ with other templating tools. Combobulate simplifies this with the
 it saves the column offset (but not point!) and restores the
 column on exit. That makes it possible to have nested sequences
 of code and be assured that the column is reset correctly when
-you exit the block.
+you exit the block. You can also use `<' in place of
+`save-column' to remove one level of indentation in
+whitespace-sensitive languages.
 
 6. You can now explicitly place point with `@'. Multiple
 instances of `@' are remembered and presented to you at the end
@@ -526,7 +533,9 @@ of the expansion so that you can choose which one to place your
 point at.
 
 7. Repetition (also a feature in Skeleton, but not Tempo) is also
-possible with `repeat' and `repeat-1'.
+possible with `repeat' and `repeat-1'. Note that indentation in
+whitespace-sensitive languages can be difficult to control with
+these forms. Keep them simple if you can.
 
 If there is an active REGION, then everything between `point' and
 `mark' is extracted and deleted and made available to
@@ -550,23 +559,36 @@ expansion:
    `region' (when `combobulate-envelope-indent-region-function'
    is non-nil) or `region-indented' when it is nil.
 
-   Both names hold the thus the
-   marked region (if there is one) when the envelope is
-   activated. The value is stored in
-   `combobulate-envelope-registers'.
+   Both register names hold the marked region (which is likely
+   the triggering node, if the user did not mark a region
+   themselves) when the envelope is activated. The value is
+   stored in `combobulate-envelope-registers'.
 
    The DEFAULT is a fallback value in case the REGISTER does not
    exist.
 
    Instructions ending with `>' also indent the inserted text
    according to the major mode's indentation preferences. It uses
-   `indent-region'.
+   `indent-region' for languages that are not
+   whitespace-sensitive.
 
    However, if `combobulate-envelope-indent-region-function' is
    nil (as it is in the likes of `python-mode') then a
-   specialized indentation mechanism is used that checks *point's
-   current column* and reindents the register's text, preserving
-   the relative indentation between the lines in the region.
+   specialized indentation system is used instead. The relative
+   indentation at the point of envelope invocation is preserved
+   and used to indent the inserted register according to its new
+   column offset when it is inserted and indented by `r>'.
+
+ `(choice BLOCK)'
+ `(choice* :name NAME :missing MISSING-BLOCK :rest BLOCK)'
+
+   Collect all choice blocks and present them to the user to
+   choose one. The BLOCK is a list of instructions that are
+   executed when the user picks that choice.
+
+   The `choice*' form is a variant that allows you to specify a
+   name for the choice, a block to execute if the choice is
+   *not* picked, and a block to execute if the choice is picked.
 
  `(prompt TAG PROMPT [TRANSFORMER-FN])'
  `(p TAG PROMPT [TRANSFORMER-FN])'
@@ -592,17 +614,31 @@ expansion:
 
  `@'
 
-   Insert a marker at point. After expansion, your point is
+   Insert a point marker at point. After expansion, your point is
    placed at this location. If there is more than one, then you
    are asked to pick the one to jump to.
 
  `n'
  `n>'
 
-   Call `newline' or `newline-and-indent'. Indentation is
-   done according to your major mode.
+   Call `newline' or `newline' followed by
+   `indent-according-to-mode'.
+
+   Indentation is done according to your major mode. Pay
+   attention if you use an envelope in a whitespace-sensitive
+   language like Python or YAML: you may need to use
+   `save-column' to remember the indentation of the previous
+   line, or `<' to remove one level of semantic indentation.
+
+ `<'
+
+   Remove one level of indentation from the current line. This
+   operation only works in select, whitespace-sensitive modes
+   like Python or YAML.
 
  `(save-column BLOCK)'
+
+   (Try to use `<' instead as it is more robust.)
 
    Saves point's *column* -- but not point itself! -- when
    entering BLOCK. Use this to remember the relative offset from
