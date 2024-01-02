@@ -1060,6 +1060,7 @@ point relative to the nodes in
     (define-key map [return] 'done)
     (define-key map [tab] 'next)
     (define-key map [S-iso-lefttab] 'prev)
+    (define-key map (kbd "<backtab>") 'prev)
     (define-key map (kbd "S-<tab>") 'prev)
     map)
   "Keymap for `combobulate-proffer-choices'.
