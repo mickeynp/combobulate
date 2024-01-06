@@ -1539,7 +1539,7 @@ more than one."
                              :named nil
                              :node nil
                              :field nil
-                             :pp thing
+                             :pp (capitalize (symbol-name combobulate-mark-node-or-thing-at-point))
                              :text thing)
                             nodes))))
       (combobulate-proffer-choices
