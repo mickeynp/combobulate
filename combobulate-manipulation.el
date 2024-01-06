@@ -1052,18 +1052,9 @@ point relative to the nodes in
 
 (defvar combobulate-envelope-static)
 
-(defvar combobulate-proffer-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-g" 'cancel)
-    (define-key map "\M-c" 'recursive-edit)
-    (define-key map "\C-l" #'recenter)
-    (define-key map [return] 'done)
-    (define-key map [tab] 'next)
-    (define-key map [S-iso-lefttab] 'prev)
-    (define-key map (kbd "<backtab>") 'prev)
-    (define-key map (kbd "S-<tab>") 'prev)
-    map)
-  "Keymap for `combobulate-proffer-choices'.
+(defvar-keymap combobulate-proffer-map
+  :parent nil
+  :doc "Keymap for `combobulate-proffer-choices'.
 
 You can bind regular commands to keys like a normal map, or you
 can bind one of the following special symbols:
@@ -1071,7 +1062,15 @@ can bind one of the following special symbols:
 The symbol `done' will accept the current choice and exit. The
 symbol `next' will move to the next choice. The symbol `prev'
 will move to the previous choice. The symbol `cancel' will cancel
-the current choice and exit.")
+the current choice and exit."
+  "TAB" 'next
+  "S-<tab>" 'prev
+  "<backtab>" 'prev
+  "RET" 'done
+  "C-g" 'cancel
+  "C-l" 'recenter
+  "M-c" 'recursive-edit
+  "M-h" 'next)
 
 (cl-defun combobulate-proffer-action-highlighter (index current-node proxy-nodes refactor-id)
   "Helper for `combobulate-proffer-choices' that highlights NODE."
@@ -1201,40 +1200,41 @@ the user aborts the choice. The following symbols are supported:
                                     ;; takes a vector of an event.
                                     (lookup-key
                                      map
-                                     (vector
-                                      ;; we need to preserve the raw
-                                      ;; event. If we want the event
-                                      ;; read by `read-event' to pass
-                                      ;; through to the event loop
-                                      ;; unscathed then we need the raw
-                                      ;; version.
-                                      (setq raw-event
-                                            (read-event
-                                             (substitute-command-keys
-                                              (format "%s %s`%s': `%s' or \\`S-TAB' to cycle; \\`C-g' quits; rest accepts.%s"
-                                                      (combobulate-display-indicator index (length proxy-nodes))
-                                                      (concat (or prompt-description "")
-                                                              (and prompt-description (propertize " → " 'face 'shadow)))
-                                                      (propertize (combobulate-pretty-print-node current-node) 'face
-                                                                  'combobulate-tree-highlighted-node-face)
-                                                      (mapconcat (lambda (k)
-                                                                   (propertize (key-description k) 'face 'help-key-binding))
-                                                                 ;; messy; is this really the best way?
-                                                                 (where-is-internal 'next map)
-                                                                 ", ")
-                                                      (if (and flash-node combobulate-flash-node)
-                                                          (concat "\n"
-                                                                  (or (combobulate-display-draw-node-tree
-                                                                       (combobulate-proxy-to-tree-node current-node))
-                                                                      ""))
-                                                        "")))
-                                             nil nil))))
+                                     ;; we need to preserve the raw
+                                     ;; event. If we want the event
+                                     ;; read by `read-key' to pass
+                                     ;; through to the event loop if
+                                     ;; we can't action the inputted
+                                     ;; key.
+                                     (setq raw-event
+                                           (read-key-sequence
+                                            (substitute-command-keys
+                                             (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
+                                                     (combobulate-display-indicator index (length proxy-nodes))
+                                                     (concat (or prompt-description "")
+                                                             (and prompt-description (propertize " → " 'face 'shadow)))
+                                                     (propertize (combobulate-pretty-print-node current-node) 'face
+                                                                 'combobulate-tree-highlighted-node-face)
+                                                     (mapconcat (lambda (k)
+                                                                  (propertize (key-description k) 'face 'help-key-binding))
+                                                                ;; messy; is this really the best way?
+                                                                (where-is-internal 'next map)
+                                                                ", ")
+                                                     (if allow-numeric-selection (concat "; \\`C-1' to \\`C-9' to select") "")
+                                                     (if (and flash-node combobulate-flash-node)
+                                                         (concat "\n"
+                                                                 (or (combobulate-display-draw-node-tree
+                                                                      (combobulate-proxy-to-tree-node current-node))
+                                                                     ""))
+                                                       "")))
+                                            )))
                                   ;; if `condition-case' traps a quit
                                   ;; error, then map it into the symbol
                                   ;; `cancel', which corresponds to the
                                   ;; equivalent event in the state
                                   ;; machine below.
-                                  (quit 'cancel)))
+                                  (quit 'cancel)
+                                  (t (rollback) 'cancel)))
                           (pcase result
                             ('prev
                              (refactor-action switch-action)
@@ -1339,7 +1339,7 @@ does not move point to either of NODE's boundaries."
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                               combobulate-manipulation-envelopes-custom))
+                          combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
@@ -1524,6 +1524,7 @@ more than one."
            (when-let (next-node (nth (1+ index) proxy-nodes))
              (mark-node-highlighted next-node))))
        :reset-point-on-abort t
+       :cancel-action 'rollback
        :reset-point-on-accept nil
        ;; This allows repetition of the command that
        ;; `combobulate-mark-node-dwim' is bound to, but this should be
@@ -1535,7 +1536,7 @@ more than one."
                                               combobulate-key-map))
                    ;; `M-h' (default) will expand the region; `M-H'
                    ;; contracts it.
-                   (list (cons "\M-H" 'prev)))
+                   (list (cons (kbd "M-H") 'prev)))
        :flash-node t
        :first-choice first-choice))))
 
