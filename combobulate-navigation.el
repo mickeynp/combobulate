@@ -509,7 +509,7 @@ extent."
               (when (> end largest)
                 (setq largest end))))
           nodes)
-    (list smallest largest)))
+    (cons smallest largest)))
 
 (defun combobulate-filter-nodes-by-type (nodes unwanted-node-types)
   "Filter NODES of UNWANTED-NODE-TYPES."
@@ -1776,8 +1776,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                       (cons 'match (cons (list child) nil))
-                     (cons 'no-match (cons nil nil)))))
+                            (cons 'match (cons (list child) nil))
+                          (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking
