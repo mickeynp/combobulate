@@ -72,6 +72,18 @@ you'd pressed `C-g'."
           (const :tag "Accept and Commit" done)
           (const :tag "Cancel" cancel)))
 
+(defcustom combobulate-proffer-allow-numeric-selection t
+  "Allow numeric selection in proffer prompts that support numeric selection.
+
+If non-nil, you can type a number to select a choice in a proffer
+prompt. This is useful if you have a lot of choices and want to
+quickly select one without having to type the whole thing out.
+
+If nil, then numeric selection is disabled."
+  :group 'combobulate
+  :type 'boolean)
+
+
 (defcustom combobulate-flash-node t
   "Display a tree outline of nodes near point if non-nil."
   :group 'combobulate
@@ -154,7 +166,13 @@ vector or an escaped string."
                                                (((background dark))
                                                 :background "gray20")
                                                (t :inherit secondary-selection))
-  "Face for notable text during editing or refactoring."
+  "Face for text that is important or relevant to a refactoring operation."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-label-face '((t
+                                            :background "DarkOrchid4"
+                                            :foreground "thistle1"))
+  "Face for the overlay label for a range during editing or refactoring."
   :group 'combobulate-faces)
 
 (defface combobulate-refactor-field-face '((t (:background "MediumPurple4" :foreground "MediumPurple1")))

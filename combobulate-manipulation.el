@@ -155,6 +155,8 @@
                   (mark-node-deleted (n)
                     (add-marker (combobulate--refactor-mark-deleted (combobulate-node-start n)
                                                                     (combobulate-node-end n))))
+                  (mark-range-label (beg end label &optional face)
+                    (add-marker (combobulate--refactor-mark-label beg end label face)))
                   (mark-node-highlighted (n &optional face advance)
                     (mark-range-highlighted (combobulate-node-start n)
                                             (combobulate-node-end n)
@@ -171,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                                    (combobulate--refactor-update-field ov tag text)))
+                               (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -479,9 +481,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -506,6 +508,7 @@ is selectable.
 
 MATCH-FN takes one argument, a node, and should return non-nil if it is
 a match."
+
   (let ((matches)
         ;; default to 1 "match" as there's no point in creating
         ;; multiple cursors when there's just one match
@@ -628,7 +631,7 @@ The action can be one of the following:
             (query (list q))
             (node-extent (combobulate-node-range-extent
                           (combobulate--query-from-node query node nil nil t)))
-            (text (apply #'buffer-substring-no-properties node-extent)))
+            (text (buffer-substring-no-properties (car node-extent) (cdr node-extent))))
       (combobulate--replace-node node text)
     (error "Cannot vanish node `%s'" (combobulate-pretty-print-node node))))
 
@@ -704,7 +707,9 @@ If there are no legitimate sexp nodes around point, fall back to
 
 (defun combobulate--kill-nodes (nodes)
   "Kill between the smallest and greatest range of NODES."
-  (apply #'kill-region (combobulate-node-range-extent nodes)))
+  (if-let (bounds (combobulate-node-range-extent nodes))
+      (kill-region (car bounds) (cdr bounds))
+    (error "No nodes to kill")))
 
 (defun combobulate--mark-extent (start end &optional swap beginning-of-line)
   "Set mark to START and point to END and activates the mark.
@@ -1085,6 +1090,7 @@ the current choice and exit."
                                              (accept-action 'rollback)
                                              (cancel-action 'commit)
                                              (switch-action 'rollback)
+                                             (allow-numeric-selection nil)
                                              (signal-on-abort nil)
                                              (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
@@ -1129,6 +1135,11 @@ nodes that share the same range extent. I.e., a `block' and a
 `statement' node that effectively encompass the same range in the
 buffer.
 
+`:allow-numeric-selection' is a boolean that determines whether
+the user can select a node by typing its index. If non-nil, then
+the user can type a number to select the node at that index from
+1 through to 9.
+
 `:extra-map' is a list of cons cells consisting of (KEY
 . COMMAND). The extra keys are mapped into the proffer map,
 `combobulate-proffer-map'.
@@ -1150,6 +1161,10 @@ the user aborts the choice. The following symbols are supported:
   `message' - Display a message in the echo area.
 
 `:prompt-description' is a string that is displayed in the prompt."
+  (setq allow-numeric-selection
+	;; numeric selection uses `C-1' through to `C-9' which cannot
+	;; always be typed on a terminal.
+	(and allow-numeric-selection (display-graphic-p)))
   (let ((proxy-nodes
          (and nodes
               (funcall #'combobulate-make-proxy
@@ -1170,7 +1185,13 @@ the user aborts the choice. The following symbols are supported:
         (map (if extra-map
                  (let ((map (make-sparse-keymap)))
                    (set-keymap-parent map combobulate-proffer-map)
+		   (define-key map (this-command-keys) 'next)
                    (mapc (lambda (k) (define-key map (car k) (cdr k))) extra-map)
+                   (when (and allow-numeric-selection
+                              combobulate-proffer-allow-numeric-selection)
+                     (dotimes (i 9)
+                       (define-key map (kbd (format "C-%d" (1+ i)))
+                                   (intern (format "select-%d" (1+ i))))))
                    map)
                combobulate-proffer-map)))
     (if proxy-nodes
@@ -1257,6 +1278,15 @@ the user aborts the choice. The following symbols are supported:
                              (setq state 'abort)
                              (refactor-action cancel-action)
                              (keyboard-quit))
+                            ;; handle numeric selection `select-1' to
+                            ;; `select-9'
+                            ((pred (lambda (x) (and (symbolp x)
+                                               (string-match-p "^select-[1-9]$" (symbol-name x)))))
+                             (let ((n (string-to-number (substring (symbol-name result) -1))))
+                               (when (and (>= n 1) (<= n 9))
+                                 (refactor-action switch-action)
+                                 (setq index (1- n))
+                                 (throw 'next nil))))
                             (_
                              (combobulate-message "Committing...")
                              ;; pushing `raw-event' to
@@ -1522,7 +1552,19 @@ more than one."
            ;; also, if it exists, mark the *next* node in the list
            ;; with a highlight outline
            (when-let (next-node (nth (1+ index) proxy-nodes))
-             (mark-node-highlighted next-node))))
+             (mark-node-highlighted next-node))
+           ;; if the user enabled numeric selection, then label the
+           ;; first ten nodes.
+           (when (and (display-graphic-p) combobulate-proffer-allow-numeric-selection)
+             (dotimes (i 9)
+               (when-let ((idx-node (nth i proxy-nodes)))
+                 (mark-range-label
+                  (combobulate-node-start idx-node)
+                  (1+ (combobulate-node-start idx-node))
+                  (int-to-string (1+ i))))))))
+       ;; this feature only works properly on displays that support
+       ;; ctrl-<number> keys.
+       :allow-numeric-selection (display-graphic-p)
        :reset-point-on-abort t
        :cancel-action 'rollback
        :reset-point-on-accept nil
@@ -1843,9 +1885,9 @@ beginning of the line."
               ('(set-point)
                (goto-char ov-start))
               (`(field . ,_))
-              ;; do nothing; it's just a highlight
+              ;; do nothing - their action is part of the overlay
               ('(highlighted))
-              ;; cursors are just for display.
+              ('(labelled))
               ('(cursor))
               (_ (error "Unknown refactor commit action `%s'" action)))))
         (when destroy-overlay
@@ -1875,6 +1917,13 @@ beginning of the line."
   (let ((ov (make-overlay beg end nil advance advance)))
     (overlay-put ov 'combobulate-refactor-actions '((highlighted)))
     (overlay-put ov 'face (or face 'combobulate-refactor-highlight-face))
+    ov))
+
+(defun combobulate--refactor-mark-label (beg end label &optional face)
+  (let ((ov (make-overlay beg end nil nil nil)))
+    (overlay-put ov 'combobulate-refactor-actions '((labelled)))
+    (overlay-put ov 'face (or face 'combobulate-refactor-label-face))
+    (overlay-put ov 'display label)
     ov))
 
 (defun combobulate--refactor-mark-copy (beg end &optional target-var)
