@@ -70,24 +70,17 @@
 
   (setq combobulate-navigation-sibling-procedures
         `(
-          ;; help clone work with array elements
+          ;; general navigation
           (:activation-nodes
            ((:node
              ,(combobulate-production-rules-get "array")
              :position at
-             :find-immediate-parent ,(combobulate-production-rules-get "array")))
+             :find-immediate-parent (combobulate-production-rules-get "array")))
            :match-children t)
-          ;; help clone find pairs
+          ;; pair-wise navigation
           (:activation-nodes
            ((:node ("pair") :position at :find-immediate-parent ("object")))
-           :match-children t)
-          ;; for general navigation
-          (:activation-nodes
-           ((:node
-             ("named_imports" "object" "formal_parameters" "array" "object_type" "arguments")
-             :position at-or-in))
-           :remove-types ("comment")
-           :match-query ((_) (_)+ @match))))
+           :match-children t)))
 
   (setq combobulate-navigation-parent-child-nodes `("document" "object" "array" "pair"))
 
