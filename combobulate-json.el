@@ -35,7 +35,7 @@
   (pcase (combobulate-node-type node)
     ("pair" (combobulate-node-text (combobulate-node-child-by-field node "key")))
     ("string" (combobulate-string-truncate
-               (concat "\"" (combobulate-node-text node) "\"")
+               (concat  (combobulate-node-text node))
                40))
     (_ default-name)))
 
