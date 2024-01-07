@@ -401,9 +401,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                         (let ((string-label (symbol-name label)))
-                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                    (let ((string-label (symbol-name label)))
+                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -447,10 +447,10 @@ Combobulate will use its definition of siblings as per
   (with-navigation-nodes (:nodes combobulate-navigation-default-nodes
                                  :procedures combobulate-navigation-sibling-procedures)
 
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
-                                    (combobulate--edit-node-determine-action arg))
-      (error "Cannot find any editable nodes here"))))
+    (let ((node (combobulate--get-nearest-navigable-node)))
+      (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
+                                  (combobulate--edit-node-determine-action arg)
+                                  node))))
 
 (defun combobulate-edit-cluster-dwim (arg)
   "Precisely edit targeted clusters of nodes.
@@ -497,7 +497,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -568,14 +568,7 @@ a match."
                                      'face 'combobulate-tree-branch-face))))
                grouped-matches))))
         (rollback)
-        (when matches
-          (setq matches (combobulate--mc-edit-nodes matches action))
-          (combobulate-message
-           (format "Editing %s in `%s'"
-                   (combobulate-tally-nodes matches t)
-                   (propertize
-                    (combobulate-node-type group-node)
-                    'face 'combobulate-active-indicator-face))))))))
+        (combobulate--mc-edit-nodes matches action node)))))
 
 (defun combobulate-edit-nodes (placement-nodes)
   "Edit PLACEMENT-NODES.
@@ -598,21 +591,13 @@ The action can be one of the following:
 
 (defun combobulate-edit-cluster (node action)
   "Edit CLUSTER of nodes at, or around, NODE."
-  (let ((matches))
-    (pcase-let ((`((,parent-node . ,_) . ,labelled-matches) (combobulate-procedure-start node)))
-      (setq matches (combobulate--mc-edit-nodes
-                     ;; Remove `@discard' matches.
-                     (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
-                                              labelled-matches))
-                     action))
-      (cond ((= (length matches) 0)
-             (combobulate-message "There are zero nodes available to edit."))
-            (t (combobulate-message
-                (concat "Editing "
-                        (combobulate-tally-nodes matches t)
-                        " in "  (propertize
-                                 (combobulate-node-type parent-node)
-                                 'face 'combobulate-active-indicator-face))))))))
+  (pcase-let ((`((,parent-node . ,_) . ,labelled-matches) (combobulate-procedure-start node)))
+    (combobulate--mc-edit-nodes
+     ;; Remove `@discard' matches.
+     (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
+                              labelled-matches))
+     action
+     node)))
 
 (defun combobulate-vanish-node (&optional arg)
   "Vanishes the node at point and attempts to preserve its children."

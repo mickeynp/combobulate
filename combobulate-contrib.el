@@ -40,8 +40,8 @@
   (interactive)
   ;; Is this right?
   (avy-process (mapcar (lambda (node) (cons (cons (combobulate-node-start node)
-                                             (combobulate-node-end node))
-                                       (selected-window)))
+                                                  (combobulate-node-end node))
+                                            (selected-window)))
                        (combobulate--query-tree (combobulate--make-navigation-query)
                                                 #'combobulate-node-visible-window-p))))
 
@@ -133,11 +133,22 @@ match a placement action."
         (combobulate--mc-enable)
         matched))))
 
-(defun combobulate--mc-edit-nodes (nodes &optional action)
+(defun combobulate--mc-edit-nodes (nodes &optional action ctx-node)
   "Edit NODES with multiple cursors placed at ACTION.
 
-Where ACTION is `before', `after', or `mark'."
-  (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes)))
+Where ACTION is `before', `after', or `mark'.
+
+CTX-NODE is the node that was used to generate NODES, such as a
+parent node. It is only used for messaging."
+  (cond
+   ((null nodes) (error "There are no editable nodes."))
+   (t (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes))
+      (combobulate-message
+       (concat "Editing " (combobulate-tally-nodes nodes t)
+               (and ctx-node (format " in `%s'"
+                                     (propertize
+                                      (combobulate-pretty-print-node ctx-node)
+                                      'face 'combobulate-active-indicator-face))))))))
 
 (provide 'combobulate-contrib)
 ;;; combobulate-contrib.el ends here
