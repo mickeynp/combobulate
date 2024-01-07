@@ -52,7 +52,7 @@
 (eval-when-compile
   (require 'cl-lib))
 
-
+(defvar combobulate-mode)
 (declare-function combobulate-get-inverted-rule-symbol "combobulate")
 (declare-function combobulate-get-rule-symbol "combobulate")
 
@@ -1162,7 +1162,7 @@ highlight Combobulate highlighters.")
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

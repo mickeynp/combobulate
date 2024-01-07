@@ -137,7 +137,7 @@
         (--pre-existing-session (gensym)))
     `(let ((,--pre-existing-session (combobulate-refactor--get-active-session ,id))
            (,--session (combobulate-refactor-setup ,id)))
-       (cl-flet* ((add-marker (ov &optional end)
+       (cl-flet* ((add-marker (ov)
                     (push ov (alist-get ,--session combobulate-refactor--active-sessions))
                     ov)
                   (mark-range-move (beg end position)
@@ -508,12 +508,10 @@ is selectable.
 
 MATCH-FN takes one argument, a node, and should return non-nil if it is
 a match."
-
   (let ((matches)
         ;; default to 1 "match" as there's no point in creating
         ;; multiple cursors when there's just one match
         (ct 1)
-        (group-node)
         (grouped-matches))
     (dolist (start-node (combobulate-get-parents node))
       (let ((known-ranges (make-hash-table :test #'equal :size 1024)))
@@ -536,7 +534,7 @@ a match."
                (combobulate-proxy-to-tree-node
                 (combobulate-proffer-choices
                  (reverse (mapcar 'car grouped-matches))
-                 (lambda (index current-node proxy-nodes refactor-id)
+                 (lambda (_index current-node _proxy-nodes refactor-id)
                    (combobulate-refactor (:id refactor-id)
                      (rollback)
                      (mark-node-highlighted current-node)
@@ -559,7 +557,6 @@ a match."
                      ;; indicate the locus of editing
                      ;; by highlighting the entire node
                      ;; boundary.
-                     (setq group-node node)
                      (mark-node-highlighted current-node)))
                  :unique-only nil
                  :prompt-description
@@ -597,7 +594,7 @@ The action can be one of the following:
      (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
                               labelled-matches))
      action
-     node)))
+     parent-node)))
 
 (defun combobulate-vanish-node (&optional arg)
   "Vanishes the node at point and attempts to preserve its children."
@@ -1062,7 +1059,7 @@ the current choice and exit."
   "M-c" 'recursive-edit
   "M-h" 'next)
 
-(cl-defun combobulate-proffer-action-highlighter (index current-node proxy-nodes refactor-id)
+(cl-defun combobulate-proffer-action-highlighter (_index current-node _proxy-nodes refactor-id)
   "Helper for `combobulate-proffer-choices' that highlights NODE."
   (combobulate-refactor (:id refactor-id)
     (mark-node-highlighted current-node)))
@@ -1201,7 +1198,7 @@ the user aborts the choice. The following symbols are supported:
                             (progn (refactor-action accept-action)
                                    (setq state 'accept))
                           (setq result
-                                (condition-case err
+                                (condition-case nil
                                     ;; `lookup-key' is funny and it only
                                     ;; takes a vector of an event.
                                     (lookup-key
@@ -1305,7 +1302,7 @@ the user aborts the choice. The following symbols are supported:
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
       (when-let ((node (combobulate-proffer-choices
                         (seq-sort #'combobulate-node-larger-than-node-p (combobulate--get-all-navigable-nodes-at-point))
-                        (lambda (index current-node proxy-nodes refactor-id)
+                        (lambda (_index current-node _proxy-nodes refactor-id)
                           (combobulate-refactor (:id refactor-id)
                             (mark-node-deleted current-node)
                             (mark-node-highlighted current-node)
@@ -1438,7 +1435,7 @@ See `combobulate-apply-envelope' for more information."
                                         (cons (combobulate-node-at-point)
                                               (combobulate-get-parents (combobulate-node-at-point))))
                           (list (combobulate-make-proxy-point-node))))
-                       (lambda (index current-node proxy-nodes refactor-id)
+                       (lambda (_index current-node _proxy-nodes refactor-id)
                          ;; mark deleted and highlight first. That way when we apply
                          ;; the envelope the overlays expand to match.
                          (combobulate-refactor (:id refactor-id)

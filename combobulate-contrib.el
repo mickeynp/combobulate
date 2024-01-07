@@ -34,14 +34,15 @@
 (declare-function mc/remove-fake-cursors "multiple-cursors-core.el")
 (declare-function mc/maybe-multiple-cursors-mode "multiple-cursors-core.el")
 (declare-function mc/create-fake-cursor-at-point "multiple-cursors-core.el")
+(declare-function combobulate-tally-nodes "combobulate-manipulation.el")
 
 (defun combobulate-avy-jump ()
   "Use avy to jump to a navigable node"
   (interactive)
   ;; Is this right?
   (avy-process (mapcar (lambda (node) (cons (cons (combobulate-node-start node)
-                                                  (combobulate-node-end node))
-                                            (selected-window)))
+                                             (combobulate-node-end node))
+                                       (selected-window)))
                        (combobulate--query-tree (combobulate--make-navigation-query)
                                                 #'combobulate-node-visible-window-p))))
 
@@ -51,6 +52,7 @@
   (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
     (combobulate-avy-jump)))
 
+(defvar multiple-cursors-mode)
 (when (fboundp 'multiple-cursors-mode)
   (require 'multiple-cursors))
 

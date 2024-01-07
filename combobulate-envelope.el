@@ -108,7 +108,6 @@ If the register does not exist, return DEFAULT or nil."
   "Internal function that expands INSTRUCTIONS."
   (let ((buf (current-buffer))
         (post-instructions)
-        (end (point-marker))
         (start (point-marker)))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (sub-instruction instructions)
@@ -164,16 +163,16 @@ If the register does not exist, return DEFAULT or nil."
              (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
              (push (cons 'prompt
                          (lambda () (save-excursion
-                                 (goto-char prompt-point)
-                                 (unless combobulate-envelope-static
-                                   (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                       (combobulate-envelope-prompt
-                                                        prompt tag nil
-                                                        (lambda ()
-                                                          (combobulate-envelope--update-prompts
-                                                           buf tag (minibuffer-contents)))))))
-                                     (push (cons tag new-text) combobulate-envelope--registers)
-                                     (combobulate-envelope--update-prompts buf tag new-text))))))
+                                      (goto-char prompt-point)
+                                      (unless combobulate-envelope-static
+                                        (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                            (combobulate-envelope-prompt
+                                                             prompt tag nil
+                                                             (lambda ()
+                                                               (combobulate-envelope--update-prompts
+                                                                buf tag (minibuffer-contents)))))))
+                                          (push (cons tag new-text) combobulate-envelope--registers)
+                                          (combobulate-envelope--update-prompts buf tag new-text))))))
                    post-instructions)))
           ;; `(field TAG)' or `(f TAG)'
           ;;
@@ -268,16 +267,13 @@ If the register does not exist, return DEFAULT or nil."
              ;; indentation so it matches correctly: this must happen
              ;; from the beginning of the line. Therefore, we change
              ;; the start point marker to match.
-             (let ((curr-col (current-indentation)))
-               (forward-line 0)
-               (setf start (point)))
+             (forward-line 0)
+             (setf start (point))
              (insert (combobulate-indent-string
                       default
                       :first-line-operation 'absolute
                       :first-line-amount (current-indentation)
-                      :rest-lines-operation 'relative))
-             ;; required?!
-             (setf end (point)))
+                      :rest-lines-operation 'relative)))
             (t (insert default))))
           ;; "string"
           ;;
@@ -360,15 +356,14 @@ If the register does not exist, return DEFAULT or nil."
                (cons (cons start (car post-instructions)) (cdr post-instructions)))
         (rollback)))))
 
-(defun combobulate-envelope-render-preview (index current-node proxy-nodes refactor-id)
+(defun combobulate-envelope-render-preview (_index current-node proxy-nodes refactor-id)
   "Render a preview of the envelope at INDEX.
 
 Unlike most proffer preview functions, this one assumes that
 `accept-action' passed to `combobulate-proffer-choices' is
 `commit' and not its usual value of `rollback'."
   (combobulate-refactor (:id refactor-id)
-    (let ((marker (point-marker))
-          (pt)
+    (let ((pt)
           (combobulate-envelope-static t)
           (combobulate-envelope--undo-on-quit nil))
       (dolist (node proxy-nodes)
@@ -380,7 +375,7 @@ Unlike most proffer preview functions, this one assumes that
                          is-current-node t
                          pt (point)))
                   (t (setq expand-envelope missing)))
-            (seq-let [[start &rest end] &rest pt]
+            (seq-let [[start &rest end] &rest _pt]
                 (combobulate-refactor (:id combobulate-envelope-refactor-id)
                   (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
                     (rollback)))
@@ -408,9 +403,7 @@ Any unfilfilled instructions in COLLECTED-INSTRUCTIONS that did
 not feature in CATEGORIES are returned."
   (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
         (remaining-instructions)
-        (start (point))
-        (end (point-marker))
-        (result))
+        (end (point-marker)))
     ;; strip out instructions that we weren't asked to process: return
     ;; them instead.
     (setq remaining-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
@@ -420,7 +413,7 @@ not feature in CATEGORIES are returned."
           (`(prompt . ,prompts)
            (save-excursion (mapc #'funcall (mapcar #'cdr prompts))))
           (`(choice . ,choices)
-           (let ((node) (nodes))
+           (let ((nodes))
              (pcase-dolist (`(choice ,pt ,name ,missing ,rest-envelope ,text) choices)
                (push (make-combobulate-proxy-node
                       :start pt
@@ -469,13 +462,12 @@ not feature in CATEGORIES are returned."
                ;; it with its instructions. Then backfill the choices
                ;; we didn't make with the missing value (if any)
                (dolist (node nodes)
-                 (let ((expand-envelope))
-                   (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
-                     (combobulate-move-to-node node)
-                     (setq remaining-instructions
-                           (append remaining-instructions
-                                   (cdr (combobulate-envelope-expand-instructions-1
-                                         (if (equal node selected-node) rest-envelope missing)))))))))))
+                 (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
+                   (combobulate-move-to-node node)
+                   (setq remaining-instructions
+                         (append remaining-instructions
+                                 (cdr (combobulate-envelope-expand-instructions-1
+                                       (if (equal node selected-node) rest-envelope missing))))))))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
@@ -483,7 +475,7 @@ not feature in CATEGORIES are returned."
              (mapc #'mark-node-cursor nodes)
              (if-let (selected-node (combobulate-proffer-choices
                                      nodes
-                                     (lambda (index current-node proxy-nodes refactor-id)
+                                     (lambda (_index current-node _proxy-nodes refactor-id)
                                        (combobulate-refactor (:id refactor-id)
                                          (combobulate-move-to-node current-node)))
                                      ;; as above, if we're in static mode, we do not
