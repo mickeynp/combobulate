@@ -43,7 +43,23 @@
   (setq combobulate-navigation-context-nodes
         '("string" "string_content" "number" "null" "true" "false"))
 
-  (setq combobulate-manipulation-envelopes nil)
+  (setq combobulate-manipulation-envelopes
+        `((:description
+           "\"...\": { ... }"
+           :key "o"
+           :mark-node t
+           :nodes ("pair")
+           :name "nest-pair-object"
+           :template
+           ("\"" (p pair "Pair") "\": " "{" n> r> n> "}" >))
+          (:description
+           "[ ... ]"
+           :key "a"
+           :mark-node t
+           :nodes ("string" "array" "number" "null" "true" "false")
+           :name "nest-array"
+           :template
+           ("[" r> "]"))))
 
   (setq combobulate-pretty-print-node-name-function #'combobulate-json-pretty-print-node-name)
   (setq combobulate-manipulation-trim-whitespace 'backward)
@@ -69,8 +85,7 @@
   (setq combobulate-navigation-defun-nodes '("document"))
 
   (setq combobulate-navigation-sibling-procedures
-        `(
-          ;; general navigation
+        `(;; general navigation
           (:activation-nodes
            ((:node
              ,(combobulate-production-rules-get "array")
