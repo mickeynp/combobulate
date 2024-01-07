@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate--get-nearest-navigable-node ()
@@ -222,7 +222,10 @@ If NODE-ONLY is non-nil then only the node texts are returned"
      parents)))
 
 (defun combobulate-get-specific-parent-type (node specific-types &optional skip-self-similar)
-  "Return the first parent with one of SPECIFIC-TYPES of NODE if such a node exist."
+  "Get the first parent node of NODE that matches one of the SPECIFIC-TYPES
+
+If SKIP-SELF-SIMILAR is non-nil then the first parent node that is
+self-similar to NODE is skipped"
   (let* ((parents (combobulate-get-parents node))
          (self-similar-node nil)
          (match (seq-find (lambda (match-node)
@@ -677,25 +680,12 @@ of the node."
                        t)))
               (combobulate-get-parents node)))
 
-(defun combobulate-nav-siblings-after-node (parent node)
-  "Find the sibling after NODE. Both must share PARENT."
-  (combobulate-filter-child parent
-                            (lambda (match-node)
-                              (combobulate-node-after-node-p match-node node))))
-
-(defun combobulate-nav-siblings-before-node (parent node)
-  "Find the sibling before NODE. Both must share PARENT."
-  (reverse (combobulate-filter-child parent
-                                     (lambda (match-node)
-                                       (combobulate-node-after-node-p node match-node)))))
-
-
 (defun combobulate-nav-get-smallest-node-at-point (&optional end)
   "Returns the smallest navigable node at point, possibly from the END"
   (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
-                                  (funcall (if end #'combobulate-point-at-end-of-node-p
-                                             #'combobulate-point-at-beginning-of-node-p)
-                                           node)))
+                             (funcall (if end #'combobulate-point-at-end-of-node-p
+                                        #'combobulate-point-at-beginning-of-node-p)
+                                      node)))
               (combobulate-all-nodes-at-point)))
 
 (defun combobulate-nav-forward (&optional skip-prefix)
@@ -735,8 +725,8 @@ of the node."
                               (flatten-tree (combobulate-build-sparse-tree
                                              'backward combobulate-navigation-default-nodes
                                              (lambda (n) (or (<= (combobulate-node-end n)
-                                                                 (point))
-                                                             (combobulate-point-in-node-range-p n))))))))
+                                                            (point))
+                                                        (combobulate-point-in-node-range-p n))))))))
               (first-node (pop tree)))
     (seq-find #'combobulate-node-before-point-p tree)))
 
@@ -746,17 +736,6 @@ of the node."
         (parent-b (combobulate-nav-get-parent node-b)))
     (and parent-a parent-b (combobulate-node-eq parent-a parent-b))))
 
-
-(defun combobulate--get-directed-siblings (sibling direction)
-  "Find siblings of SIBLING in DIRECTION"
-  (let ((siblings))
-    (while (setq sibling (if (eq direction 'forward)
-                             (combobulate-node-next-sibling sibling)
-                           (combobulate-node-prev-sibling sibling)))
-      (push sibling siblings))
-    (if (eq direction 'up)
-        siblings
-      (reverse siblings))))
 
 (defun combobulate-find-matches-by-node-type (node-or-type node-type-list &optional keep-labels)
   (when-let (q (combobulate-look-up-node-type
