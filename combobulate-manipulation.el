@@ -516,14 +516,14 @@ a match."
         (group-node)
         (grouped-matches))
     (dolist (start-node (combobulate-get-parents node))
-      (setq matches (seq-uniq (flatten-tree (combobulate-induce-sparse-tree start-node match-fn))
-                              ;; Remove nodes that share the same node
-                              ;; range: they are most probably the
-                              ;; same node. If we do not do this, we
-                              ;; would end up with several multiple
-                              ;; cursors at the exact same position.
-                              (lambda (node-a node-b) (equal (combobulate-node-range node-a)
-                                                             (combobulate-node-range node-b)))))
+      (let ((known-ranges (make-hash-table :test #'equal :size 1024)))
+        (setq matches (flatten-tree (combobulate-induce-sparse-tree
+                                     start-node
+                                     (lambda (tree-node)
+                                       (prog1
+                                           (and (funcall match-fn tree-node)
+                                                (not (gethash (combobulate-node-range tree-node) known-ranges nil)))
+                                         (puthash (combobulate-node-range tree-node) t known-ranges)))))))
       ;; this catches parent nodes that do not add more, new, nodes to
       ;; the editing locus by filtering them out.
       (when (> (length matches) ct)
