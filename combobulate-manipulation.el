@@ -758,7 +758,7 @@ If COUNT is nil, then all whitespace is stripped."
   (- (length s) (length (combobulate-indent-string--strip-whitespace s))))
 
 (defun combobulate-indent-string-1 (line operation amount)
-  "Indent LINE by AMOUNT.
+  "Indent LINE as per OPERATION and AMOUNT.
 
 If OPERATION is `add', then AMOUNT is added to the current
 indentation.
