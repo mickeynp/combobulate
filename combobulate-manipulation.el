@@ -1196,18 +1196,14 @@ the user aborts the choice. The following symbols are supported:
                                    (setq state 'accept))
                           (setq result
                                 (condition-case nil
-                                    ;; `lookup-key' is funny and it only
-                                    ;; takes a vector of an event.
                                     (lookup-key
                                      map
                                      ;; we need to preserve the raw
-                                     ;; event. If we want the event
-                                     ;; read by `read-key' to pass
-                                     ;; through to the event loop if
-                                     ;; we can't action the inputted
-                                     ;; key.
+                                     ;; event so we can put it back on
+                                     ;; the unread event loop later if
+                                     ;; the key is not recognised.
                                      (setq raw-event
-                                           (read-key-sequence
+                                           (read-key-sequence-vector
                                             (substitute-command-keys
                                              (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
                                                      (combobulate-display-indicator index (length proxy-nodes))
@@ -1270,11 +1266,11 @@ the user aborts the choice. The following symbols are supported:
                              (combobulate-message "Committing...")
                              ;; pushing `raw-event' to
                              ;; `unread-command-events' allows for a
-                             ;; seamless exit out of the proffer prompt
-                             ;; by preserving the character the user
-                             ;; typed to 'break out' of `read-event'
-                             ;; earlier.
-                             (push raw-event unread-command-events)
+                             ;; seamless exit out of the proffer
+                             ;; prompt by preserving the the last,
+                             ;; unhandled event the user inputted.
+                             (when (length> raw-event 0)
+                               (push (aref raw-event 0) unread-command-events))
                              (refactor-action accept-action)
                              (setq state 'accept))))))))))
           (quit (when signal-on-abort
