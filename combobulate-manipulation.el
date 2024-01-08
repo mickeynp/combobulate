@@ -528,44 +528,41 @@ a match."
         (setq ct (length matches))
         (push (cons start-node matches) grouped-matches)))
     (combobulate-refactor ()
-      (let ((matches
-             (cdr
-              (assoc
-               (combobulate-proxy-to-tree-node
-                (combobulate-proffer-choices
-                 (reverse (mapcar 'car grouped-matches))
-                 (lambda (_index current-node _proxy-nodes refactor-id)
-                   (combobulate-refactor (:id refactor-id)
-                     (rollback)
-                     (mark-node-highlighted current-node)
-                     (princ (format "Editing %s in %s%s\n"
-                                    (combobulate-pretty-print-node-type current-node)
-                                    (combobulate-proxy-to-tree-node current-node)
-                                    (and (combobulate-node-field-name current-node)
-                                         (format " (%s)"
-                                                 (combobulate-node-field-name current-node)))))
-                     ;; rollback the outer
-                     ;; `combobulate-refactor' call so
-                     ;; the node cursors we place below
-                     ;; are properly erased.
-                     ;; place a fake cursor at every
-                     ;; node to indicate where the
-                     ;; matching nodes are.
-                     (mapc #'mark-node-cursor
-                           (cdr (assoc (combobulate-proxy-to-tree-node node)
-                                       grouped-matches)))
-                     ;; indicate the locus of editing
-                     ;; by highlighting the entire node
-                     ;; boundary.
-                     (mark-node-highlighted current-node)))
-                 :unique-only nil
-                 :prompt-description
-                 (format "Edit %s in"
-                         (propertize (combobulate-pretty-print-node-type node)
-                                     'face 'combobulate-tree-branch-face))))
-               grouped-matches))))
+      (let* ((chosen-node (combobulate-proxy-to-tree-node
+                           (combobulate-proffer-choices
+                            (reverse (mapcar 'car grouped-matches))
+                            (lambda (_index current-node _proxy-nodes refactor-id)
+                              (combobulate-refactor (:id refactor-id)
+                                (rollback)
+                                (mark-node-highlighted current-node)
+                                (princ (format "Editing %s in %s%s\n"
+                                               (combobulate-pretty-print-node-type current-node)
+                                               (combobulate-proxy-to-tree-node current-node)
+                                               (and (combobulate-node-field-name current-node)
+                                                    (format " (%s)"
+                                                            (combobulate-node-field-name current-node)))))
+                                ;; rollback the outer
+                                ;; `combobulate-refactor' call so
+                                ;; the node cursors we place below
+                                ;; are properly erased.
+                                ;; place a fake cursor at every
+                                ;; node to indicate where the
+                                ;; matching nodes are.
+                                (mapc #'mark-node-cursor
+                                      (cdr (assoc (combobulate-proxy-to-tree-node node)
+                                                  grouped-matches)))
+                                ;; indicate the locus of editing
+                                ;; by highlighting the entire node
+                                ;; boundary.
+                                (mark-node-highlighted current-node)))
+                            :unique-only nil
+                            :prompt-description
+                            (format "Edit %s in"
+                                    (propertize (combobulate-pretty-print-node-type node)
+                                                'face 'combobulate-tree-branch-face)))))
+             (matches (cdr (assoc chosen-node grouped-matches))))
         (rollback)
-        (combobulate--mc-edit-nodes matches action node)))))
+        (combobulate--mc-edit-nodes matches action chosen-node)))))
 
 (defun combobulate-edit-nodes (placement-nodes)
   "Edit PLACEMENT-NODES.
