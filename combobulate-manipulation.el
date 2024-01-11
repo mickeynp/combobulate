@@ -155,8 +155,8 @@
                   (mark-node-deleted (n)
                     (add-marker (combobulate--refactor-mark-deleted (combobulate-node-start n)
                                                                     (combobulate-node-end n))))
-                  (mark-range-label (beg end label &optional face)
-                    (add-marker (combobulate--refactor-mark-label beg end label face)))
+                  (mark-range-label (beg end label &optional face before)
+                    (add-marker (combobulate--refactor-mark-label beg end label face before)))
                   (mark-node-highlighted (n &optional face advance)
                     (mark-range-highlighted (combobulate-node-start n)
                                             (combobulate-node-end n)
@@ -401,9 +401,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (let ((string-label (symbol-name label)))
-                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -1894,11 +1894,17 @@ beginning of the line."
     (overlay-put ov 'face (or face 'combobulate-refactor-highlight-face))
     ov))
 
-(defun combobulate--refactor-mark-label (beg end label &optional face)
+(defun combobulate--refactor-mark-label (beg end label &optional face before)
+  "Mark the region between BEG and END with LABEL.
+
+If BEFORE is non-nil, then the label is placed (using the special
+`before' overlay property) before the region."
   (let ((ov (make-overlay beg end nil nil nil)))
     (overlay-put ov 'combobulate-refactor-actions '((labelled)))
     (overlay-put ov 'face (or face 'combobulate-refactor-label-face))
-    (overlay-put ov 'display label)
+    (if before
+        (overlay-put ov 'before-string label)
+      (overlay-put ov 'display label))
     ov))
 
 (defun combobulate--refactor-mark-copy (beg end &optional target-var)
