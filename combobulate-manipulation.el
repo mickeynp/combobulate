@@ -450,7 +450,8 @@ Combobulate will use its definition of siblings as per
     (let ((node (combobulate--get-nearest-navigable-node)))
       (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
                                   (combobulate--edit-node-determine-action arg)
-                                  node))))
+                                  (or (car-safe (combobulate-nav-get-parents node t))
+                                      node)))))
 
 (defun combobulate-edit-cluster-dwim (arg)
   "Precisely edit targeted clusters of nodes.
