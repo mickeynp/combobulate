@@ -111,6 +111,23 @@ If HIGHLIGHTED then the node is highlighted with
   "Return t if the current node at point is equal to NODE"
   (or (= (combobulate-node-start node) (point))))
 
+(defun combobulate--node-hash (node)
+  "Return a hash of NODE's length and its type, to create a
+semi-unique identifier."
+  (list (- (treesit-node-end node)
+           (treesit-node-start node))
+        (treesit-node-type node)))
+
+(defun combobulate--node-hash-get (hash nodes)
+  "Lookup HASH in NODES and return the node if found."
+  (let ((found nil)
+        (node))
+    (while (and (setq node (pop nodes))
+                (not found))
+      (when (equal hash (combobulate--node-hash node))
+        (setq found node)))
+    found))
+
 (defun combobulate-point-in-node-range-p (node)
   "Return t if point is contained between NODE's start and end positions"
   (and (>= (point) (combobulate-node-start node))
@@ -2032,4 +2049,3 @@ removed."
 
 (provide 'combobulate-navigation)
 ;;; combobulate-navigation.el ends here
-

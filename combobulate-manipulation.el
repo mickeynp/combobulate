@@ -1745,21 +1745,21 @@ Whether this function does anything or not depends on
   (when combobulate-manipulation-trim-empty-lines
     (delete-blank-lines)))
 
-(defun combobulate--drag (direction)
+(defun combobulate--drag (direction &optional node)
   "Perform a drag operation on the current navigation node in DIRECTION.
 
-If the current node has no siblings in the specified direction,
+If the current NODE has no siblings in the specified direction,
 an error is raised. If the operation is successful, the cursor is
 moved to the modified node."
   (let* ((up (eq direction 'up))
-         (node (or (combobulate--get-nearest-navigable-node) (error "No navigable node")))
-         (sibling (combobulate--get-sibling node (if up 'backward 'forward)))
-         (self (combobulate--get-sibling node 'self)))
+         (node (or node (combobulate--get-nearest-navigable-node) (error "No navigable node")))
+         (hash (combobulate--node-hash node))
+         (sibling (car (combobulate--get-directed-siblings node (if up 'backward 'forward)))))
     (unless sibling
       (error "No sibling node to swap with in that direction"))
     (combobulate--goto-node sibling)
-    (save-excursion (combobulate--swap-node-regions self sibling))
-    (combobulate--get-sibling (combobulate--get-nearest-navigable-node) 'self)))
+    (save-excursion (combobulate--swap-node-regions node sibling))
+    (combobulate--node-hash-get hash (combobulate-all-nodes-at-point))))
 
 (defun combobulate-baseline-indentation-default (pos)
   (save-excursion
@@ -1986,5 +1986,3 @@ beginning of the line."
 
 (provide 'combobulate-manipulation)
 ;;; combobulate-manipulation.el ends here
-
-
