@@ -440,11 +440,17 @@ again to cycle indentation.")))))
            :match-children t)
           (:activation-nodes
            ((:node
-             ;; `tuple_pattern' has a `pattern' meta-rule, and we want
-             ;; *its* child types
+             ;; pattern is a special supertype. It is not a node in the CST.
              ,(combobulate-production-rules-get "pattern")
              :position at-or-in
-             :find-parent ("tuple_pattern"))
+             ;; Note that we do not find all the parents of pattern
+             ;; but only a couple. The main reason is that otherwise
+             ;; they'd become potential next/prev siblings in a block
+             ;; and that's generally not what people expect when
+             ;; they're navigating siblings in a block. By limiting
+             ;; ourselves to explicit tuples/lists, the user would
+             ;; have to enter these nodes explicitly to navigate them.
+             :find-immediate-parent ("tuple_pattern" "list_pattern"))
             (:node
              ,(combobulate-production-rules-get "import_from_statement")
              :position at-or-in
@@ -464,9 +470,10 @@ again to cycle indentation.")))))
                (combobulate-production-rules-get "parameter")
                (combobulate-production-rules-get "argument_list")
                (combobulate-production-rules-get "expression")
+               (combobulate-production-rules-get "expression_list")
                (combobulate-production-rules-get "primary_expression"))
              :position at-or-in
-             :find-immediate-parent ("parameters" "argument_list")))
+             :find-immediate-parent ("parameters" "argument_list" "expression_list")))
            :match-children t)
           (:activation-nodes
            ((:node
