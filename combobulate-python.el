@@ -491,6 +491,7 @@ again to cycle indentation.")))))
          (combobulate-production-rules-get "_simple_statement")
          (combobulate-production-rules-get "_compound_statement")
          (combobulate-production-rules-get "parameter")
+         (combobulate-production-rules-get "argument_list")
          '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
            "pair"
            "list" "call" "tuple" "string" "case_clause" "set")))
