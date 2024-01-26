@@ -730,27 +730,6 @@ expansion:
   (skip-chars-backward combobulate-skip-prefix-regexp)
   (combobulate-envelope-expand-instructions template))
 
-(defun combobulate-envelop-node (template node mark-node point-placement)
-  "Insert Combobulate TEMPLATE around NODE.
-
-If MARK-NODE is non-nil, then mark the node, which will then be
-available to the envelope as the `r' identifier.  If nil, the
-region is kept as-is.
-
-POINT-PLACEMENT must be one of `start', `end', or `stay'. `stay'
-does not move point to either of NODE's boundaries."
-  (interactive)
-  (save-excursion
-    ;; If we are asked to mark the node, we do. If not, we still go to
-    ;; the beginning
-    (if mark-node
-        (combobulate--mark-node node t)
-      (cond
-       ;; nothing to do if point is `stay'.
-       ((member point-placement '(start end))
-        (combobulate--goto-node node (eq point-placement 'end)))))
-    (combobulate-envelope-expand-instructions template)))
-
 (defun combobulate-get-envelope-by-name (name)
   "Find an envelope with `:name' equal to NAME."
   (seq-find (lambda (envelope) (equal (plist-get envelope :name) name))
@@ -779,12 +758,17 @@ If REGION is non-nil, envelop the region instead of NODE."
         (combobulate-envelop-region template)
       (with-navigation-nodes (:nodes nodes)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
-            (progn (combobulate-message "Enveloping" node "in" description)
-                   (combobulate-envelop-node
-                    template
-                    node
-                    mark-node
-                    point-placement))
+            (save-excursion
+              (combobulate-message "Enveloping" node "in" description)
+              ;; If we are asked to mark the node, we do. If not, we still go to
+              ;; the beginning
+              (if mark-node
+                  (combobulate--mark-node node t)
+                (cond
+                 ;; nothing to do if point is `stay'.
+                 ((member point-placement '(start end))
+                  (combobulate--goto-node node (eq point-placement 'end)))))
+              (combobulate-envelope-expand-instructions template))
           (error "Cannot apply envelope `%s'. Point must be in one of \
 these nodes: `%s'." name nodes))))))
 
