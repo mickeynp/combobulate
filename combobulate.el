@@ -211,7 +211,50 @@ have changed."
         (progress-reporter-done prog))
     (combobulate-setup-1)))
 
+(cl-defmacro define-combobulate-language (&key name language setup-fn major-modes)
+  "Define a new language for Combobulate.
 
+NAME is the name of the language as it'll be known to
+Combobulate; LANGUAGE is the tree sitter language symbol, and
+MAJOR-MODES is a list of major modes that should be set up for
+this language."
+  (cl-assert (symbolp language) t "LANGUAGE must be a symbol")
+  (cl-assert (symbolp name) t "NAME must be a symbol")
+  (let ((setup-fn (intern (format "combobulate-setup-%s" name)))
+        (group-name (intern (format "combobulate-language-%s" name))))
+    ;; Create a customize group for the language
+    (pcase-dolist (`(,var . ,doc) '(("combobulate-%s-navigation-defun-nodes" .
+                                     "Nodes used to navigate between defuns.")
+                                    ("combobulate-%s-navigation-default-nodes" .
+                                     "Nodes used for general navigation.")
+                                    ("combobulate-%s-navigation-editable-nodes" .
+                                     "Node names used to determine the correct edit procedure.")
+                                    ("combobulate-%s-navigation-sexp-nodes" .
+                                     "Node names used to navigate by s-expression.")
+                                    ("combobulate-%s-navigation-logical-nodes" .
+                                     "Node names used for logical navigation")
+                                    ("combobulate-%s-navigation-parent-child-nodes" .
+                                     "Node names used for navigating up or down hierarchies.")
+                                    ("combobulate-%s-navigation-sibling-procedures" .
+                                     "Procedures that determine what constitutes a sibling node and in what context.")
+                                    ("combobulate-%s-navigation-context-nodes" . "Node names that are contextual and hold useful information.")
+                                    ("combobulate-%s-manipulation-edit-procedures" . "")
+                                    ("combobulate-%s-manipulation-splicing-procedures" . "")
+                                    ("combobulate-%s-envelopes" . "")
+                                    ("combobulate-%s-envelopes-custom" . "")))
+      (defcustom (intern (format var name)) nil
+        (format "Customize this variable to override the default %s for %s"
+                (substring var 12 -6) name)
+        :group group-name))
+    `(progn
+       (defgroup ,group-name nil
+         ,(format "Language settings for `%s'" name)
+         :group 'combobulate))))
+
+(define-combobulate-language
+ :name foo
+ :language python
+ :major-modes '(python-mode python-ts-mode))
 
 ;;; internal
 (require 'combobulate-rules)

@@ -308,9 +308,6 @@ determine the indentation.")
 (defvar-local combobulate-navigation-sibling-skip-prefix nil
   "If non-nil, skip prefixes in the direction of travel when finding a sibling.")
 
-(defvar-local combobulate-navigation-drag-parent-nodes nil
-  "Node types that can be dragged up or down")
-
 (defvar-local combobulate-navigation-rules nil
   "Contains the auto-generated production rules.
 
@@ -373,26 +370,6 @@ envelopes.")
 
 (defvar-local combobulate-navigation-sibling-procedures nil
   "Nodes used for sibling movement")
-
-(defvar-local combobulate-manipulation-node-cluster-queries nil
-  "Alist of (NODE-TYPE . QUERY) for selecting clusters of nodes
-
-Each Alist entry must have a valid NODE-TYPE that anchors the
-query. If you want to map all the elements of a list, for
-instance, the anchor element should be the parent of those
-elements --- for instance `list' or `tuple'.
-
-The QUERY must be a valid query that has at least one capture
-name called `@match'. The QUERY should ideally have the NODE-TYPE
-in it also to ensure the query match is limited to just
-NODE-TYPE. However, if there is another sub-type that matches,
-then that can be used instead.
-
-For instance:
-
-    (\"dictionary\" . (pair \\. (_) @match)
-
-Matches all the key-portion of key-value pairs in a dictionary")
 
 (defvar-local combobulate-highlight-queries-default nil
   "List of Combobulate-provided node queries to highlight.
