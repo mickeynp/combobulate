@@ -399,7 +399,7 @@ from `combobulate-manipulation-envelopes') to insert."
                :position at-or-in
                :find-immediate-parent
                ,(seq-difference (combobulate-production-rules-get "jsx_element")
-                                '("jsx_text" "jsx_closing_element" "jsx_opening_element"))))
+                                '("jsx_closing_element" "jsx_opening_element" "jsx_text"))))
              :remove-types ("comment" "jsx_text" "jsx_closing_element" "jsx_opening_element")
              :match-children t)
             ;; for general navigation
