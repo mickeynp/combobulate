@@ -294,8 +294,8 @@ of updating the prop line."
                                              files)))
         (delete-other-windows)
         (mapc (lambda (buf) (display-buffer buf `(display-buffer-in-direction
-                                                  . ((direction . right)
-                                                     (window-width . 0.2)))))
+                                             . ((direction . right)
+                                                (window-width . 0.2)))))
               (mapcar #'find-file-noselect
                       (alist-get (completing-read "Pick command " (seq-uniq (mapcar #'car grouped-cmd-files) #'string=))
                                  grouped-cmd-files nil nil #'string=)))
@@ -342,6 +342,8 @@ Returns nil if no match is found."
    "[" (format "%s@%s~%s" action-string number suffix) "]"
    "."
    (file-name-extension fn)))
+
+(defvar ert--results-stats)
 
 (defun combobulate-ert-diff-fixture ()
   "Diff the current test with the fixture."
@@ -486,9 +488,9 @@ executed as a function. The following symbols are supported:
         ('back (push '(forward-char -1) modified))
         ('forward (push '(forward-char 1) modified))
         ('tab (push '(indent-for-tab-command) modified))
-        ((or `(assert-at-marker ,number) `(assert-at-marker ,number ,category))
+        ((or `(assert-at-marker ,number) `(assert-at-marker ,number ,_))
          (push `(should (combobulate--test-get-overlay-at-point ,number)) modified))
-        ((or `(goto-marker ,number) `(goto-marker ,number ,category))
+        ((or `(goto-marker ,number) `(goto-marker ,number ,_))
          (push `(let ((ov (combobulate--test-get-overlay-by-number ,number)))
                   (should ov)
                   (goto-char (overlay-start ov)))
