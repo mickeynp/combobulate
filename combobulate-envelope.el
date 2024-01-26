@@ -721,5 +721,154 @@ expansion:
              (combobulate-extend-region-to-whole-lines start end)))
     (cons (cons start end) selected-point)))
 
+(defun combobulate-envelop-region (template)
+  "Insert Combobulate TEMPLATE around the active region."
+  (interactive)
+  (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
+  (skip-chars-forward combobulate-skip-prefix-regexp)
+  (exchange-point-and-mark)
+  (skip-chars-backward combobulate-skip-prefix-regexp)
+  (combobulate-envelope-expand-instructions template))
+
+(defun combobulate-envelop-node (template node mark-node point-placement)
+  "Insert Combobulate TEMPLATE around NODE.
+
+If MARK-NODE is non-nil, then mark the node, which will then be
+available to the envelope as the `r' identifier.  If nil, the
+region is kept as-is.
+
+POINT-PLACEMENT must be one of `start', `end', or `stay'. `stay'
+does not move point to either of NODE's boundaries."
+  (interactive)
+  (save-excursion
+    ;; If we are asked to mark the node, we do. If not, we still go to
+    ;; the beginning
+    (if mark-node
+        (combobulate--mark-node node t)
+      (cond
+       ;; nothing to do if point is `stay'.
+       ((member point-placement '(start end))
+        (combobulate--goto-node node (eq point-placement 'end)))))
+    (combobulate-envelope-expand-instructions template)))
+
+(defun combobulate-get-envelope-by-name (name)
+  "Find an envelope with `:name' equal to NAME."
+  (seq-find (lambda (envelope) (equal (plist-get envelope :name) name))
+            (append combobulate-manipulation-envelopes
+                    (combobulate-get-envelopes-by-major-mode))))
+
+(defun combobulate-get-envelopes-by-major-mode ()
+  (mapcan
+   (lambda (parser) (alist-get (combobulate-parser-language parser)
+                          combobulate-manipulation-envelopes-custom))
+   (combobulate-parser-list)))
+
+(defun combobulate-get-envelope-function-by-name (name)
+  "Find an envelope with `:name' equal to NAME."
+  (when-let (env (combobulate-get-envelope-by-name name))
+    (symbol-function (plist-get env :template-symbol))))
+
+(defun combobulate-apply-envelope (envelope &optional node region)
+  "Envelop NODE near point or active region with ENVELOPE.
+
+If REGION is non-nil, envelop the region instead of NODE."
+  (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
+    (unless (and name)
+      (error "Envelope `%s' is not valid." envelope))
+    (if region
+        (combobulate-envelop-region template)
+      (with-navigation-nodes (:nodes nodes)
+        (if (setq node (or node (combobulate--get-nearest-navigable-node)))
+            (progn (combobulate-message "Enveloping" node "in" description)
+                   (combobulate-envelop-node
+                    template
+                    node
+                    mark-node
+                    point-placement))
+          (error "Cannot apply envelope `%s'. Point must be in one of \
+these nodes: `%s'." name nodes))))))
+
+(defun combobulate-execute-envelope (envelope-name &optional node force)
+  "Executes any envelope with a `:name' equal to ENVELOPE-NAME.
+
+See `combobulate-apply-envelope' for more information."
+  (let ((envelope (combobulate-get-envelope-by-name envelope-name))
+        ;; Default to true as we'll only turn this off briefly when we
+        ;; expand an envelope during a proffer preview.
+        (combobulate-envelope--undo-on-quit t)
+        (chosen-node) (accepted nil))
+    (unless envelope
+      (error "There is no such envelope registered with the name `%s'"
+             envelope-name))
+    (if (region-active-p)
+        (combobulate-apply-envelope envelope nil t)
+      (if node
+          (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
+            (goto-char target-pt))
+        (let ((combobulate-envelope-static t)
+              (envelope-nodes (plist-get envelope :nodes))
+              (change-group (prepare-change-group))
+              (undo-outer-limit nil)
+              (undo-limit most-positive-fixnum)
+              (undo-strong-limit most-positive-fixnum))
+          (unwind-protect
+              (progn
+                ;; use a change group to ensure we revert the proffered
+                ;; (and selected) choice immediately after. this is a
+                ;; hacky way of displaying an expansion (in conjunction
+                ;; with `combobulate-envelope-static' set to t) and not
+                ;; activate interactive prompts.
+                (activate-change-group change-group)
+                (setq chosen-node
+                      (combobulate-proffer-choices
+                       (seq-sort
+                        (lambda (a b)
+                          ;; "Smart" sorting that orders by largest node first but
+                          ;; *only* when the distance from `point' to the start of `a'
+                          ;; is 0 (i.e., the node starts at point.)
+                          ;;
+                          ;; For all other instances, we measure distance from point.
+                          (if (= (- (combobulate-node-start a) (point)) 0)
+                              (combobulate-node-larger-than-node-p a b)
+                            (> (- (combobulate-node-start a) (point))
+                               (- (combobulate-node-start b) (point)))))
+                        ;; if we don't have any assigned envelope nodes,
+                        ;; create a proxy node at point; that node (and
+                        ;; thus `point') will instead be where the
+                        ;; envelope is inserted.
+                        (if envelope-nodes
+                            (seq-filter (lambda (n)
+                                          (and (or force (combobulate-point-near-node n))
+                                               (member (combobulate-node-type n)
+                                                       envelope-nodes)))
+                                        (cons (combobulate-node-at-point)
+                                              (combobulate-get-parents (combobulate-node-at-point))))
+                          (list (combobulate-make-proxy-point-node))))
+                       (lambda (_index current-node _proxy-nodes refactor-id)
+                         ;; mark deleted and highlight first. That way when we apply
+                         ;; the envelope the overlays expand to match.
+                         (combobulate-refactor (:id refactor-id)
+                           (mark-node-deleted current-node)
+                           (let ((ov (mark-node-highlighted current-node))
+                                 (combobulate-envelope--undo-on-quit nil))
+                             (seq-let [[start &rest end] &rest pt]
+                                 (combobulate-apply-envelope envelope current-node)
+                               (goto-char pt)
+                               ;; lil' hack. The extent of the node is not
+                               ;; the same as the envelope we just
+                               ;; applied.
+                               (move-overlay ov start end)))))
+                       :reset-point-on-abort t
+                       :reset-point-on-accept nil))
+                (setq accepted t)
+                (cancel-change-group change-group))
+            (cancel-change-group change-group)))
+        ;; here we simply repeat what ever the selected choice was, as
+        ;; an explicit node skips the proffering process entirely.
+        (when (and chosen-node accepted)
+          (combobulate-execute-envelope envelope-name chosen-node))))))
+
+
+
 (provide 'combobulate-envelope)
 ;;; combobulate-envelope.el ends here
