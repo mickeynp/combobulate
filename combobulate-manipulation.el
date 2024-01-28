@@ -150,7 +150,7 @@
                     (add-marker (combobulate--refactor-mark-copy start end 'combobulate-refactor--copied-values)))
                   (mark-node-copy (n)
                     (mark-copy (combobulate-node-start n) (combobulate-node-end n)))
-                  (mark-node-indent (beg end target-pt baseline-column)
+                  (mark-range-indent (beg end target-pt baseline-column)
                     (add-marker (combobulate--refactor-mark-indent beg end target-pt baseline-column)))
                   (mark-node-deleted (n)
                     (add-marker (combobulate--refactor-mark-deleted (combobulate-node-start n)
@@ -1072,6 +1072,7 @@ the current choice and exit."
                                              (switch-action 'rollback)
                                              (allow-numeric-selection nil)
                                              (signal-on-abort nil)
+                                             (start-index 0)
                                              (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
@@ -1140,7 +1141,11 @@ the user aborts the choice. The following symbols are supported:
   `error' - Signal an error.
   `message' - Display a message in the echo area.
 
-`:prompt-description' is a string that is displayed in the prompt."
+`:prompt-description' is a string that is displayed in the prompt.
+
+`:start-index' is an integer that determines the starting index
+of the node in the list of nodes. This is useful when you want to
+skip over the first few nodes in the list."
   (setq allow-numeric-selection
 	;; numeric selection uses `C-1' through to `C-9' which cannot
 	;; always be typed on a terminal.
@@ -1160,7 +1165,7 @@ the user aborts the choice. The following symbols are supported:
                                                         (combobulate-node-range b)))))
                          nodes))))
         (result) (state 'continue) (current-node)
-        (index 0) (pt (point)) (raw-event)
+        (index start-index) (pt (point)) (raw-event)
         (refactor-id (combobulate-refactor-setup))
         (map (if extra-map
                  (let ((map (make-sparse-keymap)))
@@ -1223,8 +1228,7 @@ the user aborts the choice. The following symbols are supported:
                                                                  (or (combobulate-display-draw-node-tree
                                                                       (combobulate-proxy-to-tree-node current-node))
                                                                      ""))
-                                                       "")))
-                                            )))
+                                                       ""))))))
                                   ;; if `condition-case' traps a quit
                                   ;; error, then map it into the symbol
                                   ;; `cancel', which corresponds to the
@@ -1496,9 +1500,9 @@ Each member of PARTITIONS must be one of:
                                             (combobulate-node-start part-node)
                                             (combobulate-node-end part-node))))
                  (mark-copy start end)
-                 (mark-node-indent start end
-                                   baseline-target
-                                   (combobulate-baseline-indentation part-node))))))))
+                 (mark-range-indent start end
+                                    baseline-target
+                                    (combobulate-baseline-indentation part-node))))))))
       (combobulate-message "Spliced." (combobulate-tally-nodes tally nil))
       (commit))
     (combobulate--refactor-insert-copied-values combobulate-refactor--copied-values)))

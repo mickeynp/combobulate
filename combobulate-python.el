@@ -103,74 +103,7 @@ line when you press
       (_ default-name)))
    40))
 
-(defun combobulate-python--display-indicator ()
-  (let* ((levels (python-indent-calculate-levels))
-         (total-levels (length levels))
-         (matched-level (member (current-indentation) levels))
-         (current-level (abs (- (length matched-level) total-levels))))
-    (combobulate-display-indicator current-level total-levels)))
 
-(defvar-local combobulate-python-indent-cycle nil)
-
-(defun combobulate-python-indent-region (start end &optional columns)
-  "Indent a python region between START and END to COLUMNS.
-
-This function is designed to be called from
-`indent-region-function' and (indirectly) through
-\\[combobulate-python-indent-for-tab-command]."
-  (let ((deactivate-mark nil))
-    (save-mark-and-excursion
-      (when (and (use-region-p) (> (point) (mark)))
-        (exchange-point-and-mark))
-      (skip-chars-backward combobulate-skip-prefix-regexp
-                           (line-beginning-position))
-      (when (bolp)
-        (setq start (point)))
-      (let ((next-level (combobulate-python-indent-determine-next-level)))
-        (pcase (cons combobulate-python-indent--direction next-level)
-          ((and `(forward . (,prev . nil)))
-           (setq combobulate-python-indent--direction 'backward
-                 columns prev))
-          ((and `(forward . (,_ . ,next)))
-           (setq combobulate-python-indent--direction 'forward
-                 columns next))
-          ((and `(backward . (nil . ,next)))
-           (setq combobulate-python-indent--direction 'forward
-                 columns next))
-          ((and `(backward . (,prev . ,_)))
-           (setq combobulate-python-indent--direction 'backward
-                 columns prev))
-          (_ (setq columns nil))))
-      (when columns
-        (combobulate-indent-region
-         start end columns nil t))
-      (setq this-command 'combobulate-python-indent-for-tab-command))))
-
-(defvar-local combobulate-python-indent-cycle nil
-  "List of indentation columns to cycle through with
-\\[combobulate-python-indent-for-tab-command].")
-
-(defun combobulate-python-maybe-indent-block-at-point ()
-  "Maybe indent the block at point.
-
-Returns a non-nil value to indicate the indentation took place."
-  (with-navigation-nodes
-      (:nodes (append
-               ;; rules that trigger indentation
-               (combobulate-production-rules-get "_simple_statement")
-               (combobulate-production-rules-get "_compound_statement"))
-              ;; do not skip prefix if we have a region active. the
-              ;; reason for that is that skipping forward with a
-              ;; marked region can bork the indentation mechanism as
-              ;; we can only effectively indent with whole lines.
-              :skip-prefix (not (use-region-p))
-              :skip-newline nil)
-    (when-let ((node (combobulate--get-nearest-navigable-node)))
-      (when (and (not (use-region-p))
-                 combobulate-python-indent-blocks-dwim
-                 (combobulate-point-at-beginning-of-node-p
-                  (combobulate--get-nearest-navigable-node)))
-        (combobulate--mark-node node t t)))))
 
 (defun combobulate-python-calculate-indent (pos)
   (let ((calculated-indentation (save-excursion
@@ -189,71 +122,101 @@ Returns a non-nil value to indicate the indentation took place."
         (current-indentation)
       (* python-indent-offset (length calculated-indentation)))))
 
+(defun combobulate-python-proffer-indent-action (_index current-node _proxy-nodes refactor-id)
+  "Proffer action function that highlights the node and indents it."
+  (combobulate-refactor (:id refactor-id)
+    (mark-node-highlighted current-node)
+    (combobulate-indent-region
+     ;; we want to mark from the beginning of line
+     (save-excursion
+       (goto-char (combobulate-node-start current-node))
+       (skip-chars-backward combobulate-skip-prefix-regexp (line-beginning-position))
+       (point))
+     (combobulate-node-end current-node)
+     ;; no baseline target
+     0
+     (combobulate-proxy-node-extra current-node))
+    (combobulate-move-to-node current-node)))
+
+(defun combobulate-proffer-indentation (node)
+  "Intelligently indent the region or NODE at point."
+  (interactive)
+  (let* ((indentation (save-excursion
+                        (combobulate--goto-node node)
+                        (python-indent-calculate-levels)))
+         (indent-nodes (mapcar
+                        (lambda (level)
+                          (save-excursion
+                            (let ((proxy-node
+                                   ;; A region may, potentially, signify a valid
+                                   ;; node range, but it is unlikely. When a user
+                                   ;; wants to indent a region they want to --
+                                   ;; presumably -- indent code that may not be
+                                   ;; syntactically sound. For that we'll create a
+                                   ;; special proxy node that will be used to
+                                   ;; indent the region.
+                                   (if (use-region-p)
+                                       (combobulate-make-proxy-from-region (region-beginning) (region-end))
+                                     ;; if we're not dealing with a region, we
+                                     ;; make a proxy node for the closest node.
+                                     (combobulate-make-proxy node))))
+                              (setf (combobulate-proxy-node-extra proxy-node)
+                                    (- (current-indentation) level))
+                              proxy-node)))
+                        (python-indent-calculate-levels)))
+         (current-position (1+ (or (seq-position indentation (current-indentation)) 0)))
+         (number-of-levels (length (python-indent-calculate-levels)))
+         (at-last-level (= number-of-levels current-position)))
+    (combobulate-proffer-choices
+     (if at-last-level (reverse indent-nodes) indent-nodes)
+     #'combobulate-python-proffer-indent-action
+     :start-index (if at-last-level 1 (mod current-position number-of-levels))
+     :flash-node t
+     ;; do not filter unique nodes. all our nodes are conceptually
+     ;; identical except for the `extra' field.
+     :unique-only nil)))
 
 (defun combobulate-python-envelope-deindent-level ()
   "Determine the next-closest indentation level to deindent to."
   (car-safe (last (seq-take-while (lambda (num) (< num (current-column)))
                                   (python-indent-calculate-levels)))))
 
-(defun combobulate-python-indent-determine-next-level ()
-  "Determine the next indentation level.
-
-This function returns a cons cell of the form (PREV . NEXT) where
-PREV is the relative change to indentation level to deindent one
-step. NEXT is the next indentation level. If there is no previous
-or next indentation level, the corresponding value is nil."
-  (cons
-   (and (car (last (seq-filter (lambda (n) (< n (current-indentation)))
-                               (python-indent-calculate-levels))))
-        (- python-indent-offset))
-   (and (seq-filter (lambda (n) (> n (current-indentation)))
-                    (python-indent-calculate-levels))
-        python-indent-offset)))
 
 (defun combobulate-python-indent-for-tab-command (&optional arg)
-  "Proxy command for `indent-for-tab-command' that keeps region active.
-
-This command preserves the region if it is active. Subsequent
-indent commands cycle through all valid indentation stops."
+  "Proxy command for `indent-for-tab-command' and `combobulate-proffer-indentation'."
   (interactive "P")
-  (let ((region-manually-activated (use-region-p)))
-    (save-excursion
-      (combobulate-python-maybe-indent-block-at-point)
-      (if (use-region-p)
-          (progn
-            ;; work out the correct indentation point to use as a baseline:
-            ;; the top-most place in the region.
-            (save-mark-and-excursion
-              (when (> (point) (mark))
-                (exchange-point-and-mark))
-              (unless (eq this-command last-command)
-                (setq combobulate-python-indent--direction
-                      ;; figure out the direction to cycle in.
-                      (if (cdr (combobulate-python-indent-determine-next-level))
-                          'forward
-                        'backward)))
-              (indent-for-tab-command arg)
-              (combobulate-message
-               (concat (combobulate-python--display-indicator)
-                       " "
-                       (substitute-command-keys
-                        "Press \\[combobulate-python-indent-for-tab-command] \
-again to cycle indentation.")))))
-        (indent-for-tab-command arg)))
-    (if region-manually-activated
-        (progn
-          (setq deactivate-mark nil)
-          (activate-mark))
-      (setq deactivate-mark t))
-    ;; HACK: handle the case where we might be indenting on a
-    ;; blank/whitespace-only line. Ordinarily, that would take us to
-    ;; the farthest indentation point, but `save-excursion' will not
-    ;; preserve the point in that case. So we need to do it manually.
-    (when (and (not region-manually-activated)
-               (save-excursion
-                 (beginning-of-line)
-                 (looking-at-p "[[:space:]]*$")))
-      (indent-for-tab-command arg))))
+  (with-navigation-nodes
+      (:nodes (append
+               ;; rules that trigger indentation
+               (combobulate-production-rules-get "_simple_statement")
+               (combobulate-production-rules-get "_compound_statement"))
+              ;; do not skip prefix if we have a region active. the
+              ;; reason for that is that skipping forward with a
+              ;; marked region can bork the indentation mechanism as
+              ;; we can only effectively indent with whole lines.
+              :skip-prefix (not (use-region-p))
+              :skip-newline nil)
+    (let ((node (combobulate--get-nearest-navigable-node)))
+      (cond
+       ((use-region-p)
+        ;; ensure point is at the beginning of the region
+        (when (> (point) (mark))
+          (exchange-point-and-mark))
+        (combobulate-proffer-indentation node)
+        ;; toggle the region on and off so it doesn't get deactivated
+        (setq deactivate-mark nil)
+        (activate-mark))
+       ;; we need to handle blank lines as tabbing on a blank line should
+       ;; default to the regular python indentation mechanism.
+       ((save-excursion
+          (beginning-of-line)
+          (looking-at-p "[[:space:]]*$"))
+        (indent-for-tab-command arg))
+       ;; if we're at the beginning of a node, we want to indent it.
+       ((and combobulate-python-indent-blocks-dwim (combobulate-point-at-beginning-of-node-p node))
+        (combobulate-proffer-indentation node))
+       ;; for everything else, use the regular indentation mechanism.
+       (t (indent-for-tab-command arg))))))
 
 (defun combobulate-python-setup (_)
   (setq combobulate-navigation-context-nodes '("identifier"))

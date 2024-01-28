@@ -171,6 +171,19 @@ kept."
         proxies
       (car-safe proxies))))
 
+(defun combobulate-make-proxy-from-region (beg end)
+  "Factory that creates a facsimile proxy node of the region BEG END."
+  (make-combobulate-proxy-node
+   :start (set-marker (make-marker) beg)
+   :end (set-marker (make-marker) end)
+   :text (buffer-substring-no-properties beg end)
+   :type "region"
+   :named t
+   :field nil
+   :node nil
+   :pp "Region"
+   :extra nil))
+
 (defun combobulate-proxy-to-tree-node (proxy-node)
   "Attempt to find the real tree-sitter node PROXY-NODE points to."
   (when proxy-node
