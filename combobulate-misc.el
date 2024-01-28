@@ -111,8 +111,8 @@ No effort is made to account for, or exclude, overlaps."
     (lambda (level)
       (let ((current (= level current-level)))
         (propertize (if current
-                        (substring combobulate-indentation-marker 1 2)
-                      (substring combobulate-indentation-marker 0 1))
+                        (substring combobulate-proffer-indicators 1 2)
+                      (substring combobulate-proffer-indicators 0 1))
                     'face (if current
                               'combobulate-active-indicator-face
                             'combobulate-dimmed-indicator-face))))

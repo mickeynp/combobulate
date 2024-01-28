@@ -140,7 +140,7 @@ the node."
   :type 'boolean
   :group 'combobulate)
 
-(defcustom combobulate-indentation-marker "○●"
+(defcustom combobulate-proffer-indicators "○●"
   "Indentation indicators."
   :type 'string
   :group 'combobulate)
