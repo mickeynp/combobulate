@@ -174,6 +174,7 @@ line when you press
      :flash-node t
      ;; do not filter unique nodes. all our nodes are conceptually
      ;; identical except for the `extra' field.
+     :allow-numeric-selection t
      :unique-only nil)))
 
 (defun combobulate-python-envelope-deindent-level ()

@@ -173,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -401,9 +401,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (let ((string-label (symbol-name label)))
-                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -1054,8 +1054,7 @@ the current choice and exit."
   "RET" 'done
   "C-g" 'cancel
   "C-l" 'recenter
-  "M-c" 'recursive-edit
-  "M-h" 'next)
+  "M-c" 'recursive-edit)
 
 (cl-defun combobulate-proffer-action-highlighter (_index current-node _proxy-nodes refactor-id)
   "Helper for `combobulate-proffer-choices' that highlights NODE."
@@ -1149,7 +1148,9 @@ skip over the first few nodes in the list."
   (setq allow-numeric-selection
 	;; numeric selection uses `C-1' through to `C-9' which cannot
 	;; always be typed on a terminal.
-	(and allow-numeric-selection (display-graphic-p)))
+	(and allow-numeric-selection
+             (display-graphic-p)
+             combobulate-proffer-allow-numeric-selection))
   (let ((proxy-nodes
          (and nodes
               (funcall #'combobulate-make-proxy
@@ -1167,18 +1168,15 @@ skip over the first few nodes in the list."
         (result) (state 'continue) (current-node)
         (index start-index) (pt (point)) (raw-event)
         (refactor-id (combobulate-refactor-setup))
-        (map (if extra-map
-                 (let ((map (make-sparse-keymap)))
-                   (set-keymap-parent map combobulate-proffer-map)
-		   (define-key map (this-command-keys) 'next)
-                   (mapc (lambda (k) (define-key map (car k) (cdr k))) extra-map)
-                   (when (and allow-numeric-selection
-                              combobulate-proffer-allow-numeric-selection)
-                     (dotimes (i 9)
-                       (define-key map (kbd (format "C-%d" (1+ i)))
-                                   (intern (format "select-%d" (1+ i))))))
-                   map)
-               combobulate-proffer-map)))
+        (map (let ((map (make-sparse-keymap)))
+               (set-keymap-parent map combobulate-proffer-map)
+               (when extra-map
+                 (define-key map (this-command-keys) 'next)
+                 (mapc (lambda (k) (define-key map (car k) (cdr k))) extra-map))
+               (when allow-numeric-selection
+                 (dotimes (i 9)
+                   (define-key map (kbd (format "C-%d" (1+ i))) (1+ i))))
+               map)))
     (if proxy-nodes
         (condition-case err
             (with-undo-amalgamate
@@ -1258,15 +1256,14 @@ skip over the first few nodes in the list."
                              (setq state 'abort)
                              (refactor-action cancel-action)
                              (keyboard-quit))
-                            ;; handle numeric selection `select-1' to
-                            ;; `select-9'
-                            ((pred (lambda (x) (and (symbolp x)
-                                               (string-match-p "^select-[1-9]$" (symbol-name x)))))
-                             (let ((n (string-to-number (substring (symbol-name result) -1))))
-                               (when (and (>= n 1) (<= n 9))
-                                 (refactor-action switch-action)
-                                 (setq index (1- n))
-                                 (throw 'next nil))))
+                            ;; handle numeric selection `1' to `9'
+                            ((and (pred (numberp)) n
+                                  (pred (lambda (n) (and (>= n 1)
+                                                    (<= n 9)
+                                                    (<= n (length proxy-nodes))))))
+                             (refactor-action switch-action)
+                             (setq index (1- n))
+                             (throw 'next nil))
                             (_
                              (combobulate-message "Committing...")
                              ;; pushing `raw-event' to
