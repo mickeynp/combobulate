@@ -104,257 +104,282 @@ If the register does not exist, return DEFAULT or nil."
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
           (combobulate--refactor-get-all-overlays))))
 
-(defun combobulate-envelope-expand-instructions-1 (instructions &optional categories)
+(cl-defstruct combobulate-envelope-context
+  "The context of a combobulate envelope during its expansion."
+  start end block-instructions instructions)
+
+(defun combobulate-envelope-expand-instructions-1 (instructions)
   "Internal function that expands INSTRUCTIONS."
   (let ((buf (current-buffer))
-        (post-instructions)
+        (block-instructions)
+        (end)
         (start (point-marker)))
-    (combobulate-refactor (:id combobulate-envelope-refactor-id)
-      (dolist (sub-instruction instructions)
-        (pcase sub-instruction
-          ;; `(choice instructions)'
-          ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
-          ;;
-          ;; Presents a prompt to the user to choose between any of
-          ;; the choices in the same block. `choice' is the simplest,
-          ;; and `choice*' is more complex.
-          ;;
-          ;; `choice*' allows you to specify a name for the choice; it
-          ;; is shown in the prompt. The `:missing' keyword argument
-          ;; is a string that is shown if the user does not pick that
-          ;; choice. `:rest' is the instructions to execute if the
-          ;; user picks that choice.
-          ((or (and `(choice . ,rest)
-                    (let name nil)
-                    (let missing nil)
-                    (let rest-instructions rest))
-               (and `(choice* . ,rest)
-                    (let name (plist-get rest :name))
-                    (let missing (plist-get rest :missing))
-                    (let rest-instructions (plist-get rest :rest))))
-           (let ((combobulate-envelope-static t))
-             (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
-                            ,(apply-partially #'combobulate-envelope-expand-instructions-1
-                                              rest-instructions))
-                   post-instructions)))
-          ;; `(save-column BLOCK)'
-          ;;
-          ;; Records the `current-column' of `point' when it enters
-          ;; BLOCK and resets `point' to that column when after exiting.
-          (`(save-column . ,rest)
-           (let ((col (current-column)))
-             (setq post-instructions
-                   (nconc post-instructions
-                          (cdr (combobulate-envelope-expand-instructions-1
-                                rest '(repeat prompt)))))
-             (move-to-column col t)))
-          ;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
-          ;;
-          ;; Prompts the user with PROMPT and stores the returned value
-          ;; against TAG.  Any fields tagged TAG (alongside the prompt
-          ;; itself) are updated automatically.
-          ((or (and `(prompt ,tag ,prompt) (let transformer-fn nil))
-               (and `(p ,tag ,prompt) (let transformer-fn nil))
-               (and `(prompt ,tag ,prompt ,transformer-fn))
-               (and `(p ,tag ,prompt ,transformer-fn)))
-           (when (and transformer-fn (not (functionp transformer-fn)))
-             (error "Prompt has invalid transformer function `%s'" transformer-fn))
-           (let ((prompt-point (point)))
-             (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-             (push (cons 'prompt
-                         (lambda () (save-excursion
-                                      (goto-char prompt-point)
-                                      (unless combobulate-envelope-static
-                                        (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                            (combobulate-envelope-prompt
-                                                             prompt tag nil
-                                                             (lambda ()
-                                                               (combobulate-envelope--update-prompts
-                                                                buf tag (minibuffer-contents)))))))
-                                          (push (cons tag new-text) combobulate-envelope--registers)
-                                          (combobulate-envelope--update-prompts buf tag new-text))))))
-                   post-instructions)))
-          ;; `(field TAG)' or `(f TAG)'
-          ;;
-          ;; If there is a matching prompt TAG, update its text to that value.
-          ((or (and `(field ,tag) (let transformer-fn nil))
-               (and `(f ,tag) (let transformer-fn nil))
-               (and `(field ,tag ,transformer-fn))
-               (and `(f ,tag ,transformer-fn)))
-           (mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
-          ;; `@'
-          ;;
-          ;; Push a `point-marker' that will serve as a possible
-          ;; placement point for point after expansion.
-          ('@ (push `(point ,(point-marker)) post-instructions))
-          ;; `@@'
-          ;;
-          ;; Push a `point' that will serve as a possible
-          ;; placement point for point after expansion.
-          ('@@ (push `(point ,(point)) post-instructions))
-          ;; `n' or `n>'
-          ;;
-          ;; Calls `newline', or `newline' then `indent-according-to-mode'.
-          ;;
-          ;; Never `newline-and-indent' because it strips horizontal
-          ;; space, which is unhelpful.
-          ('n (newline))
-          ('n> (newline) (indent-according-to-mode))
-          ;; `>'
-          ;;
-          ;; Call `indent-according-to-mode'
-          ('> (indent-according-to-mode))
-          ;; `<'
-          ;;
-          ;; For whitespace-sensitive languages, this is a way to move
-          ;; back one level of indentation.
-          ('< (let ((col (or (and combobulate-envelope-deindent-function
-                                  (funcall combobulate-envelope-deindent-function))
-                             0)))
-                (newline)
-                (move-to-column col t)))
-          ;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
-          ;;
-          ;; Inserts the register REGISTER (retreived from
-          ;; `combobulate-envelope--registers') or, if there is no
-          ;; register specified, default to the REGISTER `region' (or
-          ;; `region-indented' if
-          ;; `combobulate-envelope-indent-region-function' is nil) which
-          ;; holds that captured region (if any).
-          ;;
-          ;; Forms ending with `>' are indented as per the major mode's
-          ;; indentation engine. Forms without `>' are not indented at all.
-          ((or
-            ;; surely there's a better way than this?
-            (and 'r>
-                 (let register nil)
-                 (let default "")
-                 (let indent t))
-            (and 'r
-                 (let register nil)
-                 (let default "")
-                 (let indent nil))
-            (and `(r> ,register)
-                 (let indent t)
-                 (let default ""))
-            (and `(r ,register)
-                 (let indent nil)
-                 (let default ""))
-            (and `(r> ,register ,default)
-                 (let indent t))
-            (and `(r ,register ,default)
-                 (let indent nil)))
-           (setq default (combobulate-envelope-get-register
-                          (or register
-                              (if (and (null combobulate-envelope-indent-region-function) indent)
-                                  'region-indented
-                                'region))
-                          default))
-           (cond
-            ((and combobulate-envelope-indent-region-function indent)
-             (funcall combobulate-envelope-indent-region-function
-                      (point) (progn (insert default) (point))))
-            ;; if `combobulate-envelope-indent-region-function' is nil
-            ;; then we default to a simplistic indentation style that
-            ;; works well with the likes of Python where crass,
-            ;; region-based indentation will never work.
-            ((and (not combobulate-envelope-indent-region-function) indent)
-             ;; ordinarily, we do not need to worry about changing the
-             ;; start/end point markers, as inserting text will
-             ;; advance the point markers correctly. However, in
-             ;; python and suchlike, we cannot 'just' indent the
-             ;; region register; instead, we must carefully fix its
-             ;; indentation so it matches correctly: this must happen
-             ;; from the beginning of the line. Therefore, we change
-             ;; the start point marker to match.
-             (forward-line 0)
-             (setf start (point))
-             (insert (combobulate-indent-string
-                      default
-                      :first-line-operation 'absolute
-                      :first-line-amount (current-indentation)
-                      :rest-lines-operation 'relative)))
-            (t (insert default))))
-          ;; "string"
-          ;;
-          ;; Strings are inserted at point.
-          ((and (pred stringp) s)
-           (insert s))
-          ;; `(repeat BLOCK)' or `(repeat-1 BLOCK)'
-          ;;
-          ;; Repeats BLOCK an unlimited number of times or at most once.
-          ((or (and `(repeat . ,repeat-instructions) (let max-repeat most-positive-fixnum))
-               (and `(repeat-1 . ,repeat-instructions) (let max-repeat 1)))
-           (condition-case nil
-               ;; we start with `repeat-answer' set to `t' by default
-               ;; because we want to expand `repeat-instructions'
-               ;; *first* and *then*  prompt the user if they want
-               ;; to keep the now-displayed instruction.
-               (let ((repeat-answer t))
-                 (when combobulate-envelope-static
-                   (setq max-repeat 1))
-                 (while (and repeat-answer (> max-repeat 0))
-                   (combobulate-refactor ()
-                     ;; call with `combobulate-envelope-static' set to
-                     ;; `t'. When an envelope is static, no
-                     ;; interactive functions are called (prompts and
-                     ;; such).
-                     ;;
-                     ;; That way we can safely insert the template
-                     ;; knowing that it won't block for user input.
-                     (seq-let [[inst-start &rest inst-end] &rest _]
-                         (let ((combobulate-envelope-static t))
-                           (combobulate-envelope-expand-instructions-1 repeat-instructions '(prompt repeat)))
-                       ;; mark the range as highlighted, so it's
-                       ;; easier to see its extent; and as deleted,
-                       ;; so that -- due to how we're using
-                       ;; `combobulate-refactor' -- we can delete
-                       ;; the expansion immediately after the
-                       ;; prompt.
-                       ;; BUG: if
-                       ;; `combobulate-envelope-expand-instructions-1'
-                       ;; ends up calling `save-column' as its last form
-                       ;; before exiting, then the call to set the column
-                       ;; will corrupt the `inst-end' value resulting in
-                       ;; text being left behind.
-                       (mark-range-deleted inst-start inst-end)
-                       (mark-range-highlighted inst-start inst-end)
-                       ;; note that regardless of whether we accept
-                       ;; or decline the expansion, we `commit'
-                       ;; (i.e., delete!) the expansion we created
-                       ;; above. The reason this is done is so that
-                       ;; we ditch the static ersatz template and
-                       ;; instead re-run it, and this time
-                       ;; interactively so prompts and the like are
-                       ;; invoked.
-                       (if (setq repeat-answer
-                                 (or combobulate-envelope-static
-                                     (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
-                           (progn (commit)
-                                  (let ((sub-inst (combobulate-envelope-expand-instructions-1
-                                                   repeat-instructions '(prompt repeat))))
-                                    (setq post-instructions (append post-instructions (cdr sub-inst))))
-                                  (cl-decf max-repeat)
-                                  (commit))
-                         (commit))))))
-             ;; capture `C-g' (`keyboard-quit') so that a user can
-             ;; enter an expansion and back out one step.
-             ;;
-             ;; The actual cleanup is done when
-             ;; `combobulate-refactor' captures the uncaught error
-             ;; and undoes everything.
-             (quit (combobulate-message "Keyboard quit. Undoing expansion."))))))
-      (prog1 (let ((post-instructions
-                    (combobulate-envelope-expand-post-run-instructions
-                     post-instructions
-                     ;; categories to expand right now. Note that we
-                     ;; intentionally exclude `point' as the default
-                     ;; as they should only be run once everything
-                     ;; else is finalised: they are literally the only
-                     ;; thing to run after everything else is done.
-                     (or categories '(prompt repeat choice)))))
-               (cons (cons start (car post-instructions)) (cdr post-instructions)))
-        (rollback)))))
+    (cl-flet ((expand-block (rest-instructions categories)
+                ;; Expand a block of instructions.
+                (let ((ctx (combobulate-envelope-expand-instructions-1 rest-instructions))
+                      (expanded-ctx))
+                  (pcase ctx
+                    ((cl-struct combobulate-envelope-context (block-instructions block-inst))
+                     (setq expanded-ctx
+                           (combobulate-envelope-expand-post-run-instructions
+                            block-inst
+                            ;; categories to expand right now. Note that we
+                            ;; intentionally exclude `point' as the default
+                            ;; as they should only be run once everything
+                            ;; else is finalised: they are literally the only
+                            ;; thing to run after everything else is done.
+                            categories))
+                     (setq block-instructions
+                           (nconc block-instructions
+                                  (combobulate-envelope-context-block-instructions
+                                   expanded-ctx)))
+                     (setq end (combobulate-envelope-context-end expanded-ctx)))))))
+      (combobulate-refactor (:id combobulate-envelope-refactor-id)
+        (dolist (sub-instruction instructions)
+          (pcase sub-instruction
+            ;; `(b instructions)'
+            ;; `(b* instructions)'
+            ;; Execute INSTRUCTIONS in a block, and interactively ask
+            ;; the user to complete `repeat' and `choice' instructions.
+            ;;
+            ;; The special block `b*' will also execute `point' instructions.
+            ((or (and `(b . ,rest) (let categories '(prompt repeat choice)))
+                 (and `(b* . ,rest) (let categories '(prompt repeat choice point))))
+             (expand-block rest categories))
+            ;; `(choice instructions)'
+            ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
+            ;;
+            ;; Presents a prompt to the user to choose between any of
+            ;; the choices in the same block. `choice' is the simplest,
+            ;; and `choice*' is more complex.
+            ;;
+            ;; `choice*' allows you to specify a name for the choice; it
+            ;; is shown in the prompt. The `:missing' keyword argument
+            ;; is a string that is shown if the user does not pick that
+            ;; choice. `:rest' is the instructions to execute if the
+            ;; user picks that choice.
+            ((or (and `(choice . ,rest)
+                      (let name nil)
+                      (let missing nil)
+                      (let rest-instructions rest))
+                 (and `(choice* . ,rest)
+                      (let name (plist-get rest :name))
+                      (let missing (plist-get rest :missing))
+                      (let rest-instructions (plist-get rest :rest))))
+             (let ((combobulate-envelope-static t))
+               (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
+                              ,(apply-partially #'combobulate-envelope-expand-instructions-1
+                                                rest-instructions))
+                     block-instructions)))
+            ;; `(save-column BLOCK)'
+            ;;
+            ;; Records the `current-column' of `point' when it enters
+            ;; BLOCK and resets `point' to that column when after exiting.
+            (`(save-column . ,rest)
+             (let ((col (current-column)))
+               (expand-block rest)
+               (move-to-column col t)))
+            ;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
+            ;;
+            ;; Prompts the user with PROMPT and stores the returned value
+            ;; against TAG.  Any fields tagged TAG (alongside the prompt
+            ;; itself) are updated automatically.
+            ((or (and `(prompt ,tag ,prompt) (let transformer-fn nil))
+                 (and `(p ,tag ,prompt) (let transformer-fn nil))
+                 (and `(prompt ,tag ,prompt ,transformer-fn))
+                 (and `(p ,tag ,prompt ,transformer-fn)))
+             (when (and transformer-fn (not (functionp transformer-fn)))
+               (error "Prompt has invalid transformer function `%s'" transformer-fn))
+             (let ((prompt-point (point)))
+               (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+               (push (cons 'prompt
+                           (lambda () (save-excursion
+                                   (goto-char prompt-point)
+                                   (unless combobulate-envelope-static
+                                     (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                         (combobulate-envelope-prompt
+                                                          prompt tag nil
+                                                          (lambda ()
+                                                            (combobulate-envelope--update-prompts
+                                                             buf tag (minibuffer-contents)))))))
+                                       (push (cons tag new-text) combobulate-envelope--registers)
+                                       (combobulate-envelope--update-prompts buf tag new-text))))))
+                     block-instructions)))
+            ;; `(field TAG)' or `(f TAG)'
+            ;;
+            ;; If there is a matching prompt TAG, update its text to that value.
+            ((or (and `(field ,tag) (let transformer-fn nil))
+                 (and `(f ,tag) (let transformer-fn nil))
+                 (and `(field ,tag ,transformer-fn))
+                 (and `(f ,tag ,transformer-fn)))
+             (mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
+            ;; `@'
+            ;;
+            ;; Push a `point-marker' that will serve as a possible
+            ;; placement point for point after expansion.
+            ('@ (push `(point ,(point-marker)) block-instructions))
+            ;; `@@'
+            ;;
+            ;; Push a `point' that will serve as a possible
+            ;; placement point for point after expansion.
+            ('@@ (push `(point ,(point)) block-instructions))
+            ;; `n' or `n>'
+            ;;
+            ;; Calls `newline', or `newline' then `indent-according-to-mode'.
+            ;;
+            ;; Never `newline-and-indent' because it strips horizontal
+            ;; space, which is unhelpful.
+            ('n (newline))
+            ('n> (newline) (indent-according-to-mode))
+            ;; `>'
+            ;;
+            ;; Call `indent-according-to-mode'
+            ('> (indent-according-to-mode))
+            ;; `<'
+            ;;
+            ;; For whitespace-sensitive languages, this is a way to move
+            ;; back one level of indentation.
+            ('< (let ((col (or (and combobulate-envelope-deindent-function
+                                    (funcall combobulate-envelope-deindent-function))
+                               0)))
+                  (newline)
+                  (move-to-column col t)))
+            ;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
+            ;;
+            ;; Inserts the register REGISTER (retreived from
+            ;; `combobulate-envelope--registers') or, if there is no
+            ;; register specified, default to the REGISTER `region' (or
+            ;; `region-indented' if
+            ;; `combobulate-envelope-indent-region-function' is nil) which
+            ;; holds that captured region (if any).
+            ;;
+            ;; Forms ending with `>' are indented as per the major mode's
+            ;; indentation engine. Forms without `>' are not indented at all.
+            ((or
+              ;; surely there's a better way than this?
+              (and 'r>
+                   (let register nil)
+                   (let default "")
+                   (let indent t))
+              (and 'r
+                   (let register nil)
+                   (let default "")
+                   (let indent nil))
+              (and `(r> ,register)
+                   (let indent t)
+                   (let default ""))
+              (and `(r ,register)
+                   (let indent nil)
+                   (let default ""))
+              (and `(r> ,register ,default)
+                   (let indent t))
+              (and `(r ,register ,default)
+                   (let indent nil)))
+             (setq default (combobulate-envelope-get-register
+                            (or register
+                                (if (and (null combobulate-envelope-indent-region-function) indent)
+                                    'region-indented
+                                  'region))
+                            default))
+             (cond
+              ((and combobulate-envelope-indent-region-function indent)
+               (funcall combobulate-envelope-indent-region-function
+                        (point) (progn (insert default) (point))))
+              ;; if `combobulate-envelope-indent-region-function' is nil
+              ;; then we default to a simplistic indentation style that
+              ;; works well with the likes of Python where crass,
+              ;; region-based indentation will never work.
+              ((and (not combobulate-envelope-indent-region-function) indent)
+               ;; ordinarily, we do not need to worry about changing the
+               ;; start/end point markers, as inserting text will
+               ;; advance the point markers correctly. However, in
+               ;; python and suchlike, we cannot 'just' indent the
+               ;; region register; instead, we must carefully fix its
+               ;; indentation so it matches correctly: this must happen
+               ;; from the beginning of the line. Therefore, we change
+               ;; the start point marker to match.
+               (forward-line 0)
+               (setf start (point))
+               (insert (combobulate-indent-string
+                        default
+                        :first-line-operation 'absolute
+                        :first-line-amount (current-indentation)
+                        :rest-lines-operation 'relative)))
+              (t (insert default))))
+            ;; "string"
+            ;;
+            ;; Strings are inserted at point.
+            ((and (pred stringp) s)
+             (insert s))
+            ;; `(repeat BLOCK)' or `(repeat-1 BLOCK)'
+            ;;
+            ;; Repeats BLOCK an unlimited number of times or at most once.
+            ((or (and `(repeat . ,repeat-instructions) (let max-repeat most-positive-fixnum))
+                 (and `(repeat-1 . ,repeat-instructions) (let max-repeat 1)))
+             (condition-case nil
+                 ;; we start with `repeat-answer' set to `t' by default
+                 ;; because we want to expand `repeat-instructions'
+                 ;; *first* and *then*  prompt the user if they want
+                 ;; to keep the now-displayed instruction.
+                 (let ((repeat-answer t))
+                   (when combobulate-envelope-static
+                     (setq max-repeat 1))
+                   (while (and repeat-answer (> max-repeat 0))
+                     (combobulate-refactor ()
+                       ;; call with `combobulate-envelope-static' set to
+                       ;; `t'. When an envelope is static, no
+                       ;; interactive functions are called (prompts and
+                       ;; such).
+                       ;;
+                       ;; That way we can safely insert the template
+                       ;; knowing that it won't block for user input.
+                       (seq-let [[inst-start &rest inst-end] &rest _]
+                           (let ((combobulate-envelope-static t))
+                             (combobulate-envelope-expand-instructions-1 repeat-instructions))
+                         ;; mark the range as highlighted, so it's
+                         ;; easier to see its extent; and as deleted,
+                         ;; so that -- due to how we're using
+                         ;; `combobulate-refactor' -- we can delete
+                         ;; the expansion immediately after the
+                         ;; prompt.
+                         ;; BUG: if
+                         ;; `combobulate-envelope-expand-instructions-1'
+                         ;; ends up calling `save-column' as its last form
+                         ;; before exiting, then the call to set the column
+                         ;; will corrupt the `inst-end' value resulting in
+                         ;; text being left behind.
+                         (mark-range-deleted inst-start inst-end)
+                         (mark-range-highlighted inst-start inst-end)
+                         ;; note that regardless of whether we accept
+                         ;; or decline the expansion, we `commit'
+                         ;; (i.e., delete!) the expansion we created
+                         ;; above. The reason this is done is so that
+                         ;; we ditch the static ersatz template and
+                         ;; instead re-run it, and this time
+                         ;; interactively so prompts and the like are
+                         ;; invoked.
+                         (if (setq repeat-answer
+                                   (or combobulate-envelope-static
+                                       (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
+                             (progn (commit)
+                                    (let ((sub-inst (combobulate-envelope-expand-instructions-1 repeat-instructions)))
+                                      (setq block-instructions (append block-instructions (cdr sub-inst))))
+                                    (cl-decf max-repeat)
+                                    (commit))
+                           (commit))))))
+               ;; capture `C-g' (`keyboard-quit') so that a user can
+               ;; enter an expansion and back out one step.
+               ;;
+               ;; The actual cleanup is done when
+               ;; `combobulate-refactor' captures the uncaught error
+               ;; and undoes everything.
+               (quit (combobulate-message "Keyboard quit. Undoing expansion."))))
+            (_ (error "Unknown sub-instruction: %S" sub-instruction)))))
+      (make-combobulate-envelope-context
+       :start start
+       :end (point)
+       :block-instructions block-instructions
+       :instructions nil))))
 
 (defun combobulate-envelope-render-preview (_index current-node proxy-nodes refactor-id)
   "Render a preview of the envelope at INDEX.
@@ -375,10 +400,12 @@ Unlike most proffer preview functions, this one assumes that
                          is-current-node t
                          pt (point)))
                   (t (setq expand-envelope missing)))
-            (seq-let [[start &rest end] &rest _pt]
-                (combobulate-refactor (:id combobulate-envelope-refactor-id)
-                  (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
-                    (rollback)))
+            (pcase-let (((cl-struct combobulate-envelope-context
+                                    (start start)
+                                    (end end))
+                         (combobulate-refactor (:id combobulate-envelope-refactor-id)
+                           (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
+                             (rollback)))))
               (mark-range-deleted start end)
               (when is-current-node
                 (mark-range-highlighted start end))))))
@@ -402,11 +429,11 @@ executed in the order presented in CATEGORIES.
 Any unfilfilled instructions in COLLECTED-INSTRUCTIONS that did
 not feature in CATEGORIES are returned."
   (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
-        (remaining-instructions)
+        (remaining-block-instructions)
         (end (point-marker)))
     ;; strip out instructions that we weren't asked to process: return
     ;; them instead.
-    (setq remaining-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
+    (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (category categories)
         (pcase (assoc category grouped-instructions)
@@ -464,10 +491,11 @@ not feature in CATEGORIES are returned."
                (dolist (node nodes)
                  (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                    (combobulate-move-to-node node)
-                   (setq remaining-instructions
-                         (append remaining-instructions
-                                 (cdr (combobulate-envelope-expand-instructions-1
-                                       (if (equal node selected-node) rest-envelope missing))))))))))
+                   (setq remaining-block-instructions
+                         (append remaining-block-instructions
+                                 (combobulate-envelope-context-block-instructions
+                                  (combobulate-envelope-expand-instructions-1
+                                   (if (equal node selected-node) rest-envelope missing))))))))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
@@ -490,10 +518,14 @@ not feature in CATEGORIES are returned."
              ;; ever action once we've exited the entire envelope
              ;; instruction loop. It is the final action carried out
              ;; at the very end.
-             (push (cons 'selected-point selected-point) remaining-instructions)
+             (push (cons 'selected-point selected-point) remaining-block-instructions)
              (rollback)))))
       (rollback))
-    (cons end remaining-instructions)))
+    (make-combobulate-envelope-context
+     :block-instructions remaining-block-instructions
+     :instructions nil
+     :start nil
+     :end end)))
 
 (defun combobulate-envelope-expand-instructions (instructions &optional registers)
   "Expand an envelope of INSTRUCTIONS at point.
@@ -694,20 +726,17 @@ expansion:
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (condition-case nil
           (progn
-            (setq result (cdr (combobulate-envelope-expand-instructions-1 instructions)))
+            (combobulate-envelope-expand-instructions-1
+             ;; Build the base template for the envelope we are to
+             ;; expand. The base template is just `b*', which is a
+             ;; "super-block" that expands all user actions such as
+             ;; choice, repeat, prompt and -- for `b*' specifically --
+             ;; also `point'.
+             `((b* ,@instructions)))
             (set-marker end (point))
-            ;; Some instructions are meant to be run at the very end, after
-            ;; all recursive expansions have taken place. Proffered point
-            ;; locations are one such example.
-            (let ((post-run-instructions (cdr (combobulate-envelope-expand-post-run-instructions
-                                               result '(point)))))
-              (pcase-dolist (`('selected-point . ,pt) post-run-instructions)
-                (setq selected-point pt)))
             (commit)
             (setq state 'success))
-        (quit
-         (rollback)
-         (setq state 'error))))
+        (quit (rollback) (setq state 'error))))
     ;; Only when both `combobulate-envelope--undo-on-quit' and `state'
     ;; is `error' is set do we cancel the change group. The
     ;; `combobulate-envelope--undo-on-quit' variable is there to
