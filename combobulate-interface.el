@@ -212,5 +212,37 @@ kept."
                                  :keep-types (list (combobulate-node-type proxy-node))))))))))
 
 
+(defmacro combobulate-atomic-change-group (&rest body)
+  "Re-entrant change group, like `atomic-change-group'.
+This means that if BODY exits abnormally,
+all of its changes to the current buffer are undone.
+This works regardless of whether undo is enabled in the buffer.
+
+This mechanism is transparent to ordinary use of undo;
+if undo is enabled in the buffer and BODY succeeds, the
+user can undo the change normally."
+  (declare (indent 0) (debug t))
+  (let ((handle (gensym "--change-group-handle--"))
+	(success (gensym "--change-group-success--")))
+    `(let ((,handle (prepare-change-group))
+	   ;; Don't truncate any undo data in the middle of this.
+	   (undo-outer-limit nil)
+	   (undo-limit most-positive-fixnum)
+	   (undo-strong-limit most-positive-fixnum)
+	   (,success nil))
+       (unwind-protect
+	   (progn
+	     ;; This is inside the unwind-protect because
+	     ;; it enables undo if that was disabled; we need
+	     ;; to make sure that it gets disabled again.
+	     (activate-change-group ,handle)
+	     (prog1 ,(macroexp-progn body)
+	       (setq ,success t)))
+	 ;; Either of these functions will disable undo
+	 ;; if it was disabled before.
+	 (if ,success
+	     (accept-change-group ,handle)
+	   (cancel-change-group ,handle))))))
+
 (provide 'combobulate-interface)
 ;;; combobulate-interface.el ends here

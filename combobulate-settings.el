@@ -385,7 +385,10 @@ well in indentation-sensitive languages like YAML or Python.")
 (defvar-local combobulate-envelope-deindent-function nil
   "Function to call to calculate the previous indentation level of point.
 
-This is little use to anything except whitspace-sensitive
+The function must determine, from its current position in the
+buffer, the *preceding* indentation level.
+
+This is little use to anything except whitespace-sensitive
 languages like YAML and Python.")
 
 (defvar combobulate-envelope-symbol-prefix "combobulate-envelop-"

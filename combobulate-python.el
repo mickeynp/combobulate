@@ -302,10 +302,18 @@ line when you press
              :name "nest-try-except"
              :template
              ("try:" n>
-              (choice* :missing (@@ "pass") :rest (@@ r>))
-              <
-              "except " (p Exception "Exception") ":" n>
-              (choice* :missing (@@ "pass" n>) :rest (@@ r> n))))
+              (choice* :missing
+                       (@@ "pass")
+                       :rest
+                       (@@ r>))
+              < "except "
+              (p Exception "Exception")
+              ;; "Foo"
+              ":" n>
+              (choice* :missing
+                       (@@ "pass" n>)
+                       :rest
+                       (@@ r> n))))
             (:description
              "try ... finally: ..."
              :key "btf"

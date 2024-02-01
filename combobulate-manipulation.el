@@ -173,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                                    (combobulate--refactor-update-field ov tag text)))
+                               (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -193,7 +193,7 @@
                     ;; clean up.
                     (rollback)))
          (condition-case err
-             (prog1 (atomic-change-group
+             (prog1 (combobulate-atomic-change-group
                       ,@body)
                (when (and (alist-get ,--session combobulate-refactor--active-sessions)
                           (not ,--pre-existing-session))
@@ -482,9 +482,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -498,7 +498,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -787,6 +787,7 @@ indentation."
                  (t
                   (concat (make-string 0 ? ) line-without-indent))))
           ((eq operation 'absolute)
+           (cl-assert (>= amount 0) "Absolute indentation must be positive.")
            (concat (make-string amount ? ) line-without-indent)))))
 
 (cl-defun combobulate-indent-string (text &key (first-line-operation nil)
@@ -811,7 +812,7 @@ be changed by 2 spaces (in the same direction) as well.
 
 REST-LINES-AMOUNT is the amount to add, subtract, or set the rest
 of the lines' indentation to. It cannot be used with `relative'."
-  (cl-assert (member first-line-operation '(add subtract absolute nil)))
+  (cl-assert (member first-line-operation '(add subtract absolute relative nil)))
   (cl-assert (member rest-lines-operation '(relative add subtract absolute nil)))
   ;; `rest-lines-amount'  cannot be used with `relative'.
   (cl-assert (or (not (eq rest-lines-operation 'relative))
@@ -823,7 +824,10 @@ of the lines' indentation to. It cannot be used with `relative'."
          (first-line (if first-line-operation
                          (combobulate-indent-string-1
                           (car lines)
-                          first-line-operation first-line-amount)
+                          (if (equal first-line-operation 'relative) 'subtract first-line-operation)
+                          (if (equal first-line-operation 'relative)
+                              (- first-line-indentation first-line-amount)
+                            first-line-amount))
                        (car lines)))
          (new-first-line-indentation (combobulate-indent-string--count-whitespace first-line))
          (rest-lines (if rest-lines-operation
@@ -1035,8 +1039,6 @@ point relative to the nodes in
         (combobulate-message "Killed" node)
         (combobulate--kill-node node)))))
 
-(defvar combobulate-envelope-static)
-
 (defvar-keymap combobulate-proffer-map
   :parent nil
   :doc "Keymap for `combobulate-proffer-choices'.
@@ -1072,6 +1074,8 @@ the current choice and exit."
                                              (allow-numeric-selection nil)
                                              (signal-on-abort nil)
                                              (start-index 0)
+                                             (before-switch-fn nil)
+                                             (after-switch-fn nil)
                                              (unique-only t))
   "Interactively browse NODES one at a time with ACTION-FN applied to it.
 
@@ -1168,6 +1172,7 @@ skip over the first few nodes in the list."
         (result) (state 'continue) (current-node)
         (index start-index) (pt (point)) (raw-event)
         (refactor-id (combobulate-refactor-setup))
+        (change-group)
         (map (let ((map (make-sparse-keymap)))
                (set-keymap-parent map combobulate-proffer-map)
                (when extra-map
@@ -1182,6 +1187,8 @@ skip over the first few nodes in the list."
             (with-undo-amalgamate
               (catch 'exit
                 (while (eq state 'continue)
+                  (unless change-group
+                    (setq change-group (prepare-change-group)))
                   (catch 'next
                     (setq current-node (nth index proxy-nodes))
                     (combobulate-refactor (:id refactor-id)
@@ -1191,6 +1198,7 @@ skip over the first few nodes in the list."
                                         ((eq action 'rollback)
                                          (rollback))
                                         (t (error "Unknown action: %s" action)))))
+                        (and before-switch-fn (funcall before-switch-fn))
                         (funcall action-fn index current-node proxy-nodes refactor-id)
                         ;; if we have just one item, or if
                         ;; `:first-choice' is non-nil, we pick the first
@@ -1234,6 +1242,7 @@ skip over the first few nodes in the list."
                                   ;; machine below.
                                   (quit 'cancel)
                                   (t (rollback) 'cancel)))
+                          (and after-switch-fn (funcall after-switch-fn))
                           (pcase result
                             ('prev
                              (refactor-action switch-action)
@@ -1274,7 +1283,10 @@ skip over the first few nodes in the list."
                              (when (length> raw-event 0)
                                (push (aref raw-event 0) unread-command-events))
                              (refactor-action accept-action)
-                             (setq state 'accept))))))))))
+                             (setq state 'accept)))))))
+                  (when change-group
+                    (cancel-change-group change-group))
+                  (activate-change-group change-group))))
           (quit (when signal-on-abort
                   (signal (car err) (cdr err)))))
       (error "There are no choices to make"))

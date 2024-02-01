@@ -144,7 +144,7 @@ If the register does not exist, return DEFAULT or nil."
             ;;
             ;; The special block `b*' will also execute `point' instructions.
             ((or (and `(b . ,rest) (let categories '(prompt repeat choice)))
-                 (and `(b* . ,rest) (let categories '(prompt repeat choice point))))
+                 (and `(b* . ,rest) (let categories '(prompt repeat choice point selected-point))))
              (expand-block rest categories))
             ;; `(choice instructions)'
             ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
@@ -166,11 +166,10 @@ If the register does not exist, return DEFAULT or nil."
                       (let name (plist-get rest :name))
                       (let missing (plist-get rest :missing))
                       (let rest-instructions (plist-get rest :rest))))
-             (let ((combobulate-envelope-static t))
-               (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
-                              ,(apply-partially #'combobulate-envelope-expand-instructions-1
-                                                rest-instructions))
-                     block-instructions)))
+             (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
+                            ,(apply-partially #'combobulate-envelope-expand-instructions-1
+                                              rest-instructions))
+                   block-instructions))
             ;; `(save-column BLOCK)'
             ;;
             ;; Records the `current-column' of `point' when it enters
@@ -178,7 +177,7 @@ If the register does not exist, return DEFAULT or nil."
             (`(save-column . ,rest)
              (let ((col (current-column)))
                (expand-block rest)
-               (move-to-column col t)))
+               (insert (make-string col ? ))))
             ;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
             ;;
             ;; Prompts the user with PROMPT and stores the returned value
@@ -243,7 +242,7 @@ If the register does not exist, return DEFAULT or nil."
                                     (funcall combobulate-envelope-deindent-function))
                                0)))
                   (newline)
-                  (move-to-column col t)))
+                  (insert (make-string col ? ))))
             ;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
             ;;
             ;; Inserts the register REGISTER (retreived from
@@ -298,13 +297,16 @@ If the register does not exist, return DEFAULT or nil."
                ;; indentation so it matches correctly: this must happen
                ;; from the beginning of the line. Therefore, we change
                ;; the start point marker to match.
-               (forward-line 0)
-               (setf start (point))
-               (insert (combobulate-indent-string
-                        default
-                        :first-line-operation 'absolute
-                        :first-line-amount (current-indentation)
-                        :rest-lines-operation 'relative)))
+               (let ((offset (current-indentation)))
+                 (delete-horizontal-space)
+                 ;; (forward-line 0)
+                 (setf start (point))
+                 ;; clear whitespace from the start of the line
+                 (insert (combobulate-indent-string
+                          default
+                          :first-line-operation 'absolute
+                          :first-line-amount offset
+                          :rest-lines-operation 'relative))))
               (t (insert default))))
             ;; "string"
             ;;
@@ -433,6 +435,9 @@ not feature in CATEGORIES are returned."
         (end (point-marker)))
     ;; strip out instructions that we weren't asked to process: return
     ;; them instead.
+    (message "Expanding instructions: %S" categories)
+    (message "Instructions: %S" collected-instructions)
+    (message "Grouped instructions: %S" grouped-instructions)
     (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (category categories)
@@ -491,11 +496,16 @@ not feature in CATEGORIES are returned."
                (dolist (node nodes)
                  (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                    (combobulate-move-to-node node)
-                   (setq remaining-block-instructions
-                         (append remaining-block-instructions
-                                 (combobulate-envelope-context-block-instructions
-                                  (combobulate-envelope-expand-instructions-1
-                                   (if (equal node selected-node) rest-envelope missing))))))))))
+                   (let ((ctx (combobulate-envelope-expand-instructions-1
+                               `((b ,@(if (equal node selected-node) rest-envelope missing))))))
+                     (message "Remaining instructions before: %S" remaining-block-instructions)
+                     (setq remaining-block-instructions
+                           (append remaining-block-instructions (combobulate-envelope-context-block-instructions ctx)))
+                     (message "Remaining instructions after: %S" remaining-block-instructions)
+                     (setq end (combobulate-envelope-context-end ctx))))))))
+          (`(selected-point . ,pts)
+           (dolist (pt pts)
+             (goto-char (cdr pt))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
@@ -706,16 +716,13 @@ expansion:
         (end (point-marker))
         (change-group (prepare-change-group))
         (state 'start)
-        (undo-outer-limit nil)
-        (undo-limit most-positive-fixnum)
-        (undo-strong-limit most-positive-fixnum)
         (combobulate-envelope--registers (append registers combobulate-envelope-registers))
         (combobulate-envelope-refactor-id (combobulate-refactor-setup))
         (selected-point (point)))
     (activate-change-group change-group)
     (when (use-region-p)
       (let ((col (current-indentation))
-            (text (delete-and-extract-region (point) (mark))))
+            (text (substring-no-properties (delete-and-extract-region (point) (mark)))))
         (push (cons 'region-indented (combobulate-indent-string-first-line text col))
               combobulate-envelope--registers)
         (push (cons 'region text) combobulate-envelope--registers))
@@ -726,17 +733,38 @@ expansion:
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (condition-case nil
           (progn
-            (combobulate-envelope-expand-instructions-1
-             ;; Build the base template for the envelope we are to
-             ;; expand. The base template is just `b*', which is a
-             ;; "super-block" that expands all user actions such as
-             ;; choice, repeat, prompt and -- for `b*' specifically --
-             ;; also `point'.
-             `((b* ,@instructions)))
-            (set-marker end (point))
+            (let ((ctx (combobulate-envelope-expand-instructions-1
+                        ;; Build the base template for the envelope we are to
+                        ;; expand. The base template is just `b*', which is a
+                        ;; "super-block" that expands all user actions such as
+                        ;; choice, repeat, prompt and -- for `b*' specifically --
+                        ;; also `point'.
+                        `((b* ,@instructions)))))
+              ;; The `point' category is special in that it is
+              ;; executed only at the `b*' superblock stage. If there
+              ;; is more than one `point', the user is asked to
+              ;; choose: that choice is then put back into the context
+              ;; as `selected-point'. This code will then move point
+              ;; to that location.
+              ;;
+              ;; It's a little bit hacky, but we assume that as we
+              ;; come out of this expansion of post-run instructions,
+              ;; that where ever point is, is what we want to end the
+              ;; envelope at.
+              (combobulate-envelope-expand-post-run-instructions
+               (combobulate-envelope-context-block-instructions ctx)
+               '(point selected-point))
+              (setq selected-point (point))
+              ;; Track the contextual end of the envelope.
+              (set-marker end (combobulate-envelope-context-end ctx)))
             (commit)
             (setq state 'success))
         (quit (rollback) (setq state 'error))))
+    ;; Amalgamate all the changes into one single change. If a user
+    ;; accepts an envelope, but changes their mind, they won't have to
+    ;; undo multiple times to return to the state they were in before
+    ;; the envelope was expanded.
+    (undo-amalgamate-change-group change-group)
     ;; Only when both `combobulate-envelope--undo-on-quit' and `state'
     ;; is `error' is set do we cancel the change group. The
     ;; `combobulate-envelope--undo-on-quit' variable is there to
@@ -745,6 +773,9 @@ expansion:
     (if (and (eq state 'error) combobulate-envelope--undo-on-quit)
         (cancel-change-group change-group)
       (accept-change-group change-group))
+    ;; Throw a courtesy region indent call if we support such a
+    ;; thing. (We do not in the likes of Python, where indenting a
+    ;; region is dangerous.
     (when combobulate-envelope-indent-region-function
       (apply combobulate-envelope-indent-region-function
              (combobulate-extend-region-to-whole-lines start end)))
@@ -821,6 +852,7 @@ See `combobulate-apply-envelope' for more information."
         (let ((combobulate-envelope-static t)
               (envelope-nodes (plist-get envelope :nodes))
               (change-group (prepare-change-group))
+              (switch-change-group nil)
               (undo-outer-limit nil)
               (undo-limit most-positive-fixnum)
               (undo-strong-limit most-positive-fixnum))
@@ -858,10 +890,10 @@ See `combobulate-apply-envelope' for more information."
                                               (combobulate-get-parents (combobulate-node-at-point))))
                           (list (combobulate-make-proxy-point-node))))
                        (lambda (_index current-node _proxy-nodes refactor-id)
-                         ;; mark deleted and highlight first. That way when we apply
-                         ;; the envelope the overlays expand to match.
+                         (cancel-change-group change-group)
+                         ;; That way when we apply the envelope the
+                         ;; overlays expand to match.
                          (combobulate-refactor (:id refactor-id)
-                           (mark-node-deleted current-node)
                            (let ((ov (mark-node-highlighted current-node))
                                  (combobulate-envelope--undo-on-quit nil))
                              (seq-let [[start &rest end] &rest pt]
@@ -880,8 +912,6 @@ See `combobulate-apply-envelope' for more information."
         ;; an explicit node skips the proffering process entirely.
         (when (and chosen-node accepted)
           (combobulate-execute-envelope envelope-name chosen-node))))))
-
-
 
 (provide 'combobulate-envelope)
 ;;; combobulate-envelope.el ends here
