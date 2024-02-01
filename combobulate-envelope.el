@@ -850,20 +850,9 @@ See `combobulate-apply-envelope' for more information."
           (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
             (goto-char target-pt))
         (let ((combobulate-envelope-static t)
-              (envelope-nodes (plist-get envelope :nodes))
-              (change-group (prepare-change-group))
-              (switch-change-group nil)
-              (undo-outer-limit nil)
-              (undo-limit most-positive-fixnum)
-              (undo-strong-limit most-positive-fixnum))
+              (envelope-nodes (plist-get envelope :nodes)))
           (unwind-protect
               (progn
-                ;; use a change group to ensure we revert the proffered
-                ;; (and selected) choice immediately after. this is a
-                ;; hacky way of displaying an expansion (in conjunction
-                ;; with `combobulate-envelope-static' set to t) and not
-                ;; activate interactive prompts.
-                (activate-change-group change-group)
                 (setq chosen-node
                       (combobulate-proffer-choices
                        (seq-sort
@@ -890,9 +879,6 @@ See `combobulate-apply-envelope' for more information."
                                               (combobulate-get-parents (combobulate-node-at-point))))
                           (list (combobulate-make-proxy-point-node))))
                        (lambda (_index current-node _proxy-nodes refactor-id)
-                         (cancel-change-group change-group)
-                         ;; That way when we apply the envelope the
-                         ;; overlays expand to match.
                          (combobulate-refactor (:id refactor-id)
                            (let ((ov (mark-node-highlighted current-node))
                                  (combobulate-envelope--undo-on-quit nil))
@@ -905,9 +891,7 @@ See `combobulate-apply-envelope' for more information."
                                (move-overlay ov start end)))))
                        :reset-point-on-abort t
                        :reset-point-on-accept nil))
-                (setq accepted t)
-                (cancel-change-group change-group))
-            (cancel-change-group change-group)))
+                (setq accepted t))))
         ;; here we simply repeat what ever the selected choice was, as
         ;; an explicit node skips the proffering process entirely.
         (when (and chosen-node accepted)
