@@ -122,7 +122,7 @@ If the register does not exist, return DEFAULT or nil."
                     ((cl-struct combobulate-envelope-context (block-instructions block-inst))
                      (setq expanded-ctx
                            (combobulate-envelope-expand-post-run-instructions
-                            block-inst
+                            ctx
                             ;; categories to expand right now. Note that we
                             ;; intentionally exclude `point' as the default
                             ;; as they should only be run once everything
@@ -413,7 +413,7 @@ Unlike most proffer preview functions, this one assumes that
                 (mark-range-highlighted start end))))))
       (when pt (goto-char pt)))))
 
-(cl-defun combobulate-envelope-expand-post-run-instructions (collected-instructions categories)
+(cl-defun combobulate-envelope-expand-post-run-instructions (ctx categories)
   "Expand each COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
 
 CATEGORIES is a list of instructions to expand now. Valid choices are:
@@ -430,15 +430,16 @@ executed in the order presented in CATEGORIES.
 
 Any unfilfilled instructions in COLLECTED-INSTRUCTIONS that did
 not feature in CATEGORIES are returned."
-  (let ((selected-point) (grouped-instructions (seq-group-by #'car collected-instructions))
+  (pcase-let (((cl-struct combobulate-envelope-context
+                          (block-instructions block-instructions)
+                          (end end))
+               ctx))
+    (let ((selected-point) (grouped-instructions (seq-group-by #'car block-instructions))
         (remaining-block-instructions)
         (end (point-marker)))
     ;; strip out instructions that we weren't asked to process: return
     ;; them instead.
-    (message "Expanding instructions: %S" categories)
-    (message "Instructions: %S" collected-instructions)
-    (message "Grouped instructions: %S" grouped-instructions)
-    (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) collected-instructions))
+      (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) block-instructions))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (dolist (category categories)
         (pcase (assoc category grouped-instructions)
@@ -489,28 +490,66 @@ not feature in CATEGORIES are returned."
                          ;; accept action -- rollback -- were used
                          ;; instead.
                          :accept-action 'commit))
-               ;; for each node in the node list we just proferred,
-               ;; figure out which one was picked by the user and fill
-               ;; it with its instructions. Then backfill the choices
-               ;; we didn't make with the missing value (if any)
+                 ;; If one of the proffered choices was selected, then we need to:
+                 ;;
+                 ;; 1. Move to the node
+                 ;;
+                 ;; 2. Expand the envelope found in either `:missing'
+                 ;;    or `:rest'. The `:missing' envelope is expanded
+                 ;;    if the node is not the selected node, and the
+                 ;;    `:rest' envelope is expanded if the node is the
+                 ;;    selected node.
+                 ;;
+                 ;; 3. The outcome of recursively expanding the
+                 ;;    envelope will yield block instructions that
+                 ;;    require further processing. However, these
+                 ;;    block instructions may include categories the
+                 ;;    `b' block cannot process itself. Namely, that
+                 ;;    is almost always just `point' nodes. We'll need
+                 ;;    to walk each block instruction in turn and put
+                 ;;    them back into the grouped instructions alist
+                 ;;    so they can be processed in turn.
                (dolist (node nodes)
                  (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                    (combobulate-move-to-node node)
-                   (let ((ctx (combobulate-envelope-expand-instructions-1
+                     (pcase-let (((cl-struct combobulate-envelope-context
+                                             (block-instructions block-instructions)
+                                             (end ctx-end))
+                                  (combobulate-envelope-expand-instructions-1
+                                   ;; If the node is selected we use
+                                   ;; the rest-envelope; for
+                                   ;; everything else, the missing
+                                   ;; envelope.
+                                   ;;
+                                   ;; Regardless of the envelope, we
+                                   ;; ensure it's wrapped in an
+                                   ;; implicit `b' block.
                                `((b ,@(if (equal node selected-node) rest-envelope missing))))))
-                     (message "Remaining instructions before: %S" remaining-block-instructions)
-                     (setq remaining-block-instructions
-                           (append remaining-block-instructions (combobulate-envelope-context-block-instructions ctx)))
-                     (message "Remaining instructions after: %S" remaining-block-instructions)
-                     (setq end (combobulate-envelope-context-end ctx))))))))
+                       (pcase-dolist (`(,block-category . ,block-instruction) block-instructions)
+                         ;; If we're dealing with any sort of block
+                         ;; instruction that is part of the categories
+                         ;; we are dealing with, put them back into
+                         ;; the grouped instructions alist so they can
+                         ;; be processed in turn.
+                         (if (member block-category categories)
+                             (setf (alist-get block-category grouped-instructions)
+                                   (cons (cons block-category block-instruction)
+                                         (alist-get block-category grouped-instructions)))
+                           (push (cons block-category block-instruction) remaining-block-instructions)))
+                       (setq end ctx-end)))))))
           (`(selected-point . ,pts)
+           ;; it's possible there's more than one selected-point, I
+           ;; suppose? It should not happen, though.
            (dolist (pt pts)
              (goto-char (cdr pt))))
           (`(point . ,points)
            (let ((nodes (mapcar (lambda (pt-instruction)
                                   (combobulate-make-proxy-point-node (cadr pt-instruction)))
                                 points)))
+               ;; Ensure every single point node has a cursor visible
+               ;; so the user can see the available cursor choices.
              (mapc #'mark-node-cursor nodes)
+             (save-excursion
              (if-let (selected-node (combobulate-proffer-choices
                                      nodes
                                      (lambda (_index current-node _proxy-nodes refactor-id)
@@ -523,7 +562,7 @@ not feature in CATEGORIES are returned."
                                      :reset-point-on-abort t
                                      :reset-point-on-accept nil))
                  (setq selected-point (combobulate-node-start selected-node))
-               (setq selected-point nil))
+                 (setq selected-point nil)))
              ;; This is a special post-run instructions that we only
              ;; ever action once we've exited the entire envelope
              ;; instruction loop. It is the final action carried out
@@ -531,11 +570,13 @@ not feature in CATEGORIES are returned."
              (push (cons 'selected-point selected-point) remaining-block-instructions)
              (rollback)))))
       (rollback))
+      (message "Remaining block instructions: %s" remaining-block-instructions)
+      (message "Remaining grouped instructions: %s" grouped-instructions)
     (make-combobulate-envelope-context
      :block-instructions remaining-block-instructions
      :instructions nil
      :start nil
-     :end end)))
+       :end end))))
 
 (defun combobulate-envelope-expand-instructions (instructions &optional registers)
   "Expand an envelope of INSTRUCTIONS at point.
@@ -751,9 +792,12 @@ expansion:
               ;; come out of this expansion of post-run instructions,
               ;; that where ever point is, is what we want to end the
               ;; envelope at.
+              ;; (combobulate-envelope-expand-post-run-instructions
+              ;;  ctx
+              ;;  '(point))
               (combobulate-envelope-expand-post-run-instructions
-               (combobulate-envelope-context-block-instructions ctx)
-               '(point selected-point))
+               ctx
+               '(selected-point))
               (setq selected-point (point))
               ;; Track the contextual end of the envelope.
               (set-marker end (combobulate-envelope-context-end ctx)))
