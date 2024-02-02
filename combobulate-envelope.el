@@ -176,7 +176,8 @@ If the register does not exist, return DEFAULT or nil."
             ;; BLOCK and resets `point' to that column when after exiting.
             (`(save-column . ,rest)
              (let ((col (current-column)))
-               (expand-block rest)
+               (expand-block rest nil)
+               ;; (delete-horizontal-space)
                (insert (make-string col ? ))))
             ;; `(prompt TAG PROMPT [TRANSFORM-FN])' / `(p TAG PROMPT [TRANSFORM-FN])'
             ;;
@@ -241,7 +242,7 @@ If the register does not exist, return DEFAULT or nil."
             ('< (let ((col (or (and combobulate-envelope-deindent-function
                                     (funcall combobulate-envelope-deindent-function))
                                0)))
-                  (newline)
+                  (delete-horizontal-space)
                   (insert (make-string col ? ))))
             ;; `(r> REGISTER [DEFAULT])' and `(r REGISTER [DEFAULT])'; or `r>' and `r'
             ;;
