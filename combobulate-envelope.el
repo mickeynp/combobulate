@@ -194,7 +194,7 @@ If the register does not exist, return DEFAULT or nil."
                (push (cons 'prompt
                            (lambda () (save-excursion
                                    (goto-char prompt-point)
-                                     (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
                                    (unless combobulate-envelope-static
                                      (let ((new-text (or (combobulate-envelope-get-register tag)
                                                          (combobulate-envelope-prompt
@@ -313,10 +313,10 @@ If the register does not exist, return DEFAULT or nil."
                  (setf start (point))
                  ;; clear whitespace from the start of the line
                  (let ((before-pt (point)))
-                 (insert (combobulate-indent-string
-                          default
-                          :first-line-operation 'absolute
-                          :first-line-amount offset
+                   (insert (combobulate-indent-string
+                            default
+                            :first-line-operation 'absolute
+                            :first-line-amount offset
                             :rest-lines-operation 'relative))
                    (save-excursion
                      (goto-char before-pt)
@@ -410,7 +410,7 @@ Unlike most proffer preview functions, this one assumes that
           (combobulate-envelope--undo-on-quit nil))
       (dolist (node proxy-nodes)
         (let ((expand-envelope) (is-current-node))
-          (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
+          (pcase-let ((`(,missing .  ,rest-envelope) (combobulate-proxy-node-extra node)))
             (combobulate-move-to-node node)
             (cond ((equal node current-node)
                    (setq expand-envelope rest-envelope
@@ -449,60 +449,60 @@ not feature in CATEGORIES are returned."
                           (end end))
                ctx))
     (let ((selected-point) (grouped-instructions (seq-group-by #'car block-instructions))
-        (remaining-block-instructions)
-        (end (point-marker)))
-    ;; strip out instructions that we weren't asked to process: return
-    ;; them instead.
+          (remaining-block-instructions)
+          (end (point-marker)))
+      ;; strip out instructions that we weren't asked to process: return
+      ;; them instead.
       (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) block-instructions))
-    (combobulate-refactor (:id combobulate-envelope-refactor-id)
-      (dolist (category categories)
-        (pcase (assoc category grouped-instructions)
-          (`(prompt . ,prompts)
-           (save-excursion (mapc #'funcall (mapcar #'cdr prompts))))
-          (`(choice . ,choices)
-           (let ((nodes))
-             (pcase-dolist (`(choice ,pt ,name ,missing ,rest-envelope ,text) choices)
-               (push (make-combobulate-proxy-node
-                      :start pt
-                      :end pt
-                      :text text
-                      :named t
-                      :type "Choice"
-                      :pp (format "Choice: %s" name)
-                      :extra (cons missing rest-envelope))
+      (combobulate-refactor (:id combobulate-envelope-refactor-id)
+        (dolist (category categories)
+          (pcase (assoc category grouped-instructions)
+            (`(prompt . ,prompts)
+             (save-excursion (mapc #'funcall (mapcar #'cdr prompts))))
+            (`(choice . ,choices)
+             (let ((nodes))
+               (pcase-dolist (`(choice ,pt ,name ,missing ,rest-envelope ,text) choices)
+                 (push (make-combobulate-proxy-node
+                        :start pt
+                        :end pt
+                        :text text
+                        :named t
+                        :type "Choice"
+                        :pp (format "Choice: %s" name)
+                        :extra (cons missing rest-envelope))
                        nodes))
-             (when-let (selected-node
-                        (combobulate-proffer-choices
-                         nodes
-                         #'combobulate-envelope-render-preview
-                         ;; ordinarily, we'd want to filter out nodes
-                         ;; that have identical node ranges. However,
-                         ;; with choices, we may well have multiple
-                         ;; choices in a row, each occupying the exact
-                         ;; same range, but nevertheless expanding to
-                         ;; vastly different things.
-                         :unique-only nil
-                         ;; pass whatever the value of
-                         ;; `combobulate-envelope-static' is to the
-                         ;; proffer function. If it's non-nil, then
-                         ;; the caller of this function does not
-                         ;; intend for the user to make a choice;
-                         ;; instead, the first is picked
-                         ;; automatically. The automatic choice is
-                         ;; made because we want to expand some
-                         ;; instructions (like prompt and choice)
-                         ;; without actually triggering a user
-                         ;; interaction
-                         :first-choice combobulate-envelope-static
-                         :signal-on-abort t
-                         :reset-point-on-abort nil
-                         :reset-point-on-accept nil
-                         ;; `combobulate-envelope-render-preview'
-                         ;; inserts text for potentially many nodes,
-                         ;; which would be preserved if the normal
-                         ;; accept action -- rollback -- were used
-                         ;; instead.
-                         :accept-action 'commit))
+               (when-let (selected-node
+                          (combobulate-proffer-choices
+                           nodes
+                           #'combobulate-envelope-render-preview
+                           ;; ordinarily, we'd want to filter out nodes
+                           ;; that have identical node ranges. However,
+                           ;; with choices, we may well have multiple
+                           ;; choices in a row, each occupying the exact
+                           ;; same range, but nevertheless expanding to
+                           ;; vastly different things.
+                           :unique-only nil
+                           ;; pass whatever the value of
+                           ;; `combobulate-envelope-static' is to the
+                           ;; proffer function. If it's non-nil, then
+                           ;; the caller of this function does not
+                           ;; intend for the user to make a choice;
+                           ;; instead, the first is picked
+                           ;; automatically. The automatic choice is
+                           ;; made because we want to expand some
+                           ;; instructions (like prompt and choice)
+                           ;; without actually triggering a user
+                           ;; interaction
+                           :first-choice combobulate-envelope-static
+                           :signal-on-abort t
+                           :reset-point-on-abort nil
+                           :reset-point-on-accept nil
+                           ;; `combobulate-envelope-render-preview'
+                           ;; inserts text for potentially many nodes,
+                           ;; which would be preserved if the normal
+                           ;; accept action -- rollback -- were used
+                           ;; instead.
+                           :accept-action 'commit))
                  ;; If one of the proffered choices was selected, then we need to:
                  ;;
                  ;; 1. Move to the node
@@ -522,9 +522,9 @@ not feature in CATEGORIES are returned."
                  ;;    to walk each block instruction in turn and put
                  ;;    them back into the grouped instructions alist
                  ;;    so they can be processed in turn.
-               (dolist (node nodes)
-                 (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
-                   (combobulate-move-to-node node)
+                 (dolist (node nodes)
+                   (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
+                     (combobulate-move-to-node node)
                      (pcase-let (((cl-struct combobulate-envelope-context
                                              (block-instructions block-instructions)
                                              (end ctx-end))
@@ -537,7 +537,7 @@ not feature in CATEGORIES are returned."
                                    ;; Regardless of the envelope, we
                                    ;; ensure it's wrapped in an
                                    ;; implicit `b' block.
-                               `((b ,@(if (equal node selected-node) rest-envelope missing))))))
+                                   `((b ,@(if (equal node selected-node) rest-envelope missing))))))
                        (pcase-dolist (`(,block-category . ,block-instruction) block-instructions)
                          ;; If we're dealing with any sort of block
                          ;; instruction that is part of the categories
@@ -550,46 +550,44 @@ not feature in CATEGORIES are returned."
                                          (alist-get block-category grouped-instructions)))
                            (push (cons block-category block-instruction) remaining-block-instructions)))
                        (setq end ctx-end)))))))
-          (`(selected-point . ,pts)
-           ;; it's possible there's more than one selected-point, I
-           ;; suppose? It should not happen, though.
-           (dolist (pt pts)
-             (goto-char (cdr pt))))
-          (`(point . ,points)
-           (let ((nodes (mapcar (lambda (pt-instruction)
-                                  (combobulate-make-proxy-point-node (cadr pt-instruction)))
-                                points)))
+            (`(selected-point . ,pts)
+             ;; it's possible there's more than one selected-point, I
+             ;; suppose? It should not happen, though.
+             (dolist (pt pts)
+               (goto-char (cdr pt))))
+            (`(point . ,points)
+             (let ((nodes (mapcar (lambda (pt-instruction)
+                                    (combobulate-make-proxy-point-node (cadr pt-instruction)))
+                                  points)))
                ;; Ensure every single point node has a cursor visible
                ;; so the user can see the available cursor choices.
-             (mapc #'mark-node-cursor nodes)
-             (save-excursion
-             (if-let (selected-node (combobulate-proffer-choices
-                                     nodes
-                                     (lambda (_index current-node _proxy-nodes refactor-id)
-                                       (combobulate-refactor (:id refactor-id)
-                                         (combobulate-move-to-node current-node)))
-                                     ;; as above, if we're in static mode, we do not
-                                     ;; prompt the user to pick a cursor
-                                     :first-choice combobulate-envelope-static
-                                     :signal-on-abort t
-                                     :reset-point-on-abort t
-                                     :reset-point-on-accept nil))
-                 (setq selected-point (combobulate-node-start selected-node))
-                 (setq selected-point nil)))
-             ;; This is a special post-run instructions that we only
-             ;; ever action once we've exited the entire envelope
-             ;; instruction loop. It is the final action carried out
-             ;; at the very end.
+               (mapc #'mark-node-cursor nodes)
+               (save-excursion
+                 (if-let (selected-node (combobulate-proffer-choices
+                                         nodes
+                                         (lambda (_index current-node _proxy-nodes refactor-id)
+                                           (combobulate-refactor (:id refactor-id)
+                                             (combobulate-move-to-node current-node)))
+                                         ;; as above, if we're in static mode, we do not
+                                         ;; prompt the user to pick a cursor
+                                         :first-choice combobulate-envelope-static
+                                         :signal-on-abort t
+                                         :reset-point-on-abort t
+                                         :reset-point-on-accept nil))
+                     (setq selected-point (combobulate-node-start selected-node))
+                   (setq selected-point nil)))
+               ;; This is a special post-run instructions that we only
+               ;; ever action once we've exited the entire envelope
+               ;; instruction loop. It is the final action carried out
+               ;; at the very end.
                (push (cons 'selected-point selected-point) remaining-block-instructions)))))
         (if combobulate-envelope-static
             (rollback)
           (commit)))
-      (message "Remaining block instructions: %s" remaining-block-instructions)
-      (message "Remaining grouped instructions: %s" grouped-instructions)
-    (make-combobulate-envelope-context
-     :block-instructions remaining-block-instructions
-     :instructions nil
-     :start nil
+      (make-combobulate-envelope-context
+       :block-instructions remaining-block-instructions
+       :instructions nil
+       :start nil
        :end end))))
 
 (defun combobulate-envelope-expand-instructions (instructions &optional registers)
