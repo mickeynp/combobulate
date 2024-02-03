@@ -1183,6 +1183,10 @@ skip over the first few nodes in the list."
                    (define-key map (kbd (format "C-%d" (1+ i))) (1+ i))))
                map)))
     (if proxy-nodes
+        (progn
+          (cl-assert (< start-index (length proxy-nodes)) nil
+                     "Start index %d is greater than the number of nodes %d"
+                     start-index (length proxy-nodes))
         (condition-case err
             (with-undo-amalgamate
               (catch 'exit
@@ -1288,7 +1292,7 @@ skip over the first few nodes in the list."
                     (cancel-change-group change-group))
                   (activate-change-group change-group))))
           (quit (when signal-on-abort
-                  (signal (car err) (cdr err)))))
+                    (signal (car err) (cdr err))))))
       (error "There are no choices to make"))
     ;; Determine where point is placed on exit and whether we return
     ;; the current node or not.
