@@ -143,8 +143,8 @@ If the register does not exist, return DEFAULT or nil."
             ;; the user to complete `repeat' and `choice' instructions.
             ;;
             ;; The special block `b*' will also execute `point' instructions.
-            ((or (and `(b . ,rest) (let categories '(prompt repeat choice)))
-                 (and `(b* . ,rest) (let categories '(prompt repeat choice point selected-point))))
+            ((or (and `(b . ,rest) (let categories '(repeat choice prompt)))
+                 (and `(b* . ,rest) (let categories '(repeat choice prompt point selected-point))))
              (expand-block rest categories))
             ;; `(choice instructions)'
             ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
@@ -190,12 +190,13 @@ If the register does not exist, return DEFAULT or nil."
                  (and `(p ,tag ,prompt ,transformer-fn)))
              (when (and transformer-fn (not (functionp transformer-fn)))
                (error "Prompt has invalid transformer function `%s'" transformer-fn))
-             (let ((prompt-point (point)))
-               (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+             (let ((prompt-point (point-marker)))
+
                (push (cons 'prompt
-                           (lambda () (save-excursion
+                           (lambda () (unless combobulate-envelope-static
+                                   (save-excursion
                                    (goto-char prompt-point)
-                                   (unless combobulate-envelope-static
+                                     (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
                                      (let ((new-text (or (combobulate-envelope-get-register tag)
                                                          (combobulate-envelope-prompt
                                                           prompt tag nil
@@ -213,11 +214,20 @@ If the register does not exist, return DEFAULT or nil."
                  (and `(field ,tag ,transformer-fn))
                  (and `(f ,tag ,transformer-fn)))
              (mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
+            ;; `@>'
+            ;;
+            ;; Push a `point-marker' that will moves with insertions
+            ;; made at the marker.
+            ('@> (push `(point ,(let ((m (point-marker)))
+                                  (set-marker-insertion-type m t)
+                                  m))
+                       block-instructions))
             ;; `@'
             ;;
             ;; Push a `point-marker' that will serve as a possible
             ;; placement point for point after expansion.
-            ('@ (push `(point ,(point-marker)) block-instructions))
+            ('@ (push `(point ,(point-marker))
+                      block-instructions))
             ;; `@@'
             ;;
             ;; Push a `point' that will serve as a possible
@@ -303,11 +313,16 @@ If the register does not exist, return DEFAULT or nil."
                  ;; (forward-line 0)
                  (setf start (point))
                  ;; clear whitespace from the start of the line
+                 (let ((before-pt (point)))
                  (insert (combobulate-indent-string
                           default
                           :first-line-operation 'absolute
                           :first-line-amount offset
-                          :rest-lines-operation 'relative))))
+                            :rest-lines-operation 'relative))
+                   (save-excursion
+                     (goto-char before-pt)
+                     (back-to-indentation)
+                     (push `(point ,(point-marker)) block-instructions)))))
               (t (insert default))))
             ;; "string"
             ;;
