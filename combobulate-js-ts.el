@@ -42,7 +42,8 @@
 (defcustom combobulate-js-ts-attribute-envelope-alist
   '(("className" . "attr-string")
     ("style" . "attr-expression-object")
-    ("ref" . "attr-expression"))
+    ("ref" . "attr-expression")
+    ("choice" . "attr-choice"))
   "Alist of envelopes to apply to certain JSX attributes when you press `='.
 
 Where the car of the cell is the attribute identifier,
@@ -54,15 +55,22 @@ and `attr-expression' for expression-based attributes."
   :group 'combobulate-js-ts
   :type '(alist :key-type string :value-type string))
 
-(defcustom combobulate-js-ts-attribute-envelope-default "attr-string"
+(defcustom combobulate-js-ts-attribute-envelope-default "attr-choice"
   "Default envelope name to apply to a JSX attribute.
 
 Only applied if `combobulate-js-ts-attribute-envelope-alist' does
 not contain a valid JSX attribute alist entry.
 
-If this value is `nil', then no envelope is applied."
+If this value is `nil', then no envelope is applied.
+
+The default value is `attr-choice' which is a good default for
+most JSX attributes. It will insert a `choice' envelope unless
+there's an explicit override. You can use `TAB' to cycle through
+the options: a string attribute, an expression attribute or an
+expression object attribute."
   :group 'combobulate-js-ts
   :type '(choice (const :tag "No envelope" nil)
+                 (string :tag "Choice" "attr-choice")
                  (string :tag "String" "attr-string")
                  (string :tag "JSX Expression" "attr-expression")
                  (string :tag "JSX Expression + Object" "attr-expression-object")))
@@ -240,6 +248,17 @@ from `combobulate-manipulation-envelopes') to insert."
            :nodes ("jsx_opening_element" "jsx_self_closing_element")
            :name "attr-expression"
            :template ("=" "{" @ "}"))
+          (:description
+           "...={ ... }"
+           :key "=c"
+           :mark-node nil
+           :point-placement 'stay
+           :nodes ("jsx_opening_element" "jsx_self_closing_element")
+           :name "attr-choice"
+           :template ("="
+                      (choice* :name "Expression" :rest ("{" @ "}"))
+                      (choice* :name "String" :rest ("\"" @ "\""))
+                      (choice* :name "Object" :rest ("{{" @ "}}"))))
           (:description
            "...={{ ... }}"
            :key "=E"
