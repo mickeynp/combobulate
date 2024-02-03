@@ -398,7 +398,7 @@ If the register does not exist, return DEFAULT or nil."
        :block-instructions block-instructions
        :instructions nil))))
 
-(defun combobulate-envelope-render-preview (_index current-node proxy-nodes refactor-id)
+(defun combobulate-envelope-render-choice-preview (_index current-node proxy-nodes refactor-id)
   "Render a preview of the envelope at INDEX.
 
 Unlike most proffer preview functions, this one assumes that
@@ -428,32 +428,41 @@ Unlike most proffer preview functions, this one assumes that
       (when pt (goto-char pt)))))
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (ctx categories)
-  "Expand each COLLECTED-INSTRUCTIONS if they are one of CATEGORIES.
+  "Expand the block instructions in CTX according to CATEGORIES.
 
-CATEGORIES is a list of instructions to expand now. Valid choices are:
-`prompt', `choice', `repeat' and `point'. All other categories
-are ignored.
+CATEGORIES is a list of instructions to expand now.
 
-Every instruction in COLLECTED-INSTRUCTIONS is of the form
+Valid choices are: `prompt', `choice', `repeat' and `point'. All
+other categories are ignored.
+
+Every instruction in CTX's `:block-instructions' must be of the form
 
    (TYPE . REST)
 
 Where TYPE is one of the CATEGORIES and REST could be anything,
-depending on TYPE. The instructions are grouped by TYPE and
-executed in the order presented in CATEGORIES.
+depending on TYPE.
 
-Any unfilfilled instructions in COLLECTED-INSTRUCTIONS that did
-not feature in CATEGORIES are returned."
+This function will expand the block instructions in the order
+they are given in CATEGORIES."
   (pcase-let (((cl-struct combobulate-envelope-context
                           (block-instructions block-instructions)
                           (end end))
                ctx))
+    ;; We need to group the instructions by category so that we can
+    ;; action each category as one cohesive whole. `seq-group-by'
+    ;; preserves the relative order in the block instructions, which
+    ;; is also important.
     (let ((selected-point) (grouped-instructions (seq-group-by #'car block-instructions))
           (remaining-block-instructions)
           (end (point-marker)))
-      ;; strip out instructions that we weren't asked to process: return
-      ;; them instead.
+      ;; The set of categories we're asked to process is possibly a
+      ;; subset of the block instructions we've been given. All
+      ;; instructions that we have not been told to process are passed
+      ;; through unchanged.
       (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) block-instructions))
+      ;; Re-use the global refactor ID here so we manipulate the same
+      ;; refactoring instance as the progenitor instance the envelope
+      ;; code was first activated with.
       (combobulate-refactor (:id combobulate-envelope-refactor-id)
         (dolist (category categories)
           (pcase (assoc category grouped-instructions)
@@ -468,13 +477,13 @@ not feature in CATEGORIES are returned."
                         :text text
                         :named t
                         :type "Choice"
-                        :pp (format "Choice: %s" name)
+                        :pp (if name (format "Choice: %s" name) "Choice")
                         :extra (cons missing rest-envelope))
                        nodes))
                (when-let (selected-node
                           (combobulate-proffer-choices
                            nodes
-                           #'combobulate-envelope-render-preview
+                           #'combobulate-envelope-render-choice-preview
                            ;; ordinarily, we'd want to filter out nodes
                            ;; that have identical node ranges. However,
                            ;; with choices, we may well have multiple
@@ -497,13 +506,14 @@ not feature in CATEGORIES are returned."
                            :signal-on-abort t
                            :reset-point-on-abort nil
                            :reset-point-on-accept nil
-                           ;; `combobulate-envelope-render-preview'
+                           ;; `combobulate-envelope-render-choice-preview'
                            ;; inserts text for potentially many nodes,
                            ;; which would be preserved if the normal
                            ;; accept action -- rollback -- were used
                            ;; instead.
                            :accept-action 'commit))
-                 ;; If one of the proffered choices was selected, then we need to:
+                 ;; If one of the proffered choices was selected, then
+                 ;; we need to:
                  ;;
                  ;; 1. Move to the node
                  ;;
@@ -576,10 +586,10 @@ not feature in CATEGORIES are returned."
                                          :reset-point-on-accept nil))
                      (setq selected-point (combobulate-node-start selected-node))
                    (setq selected-point nil)))
-               ;; This is a special post-run instructions that we only
-               ;; ever action once we've exited the entire envelope
-               ;; instruction loop. It is the final action carried out
-               ;; at the very end.
+               ;; `selected-point' is a special post-run block
+               ;; instruction that we only ever action once we've
+               ;; exited the entire envelope instruction loop. It is
+               ;; the final action carried out at the very end.
                (push (cons 'selected-point selected-point) remaining-block-instructions)))))
         (if combobulate-envelope-static
             (rollback)
