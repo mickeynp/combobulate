@@ -609,39 +609,44 @@ Skeletons, but Combobulate's envelopes are more powerful.
 Here are some of the differences:
 
 1. Prompts are executed in the minibuffer, much like the
-aforementioned tools, but they also update interactively as you
-type.
+   aforementioned tools, but they also update interactively as
+   you type. You can have transformers that alter some or all of
+   the prompts and fields you use.
 
-2. Prompts (and their fields) are placed inline and are only
-expanded at the end. This may occasionally cause issues if you
-have a complex template. The solution is to recognize that code
-templating is no substitute for a real keyboard macro or elisp.
+2. Regions are now stored in a register, and thus `r', `r>' and
+   so on are in effect just using those.
 
-3. Regions are now stored in a register, and thus `r', `r>' and
-so on are in effect just using those.
-
-4. The indentation algorithm now \"understands\" block-based,
+3. The indentation algorithm now \"understands\" block-based,
 whitespace-sensitive languages like Python better.
 
-5. Remembering a previous line's indentation is very difficult
-with other templating tools. Combobulate simplifies this with the
-`save-column' form. When Combobulate enters a `save-column' form
-it saves the column offset (but not point!) and restores the
-column on exit. That makes it possible to have nested sequences
-of code and be assured that the column is reset correctly when
-you exit the block. You can also use `<' in place of
-`save-column' to remove one level of indentation in
-whitespace-sensitive languages.
+   This follows on from point #2: special care is made in
+   whitespace-sensitive languages like Python. Combobulate will
+   attempt to ensure the indentation is correct for the block you
+   wish to insert the code into. Combobulate can only do this if
+   the underlying Python mode's indentation engine is capable of
+   determining the correct indentation for a given line. If it is
+   not, then Combobulate will not be able to determine the
+   correct indentation either.
 
-6. You can now explicitly place point with `@'. Multiple
-instances of `@' are remembered and presented to you at the end
-of the expansion so that you can choose which one to place your
-point at.
+4. Remembering a previous line's indentation is very difficult
+   with other templating tools. Combobulate simplifies this with
+   the `save-column' form. When Combobulate enters a
+   `save-column' form it saves the column offset (but not point!)
+   and restores the column on exit. That makes it possible to
+   have nested sequences of code and be assured that the column
+   is reset correctly when you exit the block. This is only of
+   importance in whitespace-sensitive languages where Combobulate
+   cannot safely indent the whole region.
+
+5. You can now explicitly place point with `@'. Multiple
+   instances of `@' are remembered and presented to you at the
+   end of the expansion so that you can choose which one to place
+   your point at.
 
 7. Repetition (also a feature in Skeleton, but not Tempo) is also
-possible with `repeat' and `repeat-1'. Note that indentation in
-whitespace-sensitive languages can be difficult to control with
-these forms. Keep them simple if you can.
+   possible with `repeat' and `repeat-1'. Note that indentation
+   in whitespace-sensitive languages can be difficult to control
+   with these forms. Keep them simple if you can.
 
 If there is an active REGION, then everything between `point' and
 `mark' is extracted and deleted and made available to
@@ -685,16 +690,35 @@ expansion:
    and used to indent the inserted register according to its new
    column offset when it is inserted and indented by `r>'.
 
+ `(b BLOCK)'
+
+   Execute the BLOCK of instructions and, when exiting, action
+   all the block instructions that require user input:
+
+     - `repeat' instructions are executed first;
+     - Then, `choice' prompts are executed;
+     - Then, `prompt's are executed.
+     - Finally, all `point' prompts are executed.
+
+   All envelopes are wrapped an implicit `b' block. You really
+   only need this construct if you're doing something very
+   specific, such as multiple distinct choice groupings.
+
  `(choice BLOCK)'
  `(choice* :name NAME :missing MISSING-BLOCK :rest BLOCK)'
 
-   Collect all choice blocks and present them to the user to
-   choose one. The BLOCK is a list of instructions that are
-   executed when the user picks that choice.
+   Collect all choice instructions in the current `b' block and
+   present them to the user to choose one. The BLOCK is a list of
+   instructions that are executed when the user picks that
+   choice.
 
    The `choice*' form is a variant that allows you to specify a
    name for the choice, a block to execute if the choice is
    *not* picked, and a block to execute if the choice is picked.
+
+   Warning: If you are using multiple `choice*' instructions with
+   `:missing' properties set in a row, you may run into expansion
+   problems.
 
  `(prompt TAG PROMPT [TRANSFORMER-FN])'
  `(p TAG PROMPT [TRANSFORMER-FN])'
@@ -717,7 +741,6 @@ expansion:
 
    Like a prompt, but only inserts the text belonging to its
    prompt named TAG.
-
 
  `@'
    Insert a point marker at point. Point markers move with the
@@ -751,14 +774,16 @@ expansion:
 
  `(save-column BLOCK)'
 
-   (Try to use `<' instead as it is more robust.)
-
    Saves point's *column* -- but not point itself! -- when
-   entering BLOCK. Use this to remember the relative offset from
+   entering BLOCK. Use this to remember indentation offset from
    the beginning of the line.
 
-   Pay attention when you place `n>' and `n' at the end of (or
-   immediately outside) a `save-column' block.
+   This is mostly of use in whitespace-sensitive languages like
+   Python.
+
+   You are strongly encouraged to place a singular `n' at the end
+   of BLOCK: this will ensure your point is placed on a new line
+   with the correct indentation.
 
  `(repeat BLOCK)'
  `(repeat-1 BLOCK)'
