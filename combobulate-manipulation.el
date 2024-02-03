@@ -201,7 +201,7 @@
                         ,--session
                         (combobulate--refactor-clear-overlays
                          (combobulate--refactor-get-all-overlays)))))
-           (quit (rollback) (signal (car err) (cdr err))))))))
+           (t (rollback) (signal (car err) (cdr err))))))))
 
 (defun combobulate-procedure-get-activation-nodes (procedures)
   "Given a list of PROCEDURES, return a merged list of all activation nodes."
