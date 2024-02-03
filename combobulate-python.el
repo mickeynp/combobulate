@@ -122,21 +122,27 @@ line when you press
         (current-indentation)
       (* python-indent-offset (length calculated-indentation)))))
 
+(defun combobulate-proffer-indentation-1 (node)
+    (combobulate-indent-region
+     ;; we want to mark from the beginning of line
+     (save-excursion
+     (goto-char (combobulate-node-start node))
+       (skip-chars-backward combobulate-skip-prefix-regexp (line-beginning-position))
+       (point))
+   (combobulate-node-end node)
+     ;; no baseline target
+     0
+   (combobulate-proxy-node-extra node))
+  ;; this ensures point is at the beginning of the node but also after
+  ;; the indentation.
+  (combobulate-move-to-node node)
+  (back-to-indentation))
+
 (defun combobulate-python-proffer-indent-action (_index current-node _proxy-nodes refactor-id)
   "Proffer action function that highlights the node and indents it."
   (combobulate-refactor (:id refactor-id)
     (mark-node-highlighted current-node)
-    (combobulate-indent-region
-     ;; we want to mark from the beginning of line
-     (save-excursion
-       (goto-char (combobulate-node-start current-node))
-       (skip-chars-backward combobulate-skip-prefix-regexp (line-beginning-position))
-       (point))
-     (combobulate-node-end current-node)
-     ;; no baseline target
-     0
-     (combobulate-proxy-node-extra current-node))
-    (combobulate-move-to-node current-node)))
+    (combobulate-proffer-indentation-1 current-node)))
 
 (defun combobulate-proffer-indentation (node)
   "Intelligently indent the region or NODE at point."
@@ -167,15 +173,23 @@ line when you press
          (current-position (1+ (or (seq-position indentation (current-indentation)) 0)))
          (number-of-levels (length (python-indent-calculate-levels)))
          (at-last-level (= number-of-levels current-position)))
-    (combobulate-proffer-choices
+    (when-let (selected-node (combobulate-proffer-choices
      (if at-last-level (reverse indent-nodes) indent-nodes)
      #'combobulate-python-proffer-indent-action
-     :start-index (if at-last-level 1 (mod current-position number-of-levels))
+                              ;; Try to pick a sensible starting index
+                              ;; based on whether we're at the end,
+                              ;; taking into account of the fact that
+                              ;; there might only be one node to
+                              ;; choose from.
+                              :start-index (if at-last-level
+                                               (min (1- (length indent-nodes)) 1)
+                                             (mod current-position number-of-levels))
      :flash-node t
      ;; do not filter unique nodes. all our nodes are conceptually
      ;; identical except for the `extra' field.
      :allow-numeric-selection t
-     :unique-only nil)))
+                              :unique-only nil))
+      (combobulate-proffer-indentation-1 selected-node))))
 
 (defun combobulate-python-envelope-deindent-level ()
   "Determine the next-closest indentation level to deindent to."
@@ -275,25 +289,27 @@ line when you press
                                (concat "@" text))))
                         n>))
             (:description
-             "if ...:"
+             "if ...: ... [else: ...]"
              :key "bi"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-if"
-             :template
-             ("if " @ ":" n>
-              r>))
-            (:description
-             "if ...: ... else: ..."
-             :key "bI"
              :mark-node t
              :nodes ,statement-nodes
              :name "nest-if-else"
              :template
-             ("if " @ ":" n>
-              (choice* :name "consequence" :missing ("pass") :rest (r>))
-              < "else:" n>
-              (choice* :name "alternative" :missing ("pass") :rest (r>))))
+             ("if " "True" ":" n>
+              (choice* :missing
+                       nil
+                       :rest
+                       (@@ r> n> < "else:" n> "pass")
+                       :name "if-block")
+              (choice* :missing
+                       nil
+                       :rest
+                       (@@ "pass" n> "else:" n> r>)
+                       :name "else-block")
+              ;; (choice* :name "consequence" :missing ("pass") :rest (r>))
+              ;; < "else:" n>
+              ;; (choice* :name "alternative" :missing ("pass") :rest (r>))
+              ))
             (:description
              "try ... except ...: ..."
              :key "bte"
@@ -301,19 +317,20 @@ line when you press
              :nodes ,statement-nodes
              :name "nest-try-except"
              :template
-             ("try:" n>
-              (choice* :missing
-                       (@@ "pass")
+             ((save-column
+               "try:" n>
+               (choice* :name "statement-block"
+                        :missing
+                        (@ "pass")
                        :rest
-                       (@@ r>))
-              < "except "
-              (p Exception "Exception")
-              ;; "Foo"
-              ":" n>
-              (choice* :missing
-                       (@@ "pass" n>)
+                        (r>))
+               n)
+              "except " (p Exception "Exception") ":" n>
+              (choice* :name "handler-block"
+                       :missing
+                       (@ "pass" n>)
                        :rest
-                       (@@ r> n))))
+                       (r> n))))
             (:description
              "try ... finally: ..."
              :key "btf"
@@ -321,11 +338,11 @@ line when you press
              :nodes ,statement-nodes
              :name "nest-try-finally"
              :template
-             (@ "try:" n>
-                (choice* :missing ("pass") :rest (r>))
-                <
+             ((save-column
+               @ "try:" n>
+               (choice* :missing (@ "pass") :rest (r>) :name "try-block") n)
                 "finally:" n>
-                (choice* :missing ("pass") :rest (r>))))
+              (choice* :missing (@ "pass") :rest (r>) :name "finally-block")))
             (:description
              "def ...():"
              :key "bd"
