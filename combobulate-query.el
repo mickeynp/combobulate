@@ -251,7 +251,7 @@ the xrefs for a query. This variable is used to temporarily bind
 want the default xrefs functionality for normal xrefs but want to
 use something else for Combobulate.
 
-By default ti uses `xref-show-definitions-completing-read' which
+By default it uses `xref-show-definitions-completing-read' which
 shows the xrefs in a completing read prompt."
   :group 'combobulate-query
   :type 'function)
