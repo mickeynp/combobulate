@@ -1795,13 +1795,18 @@ If BEFORE is non-nil, then the label is placed (using the special
     ov))
 
 (defun combobulate--refactor-mark-field (pt tag text &optional transformer-fn)
+  ;; check if there is already a field overlay at this position with `tag' at `pt':
+  (if-let (ov (seq-find (lambda (ov)
+                          (combobulate--refactor-field-has-tag-p ov tag 'field))
+                        (overlays-at pt)))
+      ov
   (let ((ov (make-overlay pt pt nil t nil)))
     ;; args 2 and 3 refer to respectively `tag' and the default value.
     (overlay-put ov 'combobulate-refactor-actions `((field ,tag ,text)))
     (overlay-put ov 'face 'combobulate-refactor-field-face)
     (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
     (combobulate--refactor-set-field ov text (symbol-name tag))
-    ov))
+      ov)))
 
 (defun combobulate--refactor-mark-cursor (pt)
   (let ((ov (make-overlay pt (1+ pt) nil t nil)))

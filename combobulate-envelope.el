@@ -191,12 +191,11 @@ If the register does not exist, return DEFAULT or nil."
              (when (and transformer-fn (not (functionp transformer-fn)))
                (error "Prompt has invalid transformer function `%s'" transformer-fn))
              (let ((prompt-point (point-marker)))
-
                (push (cons 'prompt
-                           (lambda () (unless combobulate-envelope-static
-                                   (save-excursion
+                           (lambda () (save-excursion
                                    (goto-char prompt-point)
                                      (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (unless combobulate-envelope-static
                                      (let ((new-text (or (combobulate-envelope-get-register tag)
                                                          (combobulate-envelope-prompt
                                                           prompt tag nil
@@ -213,7 +212,7 @@ If the register does not exist, return DEFAULT or nil."
                  (and `(f ,tag) (let transformer-fn nil))
                  (and `(field ,tag ,transformer-fn))
                  (and `(f ,tag ,transformer-fn)))
-             (mark-field (point) tag (combobulate-envelope-get-register tag) transformer-fn))
+             (mark-field (point-marker) tag (combobulate-envelope-get-register tag) transformer-fn))
             ;; `@>'
             ;;
             ;; Push a `point-marker' that will moves with insertions
@@ -421,9 +420,8 @@ Unlike most proffer preview functions, this one assumes that
             (pcase-let (((cl-struct combobulate-envelope-context
                                     (start start)
                                     (end end))
-                         (combobulate-refactor (:id combobulate-envelope-refactor-id)
-                           (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)
-                             (rollback)))))
+                         (combobulate-refactor (:id refactor-id)
+                           (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)))))
               (mark-range-deleted start end)
               (when is-current-node
                 (mark-range-highlighted start end))))))
@@ -472,8 +470,7 @@ not feature in CATEGORIES are returned."
                       :type "Choice"
                       :pp (format "Choice: %s" name)
                       :extra (cons missing rest-envelope))
-                     nodes)
-               (rollback))
+                       nodes))
              (when-let (selected-node
                         (combobulate-proffer-choices
                          nodes
@@ -583,9 +580,10 @@ not feature in CATEGORIES are returned."
              ;; ever action once we've exited the entire envelope
              ;; instruction loop. It is the final action carried out
              ;; at the very end.
-             (push (cons 'selected-point selected-point) remaining-block-instructions)
-             (rollback)))))
-      (rollback))
+               (push (cons 'selected-point selected-point) remaining-block-instructions)))))
+        (if combobulate-envelope-static
+            (rollback)
+          (commit)))
       (message "Remaining block instructions: %s" remaining-block-instructions)
       (message "Remaining grouped instructions: %s" grouped-instructions)
     (make-combobulate-envelope-context
