@@ -93,12 +93,12 @@ If HIGHLIGHTED then the node is highlighted with
   (if (combobulate-node-p node)
       (let ((s (funcall combobulate-pretty-print-node-name-function node
                         (combobulate-pretty-print-node-name node ""))))
-        (concat (format "%s%s"
+        (format "%s%s"
                         (propertize s 'face
                                     (cond
                                      (highlighted 'combobulate-tree-highlighted-node-face)
                                      (t 'combobulate-tree-normal-node-face)))
-                        (if combobulate-debug (concat " " (combobulate-node-range node)) ""))))
+                (if combobulate-debug (format " %s" (combobulate-node-range node)) "")))
     ;; fallback in case we've got a proxy node
     (if (combobulate-proxy-node-p node)
         (combobulate-proxy-node-pp node)
