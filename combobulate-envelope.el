@@ -106,20 +106,18 @@ If the register does not exist, return DEFAULT or nil."
 
 (cl-defstruct combobulate-envelope-context
   "The context of a combobulate envelope during its expansion."
-  start end block-instructions instructions)
+  start end user-actions)
 
 (defun combobulate-envelope-expand-instructions-1 (instructions)
   "Internal function that expands INSTRUCTIONS."
   (let ((buf (current-buffer))
-        (block-instructions)
+        (user-actions)
         (end)
         (start (point-marker)))
     (cl-flet ((expand-block (rest-instructions categories)
                 ;; Expand a block of instructions.
                 (let ((ctx (combobulate-envelope-expand-instructions-1 rest-instructions))
                       (expanded-ctx))
-                  (pcase ctx
-                    ((cl-struct combobulate-envelope-context (block-instructions block-inst))
                      (setq expanded-ctx
                            (combobulate-envelope-expand-post-run-instructions
                             ctx
@@ -129,11 +127,11 @@ If the register does not exist, return DEFAULT or nil."
                             ;; else is finalised: they are literally the only
                             ;; thing to run after everything else is done.
                             categories))
-                     (setq block-instructions
-                           (nconc block-instructions
-                                  (combobulate-envelope-context-block-instructions
+                  (setq user-actions
+                        (nconc user-actions
+                               (combobulate-envelope-context-user-actions
                                    expanded-ctx)))
-                     (setq end (combobulate-envelope-context-end expanded-ctx)))))))
+                  (setq end (combobulate-envelope-context-end expanded-ctx)))))
       (combobulate-refactor (:id combobulate-envelope-refactor-id)
         (dolist (sub-instruction instructions)
           (pcase sub-instruction
@@ -169,7 +167,7 @@ If the register does not exist, return DEFAULT or nil."
              (push `(choice ,(point-marker) ,name ,missing ,rest-instructions
                             ,(apply-partially #'combobulate-envelope-expand-instructions-1
                                               rest-instructions))
-                   block-instructions))
+                   user-actions))
             ;; `(save-column BLOCK)'
             ;;
             ;; Records the `current-column' of `point' when it enters
@@ -204,7 +202,7 @@ If the register does not exist, return DEFAULT or nil."
                                                              buf tag (minibuffer-contents)))))))
                                        (push (cons tag new-text) combobulate-envelope--registers)
                                        (combobulate-envelope--update-prompts buf tag new-text))))))
-                     block-instructions)))
+                     user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
             ;; If there is a matching prompt TAG, update its text to that value.
@@ -220,18 +218,18 @@ If the register does not exist, return DEFAULT or nil."
             ('@> (push `(point ,(let ((m (point-marker)))
                                   (set-marker-insertion-type m t)
                                   m))
-                       block-instructions))
+                       user-actions))
             ;; `@'
             ;;
             ;; Push a `point-marker' that will serve as a possible
             ;; placement point for point after expansion.
             ('@ (push `(point ,(point-marker))
-                      block-instructions))
+                      user-actions))
             ;; `@@'
             ;;
             ;; Push a `point' that will serve as a possible
             ;; placement point for point after expansion.
-            ('@@ (push `(point ,(point)) block-instructions))
+            ('@@ (push `(point ,(point)) user-actions))
             ;; `n' or `n>'
             ;;
             ;; Calls `newline', or `newline' then `indent-according-to-mode'.
@@ -321,7 +319,7 @@ If the register does not exist, return DEFAULT or nil."
                    (save-excursion
                      (goto-char before-pt)
                      (back-to-indentation)
-                     (push `(point ,(point-marker)) block-instructions)))))
+                     (push `(point ,(point-marker)) user-actions)))))
               (t (insert default))))
             ;; "string"
             ;;
@@ -380,7 +378,7 @@ If the register does not exist, return DEFAULT or nil."
                                        (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                              (progn (commit)
                                     (let ((sub-inst (combobulate-envelope-expand-instructions-1 repeat-instructions)))
-                                      (setq block-instructions (append block-instructions (cdr sub-inst))))
+                                      (setq user-actions (append user-actions (cdr sub-inst))))
                                     (cl-decf max-repeat)
                                     (commit))
                            (commit))))))
@@ -395,8 +393,7 @@ If the register does not exist, return DEFAULT or nil."
       (make-combobulate-envelope-context
        :start start
        :end (point)
-       :block-instructions block-instructions
-       :instructions nil))))
+       :user-actions user-actions))))
 
 (defun combobulate-envelope-render-choice-preview (_index current-node proxy-nodes refactor-id)
   "Render a preview of the envelope at INDEX.
@@ -421,45 +418,45 @@ Unlike most proffer preview functions, this one assumes that
                                     (start start)
                                     (end end))
                          (combobulate-refactor (:id refactor-id)
-                           (prog1 (combobulate-envelope-expand-instructions-1 expand-envelope)))))
+                           (combobulate-envelope-expand-instructions-1
+                            `((b ,@expand-envelope))))))
               (mark-range-deleted start end)
               (when is-current-node
                 (mark-range-highlighted start end))))))
       (when pt (goto-char pt)))))
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (ctx categories)
-  "Expand the block instructions in CTX according to CATEGORIES.
+  "Expand the user actions in CTX according to CATEGORIES.
 
 CATEGORIES is a list of instructions to expand now.
 
 Valid choices are: `prompt', `choice', `repeat' and `point'. All
 other categories are ignored.
 
-Every instruction in CTX's `:block-instructions' must be of the form
+Every instruction in CTX's `:user-actions' must be of the form
 
    (TYPE . REST)
 
 Where TYPE is one of the CATEGORIES and REST could be anything,
 depending on TYPE.
 
-This function will expand the block instructions in the order
+This function will expand the user actions in the order
 they are given in CATEGORIES."
   (pcase-let (((cl-struct combobulate-envelope-context
-                          (block-instructions block-instructions)
-                          (end end))
+                          (user-actions user-actions))
                ctx))
     ;; We need to group the instructions by category so that we can
     ;; action each category as one cohesive whole. `seq-group-by'
-    ;; preserves the relative order in the block instructions, which
+    ;; preserves the relative order in the user actions, which
     ;; is also important.
-    (let ((selected-point) (grouped-instructions (seq-group-by #'car block-instructions))
-          (remaining-block-instructions)
+    (let ((selected-point) (grouped-instructions (seq-group-by #'car user-actions))
+          (remaining-user-actions)
           (end (point-marker)))
       ;; The set of categories we're asked to process is possibly a
-      ;; subset of the block instructions we've been given. All
+      ;; subset of the user actions we've been given. All
       ;; instructions that we have not been told to process are passed
       ;; through unchanged.
-      (setq remaining-block-instructions (seq-remove (lambda (x) (member (car x) categories)) block-instructions))
+      (setq remaining-user-actions (seq-remove (lambda (x) (member (car x) categories)) user-actions))
       ;; Re-use the global refactor ID here so we manipulate the same
       ;; refactoring instance as the progenitor instance the envelope
       ;; code was first activated with.
@@ -524,19 +521,19 @@ they are given in CATEGORIES."
                  ;;    selected node.
                  ;;
                  ;; 3. The outcome of recursively expanding the
-                 ;;    envelope will yield block instructions that
+                 ;;    envelope will yield user actions that
                  ;;    require further processing. However, these
-                 ;;    block instructions may include categories the
+                 ;;    user actions may include categories the
                  ;;    `b' block cannot process itself. Namely, that
                  ;;    is almost always just `point' nodes. We'll need
-                 ;;    to walk each block instruction in turn and put
+                 ;;    to walk each user action in turn and put
                  ;;    them back into the grouped instructions alist
                  ;;    so they can be processed in turn.
                  (dolist (node nodes)
                    (pcase-let ((`(,missing . ,rest-envelope) (combobulate-proxy-node-extra node)))
                      (combobulate-move-to-node node)
                      (pcase-let (((cl-struct combobulate-envelope-context
-                                             (block-instructions block-instructions)
+                                             (user-actions user-actions)
                                              (end ctx-end))
                                   (combobulate-envelope-expand-instructions-1
                                    ;; If the node is selected we use
@@ -548,7 +545,7 @@ they are given in CATEGORIES."
                                    ;; ensure it's wrapped in an
                                    ;; implicit `b' block.
                                    `((b ,@(if (equal node selected-node) rest-envelope missing))))))
-                       (pcase-dolist (`(,block-category . ,block-instruction) block-instructions)
+                       (pcase-dolist (`(,block-category . ,user-action) user-actions)
                          ;; If we're dealing with any sort of block
                          ;; instruction that is part of the categories
                          ;; we are dealing with, put them back into
@@ -556,9 +553,9 @@ they are given in CATEGORIES."
                          ;; be processed in turn.
                          (if (member block-category categories)
                              (setf (alist-get block-category grouped-instructions)
-                                   (cons (cons block-category block-instruction)
+                                   (cons (cons block-category user-action)
                                          (alist-get block-category grouped-instructions)))
-                           (push (cons block-category block-instruction) remaining-block-instructions)))
+                           (push (cons block-category user-action) remaining-user-actions)))
                        (setq end ctx-end)))))))
             (`(selected-point . ,pts)
              ;; it's possible there's more than one selected-point, I
@@ -590,13 +587,12 @@ they are given in CATEGORIES."
                ;; instruction that we only ever action once we've
                ;; exited the entire envelope instruction loop. It is
                ;; the final action carried out at the very end.
-               (push (cons 'selected-point selected-point) remaining-block-instructions)))))
+               (push (cons 'selected-point selected-point) remaining-user-actions)))))
         (if combobulate-envelope-static
             (rollback)
           (commit)))
       (make-combobulate-envelope-context
-       :block-instructions remaining-block-instructions
-       :instructions nil
+       :user-actions remaining-user-actions
        :start nil
        :end end))))
 
@@ -693,7 +689,7 @@ expansion:
  `(b BLOCK)'
 
    Execute the BLOCK of instructions and, when exiting, action
-   all the block instructions that require user input:
+   all the user actions that require user input:
 
      - `repeat' instructions are executed first;
      - Then, `choice' prompts are executed;
@@ -800,7 +796,7 @@ expansion:
 
    Insert STRING at point."
   (when (and (use-region-p) (> (point) (mark))) (exchange-point-and-mark))
-  (let ((result) (start (point))
+  (let ((start (point))
         (end (point-marker))
         (change-group (prepare-change-group))
         (state 'start)
