@@ -29,13 +29,14 @@ download-relationships:
 
 .PHONY:	clean-tests
 clean-tests:
-	rm -v tests/*.gen.el || true
+	find . -name "*.gen.el" -delete
+	rm -rf ./tests/fixture-deltas/* || true
 
 .PHONY:	build-tests
 build-tests: clean-tests
-	$(EMACS_CMD) -l generate-tests.el
+	$(EMACS_CMD) -l generate-harnesses.el
 
-ELFILES := $(sort $(shell find ${srcdir} tests/ -name "test-*.el" ! -name ".*" -print))
+ELFILES := $(sort $(shell find ${srcdir} -name "test-*.el" ! -name ".*" -print))
 
 .PHONY:	run-tests
 run-tests:
@@ -54,4 +55,4 @@ docker-build-tests: docker-build
 
 .PHONY:	docker-run-tests
 docker-run-tests: docker-build
-	$(DOCKER_CMD) build-tests build-tests run-tests
+	$(DOCKER_CMD) run-tests

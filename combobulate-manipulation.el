@@ -173,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -1187,111 +1187,111 @@ skip over the first few nodes in the list."
           (cl-assert (< start-index (length proxy-nodes)) nil
                      "Start index %d is greater than the number of nodes %d"
                      start-index (length proxy-nodes))
-        (condition-case err
-            (with-undo-amalgamate
-              (catch 'exit
-                (while (eq state 'continue)
-                  (unless change-group
-                    (setq change-group (prepare-change-group)))
-                  (catch 'next
-                    (setq current-node (nth index proxy-nodes))
-                    (combobulate-refactor (:id refactor-id)
-                      (cl-flet ((refactor-action (action)
-                                  (cond ((eq action 'commit)
-                                         (commit))
-                                        ((eq action 'rollback)
-                                         (rollback))
-                                        (t (error "Unknown action: %s" action)))))
-                        (and before-switch-fn (funcall before-switch-fn))
-                        (funcall action-fn index current-node proxy-nodes refactor-id)
-                        ;; if we have just one item, or if
-                        ;; `:first-choice' is non-nil, we pick the first
-                        ;; item in `proxy-nodes'
-                        (if (or (= (length proxy-nodes) 1) first-choice)
-                            (progn (refactor-action accept-action)
-                                   (setq state 'accept))
-                          (setq result
-                                (condition-case nil
-                                    (lookup-key
-                                     map
-                                     ;; we need to preserve the raw
-                                     ;; event so we can put it back on
-                                     ;; the unread event loop later if
-                                     ;; the key is not recognised.
-                                     (setq raw-event
-                                           (read-key-sequence-vector
-                                            (substitute-command-keys
-                                             (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
-                                                     (combobulate-display-indicator index (length proxy-nodes))
-                                                     (concat (or prompt-description "")
-                                                             (and prompt-description (propertize " → " 'face 'shadow)))
-                                                     (propertize (combobulate-pretty-print-node current-node) 'face
-                                                                 'combobulate-tree-highlighted-node-face)
-                                                     (mapconcat (lambda (k)
-                                                                  (propertize (key-description k) 'face 'help-key-binding))
-                                                                ;; messy; is this really the best way?
-                                                                (where-is-internal 'next map)
-                                                                ", ")
-                                                     (if allow-numeric-selection (concat "; \\`C-1' to \\`C-9' to select") "")
-                                                     (if (and flash-node combobulate-flash-node)
-                                                         (concat "\n"
-                                                                 (or (combobulate-display-draw-node-tree
-                                                                      (combobulate-proxy-to-tree-node current-node))
-                                                                     ""))
-                                                       ""))))))
-                                  ;; if `condition-case' traps a quit
-                                  ;; error, then map it into the symbol
-                                  ;; `cancel', which corresponds to the
-                                  ;; equivalent event in the state
-                                  ;; machine below.
-                                  (quit 'cancel)
-                                  (t (rollback) 'cancel)))
-                          (and after-switch-fn (funcall after-switch-fn))
-                          (pcase result
-                            ('prev
-                             (refactor-action switch-action)
-                             (setq index (mod (1- index) (length proxy-nodes)))
-                             (throw 'next nil))
-                            ('next
-                             (refactor-action switch-action)
-                             (setq index (mod (1+ index) (length proxy-nodes)))
-                             (throw 'next nil))
-                            ('done
-                             (refactor-action accept-action)
-                             (combobulate-message "Committing" current-node)
-                             (setq state 'accept))
-                            ((pred functionp)
-                             (funcall result)
-                             (refactor-action accept-action)
-                             (throw 'next nil))
-                            ('cancel
-                             (combobulate-message "Cancelling...")
-                             (setq state 'abort)
-                             (refactor-action cancel-action)
-                             (keyboard-quit))
-                            ;; handle numeric selection `1' to `9'
-                            ((and (pred (numberp)) n
-                                  (pred (lambda (n) (and (>= n 1)
-                                                    (<= n 9)
-                                                    (<= n (length proxy-nodes))))))
-                             (refactor-action switch-action)
-                             (setq index (1- n))
-                             (throw 'next nil))
-                            (_
-                             (combobulate-message "Committing...")
-                             ;; pushing `raw-event' to
-                             ;; `unread-command-events' allows for a
-                             ;; seamless exit out of the proffer
-                             ;; prompt by preserving the the last,
-                             ;; unhandled event the user inputted.
-                             (when (length> raw-event 0)
-                               (push (aref raw-event 0) unread-command-events))
-                             (refactor-action accept-action)
-                             (setq state 'accept)))))))
-                  (when change-group
-                    (cancel-change-group change-group))
-                  (activate-change-group change-group))))
-          (quit (when signal-on-abort
+          (condition-case err
+              (with-undo-amalgamate
+                (catch 'exit
+                  (while (eq state 'continue)
+                    (unless change-group
+                      (setq change-group (prepare-change-group)))
+                    (catch 'next
+                      (setq current-node (nth index proxy-nodes))
+                      (combobulate-refactor (:id refactor-id)
+                        (cl-flet ((refactor-action (action)
+                                    (cond ((eq action 'commit)
+                                           (commit))
+                                          ((eq action 'rollback)
+                                           (rollback))
+                                          (t (error "Unknown action: %s" action)))))
+                          (and before-switch-fn (funcall before-switch-fn))
+                          (funcall action-fn index current-node proxy-nodes refactor-id)
+                          ;; if we have just one item, or if
+                          ;; `:first-choice' is non-nil, we pick the first
+                          ;; item in `proxy-nodes'
+                          (if (or (= (length proxy-nodes) 1) first-choice)
+                              (progn (refactor-action accept-action)
+                                     (setq state 'accept))
+                            (setq result
+                                  (condition-case nil
+                                      (lookup-key
+                                       map
+                                       ;; we need to preserve the raw
+                                       ;; event so we can put it back on
+                                       ;; the unread event loop later if
+                                       ;; the key is not recognised.
+                                       (setq raw-event
+                                             (read-key-sequence-vector
+                                              (substitute-command-keys
+                                               (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
+                                                       (combobulate-display-indicator index (length proxy-nodes))
+                                                       (concat (or prompt-description "")
+                                                               (and prompt-description (propertize " → " 'face 'shadow)))
+                                                       (propertize (combobulate-pretty-print-node current-node) 'face
+                                                                   'combobulate-tree-highlighted-node-face)
+                                                       (mapconcat (lambda (k)
+                                                                    (propertize (key-description k) 'face 'help-key-binding))
+                                                                  ;; messy; is this really the best way?
+                                                                  (where-is-internal 'next map)
+                                                                  ", ")
+                                                       (if allow-numeric-selection (concat "; \\`C-1' to \\`C-9' to select") "")
+                                                       (if (and flash-node combobulate-flash-node)
+                                                           (concat "\n"
+                                                                   (or (combobulate-display-draw-node-tree
+                                                                        (combobulate-proxy-to-tree-node current-node))
+                                                                       ""))
+                                                         ""))))))
+                                    ;; if `condition-case' traps a quit
+                                    ;; error, then map it into the symbol
+                                    ;; `cancel', which corresponds to the
+                                    ;; equivalent event in the state
+                                    ;; machine below.
+                                    (quit 'cancel)
+                                    (t (rollback) 'cancel)))
+                            (and after-switch-fn (funcall after-switch-fn))
+                            (pcase result
+                              ('prev
+                               (refactor-action switch-action)
+                               (setq index (mod (1- index) (length proxy-nodes)))
+                               (throw 'next nil))
+                              ('next
+                               (refactor-action switch-action)
+                               (setq index (mod (1+ index) (length proxy-nodes)))
+                               (throw 'next nil))
+                              ('done
+                               (refactor-action accept-action)
+                               (combobulate-message "Committing" current-node)
+                               (setq state 'accept))
+                              ((pred functionp)
+                               (funcall result)
+                               (refactor-action accept-action)
+                               (throw 'next nil))
+                              ('cancel
+                               (combobulate-message "Cancelling...")
+                               (setq state 'abort)
+                               (refactor-action cancel-action)
+                               (keyboard-quit))
+                              ;; handle numeric selection `1' to `9'
+                              ((and (pred (numberp)) (pred (lambda (n) (and (>= n 1)
+                                                                       (<= n 9)
+                                                                       (<= n (length proxy-nodes)))))
+                                    n)
+                               (refactor-action switch-action)
+                               (setq index (1- n))
+                               (throw 'next nil))
+                              (_
+                               (combobulate-message "Committing...")
+                               ;; pushing `raw-event' to
+                               ;; `unread-command-events' allows for a
+                               ;; seamless exit out of the proffer
+                               ;; prompt by preserving the the last,
+                               ;; unhandled event the user inputted.
+                               (when (length> raw-event 0)
+                                 (push (aref raw-event 0) unread-command-events))
+                               (refactor-action accept-action)
+                               (setq state 'accept)))))))
+                    (when change-group
+                      (cancel-change-group change-group))
+                    (activate-change-group change-group))))
+            (quit (when signal-on-abort
                     (signal (car err) (cdr err))))))
       (error "There are no choices to make"))
     ;; Determine where point is placed on exit and whether we return
@@ -1800,12 +1800,12 @@ If BEFORE is non-nil, then the label is placed (using the special
                           (combobulate--refactor-field-has-tag-p ov tag 'field))
                         (overlays-at pt)))
       ov
-  (let ((ov (make-overlay pt pt nil t nil)))
-    ;; args 2 and 3 refer to respectively `tag' and the default value.
-    (overlay-put ov 'combobulate-refactor-actions `((field ,tag ,text)))
-    (overlay-put ov 'face 'combobulate-refactor-field-face)
-    (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
-    (combobulate--refactor-set-field ov text (symbol-name tag))
+    (let ((ov (make-overlay pt pt nil t nil)))
+      ;; args 2 and 3 refer to respectively `tag' and the default value.
+      (overlay-put ov 'combobulate-refactor-actions `((field ,tag ,text)))
+      (overlay-put ov 'face 'combobulate-refactor-field-face)
+      (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
+      (combobulate--refactor-set-field ov text (symbol-name tag))
       ov)))
 
 (defun combobulate--refactor-mark-cursor (pt)

@@ -68,6 +68,7 @@ If FN is nil, just return the overlays. "
     (combobulate--with-test-overlays
      (lambda (ov)
        (when (eq (overlay-get ov 'combobulate-test-number) number)
+         (cl-assert (not match) nil "Multiple overlays found for number %s" number)
          (setq match ov))))
     match))
 
@@ -93,6 +94,19 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
     (setq combobulate-test-point-overlays nil)
     (combobulate-test-update-file-local-variable)
     (combobulate--test-delete-overlay)))
+
+(defun combobulate-test-go-to-marker (number)
+  (if-let (ov (combobulate--test-get-overlay-by-number number))
+      (progn
+        (goto-char (overlay-start ov))
+        (combobulate-test-assert-at-marker number))
+    (error "No overlay found for number %s" number)))
+
+(defun combobulate-test-assert-at-marker (number)
+  (if-let (ov (combobulate--test-get-overlay-by-number number))
+      (progn (should (= (overlay-get ov 'combobulate-test-number) number))
+             (should (eq (overlay-start ov) (point))))
+    (error "No overlay found for number %s" number)))
 
 (defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
   "Place a numbered overlay at point.
@@ -227,17 +241,19 @@ function."
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
                     (let ((picked-node (nth current-choice nodes))
                           (stubbed-refactor-id (combobulate-refactor-setup)))
-                      (setq choice-node (combobulate-make-proxy picked-node))
-                      (combobulate-refactor (:id stubbed-refactor-id)
-                        ;; signature: (index current-node proxy-nodes refactor-id)
-                        (funcall (or ,replacement-action-fn action-fn)
-                                 current-choice
-                                 choice-node
-                                 nodes
-                                 stubbed-refactor-id)
-                        (if (eq accept-action 'rollback)
-                            (rollback)
-                          (commit)))))
+                      (setq choice-node picked-node)
+                      ;; Not necessary??
+                      ;; (combobulate-refactor (:id stubbed-refactor-id)
+                      ;;   ;; signature: (index current-node proxy-nodes refactor-id)
+                      ;;   (funcall (or ,replacement-action-fn action-fn)
+                      ;;            current-choice
+                      ;;            choice-node
+                      ;;            nodes
+                      ;;            stubbed-refactor-id)
+                      ;;   (if (eq accept-action 'rollback)
+                      ;;       (rollback)
+                      ;;     (commit)))
+                      ))
                   choice-node)))
        ,@body)))
 
@@ -335,13 +351,7 @@ Returns nil if no match is found."
 
 
 
-(defun combobulate-test-generate-fixture-diff-filename (fn action-string number suffix)
-  "Generate a filename for a fixture diff file."
-  (concat
-   (file-name-nondirectory fn)
-   "[" (format "%s@%s~%s" action-string number suffix) "]"
-   "."
-   (file-name-extension fn)))
+
 
 (defvar ert--results-stats)
 
@@ -395,47 +405,11 @@ Returns nil if no match is found."
             :fixture-fn fn
             :statement `(string= current-contents file-contents))))))))
 
-(defun combobulate-test-get-fixture-directory ()
-  "Get the directory for the fixture files."
-  (expand-file-name "./tests/fixtures/"))
-
-(defun combobulate-test-get-test-directory ()
-  "Get the directory for the test files."
-  (expand-file-name "./"))
-
-(defvar combobulate-test-fixture-delta-subdir ""
-  "Additional subdirectory for fixture deltas.")
-
-(defun combobulate-test-get-fixture-deltas-directory (&optional action-subdir ensure-dir)
-  "Get the directory for the fixture deltas.
-
-If ACTION-SUBDIR is non-nil, then the directory will be
-<fixture-directory>/<action-subdir>/, otherwise it will be
-<fixture-directory>/.
-
-If ENSURE-DIR is non-nil, then the directory will be created if it
-doesn't exist."
-  (let* ((dir (concat
-               (if action-subdir
-                   (format "./fixture-deltas/%s/" (concat combobulate-test-fixture-delta-subdir action-subdir))
-                 (concat "./fixture-deltas/" combobulate-test-fixture-delta-subdir)))))
-    (when ensure-dir
-      (make-directory dir t))
-    dir))
-
-(defun combobulate-test-get-fixture-delta-filename (fixture-fn action-fn-name number)
-  (concat (combobulate-test-get-fixture-deltas-directory action-fn-name)
-          (combobulate-test-generate-fixture-diff-filename
-           fixture-fn
-           action-fn-name
-           number
-           "after")))
-
 (defun combobulate-compare-action-with-fixture-delta (fixture-delta-fn)
   "Compare the output from the current buffer to a fixture-delta file."
   (combobulate-test-compare-string-with-file (current-buffer) fixture-delta-fn))
 
-(cl-defun combobulate-for-each-marker (action-fn &key (reverse nil))
+(defmacro combobulate-for-each-marker (action-fn &key (reverse nil))
   "Execute ACTION-FN for each marker in the current buffer.
 
 The point is first moved to the start of the first marker. After
@@ -541,7 +515,9 @@ macros are available for use in the test body."
              ;; the default directory must be set explicitly. Here
              ;; we'll use the root of the ./tests/ directory by
              ;; looking for the combobulate-test-prelude file
-             (setq default-directory (file-name-directory (locate-library "combobulate-test-prelude")))
+             ;; (setq default-directory (file-name-directory (locate-library "combobulate-test-prelude")))
+             (should combobulate-mode)
+             (should (treesit-parser-list))
              (erase-buffer)
              (when ,fixture
                (unless (file-exists-p ,fixture)

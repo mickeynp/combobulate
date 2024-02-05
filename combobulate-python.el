@@ -32,7 +32,7 @@
 (require 'combobulate-navigation)
 (require 'combobulate-interface)
 (require 'combobulate-rules)
-
+(require 'combobulate-manipulation)
 (declare-function combobulate--mark-node "combobulate-manipulation")
 (declare-function combobulate-indent-region "combobulate-manipulation")
 
@@ -123,15 +123,15 @@ line when you press
       (* python-indent-offset (length calculated-indentation)))))
 
 (defun combobulate-proffer-indentation-1 (node)
-    (combobulate-indent-region
-     ;; we want to mark from the beginning of line
-     (save-excursion
+  (combobulate-indent-region
+   ;; we want to mark from the beginning of line
+   (save-excursion
      (goto-char (combobulate-node-start node))
-       (skip-chars-backward combobulate-skip-prefix-regexp (line-beginning-position))
-       (point))
+     (skip-chars-backward combobulate-skip-prefix-regexp (line-beginning-position))
+     (point))
    (combobulate-node-end node)
-     ;; no baseline target
-     0
+   ;; no baseline target
+   0
    (combobulate-proxy-node-extra node))
   ;; this ensures point is at the beginning of the node but also after
   ;; the indentation.
@@ -174,8 +174,8 @@ line when you press
          (number-of-levels (length (python-indent-calculate-levels)))
          (at-last-level (= number-of-levels current-position)))
     (when-let (selected-node (combobulate-proffer-choices
-     (if at-last-level (reverse indent-nodes) indent-nodes)
-     #'combobulate-python-proffer-indent-action
+                              (if at-last-level (reverse indent-nodes) indent-nodes)
+                              #'combobulate-python-proffer-indent-action
                               ;; Try to pick a sensible starting index
                               ;; based on whether we're at the end,
                               ;; taking into account of the fact that
@@ -184,10 +184,10 @@ line when you press
                               :start-index (if at-last-level
                                                (min (1- (length indent-nodes)) 1)
                                              (mod current-position number-of-levels))
-     :flash-node t
-     ;; do not filter unique nodes. all our nodes are conceptually
-     ;; identical except for the `extra' field.
-     :allow-numeric-selection t
+                              :flash-node t
+                              ;; do not filter unique nodes. all our nodes are conceptually
+                              ;; identical except for the `extra' field.
+                              :allow-numeric-selection t
                               :unique-only nil))
       (combobulate-proffer-indentation-1 selected-node))))
 
@@ -198,7 +198,7 @@ line when you press
 
 
 (defun combobulate-python-indent-for-tab-command (&optional arg)
-  "Proxy command for `indent-for-tab-command' and `combobulate-proffer-indentation'."
+  "Wrapper for `indent-for-tab-command' that adds advanced indentation."
   (interactive "P")
   (with-navigation-nodes
       (:nodes (append
@@ -247,7 +247,6 @@ line when you press
           (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
           ;; catch trailing commas that inadvertently turn expressions into tuples
           ((expression_list (_)+ "," @hl.gold :anchor))))
-  (setq indent-region-function #'combobulate-python-indent-region)
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
   (setq combobulate-manipulation-splicing-procedures
@@ -322,7 +321,7 @@ line when you press
                (choice* :name "statement-block"
                         :missing
                         (@ "pass")
-                       :rest
+                        :rest
                         (r>))
                n)
               "except " (p Exception "Exception") ":" n>
@@ -341,7 +340,7 @@ line when you press
              ((save-column
                @ "try:" n>
                (choice* :missing (@ "pass") :rest (r>) :name "try-block") n)
-                "finally:" n>
+              "finally:" n>
               (choice* :missing (@ "pass") :rest (r>) :name "finally-block")))
             (:description
              "def ...():"

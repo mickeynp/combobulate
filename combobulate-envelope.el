@@ -114,23 +114,24 @@ If the register does not exist, return DEFAULT or nil."
         (user-actions)
         (end)
         (start (point-marker)))
+    (ignore end)
     (cl-flet ((expand-block (rest-instructions categories)
                 ;; Expand a block of instructions.
                 (let ((ctx (combobulate-envelope-expand-instructions-1 rest-instructions))
                       (expanded-ctx))
-                     (setq expanded-ctx
-                           (combobulate-envelope-expand-post-run-instructions
-                            ctx
-                            ;; categories to expand right now. Note that we
-                            ;; intentionally exclude `point' as the default
-                            ;; as they should only be run once everything
-                            ;; else is finalised: they are literally the only
-                            ;; thing to run after everything else is done.
-                            categories))
+                  (setq expanded-ctx
+                        (combobulate-envelope-expand-post-run-instructions
+                         ctx
+                         ;; categories to expand right now. Note that we
+                         ;; intentionally exclude `point' as the default
+                         ;; as they should only be run once everything
+                         ;; else is finalised: they are literally the only
+                         ;; thing to run after everything else is done.
+                         categories))
                   (setq user-actions
                         (nconc user-actions
                                (combobulate-envelope-context-user-actions
-                                   expanded-ctx)))
+                                expanded-ctx)))
                   (setq end (combobulate-envelope-context-end expanded-ctx)))))
       (combobulate-refactor (:id combobulate-envelope-refactor-id)
         (dolist (sub-instruction instructions)
@@ -938,47 +939,46 @@ See `combobulate-apply-envelope' for more information."
             (goto-char target-pt))
         (let ((combobulate-envelope-static t)
               (envelope-nodes (plist-get envelope :nodes)))
-          (unwind-protect
-              (progn
-                (setq chosen-node
-                      (combobulate-proffer-choices
-                       (seq-sort
-                        (lambda (a b)
-                          ;; "Smart" sorting that orders by largest node first but
-                          ;; *only* when the distance from `point' to the start of `a'
-                          ;; is 0 (i.e., the node starts at point.)
-                          ;;
-                          ;; For all other instances, we measure distance from point.
-                          (if (= (- (combobulate-node-start a) (point)) 0)
-                              (combobulate-node-larger-than-node-p a b)
-                            (> (- (combobulate-node-start a) (point))
-                               (- (combobulate-node-start b) (point)))))
-                        ;; if we don't have any assigned envelope nodes,
-                        ;; create a proxy node at point; that node (and
-                        ;; thus `point') will instead be where the
-                        ;; envelope is inserted.
-                        (if envelope-nodes
-                            (seq-filter (lambda (n)
-                                          (and (or force (combobulate-point-near-node n))
-                                               (member (combobulate-node-type n)
-                                                       envelope-nodes)))
-                                        (cons (combobulate-node-at-point)
-                                              (combobulate-get-parents (combobulate-node-at-point))))
-                          (list (combobulate-make-proxy-point-node))))
-                       (lambda (_index current-node _proxy-nodes refactor-id)
-                         (combobulate-refactor (:id refactor-id)
-                           (let ((ov (mark-node-highlighted current-node))
-                                 (combobulate-envelope--undo-on-quit nil))
-                             (seq-let [[start &rest end] &rest pt]
-                                 (combobulate-apply-envelope envelope current-node)
-                               (goto-char pt)
-                               ;; lil' hack. The extent of the node is not
-                               ;; the same as the envelope we just
-                               ;; applied.
-                               (move-overlay ov start end)))))
-                       :reset-point-on-abort t
-                       :reset-point-on-accept nil))
-                (setq accepted t))))
+          (progn
+            (setq chosen-node
+                  (combobulate-proffer-choices
+                   (seq-sort
+                    (lambda (a b)
+                      ;; "Smart" sorting that orders by largest node first but
+                      ;; *only* when the distance from `point' to the start of `a'
+                      ;; is 0 (i.e., the node starts at point.)
+                      ;;
+                      ;; For all other instances, we measure distance from point.
+                      (if (= (- (combobulate-node-start a) (point)) 0)
+                          (combobulate-node-larger-than-node-p a b)
+                        (> (- (combobulate-node-start a) (point))
+                           (- (combobulate-node-start b) (point)))))
+                    ;; if we don't have any assigned envelope nodes,
+                    ;; create a proxy node at point; that node (and
+                    ;; thus `point') will instead be where the
+                    ;; envelope is inserted.
+                    (if envelope-nodes
+                        (seq-filter (lambda (n)
+                                      (and (or force (combobulate-point-near-node n))
+                                           (member (combobulate-node-type n)
+                                                   envelope-nodes)))
+                                    (cons (combobulate-node-at-point)
+                                          (combobulate-get-parents (combobulate-node-at-point))))
+                      (list (combobulate-make-proxy-point-node))))
+                   (lambda (_index current-node _proxy-nodes refactor-id)
+                     (combobulate-refactor (:id refactor-id)
+                       (let ((ov (mark-node-highlighted current-node))
+                             (combobulate-envelope--undo-on-quit nil))
+                         (seq-let [[start &rest end] &rest pt]
+                             (combobulate-apply-envelope envelope current-node)
+                           (goto-char pt)
+                           ;; lil' hack. The extent of the node is not
+                           ;; the same as the envelope we just
+                           ;; applied.
+                           (move-overlay ov start end)))))
+                   :reset-point-on-abort t
+                   :reset-point-on-accept nil))
+            (setq accepted t)))
         ;; here we simply repeat what ever the selected choice was, as
         ;; an explicit node skips the proffering process entirely.
         (when (and chosen-node accepted)
