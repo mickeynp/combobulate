@@ -393,7 +393,7 @@ If the register does not exist, return DEFAULT or nil."
             (_ (error "Unknown sub-instruction: %S" sub-instruction)))))
       (make-combobulate-envelope-context
        :start start
-       :end (point)
+       :end end
        :user-actions user-actions))))
 
 (defun combobulate-envelope-render-choice-preview (_index current-node proxy-nodes refactor-id)
@@ -557,7 +557,7 @@ they are given in CATEGORIES."
                                    (cons (cons block-category user-action)
                                          (alist-get block-category grouped-instructions)))
                            (push (cons block-category user-action) remaining-user-actions)))
-                       (setq end ctx-end)))))))
+                       (setq end (max end ctx-end))))))))
             (`(selected-point . ,pts)
              ;; it's possible there's more than one selected-point, I
              ;; suppose? It should not happen, though.
