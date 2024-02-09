@@ -150,7 +150,7 @@ from `combobulate-manipulation-envelopes') to insert."
            :name "useState"
            :template ("const"
                       " [" (p State "State") ", "
-                      "set" (f State)
+                      "set" (f State capitalize)
                       "] = useState(" @ (p null "Value") ")"))
           (:description
            "useEffect(() => ..., [...])"
