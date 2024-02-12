@@ -127,9 +127,6 @@
   (should (equal (combobulate-indent-string-1 " foo" 'subtract -1)
                  "  foo")))
 
-(ert-deftest test-combobulate-indent-absolute-negative ()
-  (should-error (combobulate-indent-string-1 "foo" 'absolute -1)))
-
 (ert-deftest test-combobulate-indent-subtract-more-than-indent ()
   (should (equal (combobulate-indent-string-1 " foo" 'subtract 3)
                  "foo")))

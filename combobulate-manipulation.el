@@ -173,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                                    (combobulate--refactor-update-field ov tag text)))
+                               (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -203,194 +203,6 @@
                          (combobulate--refactor-get-all-overlays)))))
            (t (rollback) (signal (car err) (cdr err))))))))
 
-(defun combobulate-procedure-get-activation-nodes (procedures)
-  "Given a list of PROCEDURES, return a merged list of all activation nodes."
-  (flatten-tree (mapcar (lambda (procedure)
-                          (mapcar (lambda (activation-node)
-                                    (let ((node (plist-get activation-node :node)))
-                                      (if (consp node) node (cons node nil))))
-                                  (plist-get procedure :activation-nodes)))
-                        procedures)))
-
-(defun combobulate-procedure-get-parent-nodes (point-node possible-parents)
-  "Find POSSIBLE-PARENTS on or near POINT-NODE.
-
-POSSIBLE-PARENTS must be a list of strings or forms.
-
-If a form, it must be a valid combobulate query that contains one or more
-`@parent' labels.
-
-Returns a list of parents ordered closest to farthest."
-  (let* ((actual-parents (combobulate-get-parents point-node))
-         (matched-parents))
-    (seq-uniq
-     (seq-sort #'combobulate-node-after-node-p
-               (dolist (possible-parent possible-parents matched-parents)
-                 (cond
-                  ((stringp possible-parent)
-                   (when-let (m (seq-find (lambda (p) (equal (combobulate-node-type p) possible-parent))
-                                          actual-parents))
-                     (push m matched-parents)))
-                  ((consp possible-parent)
-                   (dolist (actual-parent actual-parents)
-                     (pcase-dolist (`(,label . ,match) (combobulate-query-search actual-parent possible-parent t))
-                       (when (eq label '@parent)
-                         (push match matched-parents)))))))))))
-
-
-(defun combobulate-procedure-find-applicable-procedures (point-node procedures)
-  "Check if PROCEDURES apply to NODE and return the ones that do."
-  (cl-flet
-      ((node-match (n pos)
-         (and (equal (combobulate-node-type point-node) n)
-              (cond
-               ((eq pos 'at-or-in)
-                (or (combobulate-point-at-beginning-of-node-p point-node)
-                    (combobulate-point-in-node-range-p point-node)))
-               ((eq pos 'in)
-                (combobulate-point-in-node-range-p point-node)
-                ;; `combobulate-point-in-node-range-p' is non-nil if
-                ;; we're at the start of the node, but that is
-                ;; not allowed here.
-                (not (combobulate-point-at-beginning-of-node-p point-node)))
-               ((eq pos 'at)
-                (combobulate-point-at-beginning-of-node-p point-node))
-               (t (error "Unknown `:position' specifier `%s'" pos))))))
-    (let ((matches))
-      (dolist (procedure procedures)
-        (dolist (activation-node (plist-get procedure :activation-nodes))
-          (when-let (result (map-let (:node :find-parent :find-immediate-parent :find-base-rule-parent :position) activation-node
-                              (when-let (match-node (pcase node
-                                                      ((and (pred stringp) node)
-                                                       (node-match node position))
-                                                      ((and (pred consp) node-list)
-                                                       (seq-find (lambda (n) (node-match n position)) node-list))))
-                                (cond
-                                 (find-base-rule-parent
-                                  (car-safe
-                                   (if (booleanp find-base-rule-parent)
-                                       (combobulate-find-similar-ancestors
-                                        point-node
-                                        (combobulate-get-parents point-node))
-                                     (map-let (:keep-types :remove-types) find-base-rule-parent
-                                       (combobulate-filter-nodes
-                                        (combobulate-find-similar-ancestors
-                                         point-node
-                                         (combobulate-get-parents point-node))
-                                        :keep-types keep-types
-                                        :remove-types remove-types)))))
-                                 (find-parent
-                                  (car-safe (combobulate-procedure-get-parent-nodes
-                                             point-node
-                                             (if (stringp find-parent)
-                                                 (list find-parent)
-                                               find-parent))))
-                                 (find-immediate-parent
-                                  (if (booleanp find-immediate-parent)
-                                      (car-safe (combobulate-get-parents point-node))
-                                    (and (member (combobulate-node-type (car-safe (combobulate-get-parents point-node)))
-                                                 find-immediate-parent)
-                                         (car-safe (combobulate-get-parents point-node)))))
-                                 (t point-node)))))
-            (push (cons result procedure) matches))))
-      matches)))
-
-(defun combobulate-procedure-apply-procedure (point-node parent-node procedure)
-  "Apply PROCEDURE to PARENT-NODE via POINT-NODE and return the matches.
-
-The PROCEDURE should have either `:match-siblings',
-`:match-children' or `:match-query'.
-
-If `:match-query' is used, any node labelled `@ignore' is
-filtered from the list of returned matches."
-  (let ((matches) (value))
-    (dolist (key '(:match-siblings :match-children :match-query :match-dynamic-query))
-      (when (setq value (plist-get procedure key))
-        (setq matches (append
-                       matches
-                       (pcase key
-                         (:match-siblings
-                          (map-let (:keep-parent :keep-types :remove-types) value
-                            (append (list (cons (if keep-parent '@keep '@discard) parent-node))
-                                    (mapcar (lambda (n) (cons '@keep n))
-                                            (or (combobulate-filter-nodes
-                                                 (combobulate-get-siblings-of-node point-node nil)
-                                                 :keep-types keep-types
-                                                 :remove-types remove-types)
-                                                (list point-node))))))
-                         (:match-children
-                          (mapcar (lambda (n) (cons '@keep n))
-                                  (if (and (booleanp value) value)
-                                      (combobulate-get-children (if (equal parent-node point-node) point-node parent-node) :all-nodes t)
-                                    (map-let (:anonymous :excluded-fields :included-fields
-                                                         :remove-types :keep-types :all
-                                                         :all-nodes)
-                                        value
-                                      (combobulate-get-children
-                                       (if (equal parent-node point-node) point-node parent-node)
-                                       :anonymous anonymous :excluded-fields excluded-fields :included-fields included-fields
-                                       :all all :remove-types remove-types :keep-types keep-types :all-nodes all-nodes)))))
-                         ((and (or :match-dynamic-query :match-query) query-type)
-                          (seq-remove
-                           (lambda (n)
-                             (and (eq (car n) 'ignore)))
-                           (combobulate-query-search
-                            parent-node
-                            (if (eq query-type :match-dynamic-query)
-                                (combobulate-query-build-nested
-                                 (append ;; (list parent-node)
-                                  (seq-take-while (lambda (p) (not (equal p parent-node)))
-                                                  (combobulate-get-parents point-node)))
-                                 value)
-                              value)
-                            t nil nil)))
-                         (_ value))))))
-    ;; final post-processing
-    (map-let (:keep-types :remove-types) procedure
-      (combobulate-filter-nodes
-       matches
-       :keep-types keep-types
-       :remove-types remove-types
-       :testfn #'cdr))))
-
-
-(defun combobulate-procedure-start (point-node &optional procedures)
-  "Attempt an edit procedure at POINT-NODES and optionally with PROCEDURES.
-
-If PROCEDURES is nil, then default to
-`combobulate-manipulation-default-procedures', which is
-frequently set in `with-navigation-nodes'.
-
-This function raises an ambiguity error if there is more than one
-procedure in PROCEDURES that matches POINT-NODE. If there are no
-matches, another error is raised. If there is exactly one match
-then a cons cell of this shape is returned:
-
-   (MATCHED-PROCEDURE . (MATCHED-PARENT-NODE . ((@label . match-node-1) ... )))"
-  (setq procedures (or procedures combobulate-manipulation-default-procedures))
-  (let ((procedures (combobulate-procedure-find-applicable-procedures point-node procedures))
-        (procedure))
-    (cond
-     ((> (length procedures) 1)
-      (error "Ambiguous edit. `%s' matches multiple activation nodes: `%s'"
-             (combobulate-pretty-print-node point-node) procedures))
-     ((null procedures)
-      (error "There are no valid procedures that apply to `%s'."
-             (combobulate-pretty-print-node point-node)))
-     (t
-      (setq procedure (pop procedures))
-      ;; (unless (equal (car procedure) point-node)
-      ;;   (error "`%s' does not equal point node %s" (car procedure) point-node))
-      (cons procedure (combobulate-procedure-apply-procedure point-node (car procedure) (cdr procedure)))))))
-
-(defun combobulate-procedure-start-aggressive (&optional pt procedures)
-  "Attempt to find a procedure at PT."
-  (catch 'found
-    (let ((procedure))
-      (dolist (node (save-excursion (goto-char (or pt (point)))
-                                    (reverse (combobulate-all-nodes-at-point))))
-        (setq procedure (ignore-errors (combobulate-procedure-start node procedures)))
-        (when procedure (throw 'found procedure))))))
 
 (defun combobulate-tally-nodes (nodes &optional skip-label)
   "Groups NODES into labels (if any) and their types and tallies them.
@@ -401,9 +213,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                         (let ((string-label (symbol-name label)))
-                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                    (let ((string-label (symbol-name label)))
+                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -444,9 +256,7 @@ Combobulate will use its definition of siblings as per
 \\[combobulate-navigate-next] and
 \\[combobulate-navigate-previous]."
   (interactive "P")
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes
-                                 :procedures combobulate-navigation-sibling-procedures)
-
+  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
     (let ((node (combobulate--get-nearest-navigable-node)))
       (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
                                   (combobulate--edit-node-determine-action arg)
@@ -462,8 +272,7 @@ This looks for clusters of nodes to edit in
 If you specify a prefix ARG, then the points are placed at the
 end of each edited node."
   (interactive "P")
-  (with-navigation-nodes (:nodes combobulate-navigation-editable-nodes
-                                 :procedures combobulate-manipulation-edit-procedures)
+  (with-navigation-nodes (:procedures combobulate-manipulation-edit-procedures)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-cluster
          node
@@ -482,9 +291,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -498,7 +307,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -586,11 +395,20 @@ The action can be one of the following:
 
 (defun combobulate-edit-cluster (node action)
   "Edit CLUSTER of nodes at, or around, NODE."
-  (pcase-let ((`((,parent-node . ,_) . ,labelled-matches) (combobulate-procedure-start node)))
+  (pcase-let (((cl-struct combobulate-procedure-result
+                          (selected-nodes selected-nodes)
+                          (parent-node parent-node))
+               (or (combobulate-procedure-start node)
+                   (error "No cluster to edit."))))
     (combobulate--mc-edit-nodes
      ;; Remove `@discard' matches.
-     (mapcar 'cdr (seq-remove (lambda (m) (equal (car m) '@discard))
-                              labelled-matches))
+     (mapcar 'cdr (seq-remove
+                   ;; remove `@discard' matches. Tree-sitter does not
+                   ;; return tags with `@', but Combobulate query
+                   ;; search does.
+                   (lambda (m) (or (equal (car m) '@discard)
+                              (equal (car m) 'discard)))
+                   selected-nodes))
      action
      parent-node)))
 
@@ -598,10 +416,7 @@ The action can be one of the following:
   "Vanishes the node at point and attempts to preserve its children."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes
-                            (combobulate-procedure-get-activation-nodes
-                             combobulate-manipulation-splicing-procedures)
-                            :procedures combobulate-manipulation-splicing-procedures)
+    (with-navigation-nodes (:procedures combobulate-manipulation-splicing-procedures)
       (combobulate-splice (combobulate--get-nearest-navigable-node)
                           '(before after around self)))))
 
@@ -1464,19 +1279,13 @@ defun is.  Repeat calls expands the scope."
 (defun combobulate-splice-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes
-                            (combobulate-procedure-get-activation-nodes
-                             combobulate-manipulation-splicing-procedures)
-                            :procedures combobulate-manipulation-splicing-procedures)
+    (with-navigation-nodes (:procedures combobulate-manipulation-splicing-procedures)
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self after around)))))
 
 (defun combobulate-splice-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes
-                            (combobulate-procedure-get-activation-nodes
-                             combobulate-manipulation-splicing-procedures)
-                            :procedures combobulate-manipulation-splicing-procedures)
+    (with-navigation-nodes (:procedures combobulate-manipulation-splicing-procedures)
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self before around)))))
 
 (defvar combobulate-refactor--copied-values nil)
@@ -1493,7 +1302,8 @@ Each member of PARTITIONS must be one of:
  `after', to preserve things after the POINT-NODE;
  `around' to preserve nodes larger than POINT-NODE;
  `self' to preserve POINT-NODE."
-  (let* ((procedure (combobulate-procedure-start point-node))
+  (let* ((procedure (combobulate-procedure-result-selected-nodes
+                     (combobulate-procedure-start point-node)))
          (baseline-target nil)
          (tally)
          (matches (or matches (cdr procedure))))

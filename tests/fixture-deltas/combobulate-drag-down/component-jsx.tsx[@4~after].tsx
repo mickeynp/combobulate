@@ -3,7 +3,7 @@
 const test = () => (
   <something>
     <foo>
-      <bar>baz</bar> <bar>quux</bar>
+      <bar>baz</bar>        <bar>quux</bar>
       {1 + 2}
       {3 + 4}
     </foo>

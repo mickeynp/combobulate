@@ -64,6 +64,10 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
+(defun combobulate-primary-language ()
+  (combobulate-parser-language (or (car (combobulate-parser-list))
+                                   (error "No parsers available"))))
+
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
 
@@ -74,6 +78,9 @@
   (if (combobulate-node-p node)
       (treesit-node-check node 'named)
     (combobulate-proxy-node-named node)))
+
+(defsubst combobulate-node-anonymous-p (node)
+  (not (combobulate-node-named-p node)))
 
 (defsubst combobulate-node-start (node)
   (if (combobulate-node-p node)
@@ -97,6 +104,12 @@
   (if (combobulate-node-p node)
       (or (treesit-node-text node (not with-properties)) "")
     (or (and node (combobulate-proxy-node-text node)) "")))
+
+(defsubst combobulate-node-next-sibling (node &optional anonymous)
+  (treesit-node-next-sibling node (not anonymous)))
+
+(defsubst combobulate-node-prev-sibling (node &optional anonymous)
+  (treesit-node-prev-sibling node (not anonymous)))
 
 (defsubst combobulate-node-child (node n &optional anonymous)
   (treesit-node-child node n (not anonymous)))

@@ -35,7 +35,7 @@
   (pcase (combobulate-node-type node)
     ("pair" (combobulate-node-text (combobulate-node-child-by-field node "key")))
     ("string" (combobulate-string-truncate
-               (concat  (combobulate-node-text node))
+               (concat (combobulate-node-text node))
                40))
     (_ default-name)))
 
@@ -70,36 +70,36 @@
   (setq combobulate-manipulation-edit-procedures
         `(;; editing an element's opening/closing tag
           (:activation-nodes
-           ((:node "object" :position at-or-in))
-           :match-query (object (pair)+ @match))))
+           ((:nodes ("object")))
+           :match-query (:query (object (pair)+ @match)
+                                :engine combobulate))))
   (setq combobulate-navigation-sibling-skip-prefix t)
   (setq combobulate-navigation-sexp-nodes '("pair"))
   (setq combobulate-manipulation-splicing-procedures
         `((:activation-nodes
-           ((:node
-             "pair"
-             :find-parent ("pair")
-             :position at-or-in))
-           :match-query
-           ((_) @discard (object ((_) ","? )+ @keep)))))
+           ((:nodes
+             ("pair")
+             :has-parent ("pair")))
+           :match-query (:query ((_) @discard (object ((_) ","? )+ @keep))
+                                :engine combobulate))))
   (setq combobulate-navigation-defun-nodes '("document"))
 
   (setq combobulate-navigation-sibling-procedures
-        `(;; general navigation
+        '(;; general navigation
           (:activation-nodes
-           ((:node
-             ,(combobulate-production-rules-get "array")
+           ((:nodes
+             ((rule "array"))
              :position at
-             :find-immediate-parent (combobulate-production-rules-get "array")))
+             :has-parent ((rule "array"))))
            :match-children t)
           ;; pair-wise navigation
           (:activation-nodes
-           ((:node ("pair") :position at :find-immediate-parent ("object")))
+           ((:nodes ("pair") :position at :has-parent ("object")))
            :match-children t)))
 
   (setq combobulate-navigation-parent-child-nodes `("document" "object" "array" "pair"))
-
   (setq combobulate-navigation-default-nodes `("document" "object" "array" "pair"))
   (setq combobulate-navigation-logical-nodes (seq-uniq (flatten-tree combobulate-rules-json-inverted))))
+
 (provide 'combobulate-json)
 ;;; combobulate-json.el ends here

@@ -226,13 +226,6 @@ vector or an escaped string."
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
 
-(defvar-local combobulate-navigation-default-queries nil
-  "Queries used to resolve and find nodes.
-
-This is set up by `with-navigation-nodes' and it contains all the
-cons cells found in `combobulate-navigation-default-nodes' (or
-any other node list passed to the macro).")
-
 (defvar-local combobulate-navigation-default-nodes nil
   "Node names used for general navigation and as a placeholder.
 
@@ -247,20 +240,20 @@ This is used alongside `combobulate-navigation-default-nodes' to
 aid with hierarchical navigation by precomputing the first node
 name in a cons cell.")
 
-(defvar-local combobulate-navigation-editable-nodes nil
-  "Node names used to determine the correct edit procedure.
-
-This variable is automatically set by `combobulate-setup' after
-extracting all possible navigable nodes from
-`combobulate-manipulation-edit-procedures'.")
-
 (defvar-local combobulate-manipulation-edit-procedures nil
   "List of edit procedures.")
 
-(defvar-local combobulate-manipulation-default-procedures nil
+(defvar-local combobulate-default-procedures nil
   "List of default procedures.
 
 This is typically set by `with-navigation-nodes'.")
+
+(defvar-local combobulate-procedure-discard-rules '("comment")
+  "List of rules to always apply to discard operations.
+
+Wraps any call to `combobulate-procedure-expand-rules' in
+a `(exclude RULES EXCLUDES)' form, with EXCLUDES being the
+contents of this variable.")
 
 (defvar-local combobulate-navigation-sexp-nodes nil
   "Node names used to navigate by sexp.
@@ -325,6 +318,11 @@ determine the indentation.")
 
 This must be set in the setup function for the respective mode.")
 
+(defvar-local combobulate-navigation-rules-all nil
+  "Contains the auto-generated production rules.
+
+This must be set in the setup function for the respective mode.")
+
 (defvar-local combobulate-navigation-rules-inverted nil
   "Contains the auto-generated inverted production rules.
 
@@ -337,44 +335,6 @@ A RULE must be an alist with the KEY being the look-up item and
 the VALUE a list of rules:
 
    \\='((KEY . (VALUE ... VALUE_N)))")
-
-(defvar-local combobulate-navigation-rules-overrides nil
-  "List of override rules for `combobulate-navigation-rules'.
-
-An override RULE is one of many RULES. Each RULE must be of the
-form:
-
-  \\='(\"NODE-TYPE\"
-       [:anonymous BOOL]
-       [:excluded-fields FIELD-LIST]
-       [:all BOOL]
-       [:remove-types TYPE-LIST]
-       [:included-fields FIELD-LIST]
-       [:expand-rules RULES]
-       [:expand-nodes RULES])
-
-Where NODE-TYPE is a valid node type that exist as a rule in
-`combobulate-navigation-rules'.
-
-It can have any number of plist members:
-
-`:anonymous', if non-nil, also matches against anonymous nodes.
-
-`:excluded-fields' is a FIELD-LIST of `:fields' to exclude from
-the matches.
-
-`:all', if non-nil, works with `:excluded-fields' to only operate
-on the complement of the excluded fields.
-
-`:remove-types' is a TYPE-LIST of node types to ignore.
-
-`:expand-rules' expands RULES inline, replacing them with their
-sub-types. This can expand generalized types into their
-sub-types, such as `expression' into `(identifier string number
-...)'.
-
-`:expand-nodes' replaces child nodes found with their sub-types.
-")
 
 (defvar-local combobulate-envelope-indent-region-function #'indent-region
   "Function to call to indent an envelope after it is inserted.

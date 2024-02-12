@@ -34,7 +34,15 @@ class Quote(list):
     pass
 
 
+class BackQuote(list):
+    pass
+
+
 class LispString(str):
+    pass
+
+
+class Splice(list):
     pass
 
 
@@ -45,6 +53,10 @@ def sexp(args):
             for k, v in a.items():
                 plist.extend([Symbol(":" + k), v])
             return sexp(plist)
+        case Splice() as a:
+            return Symbol("," + "".join(a))
+        case BackQuote() as a:
+            return "`" + "".join(a)
         case Quote() as a:
             return "'" + "".join(a)
         case LispString() as a if a:
@@ -73,7 +85,6 @@ def match_rule(obj, rules):
         case {"type": t, "named": True, "subtypes": st}:
             t = LispString(t)
             rules[t][DEFAULT_FIELD_NAME] |= handle_types(st)
-        # Canonical case
         case {
             "fields": fields,
             "named": True,
@@ -88,6 +99,11 @@ def match_rule(obj, rules):
                 pass
             for field_name, details in fields.items():
                 rules[t][field_name] |= handle_types(details["types"])
+        case {"named": True, "type": str() as child_type}:
+            t = LispString(child_type)
+            # We are relying on the side-effect of the defaultdict
+            # factory here.
+            rules[t][DEFAULT_FIELD_NAME]
 
 
 def build_inverse_rules(rules):
@@ -99,17 +115,31 @@ def build_inverse_rules(rules):
     return d
 
 
+def build_all_node_types(rules):
+    types = set()
+    for rule, per_field_rules in rules.items():
+        types.add(rule)
+        for field, sub_rules in per_field_rules.items():
+            for sub_rule in sub_rules:
+                types.add(sub_rule)
+                # types.add(field)
+    return types
+
+
 def process_rules(data):
-    results = []
-    subtypes = {}
     rules = defaultdict(lambda: defaultdict(set))
     for obj in data:
-        result = match_rule(obj, rules)
+        match_rule(obj, rules)
     inv_rules = build_inverse_rules(rules)
-    return rules, inv_rules
+    all_node_types = build_all_node_types(rules)
+    return rules, inv_rules, all_node_types
 
 
-def generate_sexp(rules, inv_rules, language, source):
+def make_rules_symbol(language, *rest):
+    return Symbol(f"combobulate-rules-{language}" + "".join(rest))
+
+
+def generate_sexp(rules, inv_rules, all_node_types, language, source):
     l = []
     for rule_name, rule_fields in rules.items():
         # Ignore named fields and only generate the defaults?
@@ -124,7 +154,7 @@ def generate_sexp(rules, inv_rules, language, source):
         sexp(
             [
                 Symbol("defconst"),
-                Symbol(f"combobulate-rules-{language}"),
+                make_rules_symbol(language),
                 "\n",
                 Quote(sexp(sexp(l))),
             ]
@@ -132,9 +162,20 @@ def generate_sexp(rules, inv_rules, language, source):
         sexp(
             [
                 Symbol("defconst"),
-                Symbol(f"combobulate-rules-{language}-inverted"),
+                make_rules_symbol(language, "-inverse"),
                 "\n",
-                Quote(sexp([sexp([k, v]) + "\n  " for k, v in inv_rules.items()])),
+                Quote(
+                    sexp([sexp([k, v]) + "\n  " for k, v in sorted(inv_rules.items())])
+                ),
+                "\n",
+            ]
+        ),
+        sexp(
+            [
+                Symbol("defconst"),
+                make_rules_symbol(language, "-types"),
+                "\n",
+                Quote(sexp([n for n in sorted(all_node_types)])),
                 "\n",
             ]
         ),
@@ -186,7 +227,7 @@ def write_elisp_file(forms):
                 newline()
 
         langs = []
-        for src, (form, inv_form) in forms:
+        for src, (form, inv_form, all_node_types_form) in forms:
             langs.append(src)
             if not form:
                 log.error("Skipping %s as it is empty", src)
@@ -201,23 +242,78 @@ def write_elisp_file(forms):
                 header=f"Inverse production rules for {src}",
                 footer=f"Inverse production rules for {src}",
             )
+            write_form(
+                all_node_types_form,
+                header=f"All node types in {src}",
+                footer=f"All node types in {src}",
+            )
             newline()
         write_form(
             sexp(
                 [
                     Symbol("defconst"),
-                    Symbol(f"combobulate-rules-list"),
+                    Symbol(f"combobulate-rules-languages"),
                     "\n",
                     Quote(sexp(sexp(sorted(langs)))),
                     "\n",
                     LispString(
                         "A list of all the languages that have production rules."
                     ),
-                    "\n",
                 ]
             ),
             header="Auto-generated list of all languages",
             footer="Auto-generated list of all languages",
+        )
+
+        def make_alist(rules_symbol_extra):
+            return BackQuote(
+                sexp(
+                    [
+                        sexp(
+                            [
+                                Symbol(lang),
+                                Splice(make_rules_symbol(lang, rules_symbol_extra)),
+                            ]
+                        )
+                        + "\n  "
+                        for lang in sorted(langs)
+                    ]
+                )
+            )
+
+        write_form(
+            sexp(
+                [
+                    Symbol("defconst"),
+                    Symbol("combobulate-rules-alist"),
+                    "\n",
+                    make_alist(""),
+                ]
+            ),
+            header="Auto-generated alist of all languages and their production rules",
+        )
+        newline()
+        write_form(
+            sexp(
+                [
+                    Symbol("defconst"),
+                    Symbol("combobulate-rules-inverse-alist"),
+                    "\n",
+                    make_alist("-inverse"),
+                ]
+            ),
+        )
+        newline()
+        write_form(
+            sexp(
+                [
+                    Symbol("defconst"),
+                    Symbol("combobulate-rules-types-alist"),
+                    "\n",
+                    make_alist("-types"),
+                ]
+            ),
+            footer="Auto-generated alist of all languages and their production rules",
         )
         newline()
         write_form(
@@ -233,8 +329,8 @@ def write_elisp_file(forms):
 def parse_source(language, source):
     log.info("Parsing language %s with node file %s", language, source)
     data = load_node_types(source)
-    rules, inv_rules = process_rules(data)
-    return generate_sexp(rules, inv_rules, language, source)
+    rules, inv_rules, all_node_types = process_rules(data)
+    return generate_sexp(rules, inv_rules, all_node_types, language, source)
 
 
 def read_sources(sources_file: str) -> dict:

@@ -30,6 +30,9 @@ download-relationships:
 .PHONY:	clean-tests
 clean-tests:
 	find . -name "*.gen.el" -delete
+	find . -name "*.elc" -delete
+	find . -name "*~" -delete
+	find . -name "#*#" -delete
 	rm -rf ./tests/fixture-deltas/* || true
 
 .PHONY:	build-tests

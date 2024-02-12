@@ -312,7 +312,9 @@ doesn't exist."
                                     (t wildcards)))
               (dolist (fixture-file-name (file-expand-wildcards
                                           (concat current-directory wildcard)))
-                (combobulate-test-suite-create-harness obj fixture-file-name))))
+                ;; skip backup and autosave files
+                (unless (string-match-p "\\(?:\\.#\\|~\\)$" fixture-file-name)
+                  (combobulate-test-suite-create-harness obj fixture-file-name)))))
           (save-buffer))))))
 
 (defun combobulate-test-execute-action (action)

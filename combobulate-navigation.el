@@ -34,9 +34,6 @@
 (require 'map)
 
 
-(declare-function combobulate-procedure-start-aggressive "combobulate-manipulation")
-(declare-function combobulate-procedure-get-activation-nodes "combobulate-manipulation")
-
 (defsubst combobulate-group-nodes (labelled-nodes &optional group-fn)
   "Group LABELLED-NODES from a query by their label.
 
@@ -206,8 +203,22 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
+
+(defun combobulate-linear-siblings (node &optional anonymous)
+  "Return all linear siblings of NODE.
+
+Linear siblings are nodes that are at the same level in the
+syntax tree."
+  ;; rewind to the first node
+  (let ((siblings) (ref-node node) (start-node))
+    (while (setq ref-node (combobulate-node-prev-sibling ref-node anonymous))
+      (setq start-node ref-node))
+    (cl-do ((node start-node (combobulate-node-next-sibling node anonymous)))
+        ((null node) siblings)
+      (push node siblings))
+    (nreverse siblings)))
 
 (defun combobulate--get-nearest-navigable-node ()
   "Returns the nearest navigable node to point"
@@ -521,14 +532,14 @@ extent."
       (setq nodes (seq-filter (lambda (node) (not (equal (combobulate-node-type node) unwanted-node-type))) nodes))))
   nodes)
 
-(cl-defun combobulate-filter-nodes (nodes &key keep-types remove-types (testfn nil))
+(cl-defun combobulate-filter-nodes (nodes &key keep-types remove-types (get-fn nil))
   (when (and keep-types remove-types)
     (error "Cannot specify both `:keep-types' and `:remove-types'."))
   (if (and (not keep-types) (not remove-types))
       nodes
     (seq-filter (lambda (elem)
-                  (let ((node-type (combobulate-node-type (if testfn
-                                                              (funcall testfn elem)
+                  (let ((node-type (combobulate-node-type (if get-fn
+                                                              (funcall get-fn elem)
                                                             elem))))
                     (if keep-types
                         (and keep-types (member node-type keep-types))
@@ -584,12 +595,12 @@ original position."
     `(let* ((combobulate-navigation-default-nodes
              (or ,nodes
                  (when (and ,procedures (not ,nodes))
-                   (combobulate-procedure-get-activation-nodes ,procedures))
+                   (combobulate-procedure-collect-activation-nodes ,procedures))
                  combobulate-navigation-default-nodes))
             (combobulate-navigation-hierarchical-first-nodes
              (mapcar #'cdr (car (combobulate--split-node-types
                                  combobulate-navigation-default-nodes))))
-            (combobulate-manipulation-default-procedures ,procedures))
+            (combobulate-default-procedures ,procedures))
        (if combobulate-debug (message "with-navigation-nodes: %s" (prin1 ,nodes)))
        ;; keep the old position around: if we skip chars around but
        ;; `body' fails with an error we want to snap back.
@@ -725,8 +736,8 @@ of the node."
                               (flatten-tree (combobulate-build-sparse-tree
                                              'backward combobulate-navigation-default-nodes
                                              (lambda (n) (or (<= (combobulate-node-end n)
-                                                                 (point))
-                                                             (combobulate-point-in-node-range-p n))))))))
+                                                            (point))
+                                                        (combobulate-point-in-node-range-p n))))))))
               (first-node (pop tree)))
     (seq-find #'combobulate-node-before-point-p tree)))
 
@@ -750,8 +761,8 @@ of the node."
 
 (defun combobulate--get-siblings (node)
   "Return all siblings of NODE."
-  (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive
-                      (combobulate-node-start node)))))
+  (combobulate-procedure-result-matched-nodes
+   (combobulate-procedure-start node)))
 
 (defun combobulate-nav-get-siblings (node)
   "Return all navigable siblings of NODE."
@@ -810,10 +821,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                            (funcall (if backward
-                                         #'combobulate-point-at-end-of-node-p
-                                       #'combobulate-point-at-beginning-of-node-p)
-                                     node)))
+                       (funcall (if backward
+                                    #'combobulate-point-at-end-of-node-p
+                                  #'combobulate-point-at-beginning-of-node-p)
+                                node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
@@ -935,78 +946,6 @@ NODE is found or all depths have been searched."
           (throw 'done subtree))
         (cl-incf offset)))))
 
-
-(defun combobulate-get-siblings-of-node (node &optional skip-self-similar)
-  (let* ((p (combobulate-get-specific-parent-type node combobulate-navigation-default-nodes
-                                                  skip-self-similar))
-         (parent-node (cdr p))
-         (production-rules
-          (list (combobulate-node-type parent-node))))
-    (when parent-node
-      (with-navigation-nodes (:nodes production-rules)
-        (combobulate-get-expanded-children parent-node combobulate-navigation-rules-overrides)))))
-
-(defun combobulate-production-rules-exists-p (node-type)
-  "Return t if NODE-TYPE exists in `combobulate-navigation-rules'."
-  (car (assoc node-type combobulate-navigation-rules)))
-
-(defun combobulate-production-rules-get (node-type &optional fields)
-  "Get production rules for NODE-TYPE and maybe from its FIELDS.
-
-Rules are sourced from `combobulate-navigation-rules'."
-  (unless combobulate-navigation-rules
-    (error "There are no production rules in `combobulate-navigation-rules'.
-
-If you are adding a new language, ensure the grammar files are:
-
-1. Properly built using `build/build-relationships.py', and that you have sourced the `grammar.json' and `node-types.json' files.
-2. That the rebuilt `combobulate-rules.el' file is evaluated in your Emacs session.
-3. That the name of the grammar matches that in `combobulate-rules.el'."))
-  (setq fields (or fields '(:all t)))
-  (let* ((rules (copy-sequence (cadr (assoc node-type combobulate-navigation-rules))))
-         (all-keys (map-keys rules)))
-    (if rules
-        (apply
-         #'append
-         (mapcar (lambda (prop)
-                   (if (plist-member rules prop)
-                       (plist-get rules prop)
-                     (error "Rule `%s' has no field named `%s'. Known fields: `%s'"
-                            node-type prop all-keys)))
-                 (cond
-                  ((null fields) '(:*unnamed*))
-                  ((plist-get fields :all) all-keys)
-                  (t fields))))
-      (error "Cannot find any rules named `%s'" node-type))))
-
-(defun combobulate-production-rules-get-inverted (rule-name)
-  "Find the inverted production rule named RULE-NAME."
-  (or
-   (cadr (assoc rule-name combobulate-navigation-rules-overrides-inverted))
-   (cadr (assoc rule-name combobulate-navigation-rules-inverted))))
-
-(defun combobulate-production-rules-expand (existing-rules rule fields)
-  "Expand RULE with FIELDS in EXISTING-RULES and remove it."
-  (setq existing-rules (delete rule existing-rules))
-  (append existing-rules (combobulate-production-rules-get rule fields)))
-
-(defun combobulate-production-rules-expand-all (rules &optional replace)
-  "Expand production RULES.
-
-If REPLACE is non-nil, then any rule in RULES is removed if it is
-expanded."
-  (let ((expanded-rules nil))
-    (pcase-dolist (`(,rule . ,fields) rules)
-      (setq expanded-rules (append expanded-rules (combobulate-production-rules-get rule fields))))
-    (if replace
-        (combobulate-filter-nodes-by-type expanded-rules (mapcar 'car rules))
-      expanded-rules)))
-
-(defun combobulate-production-rules-set (rule)
-  "Set (and override, if it exists) RULE."
-  (setq combobulate-navigation-rules-overrides
-        (assoc-delete-all (car rule) combobulate-navigation-rules-overrides))
-  (push (copy-tree rule) combobulate-navigation-rules-overrides))
 
 (cl-defun combobulate-get-children (node &key (anonymous nil) excluded-fields
                                          included-fields remove-types keep-types (all t)
@@ -1582,7 +1521,7 @@ removed."
             ;; handle `field:' terms
             ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
              (set-expected-state 'field '(node))
-             (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
+             (let ((rule (cadr (assoc-string (combobulate-node-type query-node) (combobulate-production-rules-get-rules)))))
                (unless (map-contains-key rule (intern (concat ":" (to-field field))))
                  (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
                         query-node field (map-keys rule))))
@@ -1755,8 +1694,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                            (cons 'match (cons (list child) nil))
-                          (cons 'no-match (cons nil nil)))))
+                       (cons 'match (cons (list child) nil))
+                     (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking

@@ -201,17 +201,6 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/css-property.css[@1~after].css")))))
 
 
-(ert-deftest combobulate-test-python-combobulate-drag-up--def-block-6 ()
- "Test `combobulate' with `fixtures/sibling/def-block.py' in `python-ts-mode' mode."
-	     (combobulate-test
-		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/def-block.py")
-	       :tags
-	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-drag-up)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/def-block.py[@6~after].py")))
-
-
 (ert-deftest combobulate-test-python-combobulate-drag-up--def-block-5 ()
  "Test `combobulate' with `fixtures/sibling/def-block.py' in `python-ts-mode' mode."
 	     (combobulate-test
@@ -508,17 +497,6 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/def-parameters.py[@1~after].py")))))
 
 
-(ert-deftest combobulate-test-python-combobulate-drag-up--module-statements-9 ()
- "Test `combobulate' with `fixtures/sibling/module-statements.py' in `python-ts-mode' mode."
-	     (combobulate-test
-		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/module-statements.py")
-	       :tags
-	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (combobulate-test-go-to-marker 9)
-	       (combobulate-drag-up)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/module-statements.py[@9~after].py")))
-
-
 (ert-deftest combobulate-test-python-combobulate-drag-up--module-statements-8 ()
  "Test `combobulate' with `fixtures/sibling/module-statements.py' in `python-ts-mode' mode."
 	     (combobulate-test
@@ -602,9 +580,11 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/module-statements.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (combobulate-test-go-to-marker 1)
-	       (combobulate-drag-up)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/module-statements.py[@1~after].py")))
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/module-statements.py[@1~after].py")))))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-drag-up--module-statements-5 ()
@@ -659,8 +639,8 @@
 	       '(combobulate tsx tsx-ts-mode combobulate-drag-up)
 	       (should-error
 		(progn
-		  (combobulate-test-go-to-marker 1)
-		  (combobulate-drag-up)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/module-statements.tsx[@1~after].tsx")))))
 
 

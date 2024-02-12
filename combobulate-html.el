@@ -96,7 +96,7 @@
 ;;       (self-insert-command 1 ?/))))
 
 (defun combobulate-maybe-insert-attribute ()
-  "Insert `=' or maybe a JSX attribute."
+  "Insert `=' or maybe a an attribute."
   (interactive)
   (if-let ((node (combobulate-node-at-point (list combobulate-sgml-open-tag
                                                   combobulate-sgml-self-closing-tag))))
@@ -138,8 +138,7 @@
 (defun combobulate-html-setup (_)
   (setq combobulate-navigation-default-nodes '("element" "comment" "script_element" "style_element"))
   (setq combobulate-navigation-sexp-nodes '("element" "attribute" "text" "script_element" "style_element"))
-  (setq combobulate-navigation-context-nodes
-        '("attribute_name" "attribute_value" "tag_name" "text"))
+  (setq combobulate-navigation-context-nodes '("attribute_name" "attribute_value" "tag_name" "text"))
   (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute)
   ;; (local-set-key (kbd "/") #'combobulate-maybe-close-tag-or-self-insert)
   (local-set-key (kbd ">") #'combobulate-maybe-auto-close-tag)
@@ -185,40 +184,41 @@
 
   (setq combobulate-manipulation-edit-procedures
         '((:activation-nodes
-           ((:node
-             "attribute"
-             :find-parent ("start_tag" "self_closing_tag" "script_element" "style_element")
-             :position at-or-in))
-           :match-query ((_) (attribute)+ @match))
+           ((:nodes
+             ("attribute")
+             :has-parent ("start_tag" "self_closing_tag" "script_element" "style_element")))
+           :selector (:match-query (:query ((_) (attribute)+ @match)
+                                           :engine combobulate)))
           ;; sibling-level editing
           (:activation-nodes
-           ((:node
+           ((:nodes
              ("self_closing_tag" "expression" "element" "fragment" "script_element" "style_element")
              :position at))
-           :remove-types ("comment" "text")
-           :match-siblings (:keep-parent nil))
+           :selector (:match-siblings (:discard-rules ("comment" "text"))))
           ;; editing an element's opening/closing tag
           (:activation-nodes
            ((:node
              ("element" "script_element" "style_element")
              :position in))
-           :remove-types ("comment")
-           :match-query (_ (start_tag (tag_name) @match)
-                           (end_tag (tag_name) @match)))))
-
+           :selector (:match-query
+                      (:query
+                       (_ (start_tag (tag_name) @match)
+                          (end_tag (tag_name) @match))
+                       :engine combobulate
+                       :discard-rules ("comment"))))))
   (setq combobulate-navigation-sibling-procedures
-        `((:activation-nodes
-           ((:node
+        '((:activation-nodes
+           ((:nodes
              ("element" "script_element" "style_element")
-             :position at-or-in
-             :find-immediate-parent ("element" "script_element" "style_element")))
-           :match-children (:keep-types ("element" "script_element" "style_element")))
+             :has-parent ("element" "script_element" "style_element")))
+           :selector (:match-children
+                      (:match-rules ("element" "script_element" "style_element"))))
           (:activation-nodes
-           ((:node
+           ((:nodes
              ("attribute")
-             :position at-or-in
-             :find-parent ("start_tag" "self_closing_tag")))
-           :match-children (:keep-types ("attribute")))))
+             :has-parent ("start_tag" "self_closing_tag")))
+           :selector (:match-children
+                      (:match-rules ("attribute"))))))
 
   (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 

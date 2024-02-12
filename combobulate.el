@@ -150,13 +150,6 @@ created."
             (parser-lang (treesit-parser-language lang))
             (setup-fn (alist-get parser-lang combobulate-setup-functions-alist)))
       (progn
-        ;; load the production rules
-        (setq combobulate-navigation-rules-overrides nil)
-        (setq combobulate-navigation-rules-overrides-inverted nil)
-        (setq combobulate-navigation-rules
-              (combobulate-get-rule-symbol parser-lang))
-        (setq combobulate-navigation-rules-inverted
-              (combobulate-get-inverted-rule-symbol parser-lang))
         ;; prepare the sexp functions so they use our version
         (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
         (setq-local transpose-sexps-function #'combobulate-transpose-sexp-function)
@@ -171,8 +164,8 @@ created."
         (combobulate-highlight-install parser-lang)
         ;; this should come after the funcall to `setup-fn' as we need
         ;; the procedures setup and ready before we continue.
-        (setq-local combobulate-navigation-editable-nodes
-                    (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
+        ;; (setq-local combobulate-navigation-editable-nodes
+        ;;             (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
         (when combobulate-key-prefix
           (local-set-key
            (kbd (format "%s e" combobulate-key-prefix))
@@ -223,6 +216,7 @@ have changed."
 
 ;;; internal
 (require 'combobulate-rules)
+(require 'combobulate-procedure)
 (require 'combobulate-navigation)
 (require 'combobulate-manipulation)
 (require 'combobulate-envelope)

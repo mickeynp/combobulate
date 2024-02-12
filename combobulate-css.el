@@ -43,7 +43,7 @@
                               (combobulate-node-text)))
     ("property_name" (thread-first node
                                    (combobulate-node-parent)
-                                   (combobulate-node-child 0)
+                                   (combobulate-node-child 1)
                                    (combobulate-node-text)))
     (_ default-name)))
 
@@ -55,8 +55,7 @@
                         :mark-node t
                         :nodes ("rule_set")
                         :name "media-query"
-                        :template (
-                                   "@media "
+                        :template ("@media "
                                    (choice* :rest ("(min-width: " (p 768px "min-width") @ ") {"))
                                    (choice* :rest ("(max-width: " (p 768px "max-width") @ ") {")) >
                                    (choice* :rest ("(max-height: " (p 1024px "max-height") @ ") {"))
@@ -76,11 +75,12 @@
 
   (setq combobulate-manipulation-edit-procedures
         '((:activation-nodes
-           ((:node "declaration" :position in :find-parent "block"))
-           :match-query (block (declaration ":" (_) @match)+))
+           ((:nodes ("declaration") :position in :has-ancestor "block"))
+           :selector (:match-query (:query (block (declaration ":" (_) @match)+)
+                                           :engine combobulate)))
           (:activation-nodes
-           ((:node "block" :position at-or-in))
-           :match-query ((block) (_)+ @match))))
+           ((:nodes ("block")))
+           :selector (:match-query ((block) (_)+ @match)))))
 
   (setq combobulate-navigation-sexp-nodes
         (append '("comment" "property_name")
@@ -90,31 +90,33 @@
   (setq combobulate-navigation-parent-child-nodes (combobulate-production-rules-get "stylesheet"))
 
   (setq combobulate-navigation-sibling-procedures
-        `((:activation-nodes
-           ((:node
-             ,(combobulate-production-rules-get "declaration")
-             :position at-or-in
-             :find-immediate-parent ("declaration")))
-           :remove-types ("property_name")
-           :match-children t)
+        '((:activation-nodes
+           ((:nodes
+             ((rule "block")
+              (rule "stylesheet"))
+             :has-parent ("stylesheet" "block")))
+           :selector (:match-children (:discard-rules ("comment"))))
+          ;; declarations are siblings in a block
           (:activation-nodes
-           ((:node
-             ,(append
-               (combobulate-production-rules-get "feature_query")
-               (combobulate-production-rules-get "arguments"))
-             :position at-or-in
-             :find-immediate-parent ("feature_query" "arguments")))
-           :remove-types ("comment")
-           :match-children t)
+           ((:nodes
+             ("declaration")
+             :has-parent ("block")))
+           :selector (:match-children (:discard-rules ("comment" "property_name"))))
+          ;; declarations' own property values should be siblings, but
+          ;; not property_name as it's a child of declaration also,
+          ;; and that'd mean the LHS and RHS are siblings of another,
+          ;; which would be weird.
           (:activation-nodes
-           ((:node
-             ,(append
-               (combobulate-production-rules-get "block")
-               (combobulate-production-rules-get "stylesheet"))
-             :position at-or-in
-             :find-immediate-parent ("stylesheet" "block")))
-           :remove-types ("comment")
-           :match-children t)))
+           ((:nodes
+             ((exclude ((rule "declaration")) "property_name"))
+             :has-parent ("declaration")))
+           :selector (:match-children (:discard-rules ("comment" "property_name"))))
+          (:activation-nodes
+           ((:nodes
+             ((rule "feature_query")
+              (rule "arguments"))
+             :has-parent ("feature_query" "arguments")))
+           :selector (:match-children (:discard-rules ("comment"))))))
   (setq combobulate-navigation-defun-nodes
         (seq-difference (combobulate-production-rules-get "stylesheet")
                         ;; this is too granular for defun

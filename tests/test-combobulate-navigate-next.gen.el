@@ -10,15 +10,15 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-next)
-	       (combobulate-test-go-to-marker 2)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 3)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 4)
-	       (combobulate-test-go-to-marker 4)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 4)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))))
 
 
 (ert-deftest combobulate-test-css-combobulate-navigate-next--css-declaration-4 ()
@@ -80,7 +80,7 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
-(ert-deftest combobulate-test-python-combobulate-navigate-next--def-block-6 ()
+(ert-deftest combobulate-test-python-combobulate-navigate-next--def-block-5 ()
  "Test `combobulate' with `fixtures/sibling/def-block.py' in `python-ts-mode' mode."
 	     (combobulate-test
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/def-block.py")
@@ -97,10 +97,7 @@
 	       (combobulate-test-assert-at-marker 5)
 	       (combobulate-test-go-to-marker 5)
 	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 6)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 6)))
+	       (combobulate-test-assert-at-marker 5)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-next--def-function-block-6 ()
@@ -186,7 +183,7 @@
 	       (combobulate-test-assert-at-marker 9)))
 
 
-(ert-deftest combobulate-test-python-combobulate-navigate-next--module-statements-9 ()
+(ert-deftest combobulate-test-python-combobulate-navigate-next--module-statements-8 ()
  "Test `combobulate' with `fixtures/sibling/module-statements.py' in `python-ts-mode' mode."
 	     (combobulate-test
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/module-statements.py")
@@ -212,10 +209,7 @@
 	       (combobulate-test-assert-at-marker 8)
 	       (combobulate-test-go-to-marker 8)
 	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 9)
-	       (combobulate-test-go-to-marker 9)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 9)))
+	       (combobulate-test-assert-at-marker 8)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-next--module-statements-5 ()

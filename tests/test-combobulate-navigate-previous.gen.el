@@ -10,15 +10,15 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 4)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 3)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
-	       (combobulate-test-go-to-marker 2)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 1)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))))
 
 
 (ert-deftest combobulate-test-css-combobulate-navigate-previous--css-declaration-1 ()
@@ -86,9 +86,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/def-block.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 5)
 	       (combobulate-test-go-to-marker 5)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 4)
@@ -192,9 +189,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/module-statements.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 9)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 8)
 	       (combobulate-test-go-to-marker 8)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 7)

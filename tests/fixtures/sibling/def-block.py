@@ -1,4 +1,4 @@
-# -*- combobulate-test-point-overlays: ((1 outline 201) (2 outline 222) (3 outline 246) (4 outline 264) (5 outline 311) (6 outline 349)); eval: (combobulate-test-fixture-mode t); -*-
+# -*- combobulate-test-point-overlays: ((1 outline 185) (2 outline 230) (3 outline 248) (4 outline 295) (5 outline 333)); eval: (combobulate-test-fixture-mode t); -*-
 
 
 def foo():
