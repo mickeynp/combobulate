@@ -108,7 +108,7 @@
            (combobulate-node-at-point combobulate-sgml-exempted-tags)
            node)
           (self-insert-command 1 ?=)
-        (atomic-change-group
+        (combobulate-atomic-change-group
           (catch 'done
             (unless (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
               (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
