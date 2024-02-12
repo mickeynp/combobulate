@@ -96,7 +96,7 @@
 ;;       (self-insert-command 1 ?/))))
 
 (defun combobulate-maybe-insert-attribute ()
-  "Insert `=' or maybe a JSX attribute."
+  "Insert `=' or maybe a an attribute."
   (interactive)
   (if-let ((node (combobulate-node-at-point (list combobulate-sgml-open-tag
                                                   combobulate-sgml-self-closing-tag))))
