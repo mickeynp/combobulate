@@ -1,0 +1,4 @@
+/* -*- combobulate-test-point-overlays: ((1 outline 167) (2 outline 185) (3 outline 200) (4 outline 201)); eval: (combobulate-test-fixture-mode t); -*- */
+#foo {
+    background-color: linear-gradient(to right, #ff0000, #0000ff);
+}

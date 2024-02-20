@@ -88,8 +88,11 @@
              :has-parent ("block_mapping" "block_sequence")))
            :filter ("comment")
            :selector (:match-children t))))
-  (setq combobulate-navigation-parent-child-nodes
-        '("block_sequence" "block_sequence_item" "block_node" "block_mapping_pair"))
+  (setq combobulate-navigation-parent-child-procedures
+        `(;; basic down navigation between pairs and sequences
+          (:activation-nodes
+           ((:nodes ("block_mapping_pair" "block_sequence_item")))
+           :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-default-nodes
         '("block_sequence" "block_node" "block_mapping_pair")))

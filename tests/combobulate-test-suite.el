@@ -143,7 +143,8 @@ doesn't exist."
 
 (cl-defmethod combobulate-test-harness-extend-action-body ((obj combobulate-test-harness-marker-loop))
   (with-slots (action-body command-error fixture-delta-file-name marker-number total-markers reverse) obj
-    (when (and (> marker-number 1) (<= marker-number total-markers))
+    (princ (format "Marker number: %s / %s\n" marker-number total-markers))
+    (when (and (>= marker-number 1) (< marker-number total-markers))
       `(,@(if (member marker-number command-error)
               `((should-error
                  (progn ,@action-body)))

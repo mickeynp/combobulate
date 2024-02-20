@@ -104,8 +104,12 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
 
 (defun combobulate-test-assert-at-marker (number)
   (if-let (ov (combobulate--test-get-overlay-by-number number))
-      (progn (should (= (overlay-get ov 'combobulate-test-number) number))
-             (should (eq (overlay-start ov) (point))))
+      (let ((ov-number (overlay-get ov 'combobulate-test-number)))
+        (progn
+          (unless (= ov-number number)
+            (ert-fail (list "Expected marker with number `%d' but got `%d'" number ov-number)))
+          (unless (eq (overlay-start ov) (point))
+            (ert-fail (list "Overlay `%d' is not at point `%s'" number (point))))))
     (error "No overlay found for number %s" number)))
 
 (defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
@@ -310,8 +314,8 @@ of updating the prop line."
                                              files)))
         (delete-other-windows)
         (mapc (lambda (buf) (display-buffer buf `(display-buffer-in-direction
-                                             . ((direction . right)
-                                                (window-width . 0.2)))))
+                                                  . ((direction . right)
+                                                     (window-width . 0.2)))))
               (mapcar #'find-file-noselect
                       (alist-get (completing-read "Pick command " (seq-uniq (mapcar #'car grouped-cmd-files) #'string=))
                                  grouped-cmd-files nil nil #'string=)))

@@ -87,13 +87,13 @@
 (defvar combobulate-key-map
   (let ((map (make-sparse-keymap "Combobulate")))
     (define-key map (kbd "C-M-a") #'combobulate-navigate-beginning-of-defun)
-    (define-key map (kbd "C-M-d") #'combobulate-navigate-down-list-maybe)
+    (define-key map (kbd "C-M-d") #'combobulate-navigate-down)
     (define-key map (kbd "C-M-e") #'combobulate-navigate-end-of-defun)
     (define-key map (kbd "C-M-h") #'combobulate-mark-defun)
     (define-key map (kbd "C-M-n") #'combobulate-navigate-next)
     (define-key map (kbd "C-M-p") #'combobulate-navigate-previous)
     (define-key map (kbd "C-M-t") #'combobulate-transpose-sexps)
-    (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
+    (define-key map (kbd "C-M-u") #'combobulate-navigate-up)
     (define-key map (kbd "M-<up>") #'combobulate-splice-up)
     (define-key map (kbd "M-<down>") #'combobulate-splice-down)
     (define-key map (kbd "M-<left>") #'combobulate-yeet-forward)
@@ -164,8 +164,6 @@ created."
         (combobulate-highlight-install parser-lang)
         ;; this should come after the funcall to `setup-fn' as we need
         ;; the procedures setup and ready before we continue.
-        ;; (setq-local combobulate-navigation-editable-nodes
-        ;;             (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
         (when combobulate-key-prefix
           (local-set-key
            (kbd (format "%s e" combobulate-key-prefix))

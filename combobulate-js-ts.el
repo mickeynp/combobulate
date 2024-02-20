@@ -429,21 +429,48 @@ from `combobulate-manipulation-envelopes') to insert."
            :selector (:match-children (:discard-rules ("comment"))))))
 
   (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
-  (setq combobulate-navigation-parent-child-nodes
-        `("program"
-          ,@(combobulate-production-rules-get "declaration")
-          ,@(combobulate-production-rules-get "statement")
-          ,@(combobulate-production-rules-get "statement_block")
-          ,@(combobulate-production-rules-get "primary_expression")
-          ,@(combobulate-production-rules-get "class")
-          ,@(combobulate-production-rules-get "object")
-          ;; "function_declaration" "lexical_declaration"
-          ;; "export_statement"  "array" "arrow_function"
-          "jsx_fragment" "jsx_element" "jsx_opening_element"
-          "jsx_expression" "jsx_self_closing_element"))
+  (setq combobulate-navigation-parent-child-procedures
+        `((:activation-nodes
+           ((:nodes
+             ((exclude
+               (all)
+               ;; disallow navigating to jsx element production rules from
+               ;; this procedure, as it is handled below.
+               (rule "jsx_element")))
+             ;; Any parent but opening/closing elements as there's a
+             ;; more specific rule below for that.
+             :has-parent ((exclude (all) "jsx_opening_element" "jsx_self_closing_element"))))
+           :selector (:choose node :match-children t))
+          ;; allow seamless navigation between jsx elements
+          (:activation-nodes
+           ((:nodes ("jsx_fragment" "jsx_element" "jsx_expression")
+                    ;; use `at' because it ensures that point is at the jsx
+                    ;; element we wish to enter.
+                    :position at))
+           :selector
+           (:choose node :match-children t))
+          ;; inside a jsx opening node and we'll go 'down' into the
+          ;; attributes.
+          (:activation-nodes
+           ((:nodes
+             (("jsx_opening_element" "jsx_self_closing_element"))
+             ;; use `in' because using at would conflict with general
+             ;; jsx element navigation.
+             :position in))
+           :selector
+           (:choose node :match-children (:discard-rules ("identifier"))))
+          ;; inside a jsx attribute should take you to its value
+          (:activation-nodes
+           ((:nodes
+             (("jsx_attribute"))
+             ;; use `in' because using at would conflict with general
+             ;; jsx element navigation.
+             :position in))
+           :selector
+           (:choose node :match-children t))))
 
   (setq combobulate-navigation-default-nodes
-        (append combobulate-navigation-parent-child-nodes
+        (append combobulate-navigation-parent-child-procedures
                 `("jsx_attribute" "ternary_expression" "type_arguments" "string"
                   "arrow_function" "jsx_text" "function_declaration"
                   ,@(combobulate-production-rules-get "primary_expression")

@@ -233,13 +233,6 @@ The macro `with-navigation-nodes' binds to this variable and
 locally overrides the navigation nodes by Combobulate's node
 tools.")
 
-(defvar-local combobulate-navigation-hierarchical-first-nodes nil
-  "The first node name in a cons cell used for hierarchical navigation.
-
-This is used alongside `combobulate-navigation-default-nodes' to
-aid with hierarchical navigation by precomputing the first node
-name in a cons cell.")
-
 (defvar-local combobulate-manipulation-edit-procedures nil
   "List of edit procedures.")
 
@@ -283,7 +276,7 @@ column of node.")
 
 See `mark-sentence', `forward-sentence' and `backward-sentence'.")
 
-(defvar-local combobulate-navigation-parent-child-nodes nil
+(defvar-local combobulate-navigation-parent-child-procedures nil
   "Node names used to navigate up or down.")
 
 (defvar-local combobulate-display-ignored-node-types nil

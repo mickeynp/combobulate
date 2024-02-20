@@ -92,6 +92,8 @@ def match_rule(obj, rules):
             **rest,
         }:
             t = LispString(t)
+            # do this for the side-effect of creating a `t' entry.
+            rules[t][DEFAULT_FIELD_NAME]
             try:
                 types = rest["children"]["types"]
                 rules[t][DEFAULT_FIELD_NAME] |= handle_types(types)
@@ -99,7 +101,7 @@ def match_rule(obj, rules):
                 pass
             for field_name, details in fields.items():
                 rules[t][field_name] |= handle_types(details["types"])
-        case {"named": True, "type": str() as child_type}:
+        case {"named": True, "type": str() as child_type, **rest}:
             t = LispString(child_type)
             # We are relying on the side-effect of the defaultdict
             # factory here.

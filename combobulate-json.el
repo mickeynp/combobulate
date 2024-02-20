@@ -68,11 +68,26 @@
         '(;; highlight pseudo "comments" that are often designated "//"
           ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)))
   (setq combobulate-manipulation-edit-procedures
-        `(;; editing an element's opening/closing tag
+        `(;; edit the key field of a pair
           (:activation-nodes
-           ((:nodes ("object")))
-           :match-query (:query (object (pair)+ @match)
-                                :engine combobulate))))
+           ((:nodes
+             ((rule "pair"))
+             :has-fields "value"
+             :has-ancestor ((irule "pair"))))
+           :selector (:choose
+                      parent
+                      :match-query
+                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))
+          ;; edit the value field of a pair
+          (:activation-nodes
+           ((:nodes
+             ((rule "pair"))
+             :has-fields "key"
+             :has-ancestor ((irule "pair"))))
+           :selector (:choose
+                      parent
+                      :match-query
+                      (:query (object (pair (_) @match)+) :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
   (setq combobulate-navigation-sexp-nodes '("pair"))
   (setq combobulate-manipulation-splicing-procedures
@@ -91,15 +106,23 @@
              ((rule "array"))
              :position at
              :has-parent ((rule "array"))))
-           :match-children t)
+           :selector (:match-children t))
           ;; pair-wise navigation
           (:activation-nodes
            ((:nodes ("pair") :position at :has-parent ("object")))
-           :match-children t)))
+           :selector (:match-children t))))
 
-  (setq combobulate-navigation-parent-child-nodes `("document" "object" "array" "pair"))
+  (setq combobulate-navigation-parent-child-procedures
+        '(;; general navigation
+          ;; (:activation-nodes
+          ;;  ((:nodes (rule "array")))
+          ;;  :selector (:match-children t))
+          ;; pair-wise navigation
+          (:activation-nodes
+           ((:nodes (exclude (all) "string") :position at))
+           :selector (:choose node :match-children t))))
   (setq combobulate-navigation-default-nodes `("document" "object" "array" "pair"))
-  (setq combobulate-navigation-logical-nodes (seq-uniq (flatten-tree combobulate-rules-json-inverted))))
+  (setq combobulate-navigation-logical-nodes (combobulate-production-rules-get-types)))
 
 (provide 'combobulate-json)
 ;;; combobulate-json.el ends here

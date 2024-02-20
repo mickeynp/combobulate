@@ -16,9 +16,9 @@
 	       (should-error
 		(progn
 		  (combobulate-navigate-previous)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-previous)))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
 
 
 (ert-deftest combobulate-test-css-combobulate-navigate-previous--css-declaration-1 ()
@@ -27,13 +27,13 @@
 		 (:language css :mode css-ts-mode :fixture "fixtures/sibling/css-declaration.css")
 	       :tags
 	       '(combobulate css css-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 4)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 3)
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -44,10 +44,10 @@
 		 (:language css :mode css-ts-mode :fixture "fixtures/sibling/css-function-arg.css")
 	       :tags
 	       '(combobulate css css-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -58,10 +58,10 @@
 		 (:language css :mode css-ts-mode :fixture "fixtures/sibling/css-nested-statements.css")
 	       :tags
 	       '(combobulate css css-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -72,10 +72,10 @@
 		 (:language css :mode css-ts-mode :fixture "fixtures/sibling/css-property.css")
 	       :tags
 	       '(combobulate css css-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -86,9 +86,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/def-block.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
@@ -96,6 +93,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -106,9 +106,6 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/def-function-block.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 5)
 	       (combobulate-test-go-to-marker 5)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 4)
@@ -119,6 +116,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -129,10 +129,10 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/def-function-object-args.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -143,10 +143,10 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/def-function-type-args.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -157,9 +157,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/def-parameters.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 9)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 8)
 	       (combobulate-test-go-to-marker 8)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 7)
@@ -179,6 +176,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -189,9 +189,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/module-statements.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 8)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 7)
 	       (combobulate-test-go-to-marker 7)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 6)
@@ -208,6 +205,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -218,9 +218,6 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/module-statements.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
@@ -228,6 +225,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -238,10 +238,10 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/nested-blocks.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -252,9 +252,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-dict.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 7)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 6)
 	       (combobulate-test-go-to-marker 6)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 5)
@@ -268,6 +265,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -278,9 +278,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-list.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
@@ -288,6 +285,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -298,10 +298,10 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-match-case.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -312,10 +312,10 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-set.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -326,9 +326,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 5)
 	       (combobulate-test-go-to-marker 5)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 4)
@@ -339,6 +336,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -349,9 +349,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-tuple-pattern.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
@@ -359,6 +356,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -369,9 +369,6 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-tuple.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
@@ -379,6 +376,9 @@
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -389,7 +389,7 @@
 		 (:language yaml :mode yaml-ts-mode :fixture "fixtures/sibling/yaml-block-mapping-pairs.yaml")
 	       :tags
 	       '(combobulate yaml yaml-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 2)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -400,10 +400,10 @@
 		 (:language yaml :mode yaml-ts-mode :fixture "fixtures/sibling/yaml-block-mapping.yaml")
 	       :tags
 	       '(combobulate yaml yaml-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-navigate-previous)
-	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 
@@ -414,7 +414,7 @@
 		 (:language yaml :mode yaml-ts-mode :fixture "fixtures/sibling/yaml-sequence.yaml")
 	       :tags
 	       '(combobulate yaml yaml-ts-mode combobulate-navigate-previous)
-	       (combobulate-test-go-to-marker 2)
+	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
 

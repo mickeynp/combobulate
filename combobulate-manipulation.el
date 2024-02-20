@@ -173,7 +173,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -213,9 +213,9 @@ first; followed by the node type of each grouped label."
       (if (and (consp nodes) (consp (car nodes)))
           (mapconcat
            (lambda (g) (pcase-let ((`(,label . ,rest) g))
-                    (let ((string-label (symbol-name label)))
-                      (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
-                              (combobulate-tally-nodes (mapcar 'cdr rest))))))
+                         (let ((string-label (symbol-name label)))
+                           (concat (if skip-label "" (concat (capitalize (string-trim-left string-label "@")) " "))
+                                   (combobulate-tally-nodes (mapcar 'cdr rest))))))
            (combobulate-group-nodes nodes #'car) ". ")
         (string-join (mapcar (lambda (group)
                                (concat
@@ -291,9 +291,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -307,7 +307,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -407,7 +407,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                              (equal (car m) 'discard)))
+                                   (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -1086,8 +1086,8 @@ skip over the first few nodes in the list."
                                (keyboard-quit))
                               ;; handle numeric selection `1' to `9'
                               ((and (pred (numberp)) (pred (lambda (n) (and (>= n 1)
-                                                                       (<= n 9)
-                                                                       (<= n (length proxy-nodes)))))
+                                                                            (<= n 9)
+                                                                            (<= n (length proxy-nodes)))))
                                     n)
                                (refactor-action switch-action)
                                (setq index (1- n))
@@ -1344,12 +1344,12 @@ Each member of PARTITIONS must be one of:
         (indent-to col)))))
 
 (defun combobulate--yeet (point-node)
-  (let* ((source-node (or (car (reverse (combobulate--get-siblings point-node)))
+  (let* ((source-node (or (car (reverse (combobulate-nav-get-siblings point-node)))
                           (error "No valid sibling node.")))
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-make-proxy (combobulate--get-sibling
                                          (combobulate-node-at-point)
@@ -1372,11 +1372,11 @@ Each member of PARTITIONS must be one of:
         (delete-blank-lines)))))
 
 (defun combobulate--yoink (point-node)
-  (let* ((point-sibling (car (reverse (combobulate--get-siblings point-node))))
+  (let* ((point-sibling (car (reverse (combobulate-nav-get-siblings point-node))))
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-make-proxy (combobulate--get-sibling
                                          (combobulate-node-at-point)

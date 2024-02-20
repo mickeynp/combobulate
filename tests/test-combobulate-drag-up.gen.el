@@ -639,8 +639,8 @@
 	       '(combobulate tsx tsx-ts-mode combobulate-drag-up)
 	       (should-error
 		(progn
-	       (combobulate-test-go-to-marker 1)
-	       (combobulate-drag-up)
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/module-statements.tsx[@1~after].tsx")))))
 
 

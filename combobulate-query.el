@@ -1078,7 +1078,7 @@ node at point to highlight."
                                              (combobulate-get-parents (combobulate-node-at-point nil t))))))))
         (query))
     (unless node (error "Cannot find a valid context node at point"))
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
       (if-let ((node-parent (combobulate-node-parent node)))
           (progn
             (setq query (combobulate-query-builder-matcher-query

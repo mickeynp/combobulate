@@ -87,7 +87,8 @@
                 (combobulate-production-rules-get "selectors")
                 (combobulate-production-rules-get "arguments")))
   (setq combobulate-manipulation-splicing-procedures nil)
-  (setq combobulate-navigation-parent-child-nodes (combobulate-production-rules-get "stylesheet"))
+  (setq combobulate-navigation-parent-child-procedures
+        '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-sibling-procedures
         '((:activation-nodes

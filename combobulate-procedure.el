@@ -20,7 +20,13 @@
 
 ;;; Commentary:
 
-;;
+;; This module provides a way to declaratively search for nodes using
+;; procedures. A procedure is a list of rules that are applied to a
+;; node to determine if it matches. The rules are defined using a
+;; simple DSL.
+
+;;; See `combobulate-procedure-apply' for an explanation of how the
+;;; DSL works.
 
 ;;; Code:
 
@@ -33,6 +39,11 @@
     (when (member (combobulate-node-type parent-node)
                   (combobulate-procedure-expand-rules has-parent-rules))
       parent-node)))
+
+(defun combobulate-procedure-apply-has-field (has-fields action-node)
+  "Determine if ACTION-NODE belongs to a field in HAS-FIELDS."
+  (let ((field-name (combobulate-node-field-name action-node)))
+    (member field-name (ensure-list has-fields))))
 
 (defun combobulate-procedure-apply-has-ancestor (has-ancestor-rules action-node)
   "Determine if ACTION-NODE has an ancestor matching HAS-ANCESTOR-RULES."
@@ -64,7 +75,10 @@
                  :matched-selection nil)))
     (catch 'done
       (dolist (activation-node activation-nodes)
-        (map-let (:nodes nodes :position position :has-parent has-parent :has-ancestor has-ancestor)
+        (map-let (:nodes nodes :position position
+                         :has-parent has-parent
+                         :has-ancestor has-ancestor
+                         :has-fields has-fields)
             activation-node
           ;; Expand the rules in `:nodes' and determine if any of them match
           (let ((action-node-type (combobulate-node-type action-node))
@@ -89,6 +103,8 @@
                     ((eq position 'at)
                      (combobulate-point-at-beginning-of-node-p action-node))
                     (t (error "Unknown `:position' specifier `%s'" pos)))
+                   (or (and has-fields (combobulate-procedure-apply-has-field has-fields action-node))
+                       (not has-fields))
                    ;; If `:has-parent' or `:has-ancestor' is
                    ;; specified, then check the parents of the
                    ;; action node.
@@ -98,8 +114,8 @@
                        (and has-ancestor
                             (setq parent-node (combobulate-procedure-apply-has-ancestor
                                                has-ancestor action-node)))
-                       ;; If neither `:has-parent' nor `:has-ancestor' is
-                       ;; specified, then default to `t'.
+                       ;; If none of the :has-* conditions are specified,
+                       ;; then we can just continue.
                        (not (or has-parent has-ancestor))))
               (setf (combobulate-procedure-result-activation-node result) activation-node
                     (combobulate-procedure-result-parent-node result) parent-node
@@ -168,8 +184,16 @@ Return the first matching procedure, or nil if none match."
     (let ((matching-procedure))
       (dolist (procedure procedures)
         (setq matching-procedure (combobulate-procedure-apply procedure node))
-        (when matching-procedure
-          (throw 'done matching-procedure))))))
+        (pcase matching-procedure
+          ('nil nil)
+          ((cl-struct combobulate-procedure-result
+                      matched-selection
+                      selected-nodes)
+           (when (or (eq matched-selection 'n/a)
+                     (and (eq matched-selection t)
+                          selected-nodes))
+             (throw 'done matching-procedure)))
+          (_ (error "Unknown procedure result `%s'" matching-procedure)))))))
 
 (defun combobulate-procedure-validate (procedure)
   "Validate PROCEDURE."
@@ -184,8 +208,9 @@ Return the first matching procedure, or nil if none match."
       (error "Expected `:activation-nodes' to be a list, but got `%s'" :activation-nodes))
     (dolist (activation-node activation-nodes)
       (when (and (plist-get activation-node :has-parent)
-                 (plist-get activation-node :has-ancestor))
-        (error "Expected `:activation-node' to have either `:has-parent' or `:has-ancestor', but got `%s'" activation-node)))
+                 (plist-get activation-node :has-ancestor)
+                 (plist-get activation-node :has-fields))
+        (error "`:activation-node' allows only: `:has-parent', `:has-ancestor', or `:has-fields' but got `%s'" activation-node)))
     (when selector
       (map-let (:match-children :match-siblings :match-query)
           selector
@@ -327,6 +352,7 @@ of which is a form matching the following pattern:
    (:nodes RULES
     [:position POSITION-RULE]
     [:has-parent HAS-PARENT-RULE]
+    [:has-field FIELDS]
     [:has-ancestor HAS-ANCESTOR-RULE])
 
 Where RULES is one or more rules outlined in
@@ -344,6 +370,9 @@ list of RULES.
 HAS-PARENT-RULE checks if the immediate parent of the action node
 matches the rules, while HAS-ANCESTOR-RULE checks if any ancestor
 of the action node matches the rules.
+
+HAS-FIELD-RULE is a list of fields the action node be considered
+to be inside of.
 
 SELECTOR-RULES is a form matching the following pattern:
 
@@ -409,18 +438,18 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                ;; store the result of the selector filter in the procedure result
                (combobulate-procedure-result-selected-nodes procedure-result)
                (combobulate-procedure--mark-nodes
-               (ensure-list
-                (cond
-                 (match-query
-                  (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
-                 ((or match-siblings match-children)
-                  (combobulate-procedure--filter-nodes-by-relationship
-                   (or match-children match-siblings)
-                   chosen-node
-                   (if match-siblings
-                       #'combobulate-linear-siblings
-                     #'combobulate-node-children)))
-                 (t (error "Invalid selector: %s" selector))))
+                (ensure-list
+                 (cond
+                  (match-query
+                   (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
+                  ((or match-siblings match-children)
+                   (combobulate-procedure--filter-nodes-by-relationship
+                    (or match-children match-siblings)
+                    chosen-node
+                    (if match-siblings
+                        #'combobulate-linear-siblings
+                      #'combobulate-node-children)))
+                  (_ (error "Invalid selector: %s" selector))))
                 :discard-types (combobulate-procedure-expand-rules combobulate-procedure-discard-rules)
                 :overwrite t
                 :keep-anonymous t)
@@ -485,6 +514,24 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
   (let ((collected-node-types))
     (dolist (element (ensure-list rules))
       (pcase element
+        ;; Match a regular expression against the node types and
+        ;; expand each matching production rule with `(rule TYPE)'
+        (`(rule-rx ,regexp)
+         (setq collected-node-types
+               (append collected-node-types
+                       (mapcan (lambda (n)
+                                 (combobulate-procedure-expand-rules
+                                  (list 'rule n)))
+                               (combobulate-procedure-expand-rules
+                                (list 'rx regexp))))))
+        ;; Match a regular expression against the node types and
+        ;; collect the matching node types.
+        (`(rx ,regexp)
+         (setq collected-node-types
+               (append collected-node-types
+                       (seq-filter (lambda (node-type)
+                                     (string-match-p regexp node-type))
+                                   (combobulate-production-rules-get-types)))))
         ;; A production rule with optional fields which defaults to
         ;; nil, because `production-rules-get' interprets that to mean
         ;; all fields.

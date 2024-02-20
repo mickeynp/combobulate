@@ -120,12 +120,6 @@
 (defsubst combobulate-node-parent (node)
   (treesit-node-parent node))
 
-(defsubst combobulate-node-next-sibling (node &optional anonymous)
-  (treesit-node-next-sibling node (not anonymous)))
-
-(defsubst combobulate-node-prev-sibling (node &optional anonymous)
-  (treesit-node-prev-sibling node (not anonymous)))
-
 (defsubst combobulate-parent-while (node pred)
   (treesit-parent-while node pred))
 
@@ -179,7 +173,7 @@ kept."
                          :pp (combobulate-pretty-print-node node)
                          :extra nil)
                       node))
-                  (if (consp nodes) nodes (list nodes)))))
+                  (ensure-list nodes))))
     (if (consp nodes)
         proxies
       (car-safe proxies))))

@@ -464,15 +464,17 @@ line when you press
              :has-parent ("case_clause" "match_statement" "module" "block")))
            :selector (:match-children (:discard-rules ("block"))))))
 
-  (setq combobulate-navigation-parent-child-nodes
-        (append
-         (combobulate-production-rules-get "_simple_statement")
-         (combobulate-production-rules-get "_compound_statement")
-         (combobulate-production-rules-get "parameter")
-         (combobulate-production-rules-get "argument_list")
-         '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
-           "pair"
-           "list" "call" "tuple" "string" "case_clause" "set")))
+  (setq combobulate-navigation-parent-child-procedures
+        '(;; statements are treated with `at' so you can descend into sub-statements.
+          (:activation-nodes
+           ((:nodes ((rule "_compound_statement"))
+                    :position at))
+           :selector (:choose node
+                              :match-children (:match-rules ("block"))))
+          (:activation-nodes
+           ((:nodes ((all)) :has-parent ((all))))
+           :selector (:choose node
+                              :match-children (:discard-rules ("block"))))))
   (setq combobulate-navigation-logical-nodes
         (append
          (combobulate-production-rules-get "primary_expression")
