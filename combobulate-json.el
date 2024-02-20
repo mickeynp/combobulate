@@ -97,7 +97,7 @@
              :has-parent ("pair")))
            :match-query (:query ((_) @discard (object ((_) ","? )+ @keep))
                                 :engine combobulate))))
-  (setq combobulate-navigation-defun-nodes '("document"))
+  (setq combobulate-navigation-defun-procedures '((:activation-nodes ((:nodes ("document"))))))
 
   (setq combobulate-navigation-sibling-procedures
         '(;; general navigation

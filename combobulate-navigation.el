@@ -1210,7 +1210,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-logical-previous))))
 
 (defun combobulate--navigate-end-of-defun ()
-  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
     (combobulate-nav-end-of-defun)))
 
 (defun combobulate-navigate-end-of-defun (&optional arg)
@@ -1220,7 +1220,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-end-of-defun) t)))
 
 (defun combobulate--navigate-beginning-of-defun ()
-  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
     (combobulate-nav-beginning-of-defun)))
 
 (defun combobulate-navigate-beginning-of-defun (&optional arg)

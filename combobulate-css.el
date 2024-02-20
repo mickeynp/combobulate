@@ -118,10 +118,8 @@
               (rule "arguments"))
              :has-parent ("feature_query" "arguments")))
            :selector (:match-children (:discard-rules ("comment"))))))
-  (setq combobulate-navigation-defun-nodes
-        (seq-difference (combobulate-production-rules-get "stylesheet")
-                        ;; this is too granular for defun
-                        '("declaration")))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes (exclude (all) "declaration"))))))
   (setq combobulate-navigation-default-nodes
         (append
          (combobulate-production-rules-get "selectors")

@@ -378,8 +378,8 @@ from `combobulate-manipulation-envelopes') to insert."
                          (list "statement" "for_statement")
                          combobulate-navigation-rules-overrides-inverted)
 
-  (setq combobulate-navigation-defun-nodes '("arrow_function" "function_declaration"
-                                             "class_declaration" "method_definition"))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes ("arrow_function" "function_declaration" "class_declaration" "method_definition"))))))
 
   (setq combobulate-navigation-sibling-procedures
         `(;; for lists, arrays, objects, etc.

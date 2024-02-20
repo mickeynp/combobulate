@@ -221,7 +221,7 @@ vector or an escaped string."
 
 ;;;; Other settings
 
-(defvar-local combobulate-navigation-defun-nodes nil
+(defvar-local combobulate-navigation-defun-procedures nil
   "Node names used to navigate by defun.
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")

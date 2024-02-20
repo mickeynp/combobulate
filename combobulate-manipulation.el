@@ -407,7 +407,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                                   (equal (car m) 'discard)))
+                              (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -1248,11 +1248,11 @@ more than one."
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.
 
-Uses `combobulate-navigation-defun-nodes' to determine what a
+Uses `combobulate-navigation-defun-procedures' to determine what a
 defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes :skip-prefix t)
+    (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures :skip-prefix t)
       (unless (combobulate-mark-node-at-point nil t)
         (if (< arg 0)
             (combobulate-navigate-beginning-of-defun)

@@ -414,7 +414,8 @@ line when you press
   (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
-  (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "decorated_definition" "lambda"))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
   (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
                                             "for_in_clause" "string" "decorated_definition"))
   (setq combobulate-navigation-sibling-procedures
