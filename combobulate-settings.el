@@ -141,7 +141,7 @@ the node."
   :group 'combobulate)
 
 (defcustom combobulate-proffer-indicators "○●"
-  "Indentation indicators."
+  "Indicator symbols used in Combobulate's proffer prompts."
   :type 'string
   :group 'combobulate)
 
