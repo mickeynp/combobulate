@@ -206,21 +206,38 @@
                           (end_tag (tag_name) @match))
                        :engine combobulate
                        :discard-rules ("comment"))))))
-  (setq combobulate-navigation-sibling-procedures
-        '((:activation-nodes
-           ((:nodes
-             ("element" "script_element" "style_element")
-             :has-parent ("element" "script_element" "style_element")))
-           :selector (:match-children
-                      (:match-rules ("element" "script_element" "style_element"))))
+  (setq combobulate-navigation-parent-child-procedures
+        '(;; seamless navigation between elements and their children.
           (:activation-nodes
-           ((:nodes
-             ("attribute")
-             :has-parent ("start_tag" "self_closing_tag")))
-           :selector (:match-children
-                      (:match-rules ("attribute"))))))
+           ((:nodes ("element" "script_element" "style_element") :position at))
+           ;; do not discard "end_tag" as it lets us navigate into a
+           ;; tag without any children. Bit of a hack...
+           :selector (:choose node :match-children (:discard-rules ("start_tag" "tag_name"))))
+          ;; go into attribute if point is inside the start tag
+          (:activation-nodes
+           ((:nodes ("start_tag" "self_closing_tag") :position in))
+           :selector (:choose node
+                              :match-children
+                              (:match-rules ("attribute"))))
+          ;; if we're inside an attribute, go to its value
+          (:activation-nodes
+           ((:nodes ("attribute") :position in))
+           :selector (:choose node :match-children t)))))
+(setq combobulate-navigation-sibling-procedures
+      '((:activation-nodes
+         ((:nodes
+           ("element" "script_element" "style_element")
+           :has-parent ("element" "script_element" "style_element")))
+         :selector (:match-children
+                    (:match-rules ("element" "script_element" "style_element"))))
+        (:activation-nodes
+         ((:nodes
+           ("attribute")
+           :has-parent ("start_tag" "self_closing_tag")))
+         :selector (:match-children
+                    (:match-rules ("attribute"))))))
 
-  (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
+(setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)
 ;;; combobulate-html.el ends here
