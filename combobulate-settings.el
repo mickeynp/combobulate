@@ -252,7 +252,7 @@ This is typically set by `with-navigation-nodes' by passing a
 (defvar-local combobulate-procedure-discard-rules '("comment")
   "List of rules to always apply to discard operations.")
 
-(defvar-local combobulate-navigation-sexp-nodes nil
+(defvar-local combobulate-navigation-sexp-procedures nil
   "Node names used to navigate by sexp.
 
 See `combobulate-forward-sexp-function'.")

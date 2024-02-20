@@ -82,10 +82,10 @@
            ((:nodes ("block")))
            :selector (:match-query ((block) (_)+ @match)))))
 
-  (setq combobulate-navigation-sexp-nodes
-        (append '("comment" "property_name")
-                (combobulate-production-rules-get "selectors")
-                (combobulate-production-rules-get "arguments")))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("comment" "property_name"
+                                       (rule "selectors")
+                                       (rule "arguments")))))))
   (setq combobulate-manipulation-splicing-procedures nil)
   (setq combobulate-navigation-parent-child-procedures
         '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))

@@ -349,24 +349,25 @@ from `combobulate-manipulation-envelopes') to insert."
                                                         (jsx_closing_element (identifier) @match))
                                            :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-nodes '("jsx_element"
-                                            "regex"
-                                            ;; NOTE: you could make a
-                                            ;; legit argument that
-                                            ;; you'd want to move by
-                                            ;; opening/closing element
-                                            ;; "jsx_opening_element"
-                                            ;; "jsx_closing_element"
-                                            "jsx_expression"
-                                            ;; makes < and > in
-                                            ;; typescript behave
-                                            ;; as a cohesive
-                                            ;; unit.
-                                            "type_arguments"
-                                            "function_declaration"
-                                            "jsx_attribute"
-                                            "jsx_fragment"
-                                            "jsx_self_closing_element"))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("jsx_element"
+                                       "regex"
+                                       ;; NOTE: you could make a
+                                       ;; legit argument that
+                                       ;; you'd want to move by
+                                       ;; opening/closing element
+                                       ;; "jsx_opening_element"
+                                       ;; "jsx_closing_element"
+                                       "jsx_expression"
+                                       ;; makes < and > in
+                                       ;; typescript behave
+                                       ;; as a cohesive
+                                       ;; unit.
+                                       "type_arguments"
+                                       "function_declaration"
+                                       "jsx_attribute"
+                                       "jsx_fragment"
+                                       "jsx_self_closing_element"))))))
   (setq combobulate-manipulation-splicing-procedures
         '((:activation-nodes
            ((:nodes

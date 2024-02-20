@@ -763,8 +763,8 @@ that technically has another immediate parent."
 
 This function must be installed in `forward-sexp-function' to
 work properly."
-  (with-navigation-nodes (:nodes combobulate-navigation-sexp-nodes
-                                 :skip-prefix t :backward (< arg 0))
+  (with-navigation-nodes (:procedures combobulate-navigation-sexp-procedures
+                                      :skip-prefix t :backward (< arg 0))
     (let ((node)
           (inc (if (> arg 0) 1 -1))
           (backward (< arg 0)))

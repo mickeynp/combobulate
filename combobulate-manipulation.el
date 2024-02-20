@@ -438,8 +438,8 @@ The action can be one of the following:
   "Capture a transposable node, either forward or BACKWARD."
   ;; do not set `:nodes' here to allow this function to work with any
   ;; node type group set in the caller.
-  (with-navigation-nodes (:nodes combobulate-navigation-sexp-nodes
-                                 :backward backward :skip-prefix t)
+  (with-navigation-nodes (:procedures combobulate-navigation-sexp-procedures
+                                      :backward backward :skip-prefix t)
     (combobulate-forward-sexp-function-1 backward)))
 
 (defun combobulate-transpose-sexps ()

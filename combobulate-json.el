@@ -89,7 +89,8 @@
                       :match-query
                       (:query (object (pair (_) @match)+) :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-nodes '("pair"))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("pair"))))))
   (setq combobulate-manipulation-splicing-procedures
         `((:activation-nodes
            ((:nodes
