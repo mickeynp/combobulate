@@ -477,8 +477,6 @@ line when you press
            :selector (:choose node
                               :match-children (:discard-rules ("block"))))))
   (setq combobulate-navigation-logical-procedures
-        '((:activation-nodes ((:nodes (all))))))
-  (setq combobulate-navigation-default-nodes
         '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-python)

@@ -114,14 +114,9 @@
 
   (setq combobulate-navigation-parent-child-procedures
         '(;; general navigation
-          ;; (:activation-nodes
-          ;;  ((:nodes (rule "array")))
-          ;;  :selector (:match-children t))
-          ;; pair-wise navigation
           (:activation-nodes
            ((:nodes (exclude (all) "string") :position at))
            :selector (:choose node :match-children t))))
-  (setq combobulate-navigation-default-nodes `("document" "object" "array" "pair"))
   (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-json)

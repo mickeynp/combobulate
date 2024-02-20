@@ -136,7 +136,6 @@
     default-name))
 
 (defun combobulate-html-setup (_)
-  (setq combobulate-navigation-default-nodes '("element" "comment" "script_element" "style_element"))
   (setq combobulate-navigation-sexp-nodes '("element" "attribute" "text" "script_element" "style_element"))
   (setq combobulate-navigation-context-nodes '("attribute_name" "attribute_value" "tag_name" "text"))
   (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute)

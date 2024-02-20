@@ -95,8 +95,8 @@
            ((:nodes ("block_mapping_pair" "block_sequence_item")))
            :selector (:choose node :match-children t))))
 
-  (setq combobulate-navigation-default-nodes
-        '("block_sequence" "block_node" "block_mapping_pair")))
+  (setq combobulate-navigation-default-procedures
+        '(:activation-nodes ((:nodes ("block_sequence" "block_node" "block_mapping_pair"))))))
 
 (provide 'combobulate-yaml)
 ;;; combobulate-yaml.el ends here

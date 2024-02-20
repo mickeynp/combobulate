@@ -203,7 +203,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -648,20 +648,6 @@ of the node."
                                         #'combobulate-point-at-beginning-of-node-p)
                                       node)))
               (combobulate-all-nodes-at-point)))
-
-(defun combobulate-nav-forward (&optional skip-prefix)
-  "Moves forward one navigable node"
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
-    (when-let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
-      (when (combobulate-point-at-beginning-of-node-p node)
-        node))))
-
-(defun combobulate-nav-backward (&optional skip-prefix)
-  "Moves forward one navigable node"
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
-    (let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
-      (when (combobulate-point-at-end-of-node-p node 0)
-        node))))
 
 (defun combobulate-nav-logical-next ()
   (when-let* ((tree (flatten-tree
@@ -1117,9 +1103,9 @@ DIRECTION must be `forward' or `backward'."
      ;; ahead of point.
      ;;
      ;;
-     ;; NOTE: this is a slightly modified version of `down-list'
-     ;; with the syntax-ppss table check removed as it seems to
-     ;; miscategorise JSX as a string, even if it is not.
+     ;; NOTE: this is a slightly modified version of `down-list' with
+     ;; the syntax-ppss table check removed as it seems run into parse
+     ;; errors in JSX files.
      (ignore-errors
        (let* ((arg 1)
               (inc (if (> arg 0) 1 -1)))
@@ -1168,26 +1154,6 @@ DIRECTION must be `forward' or `backward'."
   (interactive "^p")
   (with-argument-repetition arg
     (combobulate-visual-move-to-node (combobulate--navigate-previous))))
-
-(defun combobulate--navigate-forward ()
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (combobulate-nav-forward t)))
-
-(defun combobulate-navigate-forward (&optional arg)
-  "If at the beginning of a navigable node, move forward ARG times"
-  (interactive "^p")
-  (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-forward) t)))
-
-(defun combobulate--navigate-backward ()
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (combobulate-nav-backward t)))
-
-(defun combobulate-navigate-backward (&optional arg)
-  "If at the end of a navigable node, move backward ARG times"
-  (interactive "^p")
-  (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-backward))))
 
 (defun combobulate--navigate-logical-next ()
   (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix nil)

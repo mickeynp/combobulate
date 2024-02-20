@@ -119,13 +119,7 @@
              :has-parent ("feature_query" "arguments")))
            :selector (:match-children (:discard-rules ("comment"))))))
   (setq combobulate-navigation-defun-procedures
-        '((:activation-nodes ((:nodes (exclude (all) "declaration"))))))
-  (setq combobulate-navigation-default-nodes
-        (append
-         (combobulate-production-rules-get "selectors")
-         '("stylesheet" "rule_set" "feature_query" "float_value"
-           "declaration" "property_name" "string_value" "plain_value" "integer_value"
-           "color_value" "call_expression" "function_name" "media_statement" "arguments"))))
+        '((:activation-nodes ((:nodes (exclude (all) "declaration")))))))
 
 
 (provide 'combobulate-css)

@@ -481,14 +481,6 @@ from `combobulate-manipulation-envelopes') to insert."
            :selector
            (:choose node :match-children t))))
 
-  (setq combobulate-navigation-default-nodes
-        (append combobulate-navigation-parent-child-procedures
-                `("jsx_attribute" "ternary_expression" "type_arguments" "string"
-                  "arrow_function" "jsx_text" "function_declaration"
-                  ,@(combobulate-production-rules-get "primary_expression")
-                  ,@(combobulate-production-rules-get "object")
-                  ,@(combobulate-production-rules-get "statement")
-                  ,@(combobulate-production-rules-get "declaration"))))
   (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
 
 

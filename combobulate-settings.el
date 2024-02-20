@@ -222,9 +222,16 @@ vector or an escaped string."
 ;;;; Other settings
 
 (defvar-local combobulate-navigation-defun-procedures nil
-  "Node names used to navigate by defun.
+  "Node procedures used to navigate by defun.
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
+
+(defvar-local combobulate-navigation-default-procedures '((:activation-nodes ((:nodes (all)))))
+  "Node procedures as the default in the absence of more specific procedures.
+
+The `combobulate-navigation-default-nodes' variable is populated
+with the node types from all the expanded activation node
+procedure rules.")
 
 (defvar-local combobulate-navigation-default-nodes nil
   "Node names used for general navigation and as a placeholder.
