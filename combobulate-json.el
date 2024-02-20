@@ -122,7 +122,7 @@
            ((:nodes (exclude (all) "string") :position at))
            :selector (:choose node :match-children t))))
   (setq combobulate-navigation-default-nodes `("document" "object" "array" "pair"))
-  (setq combobulate-navigation-logical-nodes (combobulate-production-rules-get-types)))
+  (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-json)
 ;;; combobulate-json.el ends here

@@ -1190,7 +1190,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-backward))))
 
 (defun combobulate--navigate-logical-next ()
-  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix nil)
+  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix nil)
     (combobulate-nav-logical-next)))
 
 (defun combobulate-navigate-logical-next (&optional arg)
@@ -1200,7 +1200,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil t)))
 
 (defun combobulate--navigate-logical-previous ()
-  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures)
     (combobulate-nav-logical-previous)))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
@@ -1607,8 +1607,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                            (cons 'match (cons (list child) nil))
-                          (cons 'no-match (cons nil nil)))))
+                       (cons 'match (cons (list child) nil))
+                     (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking

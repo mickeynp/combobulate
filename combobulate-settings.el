@@ -239,14 +239,11 @@ tools.")
 (defvar-local combobulate-default-procedures nil
   "List of default procedures.
 
-This is typically set by `with-navigation-nodes'.")
+This is typically set by `with-navigation-nodes' by passing a
+`:procedures' property with the procedures to use..")
 
 (defvar-local combobulate-procedure-discard-rules '("comment")
-  "List of rules to always apply to discard operations.
-
-Wraps any call to `combobulate-procedure-expand-rules' in
-a `(exclude RULES EXCLUDES)' form, with EXCLUDES being the
-contents of this variable.")
+  "List of rules to always apply to discard operations.")
 
 (defvar-local combobulate-navigation-sexp-nodes nil
   "Node names used to navigate by sexp.
@@ -271,7 +268,7 @@ to format the manipulated text.
 Use `node' and Combobulate will instead indent the text to the
 column of node.")
 
-(defvar-local combobulate-navigation-logical-nodes nil
+(defvar-local combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))
   "Node names used to navigate by logical block.
 
 See `mark-sentence', `forward-sentence' and `backward-sentence'.")

@@ -476,13 +476,10 @@ line when you press
            ((:nodes ((all)) :has-parent ((all))))
            :selector (:choose node
                               :match-children (:discard-rules ("block"))))))
-  (setq combobulate-navigation-logical-nodes
-        (append
-         (combobulate-production-rules-get "primary_expression")
-         (combobulate-production-rules-get "expression")
-         combobulate-navigation-default-nodes))
+  (setq combobulate-navigation-logical-procedures
+        '((:activation-nodes ((:nodes (all))))))
   (setq combobulate-navigation-default-nodes
-        (seq-uniq (flatten-tree combobulate-rules-python))))
+        '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here

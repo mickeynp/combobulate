@@ -489,9 +489,7 @@ from `combobulate-manipulation-envelopes') to insert."
                   ,@(combobulate-production-rules-get "object")
                   ,@(combobulate-production-rules-get "statement")
                   ,@(combobulate-production-rules-get "declaration"))))
-  ;; (setq combobulate-navigation-logical-nodes
-  ;;       (seq-uniq (flatten-tree combobulate-rules-tsx-inverted)))
-  )
+  (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
 
 
 (provide 'combobulate-js-ts)

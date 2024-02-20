@@ -222,22 +222,21 @@
           ;; if we're inside an attribute, go to its value
           (:activation-nodes
            ((:nodes ("attribute") :position in))
-           :selector (:choose node :match-children t)))))
-(setq combobulate-navigation-sibling-procedures
-      '((:activation-nodes
-         ((:nodes
-           ("element" "script_element" "style_element")
-           :has-parent ("element" "script_element" "style_element")))
-         :selector (:match-children
-                    (:match-rules ("element" "script_element" "style_element"))))
-        (:activation-nodes
-         ((:nodes
-           ("attribute")
-           :has-parent ("start_tag" "self_closing_tag")))
-         :selector (:match-children
-                    (:match-rules ("attribute"))))))
-
-(setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
+           :selector (:choose node :match-children t))))
+  (setq combobulate-navigation-sibling-procedures
+        '((:activation-nodes
+           ((:nodes
+             ("element" "script_element" "style_element")
+             :has-parent ("element" "script_element" "style_element")))
+           :selector (:match-children
+                      (:match-rules ("element" "script_element" "style_element"))))
+          (:activation-nodes
+           ((:nodes
+             ("attribute")
+             :has-parent ("start_tag" "self_closing_tag")))
+           :selector (:match-children
+                      (:match-rules ("attribute"))))))
+  (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)
 ;;; combobulate-html.el ends here

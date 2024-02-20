@@ -75,8 +75,8 @@
   (setq combobulate-manipulation-splicing-procedures nil)
   (setq combobulate-navigation-defun-procedures
         '((:activation-nodes ((:nodes ("stream" "block_node"))))))
-  (setq combobulate-navigation-logical-nodes '("stream" "flow_node" "block_node"
-                                               "block_mapping_pair"))
+  (setq combobulate-navigation-logical-procedures
+        '((:activation-nodes ((:nodes ("stream" "flow_node" "block_node" "block_mapping_pair"))))))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
            ((:nodes
