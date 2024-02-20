@@ -288,9 +288,30 @@ from `combobulate-manipulation-envelopes') to insert."
                                                          property: (property_identifier)
                                                          (:match "^console$" @name))))))
   (setq combobulate-manipulation-edit-procedures
-        '((:activation-nodes
+        '(;; edit the keys or values in an object
+          (:activation-nodes
            ((:nodes
-             ("named_imports" "object" "formal_parameters" "array" "object_type" "arguments" "object_pattern")
+             ;; being javascript, you can put half the damn language
+             ;; in the value part of an object pair
+             ((rule-rx "expression"))
+             :has-fields "value"
+             :has-ancestor ((irule "pair"))))
+           :selector (:choose
+                      parent
+                      :match-query
+                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))
+          (:activation-nodes
+           ((:nodes
+             ((rule "pair"))
+             :has-fields "key"
+             :has-ancestor ((irule "pair"))))
+           :selector (:choose
+                      parent
+                      :match-query
+                      (:query (object (pair (_) @match)+) :engine combobulate)))
+          (:activation-nodes
+           ((:nodes
+             ("named_imports" "formal_parameters" "array" "object_type" "arguments" "object_pattern")
              :has-parent t))
            :filter ("comment")
            :selector (:choose node :match-query (:query ((_) (_)+ @match)
@@ -368,15 +389,6 @@ from `combobulate-manipulation-envelopes') to insert."
            :selector (:match-query
                       (:query ((_) @discard (object ((_) ","? )+ @keep))
                               :engine combobulate)))))
-  ;; Required for the top-most splicing procedure: we remove
-  ;; `statement_block' because it interferes with splicing. However,
-  ;; it is also a key part in inferring relationships between certain
-  ;; specialized node types like `lexical_declaration'. So this
-  ;; snippet tweaks the inverted production rules so it recognizes the
-  ;; right thing
-  (combobulate-alist-set "lexical_declaration"
-                         (list "statement" "for_statement")
-                         combobulate-navigation-rules-overrides-inverted)
 
   (setq combobulate-navigation-defun-procedures
         '((:activation-nodes ((:nodes ("arrow_function" "function_declaration" "class_declaration" "method_definition"))))))
