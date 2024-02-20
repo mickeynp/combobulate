@@ -143,7 +143,7 @@ If the register does not exist, return DEFAULT or nil."
             ;;
             ;; The special block `b*' will also execute `point' instructions.
             ((or (and `(b . ,rest) (let categories '(repeat choice prompt)))
-                 (and `(b* . ,rest) (let categories '(repeat choice prompt point selected-point))))
+                 (and `(b* ,categories . ,rest)))
              (expand-block rest categories))
             ;; `(choice instructions)'
             ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
@@ -298,17 +298,8 @@ If the register does not exist, return DEFAULT or nil."
               ;; works well with the likes of Python where crass,
               ;; region-based indentation will never work.
               ((and (not combobulate-envelope-indent-region-function) indent)
-               ;; ordinarily, we do not need to worry about changing the
-               ;; start/end point markers, as inserting text will
-               ;; advance the point markers correctly. However, in
-               ;; python and suchlike, we cannot 'just' indent the
-               ;; region register; instead, we must carefully fix its
-               ;; indentation so it matches correctly: this must happen
-               ;; from the beginning of the line. Therefore, we change
-               ;; the start point marker to match.
                (let ((offset (current-indentation)))
                  (delete-horizontal-space)
-                 ;; (forward-line 0)
                  (setf start (point))
                  ;; clear whitespace from the start of the line
                  (let ((before-pt (point)))
@@ -417,12 +408,21 @@ Unlike most proffer preview functions, this one assumes that
                   (t (setq expand-envelope missing)))
             (pcase-let (((cl-struct combobulate-envelope-context
                                     (start start)
-                                    (end end))
+                                    (end end)
+                                    (user-actions user-actions))
                          (combobulate-refactor (:id refactor-id)
                            (combobulate-envelope-expand-instructions-1
-                            `((b ,@expand-envelope))))))
+                            ;; Normally we'd just use `(b ...)' but we
+                            ;; want the points calculated also, if
+                            ;; there are any in the envelope, so we
+                            ;; can pull out the `selected-point' and
+                            ;; use it to set `pt' later.
+                            `((b* (repeat choice prompt point) ,@expand-envelope))))))
               (mark-range-deleted start end)
               (when is-current-node
+                (pcase user-actions
+                  (`((selected-point . ,selected-pt))
+                   (setq pt selected-pt)))
                 (mark-range-highlighted start end))))))
       (when pt (goto-char pt)))))
 
@@ -695,7 +695,6 @@ expansion:
      - `repeat' instructions are executed first;
      - Then, `choice' prompts are executed;
      - Then, `prompt's are executed.
-     - Finally, all `point' prompts are executed.
 
    All envelopes are wrapped an implicit `b' block. You really
    only need this construct if you're doing something very
@@ -824,7 +823,7 @@ expansion:
                         ;; "super-block" that expands all user actions such as
                         ;; choice, repeat, prompt and -- for `b*' specifically --
                         ;; also `point'.
-                        `((b* ,@instructions)))))
+                        `((b* (repeat choice prompt point selected-point) ,@instructions)))))
               ;; The `point' category is special in that it is
               ;; executed only at the `b*' superblock stage. If there
               ;; is more than one `point', the user is asked to
@@ -836,9 +835,6 @@ expansion:
               ;; come out of this expansion of post-run instructions,
               ;; that where ever point is, is what we want to end the
               ;; envelope at.
-              ;; (combobulate-envelope-expand-post-run-instructions
-              ;;  ctx
-              ;;  '(point))
               (combobulate-envelope-expand-post-run-instructions
                ctx
                '(selected-point))
