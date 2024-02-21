@@ -178,7 +178,7 @@ kept."
         proxies
       (car-safe proxies))))
 
-(defun combobulate-make-proxy-from-region (beg end)
+(defun combobulate-make-proxy-from-range (beg end)
   "Factory that creates a facsimile proxy node of the region BEG END."
   (make-combobulate-proxy-node
    :start (set-marker (make-marker) beg)

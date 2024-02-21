@@ -4,6 +4,17 @@
 
 (require 'combobulate-test-prelude)
 
+(ert-deftest combobulate-test-tsx-combobulate-drag-up--component-jsx-5 ()
+ "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
+	     (combobulate-test
+		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
+	       :tags
+	       '(combobulate tsx tsx-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/component-jsx.tsx[@5~after].tsx")))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-drag-up--component-jsx-4 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test

@@ -143,6 +143,14 @@ from `combobulate-manipulation-envelopes') to insert."
           "string_fragment" "number"))
 
   ;; NOTE This is subject to change
+  (setq combobulate-envelope-procedure-shorthand-alist
+        '((valid-jsx-expression
+           . ((:activation-nodes
+               ((:nodes
+                 (exclude ("jsx_element" "jsx_text" "jsx_self_closing_element"
+                           "jsx_fragment" "jsx_attribute" (rule "jsx_attribute"))
+                          "jsx_expression")
+                 :has-parent (irule "jsx_expression"))))))))
   (setq combobulate-manipulation-envelopes
         `((:description
            "const [...] = useState(...)"
@@ -219,14 +227,14 @@ from `combobulate-manipulation-envelopes') to insert."
           (:description
            "{ ... }"
            :key "e"
-           :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment" "string")
+           :shorthand valid-jsx-expression
            :name "expression"
            :mark-node t
            :template ("{" r "}"))
           (:description
            "{/* ... */}"
            :key ";"
-           :nodes ("jsx_element" "jsx_self_closing_element" "jsx_fragment")
+           :shorthand valid-jsx-expression
            :name "comment"
            :mark-node t
            :template ("{/*" r "*/}"))
@@ -234,7 +242,7 @@ from `combobulate-manipulation-envelopes') to insert."
            "{... ? ... : ...}"
            :key "?"
            :mark-node t
-           :nodes ("jsx_element" "jsx_text" "jsx_self_closing_element" "jsx_fragment")
+           :shorthand valid-jsx-expression
            :name "ternary"
            :template ("{" @ "null" >
                       n> " ? " @ > (choice* :name "consequence" :missing ("null" >) :rest (r>))
@@ -414,12 +422,14 @@ from `combobulate-manipulation-envelopes') to insert."
           ;; for jsx
           (:activation-nodes
            ((:nodes
-             ;; attributes can only appear in particular JSX elements,
-             ;; so we need a distinct rule for them.
-             ("jsx_attribute")
+             ;; attributes can only appear in particular JSX elements
+             ;; (namely opening and self-closing elements), so we need
+             ;; a distinct rule for them.
+             (rule "jsx_opening_element")
              :has-parent
              ("jsx_opening_element" "jsx_self_closing_element")))
-           :selector (:match-children (:match-rules ("jsx_attribute"))))
+           ;; but do exclude identifier as that'd match the tag name!
+           :selector (:match-children (:match-rules (exclude (rule "jsx_opening_element") "identifier"))))
           (:activation-nodes
            ((:nodes
              ((exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element")))
@@ -443,17 +453,33 @@ from `combobulate-manipulation-envelopes') to insert."
 
   (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
   (setq combobulate-navigation-parent-child-procedures
-        `((:activation-nodes
+        `(;; general navigation into and out of blocks.
+          (:activation-nodes
            ((:nodes
-             ((exclude
-               (all)
-               ;; disallow navigating to jsx element production rules from
-               ;; this procedure, as it is handled below.
-               (rule "jsx_element")))
-             ;; Any parent but opening/closing elements as there's a
-             ;; more specific rule below for that.
-             :has-parent ((exclude (all) "jsx_opening_element" "jsx_self_closing_element"))))
+             ("arrow_function" "function_declaration" "class_declaration") :position at))
+           :selector (:choose node :match-children
+                              (:match-rules (rule "arrow_function" :body))))
+          ;; this is here to general statements, like if, while,
+          ;; etc. including one-armed if statements and those without
+          ;; blocks.
+          (:activation-nodes
+           ((:nodes
+             ("statement_block")
+             :position at))
            :selector (:choose node :match-children t))
+          ;; this handles the case where point is at the { ... } block
+          ;; and it ensures it navigates into the first child.
+          (:activation-nodes
+           ((:nodes
+             ((rule "statement"))
+             :position at))
+           ;; prefer statement_blocks to expressions
+           :selector (:choose node :match-children (:match-rules ("statement_block"))))
+          (:activation-nodes
+           ((:nodes
+             ((rule "statement"))
+             :position at))
+           :selector (:choose node :match-children (:match-rules (rule "expression"))))
           ;; allow seamless navigation between jsx elements
           (:activation-nodes
            ((:nodes ("jsx_fragment" "jsx_element" "jsx_expression")
@@ -480,7 +506,19 @@ from `combobulate-manipulation-envelopes') to insert."
              ;; jsx element navigation.
              :position in))
            :selector
-           (:choose node :match-children t))))
+           (:choose node :match-children t))
+          (:activation-nodes
+           ((:nodes
+             ((exclude
+               (all)
+               ;; disallow navigating to jsx element production rules from
+               ;; this procedure, as it is handled below.
+               (rule "jsx_element")
+               "formal_parameters"))
+             ;; Any parent but opening/closing elements as there's a
+             ;; more specific rule below for that.
+             :has-parent ((exclude (all) "jsx_opening_element" "jsx_self_closing_element"))))
+           :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
 

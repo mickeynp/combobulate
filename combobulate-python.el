@@ -138,12 +138,6 @@ line when you press
   (combobulate-move-to-node node)
   (back-to-indentation))
 
-(defun combobulate-python-proffer-indent-action (_index current-node _proxy-nodes refactor-id)
-  "Proffer action function that highlights the node and indents it."
-  (combobulate-refactor (:id refactor-id)
-    (mark-node-highlighted current-node)
-    (combobulate-proffer-indentation-1 current-node)))
-
 (defun combobulate-proffer-indentation (node)
   "Intelligently indent the region or NODE at point."
   (interactive)
@@ -162,7 +156,7 @@ line when you press
                                    ;; special proxy node that will be used to
                                    ;; indent the region.
                                    (if (use-region-p)
-                                       (combobulate-make-proxy-from-region (region-beginning) (region-end))
+                                       (combobulate-make-proxy-from-range (region-beginning) (region-end))
                                      ;; if we're not dealing with a region, we
                                      ;; make a proxy node for the closest node.
                                      (combobulate-make-proxy node))))
@@ -175,7 +169,10 @@ line when you press
          (at-last-level (= number-of-levels current-position)))
     (when-let (selected-node (combobulate-proffer-choices
                               (if at-last-level (reverse indent-nodes) indent-nodes)
-                              #'combobulate-python-proffer-indent-action
+                              (lambda-slots (refactor-id current-node)
+                                (combobulate-refactor (:id refactor-id)
+                                  (mark-node-highlighted current-node)
+                                  (combobulate-proffer-indentation-1 current-node)))
                               ;; Try to pick a sensible starting index
                               ;; based on whether we're at the end,
                               ;; taking into account of the fact that
@@ -447,7 +444,7 @@ line when you press
              ((rule "dictionary"))
              :has-parent ("dictionary"))
             (:nodes
-             ((rule "primary_expression") (rule "expression"))
+             ((rule "set") (rule "tuple") (rule "list"))
              :has-parent ("set" "tuple" "list"))
             (:nodes
              ((rule "parameter")
@@ -455,7 +452,7 @@ line when you press
               (rule "expression")
               (rule "expression_list")
               (rule "primary_expression"))
-             :has-parent ("parameters" "argument_list" "expression_list")))
+             :has-parent ("parameters" "lambda_parameters" "argument_list" "expression_list")))
            :selector (:match-children t))
           (:activation-nodes
            ((:nodes
@@ -469,10 +466,17 @@ line when you press
   (setq combobulate-navigation-parent-child-procedures
         '(;; statements are treated with `at' so you can descend into sub-statements.
           (:activation-nodes
-           ((:nodes ((rule "_compound_statement"))
+           ((:nodes ((rule "_compound_statement")
+                     ;; not in compound statement
+                     "case_clause")
                     :position at))
            :selector (:choose node
                               :match-children (:match-rules ("block"))))
+          (:activation-nodes
+           ((:nodes ((rule "lambda"))
+                    :position at))
+           :selector (:choose node
+                              :match-children (:match-rules (rule "lambda" :body))))
           (:activation-nodes
            ((:nodes ((all)) :has-parent ((all))))
            :selector (:choose node

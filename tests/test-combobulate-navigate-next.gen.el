@@ -4,21 +4,24 @@
 
 (require 'combobulate-test-prelude)
 
-(ert-deftest combobulate-test-tsx-combobulate-navigate-next--component-jsx-4 ()
+(ert-deftest combobulate-test-tsx-combobulate-navigate-next--component-jsx-5 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-next)
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)))
 
 
 (ert-deftest combobulate-test-css-combobulate-navigate-next--css-declaration-4 ()

@@ -124,11 +124,18 @@ def build_all_node_types(rules):
         for field, sub_rules in per_field_rules.items():
             for sub_rule in sub_rules:
                 types.add(sub_rule)
-                # types.add(field)
     return types
 
 
-def process_rules(data):
+def build_supertypes(data):
+    return [LispString(el) for el in data.get("supertypes", [])]
+
+
+def process_grammar(data):
+    return build_supertypes(data)
+
+
+def process_nodes(data):
     rules = defaultdict(lambda: defaultdict(set))
     for obj in data:
         match_rule(obj, rules)
@@ -141,7 +148,7 @@ def make_rules_symbol(language, *rest):
     return Symbol(f"combobulate-rules-{language}" + "".join(rest))
 
 
-def generate_sexp(rules, inv_rules, all_node_types, language, source):
+def generate_sexp(rules, inv_rules, all_node_types, supertypes, language):
     l = []
     for rule_name, rule_fields in rules.items():
         # Ignore named fields and only generate the defaults?
@@ -181,10 +188,19 @@ def generate_sexp(rules, inv_rules, all_node_types, language, source):
                 "\n",
             ]
         ),
+        sexp(
+            [
+                Symbol("defconst"),
+                make_rules_symbol(language, "-supertypes"),
+                "\n",
+                Quote(sexp([n for n in sorted(supertypes)]) or []) or "nil",
+                "\n",
+            ]
+        ),
     ]
 
 
-def load_node_types(source):
+def load_json(source):
     assert isinstance(source, Path), f"{source} must be a Path-like object."
     try:
         return json.loads(source.read_text())
@@ -229,7 +245,7 @@ def write_elisp_file(forms):
                 newline()
 
         langs = []
-        for src, (form, inv_form, all_node_types_form) in forms:
+        for src, (form, inv_form, all_node_types_form, supertypes_form) in forms:
             langs.append(src)
             if not form:
                 log.error("Skipping %s as it is empty", src)
@@ -248,6 +264,11 @@ def write_elisp_file(forms):
                 all_node_types_form,
                 header=f"All node types in {src}",
                 footer=f"All node types in {src}",
+            )
+            write_form(
+                supertypes_form,
+                header=f"All supertypes in {src}",
+                footer=f"All supertypes in {src}",
             )
             newline()
         write_form(
@@ -283,41 +304,19 @@ def write_elisp_file(forms):
                 )
             )
 
-        write_form(
-            sexp(
-                [
-                    Symbol("defconst"),
-                    Symbol("combobulate-rules-alist"),
-                    "\n",
-                    make_alist(""),
-                ]
-            ),
-            header="Auto-generated alist of all languages and their production rules",
-        )
-        newline()
-        write_form(
-            sexp(
-                [
-                    Symbol("defconst"),
-                    Symbol("combobulate-rules-inverse-alist"),
-                    "\n",
-                    make_alist("-inverse"),
-                ]
-            ),
-        )
-        newline()
-        write_form(
-            sexp(
-                [
-                    Symbol("defconst"),
-                    Symbol("combobulate-rules-types-alist"),
-                    "\n",
-                    make_alist("-types"),
-                ]
-            ),
-            footer="Auto-generated alist of all languages and their production rules",
-        )
-        newline()
+        for rules_symbol_extra in ["", "-inverse", "-types", "-supertypes"]:
+            write_form(
+                sexp(
+                    [
+                        Symbol("defconst"),
+                        Symbol(f"combobulate-rules{rules_symbol_extra}-alist"),
+                        "\n",
+                        make_alist(rules_symbol_extra),
+                    ]
+                ),
+            )
+
+            newline()
         write_form(
             sexp(
                 [
@@ -328,11 +327,18 @@ def write_elisp_file(forms):
         )
 
 
-def parse_source(language, source):
-    log.info("Parsing language %s with node file %s", language, source)
-    data = load_node_types(source)
-    rules, inv_rules, all_node_types = process_rules(data)
-    return generate_sexp(rules, inv_rules, all_node_types, language, source)
+def parse_source(language, nodes_fn, grammar_fn):
+    log.info(
+        "Parsing language %s with node file %s and grammar file %s",
+        language,
+        nodes_fn,
+        grammar_fn,
+    )
+    node_data = load_json(nodes_fn)
+    grammar_data = load_json(grammar_fn)
+    supertypes = process_grammar(grammar_data)
+    rules, inv_rules, all_node_types = process_nodes(node_data)
+    return generate_sexp(rules, inv_rules, all_node_types, supertypes, language)
 
 
 def read_sources(sources_file: str) -> dict:
@@ -360,7 +366,14 @@ def main():
         download_all_sources(sources)
 
     for src, files in sources.items():
-        forms.append((src, parse_source(src, Path(f"{src}-nodes.json"))))
+        forms.append(
+            (
+                src,
+                parse_source(
+                    src, Path(f"{src}-nodes.json"), Path(f"{src}-grammar.json")
+                ),
+            )
+        )
     write_elisp_file(forms)
 
 

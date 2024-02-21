@@ -203,7 +203,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -473,13 +473,18 @@ extent."
   (let ((smallest most-positive-fixnum)
         (largest most-negative-fixnum))
     (mapc (lambda (c)
-            (pcase-let ((`(,start . ,end) (combobulate-node-range c)))
-              (when (< start smallest)
-                (setq smallest start))
-              (when (> end largest)
-                (setq largest end))))
+            (and c (pcase-let ((`(,start . ,end) (combobulate-node-range c)))
+                     (when (< start smallest)
+                       (setq smallest start))
+                     (when (> end largest)
+                       (setq largest end)))))
           nodes)
     (cons smallest largest)))
+
+
+(defun combobulate-get-error-nodes (&optional node)
+  "Return all nodes in NODES that are of type 'error."
+  (combobulate-query-capture (or node (combobulate-root-node)) '((ERROR) @node) nil nil t))
 
 (defun combobulate-filter-nodes-by-type (nodes unwanted-node-types)
   "Filter NODES of UNWANTED-NODE-TYPES."
@@ -697,8 +702,7 @@ of the node."
 
 (defun combobulate-nav-get-siblings (node)
   "Return all navigable siblings of NODE."
-  (combobulate-procedure-result-matched-nodes
-   (combobulate-procedure-start node)))
+  (combobulate-procedure-start-matches node))
 
 (defun combobulate--get-sibling (node direction)
   "Returns the sibling node of NODE in the specified DIRECTION.
@@ -1091,14 +1095,13 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-up))))
 
 (defun combobulate--navigate-down ()
-  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-parent-child-procedures)
+  (with-navigation-nodes (:skip-prefix nil :procedures combobulate-navigation-parent-child-procedures)
     (or
      ;; try to find a procedure that can take us to a valid child node
      ;; (that starts after point)
      (car (seq-filter
            #'combobulate-node-after-point-p
-           (when-let ((proc (combobulate-procedure-start (combobulate--get-nearest-navigable-node))))
-             (combobulate-procedure-result-matched-nodes proc))))
+           (combobulate-procedure-start-matches (combobulate--get-nearest-navigable-node))))
      ;; ... and if that fails, jump into the first list-like structure
      ;; ahead of point.
      ;;

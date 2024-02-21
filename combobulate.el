@@ -162,6 +162,11 @@ created."
         (hack-local-variables)
         ;; install the highlighter rules
         (combobulate-highlight-install parser-lang)
+        ;; `combobulate-navigation-default-nodes' draws its nodes from
+        ;; `combobulate-navigation-default-procedures'.
+        (setq-local combobulate-navigation-default-nodes
+                    (combobulate-procedure-collect-activation-nodes
+                     combobulate-navigation-default-procedures))
         ;; this should come after the funcall to `setup-fn' as we need
         ;; the procedures setup and ready before we continue.
         (when combobulate-key-prefix

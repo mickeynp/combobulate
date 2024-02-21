@@ -91,7 +91,24 @@
         '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-sibling-procedures
-        '((:activation-nodes
+        '(;; declarations' own property values should be siblings, but
+          ;; not property_name as it's a child of declaration also,
+          ;; and that'd mean the LHS and RHS are siblings of another,
+          ;; which would be weird.
+          (:activation-nodes
+           ((:nodes
+             ((rule "feature_query")
+              (rule "arguments"))
+             :has-parent ("feature_query" "arguments")))
+           :selector (:choose parent
+                              :match-children t))
+          (:activation-nodes
+           ((:nodes
+             ((exclude (rule "declaration") "property_name"))
+             :has-parent ("declaration")))
+           :selector (:choose parent
+                              :match-children (:discard-rules ("comment" "property_name"))))
+          (:activation-nodes
            ((:nodes
              ((rule "block")
               (rule "stylesheet"))
@@ -102,22 +119,7 @@
            ((:nodes
              ("declaration")
              :has-parent ("block")))
-           :selector (:match-children (:discard-rules ("comment" "property_name"))))
-          ;; declarations' own property values should be siblings, but
-          ;; not property_name as it's a child of declaration also,
-          ;; and that'd mean the LHS and RHS are siblings of another,
-          ;; which would be weird.
-          (:activation-nodes
-           ((:nodes
-             ((exclude ((rule "declaration")) "property_name"))
-             :has-parent ("declaration")))
-           :selector (:match-children (:discard-rules ("comment" "property_name"))))
-          (:activation-nodes
-           ((:nodes
-             ((rule "feature_query")
-              (rule "arguments"))
-             :has-parent ("feature_query" "arguments")))
-           :selector (:match-children (:discard-rules ("comment"))))))
+           :selector (:match-children (:discard-rules ("comment" "property_name"))))))
   (setq combobulate-navigation-defun-procedures
         '((:activation-nodes ((:nodes (exclude (all) "declaration")))))))
 

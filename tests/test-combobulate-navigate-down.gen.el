@@ -84,10 +84,10 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
-(ert-deftest combobulate-test-tsx-combobulate-navigate-down--jsx-with-attributes-10 ()
- "Test `combobulate' with `fixtures/down/jsx-with-attributes.tsx' in `tsx-ts-mode' mode."
+(ert-deftest combobulate-test-tsx-combobulate-navigate-down--if-statements-10 ()
+ "Test `combobulate' with `fixtures/down/if-statements.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
-		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/down/jsx-with-attributes.tsx")
+		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/down/if-statements.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-navigate-down)
 	       (combobulate-test-go-to-marker 1)
@@ -119,7 +119,30 @@
 	       (combobulate-test-assert-at-marker 10)))
 
 
-(ert-deftest combobulate-test-tsx-combobulate-navigate-down--module-statements-10 ()
+(ert-deftest combobulate-test-tsx-combobulate-navigate-down--jsx-with-attributes-6 ()
+ "Test `combobulate' with `fixtures/down/jsx-with-attributes.tsx' in `tsx-ts-mode' mode."
+	     (combobulate-test
+		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/down/jsx-with-attributes.tsx")
+	       :tags
+	       '(combobulate tsx tsx-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 6)))
+
+
+(ert-deftest combobulate-test-tsx-combobulate-navigate-down--module-statements-7 ()
  "Test `combobulate' with `fixtures/down/module-statements.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/down/module-statements.tsx")
@@ -142,16 +165,7 @@
 	       (combobulate-test-assert-at-marker 6)
 	       (combobulate-test-go-to-marker 6)
 	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 7)
-	       (combobulate-test-go-to-marker 7)
-	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 8)
-	       (combobulate-test-go-to-marker 8)
-	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 9)
-	       (combobulate-test-go-to-marker 9)
-	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 10)))
+	       (combobulate-test-assert-at-marker 7)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--nested-jsx-8 ()

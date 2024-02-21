@@ -277,13 +277,15 @@
   (combobulate-test (:language tsx :mode tsx-ts-mode)
     (should-not (seq-difference (combobulate-procedure-expand-rules
                                  '("statement" (rule "statement")))
-                                '("statement" "statement_block" "while_statement" "switch_statement"
-                                  "if_statement" "do_statement" "throw_statement" "for_statement"
-                                  "export_statement" "debugger_statement" "return_statement"
-                                  "labeled_statement" "continue_statement" "with_statement"
-                                  "import_statement" "try_statement" "for_in_statement"
-                                  "declaration" "empty_statement" "expression_statement"
-                                  "break_statement")))))
+                                '("statement" "break_statement" "import_statement" "expression_statement" "do_statement"
+                                  "with_statement" "if_statement" "continue_statement" "switch_statement" "try_statement"
+                                  "ambient_declaration" "import_alias" "class_declaration" "type_alias_declaration"
+                                  "interface_declaration" "function_signature" "variable_declaration"
+                                  "generator_function_declaration" "internal_module" "enum_declaration"
+                                  "module" "lexical_declaration" "abstract_class_declaration" "function_declaration"
+                                  "empty_statement" "for_statement" "debugger_statement" "export_statement"
+                                  "statement_block" "throw_statement" "while_statement" "return_statement"
+                                  "labeled_statement" "for_in_statement")))))
 
 
 (ert-deftest combobulate-procedure-expand-rules-irule ()
@@ -299,11 +301,14 @@
   (combobulate-test (:language tsx :mode tsx-ts-mode)
     (should-not (seq-difference (combobulate-procedure-expand-rules
                                  '((exclude (rule "statement") "declaration" "expression_statement")))
-                                '("statement_block" "while_statement" "switch_statement" "if_statement"
-                                  "do_statement" "throw_statement" "for_statement" "export_statement"
-                                  "debugger_statement" "return_statement" "labeled_statement" "continue_statement"
-                                  "with_statement" "import_statement" "try_statement" "for_in_statement"
-                                  "empty_statement" "break_statement")))))
+                                '("break_statement" "import_statement" "do_statement" "with_statement"
+                                  "if_statement" "continue_statement" "switch_statement" "try_statement"
+                                  "ambient_declaration" "import_alias" "class_declaration" "type_alias_declaration"
+                                  "interface_declaration" "function_signature" "variable_declaration" "generator_function_declaration"
+                                  "internal_module" "enum_declaration" "module" "lexical_declaration" "abstract_class_declaration"
+                                  "function_declaration" "empty_statement" "for_statement" "debugger_statement" "export_statement"
+                                  "statement_block" "throw_statement" "while_statement" "return_statement" "labeled_statement"
+                                  "for_in_statement")))))
 
 (ert-deftest combobulate-procedure-expand-rules-exclude-symmetry ()
   :tags '(combobulate procedure)

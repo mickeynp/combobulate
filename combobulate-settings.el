@@ -203,6 +203,15 @@ vector or an escaped string."
   "Face for active indicators, like the indentation display."
   :group 'combobulate-faces)
 
+(defface combobulate-error-indicator-face '((t
+                                             (:box
+                                              (:line-width
+                                               (1 . 1)
+                                               :color "FireBrick2" :style flat-button)
+                                              :foreground "FireBrick1" :background "FireBrick4")))
+  "Face for error indicators, like the indentation display."
+  :group 'combobulate-faces)
+
 (defface combobulate-tree-branch-face '((t (:foreground "slate gray")))
   "Face for the branches and guides in the display tree."
   :group 'combobulate-faces)
@@ -351,6 +360,14 @@ languages like YAML and Python.")
 (defvar combobulate-envelope-symbol-prefix "combobulate-envelop-"
   "Prefix to use for symbol functions and variables for envelopes.")
 
+(defvar-local combobulate-envelope-procedure-shorthand-alist nil
+  "Alist of shorthand symbols for envelope procedures.
+
+Each entry must be an alist with the key being the shorthand
+symbol and the value being a valid combobulate procedure.
+
+Shorthands are used in lieu of inlining the procedure in the
+`:nodes' property for an envelope. It is local to a language.")
 
 (defvar-local combobulate-manipulation-envelopes nil
   "Code generators that wrap -- envelop -- nodes")

@@ -151,49 +151,85 @@ name and the cdr is the node. The tagged name should be
        (t (error "Unknown tagged name `%s'" tagged-name))))
     (reverse matches)))
 
-(defun combobulate-procedure-start (pt-or-node &optional procedures)
-  "Attempt to find a procedure at PT-OR-NODE."
-  (catch 'done
-    (dolist (node (append
-                   ;; start by getting all the nodes *at* point:
-                   ;; meaning, nodes beginning at point. They should
-                   ;; be our first port of call in terms of matching,
-                   ;; as they are the most specific.
-                   (save-excursion
-                     (goto-char (if (numberp pt-or-node)
-                                    pt-or-node
-                                  (combobulate-node-start pt-or-node)))
-                     (combobulate-all-nodes-at-point))
-                   ;; then, get all the nodes point is in.
-                   (combobulate-get-parents (combobulate-node-at-point))))
-      (when-let (procedure-result
-                 (combobulate-procedure-try
-                  ;; if we haven't been given any procedures, use the default
-                  ;; procedures.
-                  (or procedures
-                      combobulate-default-procedures
-                      (error "No procedures given and no default procedures found"))
-                  node))
-        (throw 'done procedure-result)))))
+(defun combobulate-procedure-start-matches (pt-or-node &optional procedures)
+  "Return nodes that match a procedure at PT-OR-NODE.
 
-(defun combobulate-procedure-try (procedures node)
-  "Try to apply PROCEDURES, in order, to NODE.
+If PROCEDURES is not given, use `combobulate-default-procedures'
+instead.
 
-Return the first matching procedure, or nil if none match."
-  (catch 'done
-    (let ((matching-procedure))
-      (dolist (procedure procedures)
-        (setq matching-procedure (combobulate-procedure-apply procedure node))
-        (pcase matching-procedure
-          ('nil nil)
-          ((cl-struct combobulate-procedure-result
-                      matched-selection
-                      selected-nodes)
-           (when (or (eq matched-selection 'n/a)
-                     (and (eq matched-selection t)
-                          selected-nodes))
-             (throw 'done matching-procedure)))
-          (_ (error "Unknown procedure result `%s'" matching-procedure)))))))
+Unlike `combobulate-procedure-start', this function returns the
+the struct entry `matched-nodes' of the matching procedure, if it
+exists, and nil if not."
+  (when-let (procedure (car-safe (combobulate-procedure-start pt-or-node procedures)))
+    (cl-assert (combobulate-procedure-result-p procedure) t
+               "Expected a `combobulate-procedure-result' object, but got `%s'"
+               procedure)
+    (combobulate-procedure-result-matched-nodes procedure)))
+
+(defun combobulate-procedure-start (pt-or-node &optional procedures exhaustive)
+  "Attempt to find a procedure at PT-OR-NODE.
+
+If PROCEDURES is not given, use `combobulate-default-procedures'.
+If EXHAUSTIVE is non-nil, then collect all possible procedures
+that may apply."
+  (let ((matches)
+        (nodes
+         (seq-uniq
+          (append
+           ;; start by getting all the nodes *at* point:
+           ;; meaning, nodes beginning at point. They should
+           ;; be our first port of call in terms of matching,
+           ;; as they are the most specific.
+           (save-excursion
+             (goto-char (if (numberp pt-or-node)
+                            pt-or-node
+                          (combobulate-node-start pt-or-node)))
+             (cons (if (combobulate-node-p pt-or-node)
+                       pt-or-node
+                     (combobulate-node-at-point))
+                   (combobulate-all-nodes-at-point)))
+           ;; then, get all the nodes point is in.
+           (combobulate-get-parents (combobulate-node-at-point))))))
+    (catch 'done
+      (dolist (procedure
+               (or procedures
+                   ;; if we haven't been given any procedures, use the default
+                   ;; procedures.
+                   combobulate-default-procedures
+                   (error "No procedures given and no default procedures found")))
+        (dolist (node nodes)
+          (when-let (procedure-result
+                     (combobulate-procedure-try
+                      procedure
+                      node))
+            (push procedure-result matches)
+            (unless exhaustive (throw 'done procedure-result))))))
+    matches))
+
+(defun combobulate-procedure-try (procedure node)
+  "Apply PROCEDURE to NODE and return the result, if any."
+  (let ((procedure-result))
+    (setq procedure-result (combobulate-procedure-apply procedure node))
+    (pcase procedure-result
+      ('nil nil)
+      ((cl-struct combobulate-procedure-result
+                  matched-selection
+                  selected-nodes)
+       ;; We define a successful result as one of the following:
+       ;;
+       ;; Either the matched selection is `n/a', indicating that there
+       ;; were no `:selector' properties to further refine the
+       ;; activated nodes.
+       ;;
+       ;; Or the matched selection is `t' *and* that there is at least
+       ;; one selected node with a `@match' or `match' tag.
+       (when (or (eq matched-selection 'n/a)
+                 (and (eq matched-selection t)
+                      (seq-find (pcase-lambda (`(,mark . ,_))
+                                  (or (eq mark '@match) (eq mark 'match)))
+                                selected-nodes)))
+         procedure-result))
+      (_ (error "Unknown procedure result `%s'" procedure-result)))))
 
 (defun combobulate-procedure-validate (procedure)
   "Validate PROCEDURE."
@@ -311,6 +347,9 @@ If keep-mark is non-nil, keep the mark in the result."
        :overwrite t
        :keep-anonymous t))))
 
+(defvar combobulate-procedure-include-anonymous-nodes nil
+  "Whether to include anonymous nodes in the result of a procedure.")
+
 (defun combobulate-procedure--filter-nodes-by-relationship (selector node fn)
   "Filter NODES by the relationship defined by FN against NODE.
 
@@ -329,7 +368,7 @@ anonymous nodes and return the nodes that match the relationship."
                      (error "Cannot have both `:match-rules' and `:discard-rules'
 without explicitly setting `:default-mark'"))
                 (if match-rules '@discard '@match)))
-           (anonymous anonymous)
+           (anonymous (or anonymous combobulate-procedure-include-anonymous-nodes))
            (nodes (funcall fn node anonymous)))
       (combobulate-procedure--mark-nodes
        nodes
@@ -337,6 +376,35 @@ without explicitly setting `:default-mark'"))
        :discard-types discard-rules
        :keep-anonymous anonymous
        :default-mark default-mark))))
+
+(defun combobulate-procedure-debug-print-result (procedure-result)
+  "Print PROCEDURE-RESULT in a human-readable format."
+  ;; pretty-print the cldefstruct
+  ;; (cl-defstruct combobulate-procedure-result
+  ;;   "The result of a procedure."
+  ;;   activation-node
+  ;;   action-node
+  ;;   parent-node
+  ;;   selected-nodes
+  ;;   matched-nodes
+  ;;   (matched-activation nil)
+  ;;   (matched-selection nil))
+  (pcase procedure-result
+    ((cl-struct combobulate-procedure-result
+                (activation-node activation-node)
+                (action-node action-node)
+                (parent-node parent-node)
+                (selected-nodes selected-nodes)
+                (matched-nodes matched-nodes)
+                (matched-activation matched-activation)
+                (matched-selection matched-selection))
+     (message "Activation node: %s" activation-node)
+     (message "Action node: %s" action-node)
+     (message "Parent node: %s" parent-node)
+     (message "Selected nodes: %s" selected-nodes)
+     (message "Matched nodes: %s" matched-nodes)
+     (message "Matched activation: %s" matched-activation)
+     (message "Matched selection: %s" matched-selection))))
 
 (defun combobulate-procedure-apply (procedure node)
   "Apply PROCEDURE to NODE.
@@ -454,7 +522,8 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                 :overwrite t
                 :keep-anonymous t)
                ;; acknowledge that the selector filter was used
-               (combobulate-procedure-result-matched-selection procedure-result) t)))
+               (combobulate-procedure-result-matched-selection procedure-result) t))
+            (message (combobulate-procedure-debug-print-result procedure-result)))
         ;; if there is no selector, then the action node is the selected node
         (setf (combobulate-procedure-result-matched-selection procedure-result) 'n/a))
       ;; do a final bit of clean-up: get all the nodes marked `@match'
@@ -473,19 +542,31 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
   "Get production rules for NODE-TYPE and possibly FIELDS."
   (setq fields (or fields '(:all t)))
   (let* ((rules (cadr (assoc-string node-type (combobulate-production-rules-get-rules))))
+         (supertypes (combobulate-production-rules-get-supertypes))
          (all-keys (map-keys rules)))
     (if rules
-        (apply
-         #'append
-         (mapcar (lambda (prop)
-                   (if (plist-member rules prop)
-                       (plist-get rules prop)
-                     (error "Rule `%s' has no field named `%s'. Known fields: `%s'"
-                            node-type prop all-keys)))
-                 (cond
-                  ((null fields) '(:*unnamed*))
-                  ((plist-get fields :all) all-keys)
-                  (t fields))))
+        ;; some node types are supertypes, meaning they exist outside
+        ;; the actual parse tree TS can generate. However, the rules
+        ;; for these supertypes are defined in the same way as for the
+        ;; actual parse tree. So, we need to expand the supertypes
+        ;; here.
+        (mapcan
+         (lambda (n)
+           ;; check if n is a supertype; if it is, expand it.
+           (if (member n supertypes)
+               (combobulate-production-rules-get n)
+             (list n)))
+         (apply
+          #'append
+          (mapcar (lambda (prop)
+                    (if (plist-member rules prop)
+                        (plist-get rules prop)
+                      (error "Rule `%s' has no field named `%s'. Known fields: `%s'"
+                             node-type prop all-keys)))
+                  (cond
+                   ((null fields) '(:*unnamed*))
+                   ((plist-get fields :all) all-keys)
+                   (t fields)))))
       (error "Cannot find any rules named `%s'" node-type))))
 
 (defun combobulate-production-rules-get-inverted (rule-name &optional language)
@@ -504,6 +585,10 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
 (defun combobulate-production-rules-get-rules (&optional language)
   "Return a list of the production rules in LANGUAGE."
   (combobulate-production-rules--get combobulate-rules-alist language))
+
+(defun combobulate-production-rules-get-supertypes (&optional language)
+  "Return a list of the supertypes in LANGUAGE."
+  (combobulate-production-rules--get combobulate-rules-supertypes-alist language))
 
 (defun combobulate-production-rules-get-inverse-rules (&optional language)
   "Return a list of the inverted production rules in LANGUAGE."
@@ -539,7 +624,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
              (and `(rule ,rule-name) (let fields nil)))
          (setq collected-node-types
                (append collected-node-types
-                       (apply #'combobulate-production-rules-get rule-name fields))))
+                       (apply #'combobulate-production-rules-get rule-name (list (ensure-list fields))))))
         ;; An inverted production rule that uses the inverse
         ;; production rule table instead.
         (`(irule ,inverted-rule-name)

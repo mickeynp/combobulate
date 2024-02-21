@@ -43,11 +43,22 @@
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
 	       :tags
 	       '(combobulate tsx tsx-ts-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/component-jsx.tsx[@4~after].tsx")))
+
+
+(ert-deftest combobulate-test-tsx-combobulate-drag-down--component-jsx-5 ()
+ "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
+	     (combobulate-test
+		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/sibling/component-jsx.tsx")
+	       :tags
+	       '(combobulate tsx tsx-ts-mode combobulate-drag-down)
 	       (should-error
 		(progn
-		  (combobulate-test-go-to-marker 4)
+		  (combobulate-test-go-to-marker 5)
 		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/component-jsx.tsx[@4~after].tsx")))))
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/component-jsx.tsx[@5~after].tsx")))))
 
 
 (ert-deftest combobulate-test-css-combobulate-drag-down--css-declaration-1 ()
