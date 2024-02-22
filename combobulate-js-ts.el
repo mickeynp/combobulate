@@ -115,7 +115,7 @@ from `combobulate-manipulation-envelopes') to insert."
       ("lexical_declaration" (combobulate-js-ts--get-declaration-name node))
       (_ default-name))))
 
-(defun combobulate-js-ts-setup (_lang)
+(defun combobulate-js-ts-setup (lang)
   (when combobulate-js-ts-enable-attribute-envelopes
     (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute))
   ;; (when combobulate-js-ts-enable-guess-close-tag
@@ -261,13 +261,14 @@ from `combobulate-manipulation-envelopes') to insert."
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default
-        '(;; highlight the left-hand side of sequence expressions
-          ;; ("the comma operator")
-          ((arrow_function body: ((_ (sequence_expression left: (_) @hl.veggie)))))
-          ;; highlight browser console object calls.
-          ((call_expression function: (member_expression object: (identifier) @name @hl.serene
-                                                         property: (property_identifier)
-                                                         (:match "^console$" @name))))))
+        (seq-filter (apply-partially #'combobulate-query-valid-p lang)
+                    '(;; highlight the left-hand side of sequence expressions
+                      ;; ("the comma operator")
+                      ((arrow_function body: ((_ (sequence_expression left: (_) @hl.veggie)))))
+                      ;; highlight browser console object calls.
+                      ((call_expression function: (member_expression object: (identifier) @name @hl.serene
+                                                                     property: (property_identifier)
+                                                                     (:match "^console$" @name)))))))
   (setq combobulate-manipulation-edit-procedures
         `((:activation-nodes
            ((:node

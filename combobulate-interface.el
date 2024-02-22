@@ -211,6 +211,13 @@ kept."
                                  (combobulate-all-nodes-at-point)
                                  :keep-types (list (combobulate-node-type proxy-node))))))))))
 
+(defun combobulate-query-valid-p (language query)
+  (cl-assert (or (consp query) (stringp query)))
+  (with-temp-buffer
+    (treesit-parser-create language)
+    (condition-case nil
+        (prog1 t (treesit-query-capture language query))
+      (treesit-query-error (prog1 nil (message "nil"))))))
 
 (provide 'combobulate-interface)
 ;;; combobulate-interface.el ends here
