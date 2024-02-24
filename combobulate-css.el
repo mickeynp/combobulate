@@ -97,7 +97,6 @@
         '((:activation-nodes ((:nodes ("comment" "property_name"
                                        (rule "selectors")
                                        (rule "arguments")))))))
-  (setq combobulate-manipulation-splicing-procedures nil)
   (setq combobulate-navigation-parent-child-procedures
         '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 

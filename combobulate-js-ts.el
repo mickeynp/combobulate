@@ -385,28 +385,6 @@ from `combobulate-manipulation-envelopes') to insert."
                                        "jsx_attribute"
                                        "jsx_fragment"
                                        "jsx_self_closing_element"))))))
-  (setq combobulate-manipulation-splicing-procedures
-        '((:activation-nodes
-           ((:nodes
-             ("jsx_fragment" "jsx_element" "jsx_self_closing_element" "jsx_expression"
-              "jsx_text")
-             :has-base-rule-parent (:filter ("statement_block"))))
-           :selector (:match-siblings t)
-           :filter ("jsx_opening_element" "jsx_closing_element"))
-          (:activation-nodes
-           ((:nodes
-             ("lexical_declaration"
-              (rule "if_statement")
-              (rule "declaration")
-              (rule "statement"))
-             :has-ancestor ("statement_block")))
-           :selector (:match-siblings t))
-          (:activation-nodes
-           ((:nodes ("pair")
-                    :has-base-rule-parent ("pair")))
-           :selector (:match-query
-                      (:query ((_) @discard (object ((_) ","? )+ @keep))
-                              :engine combobulate)))))
 
   (setq combobulate-navigation-defun-procedures
         '((:activation-nodes ((:nodes ("arrow_function" "function_declaration" "class_declaration" "method_definition"))))))

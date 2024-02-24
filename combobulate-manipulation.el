@@ -415,19 +415,9 @@ The action can be one of the following:
   "Vanishes the node at point and attempts to preserve its children."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-manipulation-splicing-procedures)
+    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
       (combobulate-splice (combobulate--get-nearest-navigable-node)
                           '(before after around self)))))
-
-(defun combobulate--vanish-node (node)
-  "Vanish NODE, keeping all its children."
-  (if-let* ((q (cdr (assoc (combobulate-node-type node) combobulate-manipulation-splicing-procedures)))
-            (query (list q))
-            (node-extent (combobulate-node-range-extent
-                          (combobulate--query-from-node query node nil nil t)))
-            (text (buffer-substring-no-properties (car node-extent) (cdr node-extent))))
-      (combobulate--replace-node node text)
-    (error "Cannot vanish node `%s'" (combobulate-pretty-print-node node))))
 
 (defun combobulate--swap-node-regions (node-a node-b)
   "Swaps the region substring in NODE-A with NODE-B"
@@ -1375,17 +1365,25 @@ Each member of PARTITIONS must be one of:
     ;; to try and ensnare as much of the node(s) around the beginning
     ;; of point.
     (unless (combobulate-point-at-node-p action-node)
-      (let ((largest-pt-node
-             (car (reverse (save-excursion
-                             (combobulate-move-to-node point-node)
-                             (combobulate-all-nodes-at-point))))))
-        (setq procedure
-              (car-safe (combobulate-procedure-start
-                         point-node
-                         `((:activation-nodes
-                            ((:nodes (,(combobulate-node-type largest-pt-node))
-                                     :position at))
-                            :selector (:choose node :match-siblings t))))))
+      (setq procedure nil)
+      (let ((largest-pt-node)
+            (possible-nodes (reverse (save-excursion
+                                       (combobulate-move-to-node point-node)
+                                       (combobulate-all-nodes-at-point)))))
+        ;; Startin from the largest node that starts at point,
+        ;; repeatedly try to generate a procedure that yields a valid
+        ;; result.
+        (while (and possible-nodes (null procedure))
+          (setq largest-pt-node (pop possible-nodes))
+          (setq procedure
+                (car-safe (combobulate-procedure-start
+                           point-node
+                           `((:activation-nodes
+                              ((:nodes (,(combobulate-node-type largest-pt-node))
+                                       :position at))
+                              :selector (:choose node :match-siblings t)))))))
+        (unless procedure
+          (error "Cannot splice from `%s'" (combobulate-pretty-print-node largest-pt-node)))
         (setq action-node (combobulate-procedure-result-action-node procedure)
               disable-check t)
         (setq matches (combobulate-procedure-result-selected-nodes procedure)
@@ -1482,6 +1480,7 @@ Each member of PARTITIONS must be one of:
                                     ;; we can repeat it after
                                     (setq proffer-action action)
                                     (action-function action))
+                                  :prompt-description "Splice out"
                                   :quiet t))
             (combobulate-refactor (:id 'splice)
               (setf (combobulate-proffer-action-refactor-id proffer-action) 'splice)

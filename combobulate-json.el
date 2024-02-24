@@ -91,13 +91,6 @@
   (setq combobulate-navigation-sibling-skip-prefix t)
   (setq combobulate-navigation-sexp-procedures
         '((:activation-nodes ((:nodes ("pair"))))))
-  (setq combobulate-manipulation-splicing-procedures
-        `((:activation-nodes
-           ((:nodes
-             ("pair")
-             :has-parent ("pair")))
-           :match-query (:query ((_) @discard (object ((_) ","? )+ @keep))
-                                :engine combobulate))))
   (setq combobulate-navigation-defun-procedures '((:activation-nodes ((:nodes ("document"))))))
 
   (setq combobulate-navigation-sibling-procedures

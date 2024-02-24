@@ -246,17 +246,6 @@ line when you press
           ((expression_list (_)+ "," @hl.gold :anchor))))
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
-  (setq combobulate-manipulation-splicing-procedures
-        `((:activation-nodes
-           ((:nodes
-             ((rule "_simple_statement")
-              (rule "_compound_statement")
-              (rule "if_statement")
-              (rule "try_statement")
-              "case_clause")
-             :has-parent t))
-           :match-children (:match-rules t :anonymous t))))
-
   (let ((statement-nodes
          (append (combobulate-production-rules-get "_compound_statement")
                  (combobulate-production-rules-get "_simple_statement")

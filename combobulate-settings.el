@@ -266,32 +266,6 @@ This is typically set by `with-navigation-nodes' by passing a
 
 See `combobulate-forward-sexp-function'.")
 
-(defvar-local combobulate-manipulation-splicing-procedures nil
-  "Node names used for splicing.
-
-See `combobulate-splice-up', et al.")
-
-(defvar-local combobulate-manipulation-indent-after-edit t
-  "When non-nil, Combobulate will indent the edited region.")
-
-(defvar-local combobulate-manipulation-indent-method 'mode
-  "How Combobulate must indent lines.
-
-Use `mode' and `indent-according-to-mode' is used and a
-reasonable attempt by the major mode's indentation engine is made
-to format the manipulated text.
-
-Use `node' and Combobulate will instead indent the text to the
-column of node.")
-
-(defvar-local combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))
-  "Node names used to navigate by logical block.
-
-See `mark-sentence', `forward-sentence' and `backward-sentence'.")
-
-(defvar-local combobulate-navigation-parent-child-procedures nil
-  "Node names used to navigate up or down.")
-
 (defvar-local combobulate-display-ignored-node-types nil
   "Node types that will not appear in the tree display")
 

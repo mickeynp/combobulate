@@ -73,7 +73,6 @@
   (setq combobulate-navigation-sibling-skip-prefix t)
   (setq combobulate-navigation-sexp-procedures
         '((:activation-nodes ((:nodes ("flow_node" "block_node"))))))
-  (setq combobulate-manipulation-splicing-procedures nil)
   (setq combobulate-navigation-defun-procedures
         '((:activation-nodes ((:nodes ("stream" "block_node"))))))
   (setq combobulate-navigation-logical-procedures
