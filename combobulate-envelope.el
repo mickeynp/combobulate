@@ -807,15 +807,17 @@ expansion:
         (combobulate-envelope-refactor-id (combobulate-refactor-setup))
         (selected-point (point)))
     (activate-change-group change-group)
-    (when (use-region-p)
-      (let ((col (current-indentation))
-            (text (substring-no-properties (delete-and-extract-region (point) (mark)))))
-        (push (cons 'region-indented (combobulate-indent-string-first-line text col))
-              combobulate-envelope--registers)
-        (push (cons 'region text) combobulate-envelope--registers))
-      ;; deactivate the mark as the region would otherwise interfere
-      ;; with the expansion.
-      (setq mark-active nil))
+    (if (use-region-p)
+        (progn
+          (indent-region (point) (mark) nil)
+          (let ((col (current-indentation))
+                (text (substring-no-properties (delete-and-extract-region (point) (mark)))))
+            (push (cons 'region-indented (combobulate-indent-string-first-line text col))
+                  combobulate-envelope--registers)
+            (push (cons 'region text) combobulate-envelope--registers)
+            ;; deactivate the mark as the region would otherwise interfere
+            ;; with the expansion.
+            (setq mark-active nil))))
     (cl-assert (eq state 'start))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (condition-case nil
@@ -826,7 +828,7 @@ expansion:
                         ;; "super-block" that expands all user actions such as
                         ;; choice, repeat, prompt and -- for `b*' specifically --
                         ;; also `point'.
-                        `((b* (repeat choice prompt point selected-point) > ,@instructions)))))
+                        `((b* (repeat choice prompt point selected-point) ,@instructions)))))
               ;; The `point' category is special in that it is
               ;; executed only at the `b*' superblock stage. If there
               ;; is more than one `point', the user is asked to
