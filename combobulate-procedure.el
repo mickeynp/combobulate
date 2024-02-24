@@ -522,8 +522,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                 :overwrite t
                 :keep-anonymous t)
                ;; acknowledge that the selector filter was used
-               (combobulate-procedure-result-matched-selection procedure-result) t))
-            (message (combobulate-procedure-debug-print-result procedure-result)))
+               (combobulate-procedure-result-matched-selection procedure-result) t)))
         ;; if there is no selector, then the action node is the selected node
         (setf (combobulate-procedure-result-matched-selection procedure-result) 'n/a))
       ;; do a final bit of clean-up: get all the nodes marked `@match'

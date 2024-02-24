@@ -49,21 +49,32 @@
 
 (defun combobulate-css-setup (_)
   ;; NOTE This is subject to change
+  (setq combobulate-envelope-procedure-shorthand-alist
+        '((rhs . ((:activation-nodes ((:nodes ((rule "arguments")))))))))
   (setq combobulate-manipulation-envelopes
-        '((:description "Envelop in a media query"
-                        :key "@m"
-                        :mark-node t
-                        :nodes ("rule_set")
-                        :name "media-query"
-                        :template ("@media "
-                                   (choice* :rest ("(min-width: " (p 768px "min-width") @ ") {"))
-                                   (choice* :rest ("(max-width: " (p 768px "max-width") @ ") {")) >
-                                   (choice* :rest ("(max-height: " (p 1024px "max-height") @ ") {"))
-                                   (choice* :rest ("(min-height: " (p 1024px "min-height") @ ") {"))
-                                   (choice* :rest ("(orientation: " (choice "portrait") (choice "landscape") @ ") {"))
-                                   (choice* :rest ("(aspect-ratio: " (choice "16/9") (choice "4/3") @ ") {"))
-                                   n> r> >
-                                   n > "}" >))))
+        '((:description
+           "( ... )"
+           :key "("
+           :extra-key "M-("
+           :mark-node t
+           :shorthand rhs
+           :name "wrap-parentheses"
+           :template (> @ "(" r ")"))
+          (:description
+           "Envelop in a media query"
+           :key "@m"
+           :mark-node t
+           :nodes ("rule_set")
+           :name "media-query"
+           :template ("@media "
+                      (choice* :rest ("(min-width: " (p 768px "min-width") @ ") {"))
+                      (choice* :rest ("(max-width: " (p 768px "max-width") @ ") {")) >
+                      (choice* :rest ("(max-height: " (p 1024px "max-height") @ ") {"))
+                      (choice* :rest ("(min-height: " (p 1024px "min-height") @ ") {"))
+                      (choice* :rest ("(orientation: " (choice "portrait") (choice "landscape") @ ") {"))
+                      (choice* :rest ("(aspect-ratio: " (choice "16/9") (choice "4/3") @ ") {"))
+                      n> r> >
+                      n > "}" >))))
 
   (setq combobulate-navigation-context-nodes
         '("class_name" "property_name" "feature_name" "float_name" "integer_value"

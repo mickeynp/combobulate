@@ -294,12 +294,12 @@ line when you press
               (choice* :missing
                        nil
                        :rest
-                       (@@ r> n> < "else:" n> "pass")
+                       ((save-column @@  r>  n> "else:" n> "pass" n))
                        :name "if-block")
               (choice* :missing
                        nil
                        :rest
-                       (@@ "pass" n> "else:" n> r>)
+                       ((save-column @@ "pass" n> "else:" n> r> n))
                        :name "else-block")))
             (:description
              "try ... except ...: ..."

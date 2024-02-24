@@ -826,7 +826,7 @@ expansion:
                         ;; "super-block" that expands all user actions such as
                         ;; choice, repeat, prompt and -- for `b*' specifically --
                         ;; also `point'.
-                        `((b* (repeat choice prompt point selected-point) ,@instructions)))))
+                        `((b* (repeat choice prompt point selected-point) > ,@instructions)))))
               ;; The `point' category is special in that it is
               ;; executed only at the `b*' superblock stage. If there
               ;; is more than one `point', the user is asked to
@@ -898,15 +898,14 @@ expansion:
   "Envelop NODE near point or active region with ENVELOPE.
 
 If REGION is non-nil, envelop the region instead of NODE."
-  (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
+  (map-let (:nodes :mark-node :description :template :point-placement :name :procedures) envelope
     (unless (and name)
       (error "Envelope `%s' is not valid." envelope))
     (if region
         (combobulate-envelop-region template)
-      (with-navigation-nodes (:nodes nodes)
+      (with-navigation-nodes (:nodes nodes :procedures procedures)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
             (save-excursion
-              (combobulate-message "Enveloping" node "in" description)
               ;; If we are asked to mark the node, we do. If not, we still go to
               ;; the beginning
               (if mark-node
@@ -915,7 +914,8 @@ If REGION is non-nil, envelop the region instead of NODE."
                  ;; nothing to do if point is `stay'.
                  ((member point-placement '(start end))
                   (combobulate--goto-node node (eq point-placement 'end)))))
-              (combobulate-envelope-expand-instructions template))
+              (prog1 (combobulate-envelope-expand-instructions template)
+                (combobulate-message "Enveloping" node "in" description)))
           (error "Cannot apply envelope `%s'. Point must be in one of \
 these nodes: `%s'." name nodes))))))
 

@@ -159,21 +159,23 @@ kept."
 
 (defun combobulate-make-proxy (nodes)
   "Factory that creates a facsimile proxy node of NODES."
-  (let ((proxies (mapcar
-                  (lambda (node)
-                    (if (combobulate-node-p node)
-                        (make-combobulate-proxy-node
-                         :start (set-marker (make-marker) (treesit-node-start node))
-                         :end (set-marker (make-marker) (treesit-node-end node))
-                         :text (treesit-node-text node t)
-                         :type (treesit-node-type node)
-                         :named (treesit-node-check node 'named)
-                         :field (treesit-node-field-name node)
-                         :node node
-                         :pp (combobulate-pretty-print-node node)
-                         :extra nil)
-                      node))
-                  (ensure-list nodes))))
+  (let ((proxies
+         (mapcar
+          (pcase-lambda ((or (and (pred consp) `(,mark . ,node)) node))
+            (let ((tgt-node (if (combobulate-node-p node)
+                                (make-combobulate-proxy-node
+                                 :start (set-marker (make-marker) (treesit-node-start node))
+                                 :end (set-marker (make-marker) (treesit-node-end node))
+                                 :text (treesit-node-text node t)
+                                 :type (treesit-node-type node)
+                                 :named (treesit-node-check node 'named)
+                                 :field (treesit-node-field-name node)
+                                 :node node
+                                 :pp (combobulate-pretty-print-node node)
+                                 :extra nil)
+                              node)))
+              (if mark (cons mark tgt-node) tgt-node)))
+          (ensure-list nodes))))
     (if (consp nodes)
         proxies
       (car-safe proxies))))

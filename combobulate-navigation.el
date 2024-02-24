@@ -139,6 +139,13 @@ Uses `point' and `mark' to infer the boundaries."
         (point))
       (point)))))
 
+(defun combobulate-before-point-anonymous-node-p (pt)
+  "Return the node if there is an anonymous node before point."
+  (save-excursion
+    (goto-char pt)
+    (skip-chars-backward combobulate-skip-prefix-regexp)
+    (seq-find #'combobulate-node-anonymous-p (combobulate-all-nodes-at-point t t))))
+
 (defun combobulate-after-point-blank-p (pt)
   "Return t if there is nothing but blank text or a newline after PT."
   (save-excursion
@@ -451,14 +458,14 @@ The returned list is ordered smallest-to-largest by the node's
 extent."
   (seq-filter #'combobulate-navigable-node-p (combobulate-all-nodes-at-point)))
 
-(defun combobulate-all-nodes-at-point (&optional backward)
+(defun combobulate-all-nodes-at-point (&optional backward anonymous)
   "Returns all nodes that start at `point'.
 
 The returned list is ordered smallest-to-largest by the node's
 extent."
   (let ((nodes)
         (sub-node (combobulate-node-descendant-for-range
-                   (combobulate-root-node) (if backward (1- (point)) (point)) (point))))
+                   (combobulate-root-node) (if backward (1- (point)) (point)) (point) anonymous)))
     (while (and sub-node (= (if backward (combobulate-node-end sub-node) (combobulate-node-start sub-node)) (point)))
       (push sub-node nodes)
       (setq sub-node (combobulate-node-parent sub-node)))

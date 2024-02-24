@@ -150,7 +150,9 @@ from `combobulate-manipulation-envelopes') to insert."
                  (exclude ("jsx_element" "jsx_text" "jsx_self_closing_element"
                            "jsx_fragment" "jsx_attribute" (rule "jsx_attribute"))
                           "jsx_expression")
-                 :has-parent (irule "jsx_expression"))))))))
+                 :has-parent (irule "jsx_expression"))))))
+          (general-statement
+           . ((:activation-nodes ((:nodes (rule "statement") :has-parent (irule "statement"))))))))
   (setq combobulate-manipulation-envelopes
         `((:description
            "const [...] = useState(...)"
@@ -224,6 +226,13 @@ from `combobulate-manipulation-envelopes') to insert."
            :template ("<>" n>
                       r>
                       n> "</>"))
+          (:description
+           "if ( ... ) { ... }"
+           :key "i"
+           :shorthand general-statement
+           :name "if-statement"
+           :mark-node t
+           :template ("if " "(" @ ")" " " "{" n>  r> n> "}"))
           (:description
            "{ ... }"
            :key "e"
@@ -409,10 +418,12 @@ from `combobulate-manipulation-envelopes') to insert."
              ("import_specifier")
              :has-parent ("named_imports"))
             (:nodes
-             ((rule "object") (rule "object_type") (rule "import_specifier")
-              (rule "object_pattern") (rule "array") (rule "arguments") (rule "formal_parameters")
-              (rule "expression") (rule "primary_expression") (rule "tuple_type") (rule "union_type")
-              (rule "intersection_type") (rule "type_arguments") (rule "array_pattern") (rule "type_arguments"))
+             (exclude
+              ((rule "object") (rule "object_type") (rule "import_specifier")
+               (rule "object_pattern") (rule "array") (rule "arguments") (rule "formal_parameters")
+               (rule "expression") (rule "primary_expression") "arrow_function" (rule "tuple_type") (rule "union_type")
+               (rule "intersection_type") (rule "type_arguments") (rule "array_pattern") (rule "type_arguments"))
+              "arrow_function")
              :has-parent
              ("object" "object_type" "import_specifier"
               "object_pattern" "array" "arguments" "formal_parameters"
