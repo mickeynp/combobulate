@@ -279,16 +279,16 @@ line when you press
              :nodes ,statement-nodes
              :name "nest-if-else"
              :template
-             ("if " "True" ":" n>
+             ("if " @ (p True "Bool") ":" n>
               (choice* :missing
                        nil
                        :rest
-                       ((save-column @@  r>  n> "else:" n> "pass" n))
+                       ((save-column r> n) < "else:" (save-column n> "pass" n))
                        :name "if-block")
               (choice* :missing
                        nil
                        :rest
-                       ((save-column @@ "pass" n> "else:" n> r> n))
+                       (@ (save-column "pass" n> "else:" n> r> n))
                        :name "else-block")))
             (:description
              "try ... except ...: ..."
