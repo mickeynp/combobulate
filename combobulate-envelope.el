@@ -102,7 +102,7 @@ If the register does not exist, return DEFAULT or nil."
                 (overlay-put ov 'face 'combobulate-refactor-field-face)
               (overlay-put ov 'face 'combobulate-refactor-inactive-field-face))
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
-          (combobulate--refactor-get-all-overlays))))
+          (combobulate--refactor-get-overlays))))
 
 (cl-defstruct combobulate-envelope-context
   "The context of a combobulate envelope during its expansion."

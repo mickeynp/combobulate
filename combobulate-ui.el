@@ -122,15 +122,14 @@
     ("t" "Edit …" combobulate-edit)
     ("c" "Clone node DWIM" combobulate-clone-node-dwim)
     ("C-M-t" "Transpose sexp" combobulate-transpose-sexps)
-    ("e" "Envelop …" combobulate-envelop)]
-   ["Experimental"
-    ("M-<up>" "Splice up and out" combobulate-splice-up :transient t)
-    ("M-<down>" "Splice down and out" combobulate-splice-down :transient t)
-    ("M-<left>" "Yeet" combobulate-yeet-forward :transient t)
-    ("M-<right>" "Yoink" combobulate-yoink-forward :transient t)
+    ("e" "Envelop …" combobulate-envelop)
     ("M-P" "Drag node up" combobulate-drag-up :transient t)
-    ("M-N" "Drag node down" combobulate-drag-down :transient t)
-    ("v" "Vanish parent" combobulate-vanish-node)]])
+    ("M-N" "Drag node down" combobulate-drag-down :transient t)]
+   ["Splicing"
+    ("M-<up>" "Elevate before and out" combobulate-splice-up :transient t)
+    ("M-<down>" "Elevate after and out" combobulate-splice-down :transient t)
+    ("M-<left>" "Elevate self and out" combobulate-splice-self :transient t)
+    ("M-<right>" "Elevate all and out" combobulate-splice-parent)]])
 
 (provide 'combobulate-ui)
 ;;; combobulate-ui.el ends here

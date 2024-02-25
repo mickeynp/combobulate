@@ -78,14 +78,18 @@
                                     (point))))
     (goto-char start-marker)))
 
-(defun combobulate--refactor-get-all-overlays ()
+(defun combobulate--refactor-get-overlays (&optional session-id)
   (seq-filter
    (lambda (ov)
-     (overlay-get ov 'combobulate-refactor-actions))
+     (and (overlay-get ov 'combobulate-refactor-actions)
+          (or (not session-id)
+              (equal (overlay-get ov 'combobulate-refactor-session-id)
+                     session-id))))
    (car (overlay-lists))))
 
-(defun combobulate--refactor-clear-overlays (overlays)
-  (mapc #'delete-overlay overlays))
+(defun combobulate--refactor-clear-overlays (session-id)
+  "Clear all `combobulate-refactor' overlays with SESSION-ID."
+  (mapc #'delete-overlay (combobulate--refactor-get-overlays session-id)))
 
 ;; (defun combobulate--refactor-divide-overlays (keep-overlays)
 ;;   (let ((markers))
@@ -130,6 +134,17 @@
       (push (cons id nil) combobulate-refactor--active-sessions))
     id))
 
+(define-error 'combobulate-refactor-error "Combobulate Refactor Error" 'error)
+(define-error 'combobulate-refactor-uncommitted-changes "Combobulate Refactor: Uncommitted Changes" 'combobulate-refactor-error)
+
+(defun combobulate-refactor-delete-session (id)
+  "Delete a `combobulate-refactor' session with ID"
+  (let ((session (combobulate-refactor--get-active-session id)))
+    (when session
+      (combobulate--refactor-clear-overlays id)
+      (setq combobulate-refactor--active-sessions
+            (assq-delete-all id combobulate-refactor--active-sessions)))))
+
 (cl-defmacro combobulate-refactor ((&key (id nil)) &rest body)
   (declare (indent defun) (debug (sexp body)))
   (let ((--session (gensym))
@@ -138,6 +153,7 @@
     `(let ((,--pre-existing-session (combobulate-refactor--get-active-session ,id))
            (,--session (combobulate-refactor-setup ,id)))
        (cl-flet* ((add-marker (ov)
+                    (overlay-put ov 'combobulate-refactor-session-id ,--session)
                     (push ov (alist-get ,--session combobulate-refactor--active-sessions))
                     ov)
                   (mark-range-move (beg end position)
@@ -178,8 +194,7 @@
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
                   (rollback ()
-                    (mapc (lambda (ov) (delete-overlay ov)) (alist-get ,--session combobulate-refactor--active-sessions))
-                    (setq combobulate-refactor--active-sessions (assq-delete-all ,--session combobulate-refactor--active-sessions)))
+                    (combobulate-refactor-delete-session ,--session))
                   (commit ()
                     (setq combobulate-refactor--copied-values nil)
                     (mapc (lambda (ov) (combobulate--refactor-commit ov t))
@@ -197,10 +212,10 @@
                       ,@body)
                (when (and (alist-get ,--session combobulate-refactor--active-sessions)
                           (not ,--pre-existing-session))
-                 (error "Uncommitted changes in `%s': %s"
-                        ,--session
-                        (combobulate--refactor-clear-overlays
-                         (combobulate--refactor-get-all-overlays)))))
+                 (prog1
+                     (signal 'combobulate-refactor-uncommitted-changes
+                             (format "Uncommitted changes in session `%s'" ,--session))
+                   (combobulate-refactor-delete-session ,--session))))
            (t (rollback) (signal (car err) (cdr err))))))))
 
 
@@ -411,7 +426,7 @@ The action can be one of the following:
      action
      parent-node)))
 
-(defun combobulate-vanish-node (&optional arg)
+(defun combobulate-splice-parent (&optional arg)
   "Vanishes the node at point and attempts to preserve its children."
   (interactive "^p")
   (with-argument-repetition arg
@@ -1321,6 +1336,12 @@ defun is.  Repeat calls expands the scope."
     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self after around)))))
 
+(defun combobulate-splice-self (&optional arg)
+  (interactive "^p")
+  (with-argument-repetition arg
+    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+      (combobulate-splice (combobulate--get-nearest-navigable-node) '(self)))))
+
 (defun combobulate-splice-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
@@ -1348,12 +1369,12 @@ Each member of PARTITIONS must be one of:
          ;; here we'd want to keep them also.
          (combobulate-procedure-discard-rules)
          ;; Begin the search at the point node.
-         (procedure (car-safe (combobulate-procedure-start point-node)))
+         (procedure)
          (legal-splices)
-         (action-node (combobulate-procedure-result-action-node procedure))
+         (action-node)
          (pt-type)
          (disable-check nil)
-         (matches (combobulate-procedure-result-selected-nodes procedure))
+         (matches)
          (source-node)
          (all-parents) (valid-parents))
     ;; The action node is one of the activation nodes that yielded
@@ -1364,13 +1385,18 @@ Each member of PARTITIONS must be one of:
     ;; *not* at the beginning, we instead create an ad hoc procedure
     ;; to try and ensnare as much of the node(s) around the beginning
     ;; of point.
-    (unless (combobulate-point-at-node-p action-node)
+    (setq procedure (car-safe (combobulate-procedure-start point-node)))
+    (when procedure
+      (setq action-node (combobulate-procedure-result-action-node procedure)
+            matches (combobulate-procedure-result-selected-nodes procedure)))
+    (when (or (not procedure)
+              (not (combobulate-point-at-node-p action-node)))
       (setq procedure nil)
       (let ((largest-pt-node)
             (possible-nodes (reverse (save-excursion
                                        (combobulate-move-to-node point-node)
                                        (combobulate-all-nodes-at-point)))))
-        ;; Startin from the largest node that starts at point,
+        ;; Starting from the largest node that starts at point,
         ;; repeatedly try to generate a procedure that yields a valid
         ;; result.
         (while (and possible-nodes (null procedure))
@@ -1412,7 +1438,7 @@ Each member of PARTITIONS must be one of:
                             node))
                      matches))))
     (unless (and matches valid-parents)
-      (error "Cannot splice from `%s'." point-node))
+      (error "Cannot splice from `%s'" point-node))
     (seq-let [start &rest end]
         ;; Get the node range extent of the filtered, partitioned
         ;; nodes. This does mean that we cannot pick things that are
@@ -1423,15 +1449,18 @@ Each member of PARTITIONS must be one of:
             (combobulate-indent-string-first-line
              (combobulate-node-text source-node)
              (current-column)))
-      (setq legal-splices (seq-filter
-                           (lambda (n) (or disable-check
-                                      (and (combobulate-node-parent n)
-                                           (member (combobulate-node-parent n)
-                                                   valid-parents)
-                                           (not (equal (combobulate-node-parent n)
-                                                       (car valid-parents)))
-                                           (combobulate-node-before-node-p n source-node))))
-                           all-parents))
+      (setq legal-splices
+            (seq-filter
+             ;; Validation checks are disengaged if we're free-form
+             ;; searching because no applicable sibling procedure was
+             ;; found.
+             (lambda (n) (or disable-check
+                        (and (combobulate-node-parent n)
+                             (or (member (combobulate-node-parent n) valid-parents)
+                                 (member n valid-parents))
+                             (not (equal (combobulate-node-parent n) (car valid-parents)))
+                             (combobulate-node-before-node-p n source-node))))
+             all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action
                     (combobulate-refactor (:id refactor-id)
@@ -1448,7 +1477,7 @@ Each member of PARTITIONS must be one of:
                         (mark-range-highlighted start end))
                       ;; Test if there's an error node as a result of
                       ;; our changes.
-                      (when-let (err (combobulate-get-error-nodes))
+                      (when-let (err (seq-filter #'combobulate-point-in-node-range-p (combobulate-get-error-nodes)))
                         (setf (combobulate-proffer-action-display-indicator action)
                               (combobulate-display-indicator
                                index (length proxy-nodes)
@@ -1566,17 +1595,18 @@ Each member of PARTITIONS must be one of:
              (point)))
           (commit))))))
 
-(defun combobulate-yoink-forward (arg)
-  (interactive "^p")
-  (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-      (combobulate--yoink (combobulate--get-nearest-navigable-node)))))
+;;; not ready for prime time
+;; (defun combobulate-yoink-forward (arg)
+;;   (interactive "^p")
+;;   (with-argument-repetition arg
+;;     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+;;       (combobulate--yoink (combobulate--get-nearest-navigable-node)))))
 
-(defun combobulate-yeet-forward (arg)
-  (interactive "^p")
-  (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-      (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
+;; (defun combobulate-yeet-forward (arg)
+;;   (interactive "^p")
+;;   (with-argument-repetition arg
+;;     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+;;       (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
 
 (defun combobulate-delete-whitespace ()
   "Maybe deletes excess whitespace around point.
@@ -1624,23 +1654,6 @@ moved to the modified node."
                   node-or-pos)
                  (t (error "Unknown node-or-pos `%s'" node-or-pos)))))
 
-(defun combobulate-indent-node (node column &optional relative)
-  "Indent NODE to COLUMN.
-
-This function rigidly indents NODE by COLUMN while
-preserving the relative indentation of each line.
-
-If RELATIVE is non-nil, then COLUMN adds or subtracts from the
-baseline indentation (as calculated by
-`combobulate-baseline-indentation') instead of absolutely
-indenting to that column."
-  (let ((baseline-column (combobulate-baseline-indentation node)))
-    (combobulate--mark-node node t t)
-    (combobulate-indent-region (point) (mark)
-                               baseline-column
-                               (if relative column
-                                 (- column baseline-column)))))
-
 (defun combobulate-indent-region (start end column &optional baseline-column relative)
   "Indent the region between START and END to COLUMN.
 
@@ -1651,20 +1664,6 @@ beginning of the line."
          (or baseline-column
              (combobulate-baseline-indentation start))))
     (indent-rigidly start end (if relative column (- column baseline-column)))))
-
-(defun combobulate-take-query-nodes-between (nodes start-label stop-label)
-  "Keeps all NODES starting from START-LABEL and ending at STOP-LABEL."
-  (let ((filtered) (collect))
-    (nreverse (progn
-                (catch 'done
-                  (pcase-dolist (`(,label . ,node) nodes)
-                    (when (and (eq stop-label label) collect)
-                      (throw 'done filtered))
-                    (when (eq start-label label)
-                      (setq collect t))
-                    (when collect
-                      (push (cons label node) filtered))))
-                filtered))))
 
 (defun combobulate--refactor-commit (ov &optional destroy-overlay)
   (if-let ((actions (overlay-get ov 'combobulate-refactor-actions)))

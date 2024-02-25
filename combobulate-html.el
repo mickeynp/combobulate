@@ -223,6 +223,7 @@
           (:activation-nodes
            ((:nodes ("attribute") :position in))
            :selector (:choose node :match-children t))))
+  (setq combobulate-display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag"))
   (setq combobulate-navigation-sibling-procedures
         '((:activation-nodes
            ((:nodes

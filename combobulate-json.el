@@ -68,7 +68,7 @@
         '(;; highlight pseudo "comments" that are often designated "//"
           ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)))
   (setq combobulate-manipulation-edit-procedures
-        `(;; edit the key field of a pair
+        `(;; edit the value field of a pair
           (:activation-nodes
            ((:nodes
              ((rule "pair"))
@@ -78,7 +78,7 @@
                       parent
                       :match-query
                       (:query (object (pair (_) (_) @match)+) :engine combobulate)))
-          ;; edit the value field of a pair
+          ;; edit the key field of a pair
           (:activation-nodes
            ((:nodes
              ((rule "pair"))
@@ -101,10 +101,19 @@
              :position at
              :has-parent ((rule "array"))))
            :selector (:match-children t))
-          ;; pair-wise navigation
+          ;; pair-wise navigation (key side)
           (:activation-nodes
            ((:nodes ("pair") :position at :has-parent ("object")))
-           :selector (:match-children t))))
+           :selector (:match-children t))
+          (:activation-nodes
+           ((:nodes
+             ((rule "pair"))
+             :has-fields "value"
+             :has-ancestor ((irule "pair"))))
+           :selector (:choose
+                      parent
+                      :match-query
+                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
 
   (setq combobulate-navigation-parent-child-procedures
         '(;; general navigation
