@@ -64,6 +64,34 @@
 	       (combobulate-test-assert-at-marker 4)))
 
 
+(ert-deftest combobulate-test-html-combobulate-navigate-down--down-attributes-3 ()
+ "Test `combobulate' with `fixtures/down/down-attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/down/down-attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest combobulate-test-html-combobulate-navigate-down--elements-3 ()
+ "Test `combobulate' with `fixtures/down/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/down/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-python-combobulate-navigate-down--function-5 ()
  "Test `combobulate' with `fixtures/down/function.py' in `python-ts-mode' mode."
 	     (combobulate-test

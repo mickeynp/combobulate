@@ -4,6 +4,20 @@
 
 (require 'combobulate-test-prelude)
 
+(ert-deftest combobulate-test-html-combobulate-navigate-previous--attributes-1 ()
+ "Test `combobulate' with `fixtures/sibling/attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-navigate-previous--component-jsx-1 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -181,6 +195,32 @@
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-html-combobulate-navigate-previous--elements-1 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-previous)
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-previous)))
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))

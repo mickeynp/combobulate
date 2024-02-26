@@ -379,16 +379,6 @@ without explicitly setting `:default-mark'"))
 
 (defun combobulate-procedure-debug-print-result (procedure-result)
   "Print PROCEDURE-RESULT in a human-readable format."
-  ;; pretty-print the cldefstruct
-  ;; (cl-defstruct combobulate-procedure-result
-  ;;   "The result of a procedure."
-  ;;   activation-node
-  ;;   action-node
-  ;;   parent-node
-  ;;   selected-nodes
-  ;;   matched-nodes
-  ;;   (matched-activation nil)
-  ;;   (matched-selection nil))
   (pcase procedure-result
     ((cl-struct combobulate-procedure-result
                 (activation-node activation-node)
@@ -546,9 +536,9 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
     (if rules
         ;; some node types are supertypes, meaning they exist outside
         ;; the actual parse tree TS can generate. However, the rules
-        ;; for these supertypes are defined in the same way as for the
-        ;; actual parse tree. So, we need to expand the supertypes
-        ;; here.
+        ;; for these supertypes are defined and used in the parser and
+        ;; exported in the node rules also. If we encounter a
+        ;; supertype, we expand it inline.
         (mapcan
          (lambda (n)
            ;; check if n is a supertype; if it is, expand it.

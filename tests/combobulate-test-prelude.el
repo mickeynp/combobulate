@@ -243,21 +243,22 @@ function."
                   (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
-                    (let ((picked-node (nth current-choice nodes))
+                    (let ((cg (prepare-change-group))
+                          (picked-node (nth current-choice nodes))
                           (stubbed-refactor-id (combobulate-refactor-setup)))
+                      (activate-change-group cg)
                       (setq choice-node picked-node)
-                      ;; Not necessary??
-                      ;; (combobulate-refactor (:id stubbed-refactor-id)
-                      ;;   ;; signature: (index current-node proxy-nodes refactor-id)
-                      ;;   (funcall (or ,replacement-action-fn action-fn)
-                      ;;            current-choice
-                      ;;            choice-node
-                      ;;            nodes
-                      ;;            stubbed-refactor-id)
-                      ;;   (if (eq accept-action 'rollback)
-                      ;;       (rollback)
-                      ;;     (commit)))
-                      ))
+                      (combobulate-refactor (:id stubbed-refactor-id)
+                        (funcall (or ,replacement-action-fn action-fn)
+                                 (combobulate-proffer-action-create
+                                  :index current-choice
+                                  :current-node (combobulate-make-proxy picked-node)
+                                  ;; :proxy-nodes (combobulate-make-proxy nodes)
+                                  :refactor-id stubbed-refactor-id))
+                        (if (eq accept-action 'rollback)
+                            (rollback)
+                          (commit)))
+                      (cancel-change-group cg)))
                   choice-node)))
        ,@body)))
 
@@ -314,8 +315,8 @@ of updating the prop line."
                                              files)))
         (delete-other-windows)
         (mapc (lambda (buf) (display-buffer buf `(display-buffer-in-direction
-                                                  . ((direction . right)
-                                                     (window-width . 0.2)))))
+                                             . ((direction . right)
+                                                (window-width . 0.2)))))
               (mapcar #'find-file-noselect
                       (alist-get (completing-read "Pick command " (seq-uniq (mapcar #'car grouped-cmd-files) #'string=))
                                  grouped-cmd-files nil nil #'string=)))

@@ -4,6 +4,20 @@
 
 (require 'combobulate-test-prelude)
 
+(ert-deftest combobulate-test-html-combobulate-navigate-next--attributes-3 ()
+ "Test `combobulate' with `fixtures/sibling/attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-navigate-next--component-jsx-5 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -184,6 +198,32 @@
 	       (combobulate-test-go-to-marker 8)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 9)))
+
+
+(ert-deftest combobulate-test-html-combobulate-navigate-next--elements-7 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-navigate-next)
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))
+	       (should-error
+		(progn
+		  (combobulate-navigate-next)))))
 
 
 (ert-deftest combobulate-test-python-combobulate-navigate-next--module-statements-8 ()

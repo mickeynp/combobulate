@@ -232,18 +232,17 @@
   ;; comments. This is not a problem in HTML where they have
   ;; beginnings and ends.
   (setq combobulate-procedure-discard-rules nil)
+  (setq combobulate-display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag" "tag_name"))
   (setq combobulate-navigation-sibling-procedures
         '((:activation-nodes
            ((:nodes
-             ((rule "fragment") "comment")
-             :has-parent ((rule "fragment") "fragment")))
-           :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))
+             ("attribute")))
+           :selector (:choose node :match-siblings (:match-rules ("attribute"))))
           (:activation-nodes
            ((:nodes
-             ("attribute")
-             :has-parent ("start_tag" "self_closing_tag")))
-           :selector (:match-children
-                      (:match-rules ("attribute"))))))
+             ((rule "fragment") "comment")
+             :has-parent ((rule "fragment") "fragment" "start_tag" "self_closing_tag")))
+           :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))))
   (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
 (provide 'combobulate-html)

@@ -4,6 +4,41 @@
 
 (require 'combobulate-test-prelude)
 
+(ert-deftest combobulate-test-html-combobulate-drag-down--attributes-1 ()
+ "Test `combobulate' with `fixtures/sibling/attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/attributes.html[@1~after].html")))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--attributes-2 ()
+ "Test `combobulate' with `fixtures/sibling/attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/attributes.html[@2~after].html")))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--attributes-3 ()
+ "Test `combobulate' with `fixtures/sibling/attributes.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/attributes.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/attributes.html[@3~after].html")))))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-drag-down--component-jsx-1 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -506,6 +541,97 @@
 		  (combobulate-test-go-to-marker 9)
 		  (combobulate-drag-down)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/def-parameters.py[@9~after].py")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-1 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@1~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-2 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 2)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@2~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-3 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@3~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-4 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 4)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@4~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-5 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 5)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@5~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-6 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 6)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@6~after].html")))))
+
+
+(ert-deftest combobulate-test-html-combobulate-drag-down--elements-7 ()
+ "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
+	     (combobulate-test
+		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
+	       :tags
+	       '(combobulate html html-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 7)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@7~after].html")))))
 
 
 (ert-deftest combobulate-test-python-combobulate-drag-down--module-statements-1 ()

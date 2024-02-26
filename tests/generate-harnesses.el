@@ -191,6 +191,23 @@
     :action-body '((combobulate-drag-up))
     :per-marker t
     :reverse t)
+   ;; Splicing
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/splice/*"
+    :collection-name "combobulate-splice-up"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0 0 0))
+                     (combobulate-splice-up)))
+    :per-marker t
+    :reverse nil)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/splice/*"
+    :collection-name "combobulate-splice-self"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0 0 0))
+                     (combobulate-splice-self)))
+    :per-marker t
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
@@ -207,20 +224,6 @@
     :per-marker nil
     :reverse nil)
    ;; Parent navigation
-   ;; (combobulate-test-suite
-   ;;  :harness-factory #'combobulate-test-harness-marker-loop
-   ;;  :fixture-files "fixtures/up-down/*"
-   ;;  :collection-name "combobulate-navigate-up"
-   ;;  :action-body '((combobulate-navigate-up))
-   ;;  :per-marker nil
-   ;;  :harness-factory-args)
-   ;; (combobulate-test-suite
-   ;;  :harness-factory #'combobulate-test-harness-marker-loop
-   ;;  :fixture-files "fixtures/down/*"
-   ;;  :collection-name "combobulate-navigate-up-list-maybe"
-   ;;  :action-body '((combobulate-navigate-up-list-maybe))
-   ;;  :per-marker nil
-   ;;  :harness-factory-args)
    ;; child navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
