@@ -128,12 +128,17 @@
     (self-insert-command 1 ?=)))
 
 (defun combobulate-html-pretty-print (node default-name)
-  (if (and node (member (combobulate-node-type node) '("element" "script_element" "style_element")))
-      (format "<%s>" (thread-first node
-                                   (combobulate-node-child 0)
-                                   (combobulate-node-child 0)
-                                   (combobulate-node-text)))
-    default-name))
+  (cond
+   ((and node (member (combobulate-node-type node) '("element" "script_element" "style_element")))
+    (format "<%s>" (thread-first node
+                                 (combobulate-node-child 0)
+                                 (combobulate-node-child 0)
+                                 (combobulate-node-text))))
+   ((and node (equal (combobulate-node-type node) "text"))
+    (format "`%s'" (combobulate-node-text node)))
+   ((and node (equal (combobulate-node-type node) "comment"))
+    (combobulate-node-text node))
+   (t default-name)))
 
 (defun combobulate-html-setup (_)
   (setq combobulate-navigation-sexp-procedures
@@ -223,14 +228,16 @@
           (:activation-nodes
            ((:nodes ("attribute") :position in))
            :selector (:choose node :match-children t))))
-  (setq combobulate-display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag"))
+  ;; Ordinarily, we discard comments as they tend to be line
+  ;; comments. This is not a problem in HTML where they have
+  ;; beginnings and ends.
+  (setq combobulate-procedure-discard-rules nil)
   (setq combobulate-navigation-sibling-procedures
         '((:activation-nodes
            ((:nodes
-             ("element" "script_element" "style_element")
-             :has-parent ("element" "script_element" "style_element")))
-           :selector (:match-children
-                      (:match-rules ("element" "script_element" "style_element"))))
+             ((rule "fragment") "comment")
+             :has-parent ((rule "fragment") "fragment")))
+           :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))
           (:activation-nodes
            ((:nodes
              ("attribute")
