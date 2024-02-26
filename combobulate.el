@@ -110,11 +110,7 @@
 
 (make-variable-buffer-local 'forward-sexp-function)
 
-(defun combobulate-get-rule-symbol (parser-lang)
-  (symbol-value (intern (format "combobulate-rules-%s" parser-lang))))
 
-(defun combobulate-get-inverted-rule-symbol (parser-lang)
-  (symbol-value (intern (format "combobulate-rules-%s-inverted" parser-lang))))
 
 (defun combobulate--setup-envelopes (envelopes)
   "Prepare ENVELOPES for interactive use.

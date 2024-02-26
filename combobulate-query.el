@@ -572,10 +572,12 @@ Argument PARSER sets the buffer to the parser instance to use for fontifying."
             (combobulate-proffer-choices
              (cons point-node (combobulate-get-parents point-node))
              #'combobulate-proffer-action-highlighter
-             :prompt-description "Pick a node hierarchy to copy"
-             :use-proxy-nodes nil)))
+             :prompt-description "Pick a node hierarchy to copy")))
       (unless parent-node
         (user-error "No node selected"))
+      ;; check if we have a `node' slot in the parent
+      ;; node. `combobulate-proffer-choices' only returns proxy nodes.
+      (setq parent-node (combobulate-proxy-node-node parent-node))
       (combobulate-query-builder-insert
        (combobulate-query-builder-to-string
         (combobulate-build-nested-query
@@ -878,6 +880,7 @@ buffer."
     (define-key map (kbd "C-c M-p") #'combobulate-query-ring-previous-query)
     (define-key map (kbd "C-c M-n") #'combobulate-query-ring-next-query)
     (define-key map (kbd "C-c C-s") #'combobulate-query-ring-save-query)
+    (define-key map (kbd "M-<up>") #'raise-sexp)
     map)
   "Keymap for `combobulate-query-mode'.")
 
@@ -943,11 +946,11 @@ To use, call \\[combobulate-query-builder]."
   :abbrev-table scheme-mode-abbrev-table
   (let ((parser-lang-name (combobulate-parser-language combobulate-query-builder-parser)))
     (setq combobulate-query-builder-rules (combobulate-get-rule-symbol parser-lang-name))
-    (setq combobulate-query-builder-rule-names (seq-uniq (flatten-list (combobulate-get-inverted-rule-symbol parser-lang-name))))
+    (setq combobulate-query-builder-rule-names (combobulate-production-rules-get-types parser-lang-name))
     (setq combobulate-query-builder-field-names
           (mapcar #'combobulate-query-builder-prop-name-to-field-name
                   (seq-remove (lambda (prop) (equal prop :*unnamed*))
-                              (seq-uniq (mapcan #'map-keys (mapcar #'cadr (combobulate-get-rule-symbol parser-lang-name)))))))
+                              (seq-uniq (mapcan #'map-keys (mapcar #'cadr (combobulate-production-rules-get-rules parser-lang-name)))))))
     (setq-local comment-start ";"
                 comment-end "")
     (setq-local completion-at-point-functions '(combobulate-query-builder-completion-at-point-function))
@@ -1162,7 +1165,7 @@ highlight Combobulate highlighters.")
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)
