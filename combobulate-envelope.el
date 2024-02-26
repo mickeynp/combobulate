@@ -916,6 +916,8 @@ If REGION is non-nil, envelop the region instead of NODE."
                  ;; nothing to do if point is `stay'.
                  ((member point-placement '(start end))
                   (combobulate--goto-node node (eq point-placement 'end)))))
+              ;; triggering an envelope will invalidate `node'.
+              (setq node (combobulate-make-proxy node))
               (prog1 (combobulate-envelope-expand-instructions template)
                 (combobulate-message "Enveloping" node "in" description)))
           (error "Cannot apply envelope `%s'. Point must be in one of \
