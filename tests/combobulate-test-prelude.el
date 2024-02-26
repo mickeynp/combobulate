@@ -104,8 +104,12 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
 
 (defun combobulate-test-assert-at-marker (number)
   (if-let (ov (combobulate--test-get-overlay-by-number number))
-      (progn (should (= (overlay-get ov 'combobulate-test-number) number))
-             (should (eq (overlay-start ov) (point))))
+      (let ((ov-number (overlay-get ov 'combobulate-test-number)))
+        (progn
+          (unless (= ov-number number)
+            (ert-fail (list "Expected marker with number `%d' but got `%d'" number ov-number)))
+          (unless (eq (overlay-start ov) (point))
+            (ert-fail (list "Overlay `%d' is not at point `%s'" number (point))))))
     (error "No overlay found for number %s" number)))
 
 (defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
@@ -239,21 +243,22 @@ function."
                   (setq current-choice (pop remaining-choices))
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
-                    (let ((picked-node (nth current-choice nodes))
+                    (let ((cg (prepare-change-group))
+                          (picked-node (nth current-choice nodes))
                           (stubbed-refactor-id (combobulate-refactor-setup)))
+                      (activate-change-group cg)
                       (setq choice-node picked-node)
-                      ;; Not necessary??
-                      ;; (combobulate-refactor (:id stubbed-refactor-id)
-                      ;;   ;; signature: (index current-node proxy-nodes refactor-id)
-                      ;;   (funcall (or ,replacement-action-fn action-fn)
-                      ;;            current-choice
-                      ;;            choice-node
-                      ;;            nodes
-                      ;;            stubbed-refactor-id)
-                      ;;   (if (eq accept-action 'rollback)
-                      ;;       (rollback)
-                      ;;     (commit)))
-                      ))
+                      (combobulate-refactor (:id stubbed-refactor-id)
+                        (funcall (or ,replacement-action-fn action-fn)
+                                 (combobulate-proffer-action-create
+                                  :index current-choice
+                                  :current-node (combobulate-make-proxy picked-node)
+                                  ;; :proxy-nodes (combobulate-make-proxy nodes)
+                                  :refactor-id stubbed-refactor-id))
+                        (if (eq accept-action 'rollback)
+                            (rollback)
+                          (commit)))
+                      (cancel-change-group cg)))
                   choice-node)))
        ,@body)))
 

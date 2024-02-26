@@ -47,7 +47,7 @@
            :name "block"
            :template
            (@ ":" n
-              y>))))
+              >))))
   (setq combobulate-navigation-context-nodes
         '("alias_name" "anchor_name" "block_sequence_item" "plain_scalar"
           "double_quote_scalar" "string_scalar" "single_quote_scalar"))
@@ -59,37 +59,44 @@
 
   (setq combobulate-manipulation-edit-procedures
         '((:activation-nodes
-           ((:node "block_sequence" :position at-or-in))
-           :match-query (block_sequence (block_sequence_item (flow_node)  @match)+))
+           ((:nodes ("block_sequence")))
+           :selector (:match-query
+                      (:discard-rules
+                       ("comment")
+                       :query (block_sequence (block_sequence_item (flow_node)  @match)+))))
           (:activation-nodes
-           ((:node "block_mapping" :find-parent "block_node" :position at-or-in))
-           :match-query (block_node (block_mapping (_)+ @match))
-           :remove-types ("comment"))))
+           ((:node ("block_mapping") :has-parent ("block_node")))
+           :selector (:match-query
+                      (:query
+                       (block_node (block_mapping (_)+ @match))
+                       :discard-rules ("comment"))))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-nodes '("flow_node" "block_node"))
-  (setq combobulate-manipulation-splicing-procedures nil)
-  (setq combobulate-navigation-defun-nodes '("stream" "block_node"))
-  (setq combobulate-navigation-logical-nodes '("stream" "flow_node" "block_node"
-                                               "block_mapping_pair"))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("flow_node" "block_node"))))))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes ("stream" "block_node"))))))
+  (setq combobulate-navigation-logical-procedures
+        '((:activation-nodes ((:nodes ("stream" "flow_node" "block_node" "block_mapping_pair"))))))
   (setq combobulate-navigation-sibling-procedures
         `((:activation-nodes
-           ((:node
-             ,(append '("comment"))
-             :position at-or-in
-             :find-immediate-parent ("block_mapping" "block_sequence" "document" "stream")))
-           :match-children t)
+           ((:nodes
+             ("comment")
+             :has-parent ("block_mapping" "block_sequence" "document" "stream")))
+           :selector (:match-children t))
           (:activation-nodes
-           ((:node
-             ,(append '("block_mapping_pair" "block_sequence_item"))
-             :position at-or-in
-             :find-immediate-parent ("block_mapping" "block_sequence")))
-           :remove-types ("comment")
-           :match-children t)))
-  (setq combobulate-navigation-parent-child-nodes
-        '("block_sequence" "block_sequence_item" "block_node" "block_mapping_pair"))
+           ((:nodes
+             ("block_mapping_pair" "block_sequence_item")
+             :has-parent ("block_mapping" "block_sequence")))
+           :filter ("comment")
+           :selector (:match-children t))))
+  (setq combobulate-navigation-parent-child-procedures
+        `(;; basic down navigation between pairs and sequences
+          (:activation-nodes
+           ((:nodes ("block_mapping_pair" "block_sequence_item")))
+           :selector (:choose node :match-children t))))
 
-  (setq combobulate-navigation-default-nodes
-        '("block_sequence" "block_node" "block_mapping_pair")))
+  (setq combobulate-navigation-default-procedures
+        '((:activation-nodes ((:nodes ("block_sequence" "block_node" "block_mapping_pair")))))))
 
 (provide 'combobulate-yaml)
 ;;; combobulate-yaml.el ends here

@@ -102,7 +102,7 @@ If the register does not exist, return DEFAULT or nil."
                 (overlay-put ov 'face 'combobulate-refactor-field-face)
               (overlay-put ov 'face 'combobulate-refactor-inactive-field-face))
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
-          (combobulate--refactor-get-all-overlays))))
+          (combobulate--refactor-get-overlays))))
 
 (cl-defstruct combobulate-envelope-context
   "The context of a combobulate envelope during its expansion."
@@ -143,7 +143,7 @@ If the register does not exist, return DEFAULT or nil."
             ;;
             ;; The special block `b*' will also execute `point' instructions.
             ((or (and `(b . ,rest) (let categories '(repeat choice prompt)))
-                 (and `(b* . ,rest) (let categories '(repeat choice prompt point selected-point))))
+                 (and `(b* ,categories . ,rest)))
              (expand-block rest categories))
             ;; `(choice instructions)'
             ;; `(choice* :name NAME :missing MISSING :rest INSTRUCTIONS)'
@@ -298,17 +298,8 @@ If the register does not exist, return DEFAULT or nil."
               ;; works well with the likes of Python where crass,
               ;; region-based indentation will never work.
               ((and (not combobulate-envelope-indent-region-function) indent)
-               ;; ordinarily, we do not need to worry about changing the
-               ;; start/end point markers, as inserting text will
-               ;; advance the point markers correctly. However, in
-               ;; python and suchlike, we cannot 'just' indent the
-               ;; region register; instead, we must carefully fix its
-               ;; indentation so it matches correctly: this must happen
-               ;; from the beginning of the line. Therefore, we change
-               ;; the start point marker to match.
                (let ((offset (current-indentation)))
                  (delete-horizontal-space)
-                 ;; (forward-line 0)
                  (setf start (point))
                  ;; clear whitespace from the start of the line
                  (let ((before-pt (point)))
@@ -396,35 +387,45 @@ If the register does not exist, return DEFAULT or nil."
        :end end
        :user-actions user-actions))))
 
-(defun combobulate-envelope-render-choice-preview (_index current-node proxy-nodes refactor-id)
+(defun combobulate-envelope-render-choice-preview (action)
   "Render a preview of the envelope at INDEX.
 
 Unlike most proffer preview functions, this one assumes that
 `accept-action' passed to `combobulate-proffer-choices' is
 `commit' and not its usual value of `rollback'."
-  (combobulate-refactor (:id refactor-id)
-    (let ((pt)
-          (combobulate-envelope-static t)
-          (combobulate-envelope--undo-on-quit nil))
-      (dolist (node proxy-nodes)
-        (let ((expand-envelope) (is-current-node))
-          (pcase-let ((`(,missing .  ,rest-envelope) (combobulate-proxy-node-extra node)))
-            (combobulate-move-to-node node)
-            (cond ((equal node current-node)
-                   (setq expand-envelope rest-envelope
-                         is-current-node t
-                         pt (point)))
-                  (t (setq expand-envelope missing)))
-            (pcase-let (((cl-struct combobulate-envelope-context
-                                    (start start)
-                                    (end end))
-                         (combobulate-refactor (:id refactor-id)
-                           (combobulate-envelope-expand-instructions-1
-                            `((b ,@expand-envelope))))))
-              (mark-range-deleted start end)
-              (when is-current-node
-                (mark-range-highlighted start end))))))
-      (when pt (goto-char pt)))))
+  (with-slots (index current-node proxy-nodes refactor-id) action
+    (combobulate-refactor (:id refactor-id)
+      (let ((pt)
+            (combobulate-envelope-static t)
+            (combobulate-envelope--undo-on-quit nil))
+        (dolist (node proxy-nodes)
+          (let ((expand-envelope) (is-current-node))
+            (pcase-let ((`(,missing .  ,rest-envelope) (combobulate-proxy-node-extra node)))
+              (combobulate-move-to-node node)
+              (cond ((equal node current-node)
+                     (setq expand-envelope rest-envelope
+                           is-current-node t
+                           pt (point)))
+                    (t (setq expand-envelope missing)))
+              (pcase-let (((cl-struct combobulate-envelope-context
+                                      (start start)
+                                      (end end)
+                                      (user-actions user-actions))
+                           (combobulate-refactor (:id refactor-id)
+                             (combobulate-envelope-expand-instructions-1
+                              ;; Normally we'd just use `(b ...)' but we
+                              ;; want the points calculated also, if
+                              ;; there are any in the envelope, so we
+                              ;; can pull out the `selected-point' and
+                              ;; use it to set `pt' later.
+                              `((b* (repeat choice prompt point) ,@expand-envelope))))))
+                (mark-range-deleted start end)
+                (when is-current-node
+                  (pcase user-actions
+                    (`((selected-point . ,selected-pt))
+                     (setq pt selected-pt)))
+                  (mark-range-highlighted start end))))))
+        (when pt (goto-char pt))))))
 
 (cl-defun combobulate-envelope-expand-post-run-instructions (ctx categories)
   "Expand the user actions in CTX according to CATEGORIES.
@@ -502,6 +503,7 @@ they are given in CATEGORIES."
                            ;; interaction
                            :first-choice combobulate-envelope-static
                            :signal-on-abort t
+                           :quiet t
                            :reset-point-on-abort nil
                            :reset-point-on-accept nil
                            ;; `combobulate-envelope-render-choice-preview'
@@ -573,13 +575,14 @@ they are given in CATEGORIES."
                (save-excursion
                  (if-let (selected-node (combobulate-proffer-choices
                                          nodes
-                                         (lambda (_index current-node _proxy-nodes refactor-id)
+                                         (lambda-slots (current-node refactor-id)
                                            (combobulate-refactor (:id refactor-id)
                                              (combobulate-move-to-node current-node)))
                                          ;; as above, if we're in static mode, we do not
                                          ;; prompt the user to pick a cursor
                                          :first-choice combobulate-envelope-static
                                          :signal-on-abort t
+                                         :quiet t
                                          :reset-point-on-abort t
                                          :reset-point-on-accept nil))
                      (setq selected-point (combobulate-node-start selected-node))
@@ -695,7 +698,6 @@ expansion:
      - `repeat' instructions are executed first;
      - Then, `choice' prompts are executed;
      - Then, `prompt's are executed.
-     - Finally, all `point' prompts are executed.
 
    All envelopes are wrapped an implicit `b' block. You really
    only need this construct if you're doing something very
@@ -805,15 +807,17 @@ expansion:
         (combobulate-envelope-refactor-id (combobulate-refactor-setup))
         (selected-point (point)))
     (activate-change-group change-group)
-    (when (use-region-p)
-      (let ((col (current-indentation))
-            (text (substring-no-properties (delete-and-extract-region (point) (mark)))))
-        (push (cons 'region-indented (combobulate-indent-string-first-line text col))
-              combobulate-envelope--registers)
-        (push (cons 'region text) combobulate-envelope--registers))
-      ;; deactivate the mark as the region would otherwise interfere
-      ;; with the expansion.
-      (setq mark-active nil))
+    (if (use-region-p)
+        (progn
+          (indent-region (point) (mark) nil)
+          (let ((col (current-indentation))
+                (text (substring-no-properties (delete-and-extract-region (point) (mark)))))
+            (push (cons 'region-indented (combobulate-indent-string-first-line text col))
+                  combobulate-envelope--registers)
+            (push (cons 'region text) combobulate-envelope--registers)
+            ;; deactivate the mark as the region would otherwise interfere
+            ;; with the expansion.
+            (setq mark-active nil))))
     (cl-assert (eq state 'start))
     (combobulate-refactor (:id combobulate-envelope-refactor-id)
       (condition-case nil
@@ -824,7 +828,7 @@ expansion:
                         ;; "super-block" that expands all user actions such as
                         ;; choice, repeat, prompt and -- for `b*' specifically --
                         ;; also `point'.
-                        `((b* ,@instructions)))))
+                        `((b* (repeat choice prompt point selected-point) ,@instructions)))))
               ;; The `point' category is special in that it is
               ;; executed only at the `b*' superblock stage. If there
               ;; is more than one `point', the user is asked to
@@ -836,9 +840,6 @@ expansion:
               ;; come out of this expansion of post-run instructions,
               ;; that where ever point is, is what we want to end the
               ;; envelope at.
-              ;; (combobulate-envelope-expand-post-run-instructions
-              ;;  ctx
-              ;;  '(point))
               (combobulate-envelope-expand-post-run-instructions
                ctx
                '(selected-point))
@@ -899,15 +900,14 @@ expansion:
   "Envelop NODE near point or active region with ENVELOPE.
 
 If REGION is non-nil, envelop the region instead of NODE."
-  (map-let (:nodes :mark-node :description :template :point-placement :name) envelope
+  (map-let (:nodes :mark-node :description :template :point-placement :name :procedures) envelope
     (unless (and name)
       (error "Envelope `%s' is not valid." envelope))
     (if region
         (combobulate-envelop-region template)
-      (with-navigation-nodes (:nodes nodes)
+      (with-navigation-nodes (:nodes nodes :procedures procedures)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
             (save-excursion
-              (combobulate-message "Enveloping" node "in" description)
               ;; If we are asked to mark the node, we do. If not, we still go to
               ;; the beginning
               (if mark-node
@@ -916,9 +916,43 @@ If REGION is non-nil, envelop the region instead of NODE."
                  ;; nothing to do if point is `stay'.
                  ((member point-placement '(start end))
                   (combobulate--goto-node node (eq point-placement 'end)))))
-              (combobulate-envelope-expand-instructions template))
+              ;; triggering an envelope will invalidate `node'.
+              (setq node (combobulate-make-proxy node))
+              (prog1 (combobulate-envelope-expand-instructions template)
+                (combobulate-message "Enveloping" node "in" description)))
           (error "Cannot apply envelope `%s'. Point must be in one of \
 these nodes: `%s'." name nodes))))))
+
+(defun combobulate-envelope-get-shorthand-procedure (shorthand)
+  "Get the procedure given a SHORTHAND.
+
+Raise an error if the SHORTHAND is not valid."
+  (let ((procedure (alist-get shorthand combobulate-envelope-procedure-shorthand-alist)))
+    (unless procedure
+      (error "Shorthand `%s' is not valid." shorthand))
+    procedure))
+
+(defun combobulate-envelope-get-applicable-nodes (envelope &optional force)
+  "Given an ENVELOPE, return a list of valid nodes to apply it to.
+
+The NODES are the nodes that the envelope can be applied to. The
+NODES must be a list of strings or procedures. If a string, it is
+the name of a node type. If a procedure, then it follows the
+procedural rules laid out in `combobulate-procedure-apply'."
+  (map-let (:nodes :shorthand) envelope
+    ;; only nodes or shorthand can be used in the same envelope, never both.
+    (if (and nodes shorthand)
+        (error "Envelope `%s' has both `:nodes' and `:shorthand' defined. \
+Only one can be used." envelope))
+    (let* ((string-elements (seq-filter #'stringp nodes))
+           (procedure-elements
+            (append (seq-filter #'listp nodes)
+                    (and shorthand (combobulate-envelope-get-shorthand-procedure shorthand)))))
+      (mapcar #'combobulate-procedure-result-action-node
+              (append
+               (and procedure-elements (combobulate-procedure-start (point) procedure-elements t))
+               ;; As we have no selectors nor a parent discriminator, we just use the action node.
+               (combobulate-procedure-start (point) `((:activation-nodes ((:nodes ,string-elements)))) t))))))
 
 (defun combobulate-execute-envelope (envelope-name &optional node force)
   "Executes any envelope with a `:name' equal to ENVELOPE-NAME.
@@ -938,7 +972,14 @@ See `combobulate-apply-envelope' for more information."
           (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
             (goto-char target-pt))
         (let ((combobulate-envelope-static t)
-              (envelope-nodes (plist-get envelope :nodes)))
+              (envelope-nodes
+               (if (or (plist-member envelope :nodes) (plist-member envelope :shorthand))
+                   (combobulate-envelope-get-applicable-nodes envelope force)
+                 ;; if we don't have any assigned envelope nodes,
+                 ;; create a proxy node at point; that node (and
+                 ;; thus `point') will instead be where the
+                 ;; envelope is inserted.
+                 (list (combobulate-make-proxy-point-node)))))
           (progn
             (setq chosen-node
                   (combobulate-proffer-choices
@@ -953,19 +994,8 @@ See `combobulate-apply-envelope' for more information."
                           (combobulate-node-larger-than-node-p a b)
                         (> (- (combobulate-node-start a) (point))
                            (- (combobulate-node-start b) (point)))))
-                    ;; if we don't have any assigned envelope nodes,
-                    ;; create a proxy node at point; that node (and
-                    ;; thus `point') will instead be where the
-                    ;; envelope is inserted.
-                    (if envelope-nodes
-                        (seq-filter (lambda (n)
-                                      (and (or force (combobulate-point-near-node n))
-                                           (member (combobulate-node-type n)
-                                                   envelope-nodes)))
-                                    (cons (combobulate-node-at-point)
-                                          (combobulate-get-parents (combobulate-node-at-point))))
-                      (list (combobulate-make-proxy-point-node))))
-                   (lambda (_index current-node _proxy-nodes refactor-id)
+                    (reverse envelope-nodes))
+                   (lambda-slots (current-node refactor-id)
                      (combobulate-refactor (:id refactor-id)
                        (let ((ov (mark-node-highlighted current-node))
                              (combobulate-envelope--undo-on-quit nil))

@@ -64,6 +64,10 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
+(defun combobulate-primary-language ()
+  (combobulate-parser-language (or (car (combobulate-parser-list))
+                                   (error "No parsers available"))))
+
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
 
@@ -74,6 +78,9 @@
   (if (combobulate-node-p node)
       (treesit-node-check node 'named)
     (combobulate-proxy-node-named node)))
+
+(defsubst combobulate-node-anonymous-p (node)
+  (not (combobulate-node-named-p node)))
 
 (defsubst combobulate-node-start (node)
   (if (combobulate-node-p node)
@@ -98,6 +105,12 @@
       (or (treesit-node-text node (not with-properties)) "")
     (or (and node (combobulate-proxy-node-text node)) "")))
 
+(defsubst combobulate-node-next-sibling (node &optional anonymous)
+  (treesit-node-next-sibling node (not anonymous)))
+
+(defsubst combobulate-node-prev-sibling (node &optional anonymous)
+  (treesit-node-prev-sibling node (not anonymous)))
+
 (defsubst combobulate-node-child (node n &optional anonymous)
   (treesit-node-child node n (not anonymous)))
 
@@ -106,12 +119,6 @@
 
 (defsubst combobulate-node-parent (node)
   (treesit-node-parent node))
-
-(defsubst combobulate-node-next-sibling (node &optional anonymous)
-  (treesit-node-next-sibling node (not anonymous)))
-
-(defsubst combobulate-node-prev-sibling (node &optional anonymous)
-  (treesit-node-prev-sibling node (not anonymous)))
 
 (defsubst combobulate-parent-while (node pred)
   (treesit-parent-while node pred))
@@ -152,26 +159,28 @@ kept."
 
 (defun combobulate-make-proxy (nodes)
   "Factory that creates a facsimile proxy node of NODES."
-  (let ((proxies (mapcar
-                  (lambda (node)
-                    (if (combobulate-node-p node)
-                        (make-combobulate-proxy-node
-                         :start (set-marker (make-marker) (treesit-node-start node))
-                         :end (set-marker (make-marker) (treesit-node-end node))
-                         :text (treesit-node-text node t)
-                         :type (treesit-node-type node)
-                         :named (treesit-node-check node 'named)
-                         :field (treesit-node-field-name node)
-                         :node node
-                         :pp (combobulate-pretty-print-node node)
-                         :extra nil)
-                      node))
-                  (if (consp nodes) nodes (list nodes)))))
+  (let ((proxies
+         (mapcar
+          (pcase-lambda ((or (and (pred consp) `(,mark . ,node)) node))
+            (let ((tgt-node (if (combobulate-node-p node)
+                                (make-combobulate-proxy-node
+                                 :start (set-marker (make-marker) (treesit-node-start node))
+                                 :end (set-marker (make-marker) (treesit-node-end node))
+                                 :text (treesit-node-text node t)
+                                 :type (treesit-node-type node)
+                                 :named (treesit-node-check node 'named)
+                                 :field (treesit-node-field-name node)
+                                 :node node
+                                 :pp (combobulate-pretty-print-node node)
+                                 :extra nil)
+                              node)))
+              (if mark (cons mark tgt-node) tgt-node)))
+          (ensure-list nodes))))
     (if (consp nodes)
         proxies
       (car-safe proxies))))
 
-(defun combobulate-make-proxy-from-region (beg end)
+(defun combobulate-make-proxy-from-range (beg end)
   "Factory that creates a facsimile proxy node of the region BEG END."
   (make-combobulate-proxy-node
    :start (set-marker (make-marker) beg)

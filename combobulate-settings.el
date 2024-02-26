@@ -141,7 +141,7 @@ the node."
   :group 'combobulate)
 
 (defcustom combobulate-proffer-indicators "○●"
-  "Indentation indicators."
+  "Indicator symbols used in Combobulate's proffer prompts."
   :type 'string
   :group 'combobulate)
 
@@ -203,6 +203,15 @@ vector or an escaped string."
   "Face for active indicators, like the indentation display."
   :group 'combobulate-faces)
 
+(defface combobulate-error-indicator-face '((t
+                                             (:box
+                                              (:line-width
+                                               (1 . 1)
+                                               :color "FireBrick2" :style flat-button)
+                                              :foreground "FireBrick1" :background "FireBrick4")))
+  "Face for error indicators, like the indentation display."
+  :group 'combobulate-faces)
+
 (defface combobulate-tree-branch-face '((t (:foreground "slate gray")))
   "Face for the branches and guides in the display tree."
   :group 'combobulate-faces)
@@ -221,17 +230,17 @@ vector or an escaped string."
 
 ;;;; Other settings
 
-(defvar-local combobulate-navigation-defun-nodes nil
-  "Node names used to navigate by defun.
+(defvar-local combobulate-navigation-defun-procedures nil
+  "Node procedures used to navigate by defun.
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
 
-(defvar-local combobulate-navigation-default-queries nil
-  "Queries used to resolve and find nodes.
+(defvar-local combobulate-navigation-default-procedures '((:activation-nodes ((:nodes (all)))))
+  "Node procedures as the default in the absence of more specific procedures.
 
-This is set up by `with-navigation-nodes' and it contains all the
-cons cells found in `combobulate-navigation-default-nodes' (or
-any other node list passed to the macro).")
+The `combobulate-navigation-default-nodes' variable is populated
+with the node types from all the expanded activation node
+procedure rules.")
 
 (defvar-local combobulate-navigation-default-nodes nil
   "Node names used for general navigation and as a placeholder.
@@ -240,58 +249,22 @@ The macro `with-navigation-nodes' binds to this variable and
 locally overrides the navigation nodes by Combobulate's node
 tools.")
 
-(defvar-local combobulate-navigation-hierarchical-first-nodes nil
-  "The first node name in a cons cell used for hierarchical navigation.
-
-This is used alongside `combobulate-navigation-default-nodes' to
-aid with hierarchical navigation by precomputing the first node
-name in a cons cell.")
-
-(defvar-local combobulate-navigation-editable-nodes nil
-  "Node names used to determine the correct edit procedure.
-
-This variable is automatically set by `combobulate-setup' after
-extracting all possible navigable nodes from
-`combobulate-manipulation-edit-procedures'.")
-
 (defvar-local combobulate-manipulation-edit-procedures nil
   "List of edit procedures.")
 
-(defvar-local combobulate-manipulation-default-procedures nil
+(defvar-local combobulate-default-procedures nil
   "List of default procedures.
 
-This is typically set by `with-navigation-nodes'.")
+This is typically set by `with-navigation-nodes' by passing a
+`:procedures' property with the procedures to use..")
 
-(defvar-local combobulate-navigation-sexp-nodes nil
+(defvar-local combobulate-procedure-discard-rules '("comment")
+  "List of rules to always apply to discard operations.")
+
+(defvar-local combobulate-navigation-sexp-procedures nil
   "Node names used to navigate by sexp.
 
 See `combobulate-forward-sexp-function'.")
-
-(defvar-local combobulate-manipulation-splicing-procedures nil
-  "Node names used for splicing.
-
-See `combobulate-splice-up', et al.")
-
-(defvar-local combobulate-manipulation-indent-after-edit t
-  "When non-nil, Combobulate will indent the edited region.")
-
-(defvar-local combobulate-manipulation-indent-method 'mode
-  "How Combobulate must indent lines.
-
-Use `mode' and `indent-according-to-mode' is used and a
-reasonable attempt by the major mode's indentation engine is made
-to format the manipulated text.
-
-Use `node' and Combobulate will instead indent the text to the
-column of node.")
-
-(defvar-local combobulate-navigation-logical-nodes nil
-  "Node names used to navigate by logical block.
-
-See `mark-sentence', `forward-sentence' and `backward-sentence'.")
-
-(defvar-local combobulate-navigation-parent-child-nodes nil
-  "Node names used to navigate up or down.")
 
 (defvar-local combobulate-display-ignored-node-types nil
   "Node types that will not appear in the tree display")
@@ -325,6 +298,11 @@ determine the indentation.")
 
 This must be set in the setup function for the respective mode.")
 
+(defvar-local combobulate-navigation-rules-all nil
+  "Contains the auto-generated production rules.
+
+This must be set in the setup function for the respective mode.")
+
 (defvar-local combobulate-navigation-rules-inverted nil
   "Contains the auto-generated inverted production rules.
 
@@ -337,44 +315,6 @@ A RULE must be an alist with the KEY being the look-up item and
 the VALUE a list of rules:
 
    \\='((KEY . (VALUE ... VALUE_N)))")
-
-(defvar-local combobulate-navigation-rules-overrides nil
-  "List of override rules for `combobulate-navigation-rules'.
-
-An override RULE is one of many RULES. Each RULE must be of the
-form:
-
-  \\='(\"NODE-TYPE\"
-       [:anonymous BOOL]
-       [:excluded-fields FIELD-LIST]
-       [:all BOOL]
-       [:remove-types TYPE-LIST]
-       [:included-fields FIELD-LIST]
-       [:expand-rules RULES]
-       [:expand-nodes RULES])
-
-Where NODE-TYPE is a valid node type that exist as a rule in
-`combobulate-navigation-rules'.
-
-It can have any number of plist members:
-
-`:anonymous', if non-nil, also matches against anonymous nodes.
-
-`:excluded-fields' is a FIELD-LIST of `:fields' to exclude from
-the matches.
-
-`:all', if non-nil, works with `:excluded-fields' to only operate
-on the complement of the excluded fields.
-
-`:remove-types' is a TYPE-LIST of node types to ignore.
-
-`:expand-rules' expands RULES inline, replacing them with their
-sub-types. This can expand generalized types into their
-sub-types, such as `expression' into `(identifier string number
-...)'.
-
-`:expand-nodes' replaces child nodes found with their sub-types.
-")
 
 (defvar-local combobulate-envelope-indent-region-function #'indent-region
   "Function to call to indent an envelope after it is inserted.
@@ -394,6 +334,14 @@ languages like YAML and Python.")
 (defvar combobulate-envelope-symbol-prefix "combobulate-envelop-"
   "Prefix to use for symbol functions and variables for envelopes.")
 
+(defvar-local combobulate-envelope-procedure-shorthand-alist nil
+  "Alist of shorthand symbols for envelope procedures.
+
+Each entry must be an alist with the key being the shorthand
+symbol and the value being a valid combobulate procedure.
+
+Shorthands are used in lieu of inlining the procedure in the
+`:nodes' property for an envelope. It is local to a language.")
 
 (defvar-local combobulate-manipulation-envelopes nil
   "Code generators that wrap -- envelop -- nodes")

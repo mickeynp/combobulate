@@ -43,28 +43,38 @@
                               (combobulate-node-text)))
     ("property_name" (thread-first node
                                    (combobulate-node-parent)
-                                   (combobulate-node-child 0)
+                                   (combobulate-node-child 1)
                                    (combobulate-node-text)))
     (_ default-name)))
 
 (defun combobulate-css-setup (_)
   ;; NOTE This is subject to change
+  (setq combobulate-envelope-procedure-shorthand-alist
+        '((rhs . ((:activation-nodes ((:nodes ((rule "arguments")))))))))
   (setq combobulate-manipulation-envelopes
-        '((:description "Envelop in a media query"
-                        :key "@m"
-                        :mark-node t
-                        :nodes ("rule_set")
-                        :name "media-query"
-                        :template (
-                                   "@media "
-                                   (choice* :rest ("(min-width: " (p 768px "min-width") @ ") {"))
-                                   (choice* :rest ("(max-width: " (p 768px "max-width") @ ") {")) >
-                                   (choice* :rest ("(max-height: " (p 1024px "max-height") @ ") {"))
-                                   (choice* :rest ("(min-height: " (p 1024px "min-height") @ ") {"))
-                                   (choice* :rest ("(orientation: " (choice "portrait") (choice "landscape") @ ") {"))
-                                   (choice* :rest ("(aspect-ratio: " (choice "16/9") (choice "4/3") @ ") {"))
-                                   n> r> >
-                                   n > "}" >))))
+        '((:description
+           "( ... )"
+           :key "("
+           :extra-key "M-("
+           :mark-node t
+           :shorthand rhs
+           :name "wrap-parentheses"
+           :template (> @ "(" r ")"))
+          (:description
+           "Envelop in a media query"
+           :key "@m"
+           :mark-node t
+           :nodes ("rule_set")
+           :name "media-query"
+           :template ("@media "
+                      (choice* :rest ("(min-width: " (p 768px "min-width") @ ") {"))
+                      (choice* :rest ("(max-width: " (p 768px "max-width") @ ") {")) >
+                      (choice* :rest ("(max-height: " (p 1024px "max-height") @ ") {"))
+                      (choice* :rest ("(min-height: " (p 1024px "min-height") @ ") {"))
+                      (choice* :rest ("(orientation: " (choice "portrait") (choice "landscape") @ ") {"))
+                      (choice* :rest ("(aspect-ratio: " (choice "16/9") (choice "4/3") @ ") {"))
+                      n> r> >
+                      n > "}" >))))
 
   (setq combobulate-navigation-context-nodes
         '("class_name" "property_name" "feature_name" "float_name" "integer_value"
@@ -76,55 +86,52 @@
 
   (setq combobulate-manipulation-edit-procedures
         '((:activation-nodes
-           ((:node "declaration" :position in :find-parent "block"))
-           :match-query (block (declaration ":" (_) @match)+))
+           ((:nodes ("declaration") :position in :has-ancestor "block"))
+           :selector (:match-query (:query (block (declaration ":" (_) @match)+)
+                                           :engine combobulate)))
           (:activation-nodes
-           ((:node "block" :position at-or-in))
-           :match-query ((block) (_)+ @match))))
+           ((:nodes ("block")))
+           :selector (:match-query ((block) (_)+ @match)))))
 
-  (setq combobulate-navigation-sexp-nodes
-        (append '("comment" "property_name")
-                (combobulate-production-rules-get "selectors")
-                (combobulate-production-rules-get "arguments")))
-  (setq combobulate-manipulation-splicing-procedures nil)
-  (setq combobulate-navigation-parent-child-nodes (combobulate-production-rules-get "stylesheet"))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("comment" "property_name"
+                                       (rule "selectors")
+                                       (rule "arguments")))))))
+  (setq combobulate-navigation-parent-child-procedures
+        '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-sibling-procedures
-        `((:activation-nodes
-           ((:node
-             ,(combobulate-production-rules-get "declaration")
-             :position at-or-in
-             :find-immediate-parent ("declaration")))
-           :remove-types ("property_name")
-           :match-children t)
+        '(;; declarations' own property values should be siblings, but
+          ;; not property_name as it's a child of declaration also,
+          ;; and that'd mean the LHS and RHS are siblings of another,
+          ;; which would be weird.
           (:activation-nodes
-           ((:node
-             ,(append
-               (combobulate-production-rules-get "feature_query")
-               (combobulate-production-rules-get "arguments"))
-             :position at-or-in
-             :find-immediate-parent ("feature_query" "arguments")))
-           :remove-types ("comment")
-           :match-children t)
+           ((:nodes
+             ((rule "feature_query")
+              (rule "arguments"))
+             :has-parent ("feature_query" "arguments")))
+           :selector (:choose parent
+                              :match-children t))
           (:activation-nodes
-           ((:node
-             ,(append
-               (combobulate-production-rules-get "block")
-               (combobulate-production-rules-get "stylesheet"))
-             :position at-or-in
-             :find-immediate-parent ("stylesheet" "block")))
-           :remove-types ("comment")
-           :match-children t)))
-  (setq combobulate-navigation-defun-nodes
-        (seq-difference (combobulate-production-rules-get "stylesheet")
-                        ;; this is too granular for defun
-                        '("declaration")))
-  (setq combobulate-navigation-default-nodes
-        (append
-         (combobulate-production-rules-get "selectors")
-         '("stylesheet" "rule_set" "feature_query" "float_value"
-           "declaration" "property_name" "string_value" "plain_value" "integer_value"
-           "color_value" "call_expression" "function_name" "media_statement" "arguments"))))
+           ((:nodes
+             ((exclude (rule "declaration") "property_name"))
+             :has-parent ("declaration")))
+           :selector (:choose parent
+                              :match-children (:discard-rules ("comment" "property_name"))))
+          (:activation-nodes
+           ((:nodes
+             ((rule "block")
+              (rule "stylesheet"))
+             :has-parent ("stylesheet" "block")))
+           :selector (:match-children (:discard-rules ("comment"))))
+          ;; declarations are siblings in a block
+          (:activation-nodes
+           ((:nodes
+             ("declaration")
+             :has-parent ("block")))
+           :selector (:match-children (:discard-rules ("comment" "property_name"))))))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes (exclude (all) "declaration")))))))
 
 
 (provide 'combobulate-css)

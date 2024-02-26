@@ -1,0 +1,7 @@
+# -*- combobulate-test-point-overlays: ((1 outline 201) (2 outline 209) (3 outline 225) (4 outline 235) (5 outline 237) (6 outline 255) (7 outline 260)); eval: (combobulate-test-fixture-mode t); -*-
+
+Key:
+   Subkey1:
+       -
+        - Foo:
+             Bar: 1

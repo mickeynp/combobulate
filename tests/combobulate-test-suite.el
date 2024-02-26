@@ -143,7 +143,8 @@ doesn't exist."
 
 (cl-defmethod combobulate-test-harness-extend-action-body ((obj combobulate-test-harness-marker-loop))
   (with-slots (action-body command-error fixture-delta-file-name marker-number total-markers reverse) obj
-    (when (and (> marker-number 1) (<= marker-number total-markers))
+    (princ (format "Marker number: %s / %s\n" marker-number total-markers))
+    (when (and (>= marker-number 1) (< marker-number total-markers))
       `(,@(if (member marker-number command-error)
               `((should-error
                  (progn ,@action-body)))
@@ -294,7 +295,10 @@ doesn't exist."
                                        (bash-mode . bash-ts-mode)
                                        (css-mode . css-ts-mode)
                                        (yaml-mode . yaml-ts-mode)
-                                       (json-mode . json-ts-mode)))
+                                       (json-mode . json-ts-mode)
+                                       (html-mode . html-ts-mode)
+                                       (mhtml-mode . html-ts-mode)
+                                       (js-json-mode . json-ts-mode)))
              (combobulate-flash-node nil)
              (target-fn (concat (oref obj target-dir) (format "test-%s.gen.el" (oref obj collection-name))))
              (current-directory default-directory)
@@ -312,7 +316,9 @@ doesn't exist."
                                     (t wildcards)))
               (dolist (fixture-file-name (file-expand-wildcards
                                           (concat current-directory wildcard)))
-                (combobulate-test-suite-create-harness obj fixture-file-name))))
+                ;; skip backup and autosave files
+                (unless (string-match-p "\\(?:\\.#\\|~\\)$" fixture-file-name)
+                  (combobulate-test-suite-create-harness obj fixture-file-name)))))
           (save-buffer))))))
 
 (defun combobulate-test-execute-action (action)
@@ -415,9 +421,11 @@ doesn't exist."
   (with-current-buffer (oref obj output-buffer)
     (let* ((numbers)
            (fixture-buf (find-file-noselect fixture-file-name))
-           (fixture-language) (fixture-major-mode))
+           (fixture-language) (fixture-major-mode) (lang))
       (with-current-buffer fixture-buf
-        (setq fixture-language (combobulate-parser-language (car (combobulate-parser-list))))
+        (setq lang (car (combobulate-parser-list)))
+        (cl-assert (not (null lang)) nil "No language found in `%s' (major mode: `%s')" fixture-file-name major-mode)
+        (setq fixture-language (combobulate-parser-language lang))
         (setf fixture-major-mode major-mode)
         (setq numbers (seq-sort #'< (mapcar (lambda (ov) (overlay-get ov 'combobulate-test-number))
                                             (combobulate--with-test-overlays)))))

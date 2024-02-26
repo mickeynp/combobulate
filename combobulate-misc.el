@@ -103,7 +103,7 @@ No effort is made to account for, or exclude, overlaps."
 (defsubst combobulate-debug (s &rest args)
   (princ (apply #'format (concat s "\n") args)))
 
-(defun combobulate-display-indicator (current-level total)
+(defun combobulate-display-indicator (current-level total &optional active-face dimmed-face active-indicator dimmed-indicator)
   "Indicate CURRENT-LEVEL within a TOTAL number of pips."
   (concat
    "("
@@ -111,11 +111,12 @@ No effort is made to account for, or exclude, overlaps."
     (lambda (level)
       (let ((current (= level current-level)))
         (propertize (if current
-                        (substring combobulate-proffer-indicators 1 2)
-                      (substring combobulate-proffer-indicators 0 1))
-                    'face (if current
-                              'combobulate-active-indicator-face
-                            'combobulate-dimmed-indicator-face))))
+                        (or active-indicator (substring combobulate-proffer-indicators 1 2))
+                      (or dimmed-indicator (substring combobulate-proffer-indicators 0 1)))
+                    'face
+                    (cond
+                     (current (or active-face 'combobulate-active-indicator-face))
+                     (t (or dimmed-face 'combobulate-dimmed-indicator-face))))))
     (number-sequence 0 (1- total)) " ")
    ")"))
 

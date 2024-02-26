@@ -1,0 +1,6 @@
+// -*- combobulate-test-point-overlays: ((3 outline 157) (2 outline 196) (1 outline 203)); eval: (combobulate-test-fixture-mode t); -*-
+{
+  "foo": "bar",
+  "baz": "qux",
+  "biz": [1, 2, [4, 5, 6]]
+}

@@ -138,12 +138,6 @@ line when you press
   (combobulate-move-to-node node)
   (back-to-indentation))
 
-(defun combobulate-python-proffer-indent-action (_index current-node _proxy-nodes refactor-id)
-  "Proffer action function that highlights the node and indents it."
-  (combobulate-refactor (:id refactor-id)
-    (mark-node-highlighted current-node)
-    (combobulate-proffer-indentation-1 current-node)))
-
 (defun combobulate-proffer-indentation (node)
   "Intelligently indent the region or NODE at point."
   (interactive)
@@ -162,7 +156,7 @@ line when you press
                                    ;; special proxy node that will be used to
                                    ;; indent the region.
                                    (if (use-region-p)
-                                       (combobulate-make-proxy-from-region (region-beginning) (region-end))
+                                       (combobulate-make-proxy-from-range (region-beginning) (region-end))
                                      ;; if we're not dealing with a region, we
                                      ;; make a proxy node for the closest node.
                                      (combobulate-make-proxy node))))
@@ -175,7 +169,10 @@ line when you press
          (at-last-level (= number-of-levels current-position)))
     (when-let (selected-node (combobulate-proffer-choices
                               (if at-last-level (reverse indent-nodes) indent-nodes)
-                              #'combobulate-python-proffer-indent-action
+                              (lambda-slots (refactor-id current-node)
+                                (combobulate-refactor (:id refactor-id)
+                                  (mark-node-highlighted current-node)
+                                  (combobulate-proffer-indentation-1 current-node)))
                               ;; Try to pick a sensible starting index
                               ;; based on whether we're at the end,
                               ;; taking into account of the fact that
@@ -249,18 +246,6 @@ line when you press
           ((expression_list (_)+ "," @hl.gold :anchor))))
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
-  (setq combobulate-manipulation-splicing-procedures
-        `((:activation-nodes
-           ((:node
-             ,(append (combobulate-production-rules-get "_simple_statement")
-                      (combobulate-production-rules-get "_compound_statement")
-                      (combobulate-production-rules-get "if_statement")
-                      (combobulate-production-rules-get "try_statement")
-                      '("case_clause"))
-             :find-base-rule-parent t
-             :position at-or-in))
-           :match-siblings (:keep-parent nil))))
-
   (let ((statement-nodes
          (append (combobulate-production-rules-get "_compound_statement")
                  (combobulate-production-rules-get "_simple_statement")
@@ -294,21 +279,17 @@ line when you press
              :nodes ,statement-nodes
              :name "nest-if-else"
              :template
-             ("if " "True" ":" n>
+             ("if " @ (p True "Bool") ":" n>
               (choice* :missing
                        nil
                        :rest
-                       (@@ r> n> < "else:" n> "pass")
+                       ((save-column r> n) < "else:" (save-column n> "pass" n))
                        :name "if-block")
               (choice* :missing
                        nil
                        :rest
-                       (@@ "pass" n> "else:" n> r>)
-                       :name "else-block")
-              ;; (choice* :name "consequence" :missing ("pass") :rest (r>))
-              ;; < "else:" n>
-              ;; (choice* :name "alternative" :missing ("pass") :rest (r>))
-              ))
+                       (@ (save-column "pass" n> "else:" n> r> n))
+                       :name "else-block")))
             (:description
              "try ... except ...: ..."
              :key "bte"
@@ -383,54 +364,60 @@ line when you press
   (setq combobulate-manipulation-edit-procedures
         '(;; edit comments in blocks
           (:activation-nodes
-           ((:node "comment" :find-parent ("block") :position at-or-in))
-           :match-query (block (comment)+ @match))
+           ((:nodes ("comment") :has-parent ("block")))
+           :selector (:match-query (:query (block (comment)+ @match)
+                                           :engine combobulate)))
           ;; edit pairs in dictionaries
           (:activation-nodes
-           ((:node "pair" :find-parent "dictionary" :position at-or-in)
-            (:node "dictionary" :position at-or-in))
-           :match-query (dictionary (pair)+ @match)
-           :remove-types ("comment"))
+           ((:nodes ("pair") :has-parent "dictionary")
+            (:nodes ("dictionary")))
+           :selector (:match-query (:query (dictionary (pair)+ @match)
+                                           :engine combobulate)))
           ;; edit parameters in functions
           (:activation-nodes
-           ((:node "function_definition" :position at-or-in))
-           :match-query (function_definition (parameters (_)+ @match))
-           :remove-types ("comment"))
+           ((:nodes ("function_definition")))
+           :selector (:match-query (:query (function_definition (parameters (_)+ @match))
+                                           :engine combobulate)))
           ;; edit elements in containers and blocks
           (:activation-nodes
-           ((:node ("block" "tuple_pattern" "set" "list" "tuple") :position at-or-in))
-           :match-query ((_) (_)+ @match)
-           ;; :match-children t
-           :remove-types ("comment"))
+           ((:nodes ("block" "tuple_pattern" "set" "list" "tuple")))
+           :selector (:choose
+                      node
+                      :match-query (:query ((_) (_)+ @match)
+                                           :engine combobulate))
+           :selector (:match-children t))
           ;; edit arguments in calls
           (:activation-nodes
-           ((:node "argument_list" :position at-or-in))
-           :match-query ((argument_list) (_)+ @match)
-           :remove-types ("comment"))
+           ((:nodes ("argument_list")))
+           :selector (:match-query (:query ((argument_list) (_)+ @match)
+                                           :engine combobulate)))
           ;; edit imports
           (:activation-nodes
-           ((:node "import_from_statement" :position at-or-in :find-parent "module"))
-           :match-query (import_from_statement name: (dotted_name)+ @match))))
+           ((:nodes "import_from_statement" :find-parent "module"))
+           :selector (:match-query (:query (import_from_statement name: (dotted_name)+ @match)
+                                           :engine combobulate)))))
 
   (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
-  (setq combobulate-navigation-defun-nodes '("class_definition" "function_definition" "decorated_definition" "lambda"))
-  (setq combobulate-navigation-sexp-nodes '("function_definition"  "class_definition" "lambda"
-                                            "for_in_clause" "string" "decorated_definition"))
+  (setq combobulate-navigation-defun-procedures
+        '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
+  (setq combobulate-navigation-sexp-procedures
+        '((:activation-nodes ((:nodes ("function_definition"  "class_definition" "lambda"
+                                       "for_in_clause" "string" "decorated_definition"))))))
   (setq combobulate-navigation-sibling-procedures
-        `((:activation-nodes
-           ((:node
+        '((:activation-nodes
+           ((:nodes
              ("string_content" "interpolation")
-             :position at-or-in
-             :find-immediate-parent ("string")))
-           :remove-types ("string_start" "string_end")
-           :match-children t)
+             :has-parent ("string")))
+           :selector (:match-children
+                      (:discard-rules
+                       ("string_start" "string_end")
+                       :default-mark @match)))
           (:activation-nodes
-           ((:node
+           ((:nodes
              ;; pattern is a special supertype. It is not a node in the CST.
-             ,(combobulate-production-rules-get "pattern")
-             :position at-or-in
+             ((rule "pattern"))
              ;; Note that we do not find all the parents of pattern
              ;; but only a couple. The main reason is that otherwise
              ;; they'd become potential next/prev siblings in a block
@@ -438,58 +425,53 @@ line when you press
              ;; they're navigating siblings in a block. By limiting
              ;; ourselves to explicit tuples/lists, the user would
              ;; have to enter these nodes explicitly to navigate them.
-             :find-immediate-parent ("tuple_pattern" "list_pattern"))
-            (:node
-             ,(combobulate-production-rules-get "import_from_statement")
-             :position at-or-in
-             :find-immediate-parent ("import_from_statement"))
-            (:node
-             ,(combobulate-production-rules-get "dictionary")
-             :position at-or-in
-             :find-immediate-parent ("dictionary"))
-            (:node
-             ,(append
-               (combobulate-production-rules-get "primary_expression")
-               (combobulate-production-rules-get "expression"))
-             :position at-or-in
-             :find-immediate-parent ("set" "tuple" "list"))
-            (:node
-             ,(append
-               (combobulate-production-rules-get "parameter")
-               (combobulate-production-rules-get "argument_list")
-               (combobulate-production-rules-get "expression")
-               (combobulate-production-rules-get "expression_list")
-               (combobulate-production-rules-get "primary_expression"))
-             :position at-or-in
-             :find-immediate-parent ("parameters" "argument_list" "expression_list")))
-           :match-children t)
+             :has-parent ("tuple_pattern" "list_pattern"))
+            (:nodes
+             ((rule "import_from_statement"))
+             :has-parent ("import_from_statement"))
+            (:nodes
+             ((rule "dictionary"))
+             :has-parent ("dictionary"))
+            (:nodes
+             ((rule "set") (rule "tuple") (rule "list"))
+             :has-parent ("set" "tuple" "list"))
+            (:nodes
+             ((rule "parameter")
+              (rule "argument_list")
+              (rule "expression")
+              (rule "expression_list")
+              (rule "primary_expression"))
+             :has-parent ("parameters" "lambda_parameters" "argument_list" "expression_list")))
+           :selector (:match-children t))
           (:activation-nodes
-           ((:node
-             ,(append (combobulate-production-rules-get "_simple_statement")
-                      (combobulate-production-rules-get "_compound_statement")
-                      (combobulate-production-rules-get "module")
-                      '("module" "comment" "case_clause"))
-             :position at-or-in
-             :find-immediate-parent ("case_clause" "match_statement" "module" "block")))
-           :remove-types nil
-           :match-children t)))
+           ((:nodes
+             ((rule "_simple_statement")
+              (rule "_compound_statement")
+              (rule "module")
+              "module" "case_clause")
+             :has-parent ("case_clause" "match_statement" "module" "block")))
+           :selector (:match-children (:discard-rules ("block"))))))
 
-  (setq combobulate-navigation-parent-child-nodes
-        (append
-         (combobulate-production-rules-get "_simple_statement")
-         (combobulate-production-rules-get "_compound_statement")
-         (combobulate-production-rules-get "parameter")
-         (combobulate-production-rules-get "argument_list")
-         '("module" "dictionary" "except_clause" "for_in_clause" "finally_clause" "elif_clause"
-           "pair"
-           "list" "call" "tuple" "string" "case_clause" "set")))
-  (setq combobulate-navigation-logical-nodes
-        (append
-         (combobulate-production-rules-get "primary_expression")
-         (combobulate-production-rules-get "expression")
-         combobulate-navigation-default-nodes))
-  (setq combobulate-navigation-default-nodes
-        (seq-uniq (flatten-tree combobulate-rules-python))))
+  (setq combobulate-navigation-parent-child-procedures
+        '(;; statements are treated with `at' so you can descend into sub-statements.
+          (:activation-nodes
+           ((:nodes ((rule "_compound_statement")
+                     ;; not in compound statement
+                     "case_clause")
+                    :position at))
+           :selector (:choose node
+                              :match-children (:match-rules ("block"))))
+          (:activation-nodes
+           ((:nodes ((rule "lambda"))
+                    :position at))
+           :selector (:choose node
+                              :match-children (:match-rules (rule "lambda" :body))))
+          (:activation-nodes
+           ((:nodes ((all)) :has-parent ((all))))
+           :selector (:choose node
+                              :match-children (:discard-rules ("block"))))))
+  (setq combobulate-navigation-logical-procedures
+        '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here

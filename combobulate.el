@@ -77,7 +77,6 @@
     (define-key map (kbd "j") #'combobulate-avy-jump)
     (define-key map (kbd "o") #'combobulate)
     (define-key map (kbd "c") #'combobulate-clone-node-dwim)
-    (define-key map (kbd "v") #'combobulate-vanish-node)
     (define-key map (kbd "t") combobulate-edit-key-map)
     (define-key map (kbd "x") combobulate-xref-key-map)
     (define-key map (kbd "h") combobulate-highlight-key-map)
@@ -87,17 +86,17 @@
 (defvar combobulate-key-map
   (let ((map (make-sparse-keymap "Combobulate")))
     (define-key map (kbd "C-M-a") #'combobulate-navigate-beginning-of-defun)
-    (define-key map (kbd "C-M-d") #'combobulate-navigate-down-list-maybe)
+    (define-key map (kbd "C-M-d") #'combobulate-navigate-down)
     (define-key map (kbd "C-M-e") #'combobulate-navigate-end-of-defun)
     (define-key map (kbd "C-M-h") #'combobulate-mark-defun)
     (define-key map (kbd "C-M-n") #'combobulate-navigate-next)
     (define-key map (kbd "C-M-p") #'combobulate-navigate-previous)
     (define-key map (kbd "C-M-t") #'combobulate-transpose-sexps)
-    (define-key map (kbd "C-M-u") #'combobulate-navigate-up-list-maybe)
+    (define-key map (kbd "C-M-u") #'combobulate-navigate-up)
     (define-key map (kbd "M-<up>") #'combobulate-splice-up)
     (define-key map (kbd "M-<down>") #'combobulate-splice-down)
-    (define-key map (kbd "M-<left>") #'combobulate-yeet-forward)
-    (define-key map (kbd "M-<right>") #'combobulate-yoink-forward)
+    (define-key map (kbd "M-<left>") #'combobulate-splice-self)
+    (define-key map (kbd "M-<right>") #'combobulate-splice-parent)
     (define-key map (kbd "M-N") #'combobulate-drag-down)
     (define-key map (kbd "M-P") #'combobulate-drag-up)
     (define-key map (kbd "M-a") #'combobulate-navigate-logical-previous)
@@ -111,11 +110,7 @@
 
 (make-variable-buffer-local 'forward-sexp-function)
 
-(defun combobulate-get-rule-symbol (parser-lang)
-  (symbol-value (intern (format "combobulate-rules-%s" parser-lang))))
 
-(defun combobulate-get-inverted-rule-symbol (parser-lang)
-  (symbol-value (intern (format "combobulate-rules-%s-inverted" parser-lang))))
 
 (defun combobulate--setup-envelopes (envelopes)
   "Prepare ENVELOPES for interactive use.
@@ -150,13 +145,6 @@ created."
             (parser-lang (treesit-parser-language lang))
             (setup-fn (alist-get parser-lang combobulate-setup-functions-alist)))
       (progn
-        ;; load the production rules
-        (setq combobulate-navigation-rules-overrides nil)
-        (setq combobulate-navigation-rules-overrides-inverted nil)
-        (setq combobulate-navigation-rules
-              (combobulate-get-rule-symbol parser-lang))
-        (setq combobulate-navigation-rules-inverted
-              (combobulate-get-inverted-rule-symbol parser-lang))
         ;; prepare the sexp functions so they use our version
         (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
         (setq-local transpose-sexps-function #'combobulate-transpose-sexp-function)
@@ -169,10 +157,13 @@ created."
         (hack-local-variables)
         ;; install the highlighter rules
         (combobulate-highlight-install parser-lang)
+        ;; `combobulate-navigation-default-nodes' draws its nodes from
+        ;; `combobulate-navigation-default-procedures'.
+        (setq-local combobulate-navigation-default-nodes
+                    (combobulate-procedure-collect-activation-nodes
+                     combobulate-navigation-default-procedures))
         ;; this should come after the funcall to `setup-fn' as we need
         ;; the procedures setup and ready before we continue.
-        (setq-local combobulate-navigation-editable-nodes
-                    (combobulate-procedure-get-activation-nodes combobulate-manipulation-edit-procedures))
         (when combobulate-key-prefix
           (local-set-key
            (kbd (format "%s e" combobulate-key-prefix))
@@ -223,6 +214,7 @@ have changed."
 
 ;;; internal
 (require 'combobulate-rules)
+(require 'combobulate-procedure)
 (require 'combobulate-navigation)
 (require 'combobulate-manipulation)
 (require 'combobulate-envelope)

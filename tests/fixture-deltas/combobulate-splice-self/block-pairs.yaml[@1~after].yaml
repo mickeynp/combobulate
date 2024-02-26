@@ -1,0 +1,10 @@
+# -*- combobulate-test-point-overlays: ((4 outline 182) (3 outline 191) (2 outline 226) (1 outline 267)); eval: (combobulate-test-fixture-mode t); -*-
+
+# Deeply nested pairs
+One:
+  Two:
+    Three:
+      Bar: "Baz"     
+      lists:
+        - foo
+        - bar
