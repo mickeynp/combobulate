@@ -1091,7 +1091,7 @@ accepts or cancels the proffer. "
                                        (rollback))
                                       (t (error "Unknown action: %s" action)))))
                       (and before-switch-fn (funcall before-switch-fn))
-                      (when recenter (recenter))
+                      (when recenter (ignore-errors (recenter)))
                       ;; if we have just one item, or if
                       ;; `:first-choice' is non-nil, we pick the first
                       ;; item in `proxy-nodes'
@@ -1515,15 +1515,16 @@ Each member of PARTITIONS must be one of:
               (setf (combobulate-proffer-action-refactor-id proffer-action) 'splice)
               (action-function proffer-action)
               (rollback)
-              (combobulate-message
-               (format
-                "Spliced. Keep %s. Discard %s."
-                (combobulate-tally-nodes proxy-matches t)
-                (combobulate-tally-nodes
-                 (cons target-node
-                       (seq-take (combobulate-proffer-action-proxy-nodes proffer-action)
-                                 (combobulate-proffer-action-index proffer-action)))
-                 t))))))))))
+              ;; (combobulate-message
+              ;;  (format
+              ;;   "Spliced. Keep %s. Discard %s."
+              ;;   (combobulate-tally-nodes proxy-matches t)
+              ;;   (combobulate-tally-nodes
+              ;;    (cons target-node
+              ;;          (seq-take (combobulate-proffer-action-proxy-nodes proffer-action)
+              ;;                    (combobulate-proffer-action-index proffer-action)))
+              ;;    t)))
+              )))))))
 
 (defun combobulate-move-past-close-and-reindent (&optional arg)
   (interactive "^p")
