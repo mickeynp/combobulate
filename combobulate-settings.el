@@ -243,7 +243,7 @@ with the node types from all the expanded activation node
 procedure rules.")
 
 (defvar-local combobulate-navigation-default-nodes nil
-  "Node names used for general navigation and as a placeholder.
+  "Node procedures used for general navigation and as a placeholder.
 
 The macro `with-navigation-nodes' binds to this variable and
 locally overrides the navigation nodes by Combobulate's node
@@ -262,9 +262,16 @@ This is typically set by `with-navigation-nodes' by passing a
   "List of rules to always apply to discard operations.")
 
 (defvar-local combobulate-navigation-sexp-procedures nil
-  "Node names used to navigate by sexp.
+  "Node procedures used to navigate by sexp.
 
 See `combobulate-forward-sexp-function'.")
+
+(defvar-local combobulate-navigation-logical-procedures
+    '((:activation-nodes ((:nodes (all)))))
+  "Node procedures used to navigate by logical units.")
+
+(defvar-local combobulate-navigation-defun-procedures nil
+  "Node procedures used to navigate by defun.")
 
 (defvar-local combobulate-display-ignored-node-types nil
   "Node types that will not appear in the tree display")
