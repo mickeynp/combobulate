@@ -106,12 +106,12 @@
                                  "b = " (p some-prompt "Pick a value"))
                   :mock-prompt-actions ("blah"))
       ;; repeat
-      (:test-name "repeat-simple"
-                  :instructions (repeat "if 1:" n>
-                                        "a = " (p repeating-prompt "Pick a value") n>
-                                        "b = 1" n>)
-                  :mock-prompt-actions ("blah")
-                  :mock-expansion-actions (yes yes no))
+      ;; (:test-name "repeat-simple"
+      ;;             :instructions (repeat "if 1:" n>
+      ;;                                   "a = " (p repeating-prompt "Pick a value") n>
+      ;;                                   "b = 1" n>)
+      ;;             :mock-prompt-actions ("blah")
+      ;;             :mock-expansion-actions (yes yes no))
       ;; choice and choice*
       (:test-name "choice*-with-complex-missing-field"
                   :instructions

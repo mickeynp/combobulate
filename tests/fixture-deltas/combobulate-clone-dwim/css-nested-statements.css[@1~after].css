@@ -1,20 +1,20 @@
-/* -*- combobulate-test-point-overlays: ((1 outline 140)); eval: (combobulate-test-fixture-mode t); -*- */
+/* -*- combobulate-test-point-overlays: ((1 outline 142)); eval: (combobulate-test-fixture-mode t); -*- */
 
 @media (min-width: 1024px) {
-  .testimonial.middle {
-    margin-left: 2rem;
-  }
-  .testimonial.middle {
-    margin-left: 2rem;
-  }
-  .testimonial.right {
-    float: right;
-    width: 250px;
-    margin-left: 2rem;
-  }
-  .testimonial.right-xl {
-    float: right;
-    width: 450px;
-    margin-left: 2rem;
-  }
+    .testimonial.middle {
+        margin-left: 2rem;
+    }
+    .testimonial.middle {
+        margin-left: 2rem;
+    }
+    .testimonial.right {
+        float: right;
+        width: 250px;
+        margin-left: 2rem;
+    }
+    .testimonial.right-xl {
+        float: right;
+        width: 450px;
+        margin-left: 2rem;
+    }
 }

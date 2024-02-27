@@ -31,7 +31,8 @@
 (require 'combobulate-navigation)
 (require 'combobulate-misc)
 (require 'combobulate-interface)
-(require 'tempo)
+(require 'combobulate-procedure)
+(require 'eieio)
 (require 'map)
 ;;; for python-specific indent stuff
 (require 'python)
@@ -807,44 +808,6 @@ the deleted node are removed."
                               correct-indentation
                               delete-blank-lines)))
 
-(defun combobulate--replace-node (node text &optional before)
-  "Replace NODE with TEXT and maybe place point BEFORE.
-
-The NODE is deleted (`delete-region') and TEXT inserted in its place.
-
-If BEFORE then point is placed before the text and not after.
-
-The variable `combobulate-manipulation-indent-method' determines
-how indentation of the TEXT happens.  This is mostly of interest
-in Python where whitespace is very important, and automatic
-indentation unreliable."
-  (when node
-    (atomic-change-group
-      (let ((node-start (combobulate-node-start node)))
-        (combobulate--goto-node node)
-        (combobulate--delete-node node)
-        (let ((beg) (end)
-              (pt (point))
-              (offset 0))
-          (setq beg (pos-bol))
-          (save-excursion (beginning-of-line) (insert text))
-          (setq end (pos-eol))
-          (goto-char node-start)
-          (cond ((eq 'mode combobulate-manipulation-indent-method)
-                 (indent-region beg end))
-                ((eq 'first combobulate-manipulation-indent-method)
-                 (setq offset (save-excursion
-                                (goto-char pt)
-                                (skip-syntax-forward " ")
-                                (current-column)))
-                 (indent-rigidly beg end (- (current-column) offset))))
-          (when before
-            (goto-char pt)))))
-    (combobulate-delete-empty-lines)
-    (combobulate-delete-whitespace)
-    (when (eq 'mode combobulate-manipulation-indent-method)
-      (indent-according-to-mode))))
-
 (defun combobulate-kill-node-dwim (&optional arg)
   "Kill the most likely node on or near point ARG times.
 
@@ -883,31 +846,6 @@ the current choice and exit."
     (combobulate-refactor (:id refactor-id)
       (mark-node-highlighted current-node))))
 
-;; cl-defstruct to hold all the various prompt display values
-(cl-defstruct (combobulate-proffer-action
-               (:constructor combobulate-proffer-action-create)
-               (:copier nil))
-  index
-  display-indicator
-  current-node
-  proxy-nodes
-  refactor-id
-  prompt-description
-  extra-map)
-
-(defmacro lambda-slots (slots &rest body)
-  "Construct a macro that expands to a lambda with the given SLOTS and BODY.
-
-The lambda takes a single argument, ACTION, which is an EIEIO object
-or `cl-defstruct'.
-
-The requested SLOTS are bound to the action object using `with-slots'."
-  (declare (indent defun)
-           (debug (&define [&or symbolp (symbolp &optional sexp &rest sexp)]
-                           def-body)))
-  `(lambda (action)
-     (with-slots ,slots action
-       ,@body)))
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key
                                              (first-choice nil)

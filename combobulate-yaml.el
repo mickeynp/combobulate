@@ -54,7 +54,6 @@
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function nil)
   (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-manipulation-trim-empty-lines t)
 
   (setq combobulate-manipulation-edit-procedures
@@ -87,7 +86,6 @@
            ((:nodes
              ("block_mapping_pair" "block_sequence_item")
              :has-parent ("block_mapping" "block_sequence")))
-           :filter ("comment")
            :selector (:match-children t))))
   (setq combobulate-navigation-parent-child-procedures
         `(;; basic down navigation between pairs and sequences

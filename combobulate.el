@@ -39,6 +39,7 @@
 
 
 (require 'combobulate-settings)
+(declare-function combobulate-procedure-collect-activation-nodes "combobulate-procedure")
 
 (defvar-local combobulate-options-envelope-key-map
     (make-sparse-keymap "Combobulate Envelopes")

@@ -253,5 +253,32 @@ user can undo the change normally."
 	     (accept-change-group ,handle)
 	   (cancel-change-group ,handle))))))
 
+;; cl-defstruct to hold all the various prompt display values
+(cl-defstruct (combobulate-proffer-action
+               (:constructor combobulate-proffer-action-create)
+               (:copier nil))
+  index
+  display-indicator
+  current-node
+  proxy-nodes
+  refactor-id
+  prompt-description
+  extra-map)
+
+(defmacro lambda-slots (slots &rest body)
+  "Construct a macro that expands to a lambda with the given SLOTS and BODY.
+
+The lambda takes a single argument, ACTION, which is an EIEIO object
+or `cl-defstruct'.
+
+The requested SLOTS are bound to the action object using `with-slots'."
+  (declare (indent defun)
+           (debug (&define [&or symbolp (symbolp &optional sexp &rest sexp)]
+                           def-body)))
+  `(lambda (action)
+     (with-slots ,slots action
+       ,@body)))
+
+
 (provide 'combobulate-interface)
 ;;; combobulate-interface.el ends here

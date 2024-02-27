@@ -33,6 +33,17 @@
 (require 'combobulate-interface)
 (require 'map)
 
+(declare-function combobulate-production-rules-get-rules "combobulate-navigation") 
+(declare-function combobulate-procedure-collect-activation-nodes "combobulate-navigation")
+(declare-function combobulate-procedure-start-matches "combobulate-navigation")
+(declare-function combobulate-production-rules-get-inverted "combobulate-navigation")
+
+
+(defvar combobulate-skip-prefix-regexp " \t\n"
+  "Skip prefix regexp used to skip past whitespace characters.")
+
+(defvar combobulate-skip-prefix-regexp-no-newline " \t"
+  "Skip prefix regexp used to skip past whitespace characters.")
 
 (defsubst combobulate-group-nodes (labelled-nodes &optional group-fn)
   "Group LABELLED-NODES from a query by their label.
@@ -210,7 +221,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -494,7 +505,7 @@ extent."
 
 
 (defun combobulate-get-error-nodes (&optional node)
-  "Return all nodes in NODES that are of type 'error."
+  "Return all nodes in NODES that are of type ERROR."
   (combobulate-query-capture (or node (combobulate-root-node)) '((ERROR) @node) nil nil t))
 
 (defun combobulate-filter-nodes-by-type (nodes unwanted-node-types)
@@ -534,12 +545,6 @@ If NODE is nil, then nil is returned."
     (if end (combobulate-node-end node)
       (combobulate-node-start node))))
 
-
-(defvar combobulate-skip-prefix-regexp " \t\n"
-  "Skip prefix regexp used to skip past whitespace characters.")
-
-(defvar combobulate-skip-prefix-regexp-no-newline " \t"
-  "Skip prefix regexp used to skip past whitespace characters.")
 
 (defun combobulate-skip-whitespace-forward (&optional skip-newline)
   "Skip whitespace forward, including newlines if SKIP-NEWLINE is non-nil."
@@ -757,10 +762,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                       (funcall (if backward
-                                    #'combobulate-point-at-end-of-node-p
-                                  #'combobulate-point-at-beginning-of-node-p)
-                                node)))
+                            (funcall (if backward
+                                         #'combobulate-point-at-end-of-node-p
+                                       #'combobulate-point-at-beginning-of-node-p)
+                                     node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
@@ -960,48 +965,6 @@ at the same time."
                       (member node-type keep-types))
                   (not (member node-type remove-types)))))
          (combobulate-node-children node anonymous))))))
-
-(defun combobulate-get-expanded-children (node &optional rules)
-  "Return a list of expanded children for the given NODE using RULES.
-
-Expanded children are obtained by recursively applying the
-override rules to the children of NODE. The resulting list of
-nodes is sorted using the `combobulate-node-before-node-p'
-function."
-  (let* ((node-type (combobulate-node-type node))
-         (node-rules (assoc node-type (or rules combobulate-navigation-rules-overrides)))
-         (expanded-children)
-         (collected))
-    (pcase-let ((`(,_ . ,spec) node-rules))
-      (map-let (:included-fields
-                :anonymous :excluded-fields
-                :expand-rules :keep-types
-                :expand-nodes :remove-types)
-          spec
-        (setq expanded-children
-              (combobulate-get-children
-               node
-               :anonymous anonymous
-               :included-fields included-fields
-               :excluded-fields excluded-fields
-               :keep-types (append keep-types (combobulate-production-rules-expand-all expand-rules))
-               :remove-types remove-types
-               :all t))
-        (setq collected expanded-children)
-        (when expand-nodes
-          ;; clean this up. time complexity is too high and it can be
-          ;; simplified.
-          (while expanded-children
-            (dolist (expand-node expand-nodes)
-              (let ((child (pop expanded-children)))
-                (setq expanded-children
-                      (nconc (and (equal (car expand-node) (combobulate-node-type child))
-                                  (combobulate-get-expanded-children child (list expand-node)))
-                             expanded-children))
-                (setq collected (combobulate-filter-nodes-by-type
-                                 (append collected expanded-children)
-                                 (list (car expand-node))))))))))
-    (seq-uniq (seq-sort #'combobulate-node-before-node-p collected) #'combobulate-node-eq)))
 
 (defun combobulate-nav-to-defun (direction &optional node)
   "Navigate to a defun in DIRECTION, possibly from NODE.
@@ -1577,8 +1540,8 @@ removed."
      ;; return the item itself to match.
      ((eq term-type 'named-wildcard)
       (lambda (child _) (if (combobulate-node-named-p child)
-                       (cons 'match (cons (list child) nil))
-                     (cons 'no-match (cons nil nil)))))
+                            (cons 'match (cons (list child) nil))
+                          (cons 'no-match (cons nil nil)))))
      ((eq term-type 'wildcard)
       (lambda (child _) (cons 'match (cons (list child) nil))))
      ;; strings are handled by equality checking

@@ -330,12 +330,10 @@ from `combobulate-manipulation-envelopes') to insert."
            ((:nodes
              ("named_imports" "formal_parameters" "array" "object_type" "arguments" "object_pattern")
              :has-parent t))
-           :filter ("comment")
            :selector (:choose node :match-query (:query ((_) (_)+ @match)
                                                         :engine combobulate)))
           (:activation-nodes
            ((:nodes ("variable_declarator")))
-           :filter ("comment")
            :selector (:match-query (:query ((_) name: (array_pattern (_)+  @match))
                                            :engine combobulate)))
           (:activation-nodes
@@ -349,7 +347,6 @@ from `combobulate-manipulation-envelopes') to insert."
            ((:nodes
              ("jsx_self_closing_element" "jsx_expression" "jsx_element" "jsx_fragment")
              :position at))
-           :filter ("comment" "jsx_text")
            :selector (:choose
                       node
                       :match-siblings (:discard-rules

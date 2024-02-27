@@ -35,6 +35,7 @@
 (declare-function mc/maybe-multiple-cursors-mode "multiple-cursors-core.el")
 (declare-function mc/create-fake-cursor-at-point "multiple-cursors-core.el")
 (declare-function combobulate-tally-nodes "combobulate-manipulation.el")
+(declare-function combobulate-procedure-collect-activation-nodes "combobulate-navigation")
 
 (defun combobulate-avy-jump ()
   "Use avy to jump to a navigable node"

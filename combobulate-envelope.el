@@ -30,6 +30,7 @@
 (require 'generator)
 (require 'combobulate-settings)
 (require 'combobulate-manipulation)
+(require 'eieio)
 
 (defvar combobulate-envelope-indent-region-function)
 
@@ -192,17 +193,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                   (goto-char prompt-point)
-                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                   (unless combobulate-envelope-static
-                                     (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                         (combobulate-envelope-prompt
-                                                          prompt tag nil
-                                                          (lambda ()
-                                                            (combobulate-envelope--update-prompts
-                                                             buf tag (minibuffer-contents)))))))
-                                       (push (cons tag new-text) combobulate-envelope--registers)
-                                       (combobulate-envelope--update-prompts buf tag new-text))))))
+                                        (goto-char prompt-point)
+                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                        (unless combobulate-envelope-static
+                                          (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                              (combobulate-envelope-prompt
+                                                               prompt tag nil
+                                                               (lambda ()
+                                                                 (combobulate-envelope--update-prompts
+                                                                  buf tag (minibuffer-contents)))))))
+                                            (push (cons tag new-text) combobulate-envelope--registers)
+                                            (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -888,7 +889,7 @@ expansion:
 (defun combobulate-get-envelopes-by-major-mode ()
   (mapcan
    (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
+                               combobulate-manipulation-envelopes-custom))
    (combobulate-parser-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
@@ -932,7 +933,7 @@ Raise an error if the SHORTHAND is not valid."
       (error "Shorthand `%s' is not valid." shorthand))
     procedure))
 
-(defun combobulate-envelope-get-applicable-nodes (envelope &optional force)
+(defun combobulate-envelope-get-applicable-nodes (envelope &optional _force)
   "Given an ENVELOPE, return a list of valid nodes to apply it to.
 
 The NODES are the nodes that the envelope can be applied to. The

@@ -235,6 +235,9 @@ vector or an escaped string."
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
 
+(defvar-local combobulate-navigation-parent-child-procedures nil
+  "Node procedures used to navigate by parent and child nodes.")
+
 (defvar-local combobulate-navigation-default-procedures '((:activation-nodes ((:nodes (all)))))
   "Node procedures as the default in the absence of more specific procedures.
 
@@ -278,6 +281,11 @@ See `combobulate-forward-sexp-function'.")
 
 (defvar-local combobulate-manipulation-plausible-separators '("," ".")
   "List of characters that could be valid node separators.")
+
+(defvar-local combobulate-manipulation-indent-after-edit t
+  "Non-nil indents the inserted text after a Combobulate refactor text operation.
+
+This should probably be nil in whitespace-sensitive languages.")
 
 (defvar-local combobulate-manipulation-trim-whitespace nil
   "Trim whitespace after Combobulate manipulates the tree.

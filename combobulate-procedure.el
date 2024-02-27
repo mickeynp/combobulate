@@ -30,8 +30,10 @@
 
 ;;; Code:
 
-(require 'combobulate-navigation)
 (eval-when-compile (require 'cl-lib))
+(require 'map)
+(require 'combobulate-rules)
+(require 'combobulate-navigation)
 
 (defun combobulate-procedure-apply-has-parent (has-parent-rules action-node)
   "Determine if ACTION-NODE has an immediate parent matching HAS-PARENT-RULES."
@@ -75,10 +77,7 @@
                  :matched-selection nil)))
     (catch 'done
       (dolist (activation-node activation-nodes)
-        (map-let (:nodes nodes :position position
-                         :has-parent has-parent
-                         :has-ancestor has-ancestor
-                         :has-fields has-fields)
+        (map-let (:nodes :position :has-parent :has-ancestor :has-fields)
             activation-node
           ;; Expand the rules in `:nodes' and determine if any of them match
           (let ((action-node-type (combobulate-node-type action-node))
@@ -102,7 +101,7 @@
                           (not (combobulate-point-at-beginning-of-node-p action-node))))
                     ((eq position 'at)
                      (combobulate-point-at-beginning-of-node-p action-node))
-                    (t (error "Unknown `:position' specifier `%s'" pos)))
+                    (t (error "Unknown `:position' specifier `%s'" position)))
                    (or (and has-fields (combobulate-procedure-apply-has-field has-fields action-node))
                        (not has-fields))
                    ;; If `:has-parent' or `:has-ancestor' is
@@ -126,10 +125,9 @@
   "Given a list of PROCEDURES, return a list of expanded activation nodes."
   (let ((expanded-nodes))
     (dolist (procedure procedures)
-      (map-let (:activation-nodes activation-nodes)
-          procedure
+      (map-let (:activation-nodes) procedure
         (dolist (activation-node activation-nodes)
-          (map-let (:nodes nodes :position position :has-parent has-parent :has-ancestor has-ancestor)
+          (map-let (:nodes)
               activation-node
             (setq expanded-nodes (nconc expanded-nodes (combobulate-procedure-expand-rules nodes)))))))
     (seq-uniq expanded-nodes)))
@@ -142,7 +140,7 @@ name and the cdr is the node. The tagged name should be
 `@match' (or `match'), indicating the node must be kept; or
 `@discard' (or `discard'), to indicate the node must be removed."
   (let ((matches))
-    (pcase-dolist ((and `(,tagged-name . ,node) result) query-results)
+    (pcase-dolist ((and `(,tagged-name . ,_) result) query-results)
       (cond
        ((or (equal tagged-name 'discard) (equal tagged-name '@discard)) nil)
        (t;; (or (equal tagged-name 'keep) (equal tagged-name '@keep)
@@ -235,10 +233,10 @@ that may apply."
   "Validate PROCEDURE."
   ;; assert that there are no keys beyond these three
   (when-let (unknown-keys (seq-difference (map-keys procedure)
-                                          '(:activation-nodes :selector :filter)))
+                                          '(:activation-nodes :selector)))
     (error "Unknown key in procedure `%s'. Only `:activation-nodes',
 `:selector' or `:filter' are valid" unknown-keys))
-  (map-let (:activation-nodes :selector :filter)
+  (map-let (:activation-nodes :selector)
       procedure
     (unless (listp activation-nodes)
       (error "Expected `:activation-nodes' to be a list, but got `%s'" :activation-nodes))
@@ -262,7 +260,8 @@ that may apply."
             ;; match-query should be a list (:query QUERY :discard-rules RULES :engine ENGINE)
             (unless (and (listp matcher)
                          (let ((query (plist-get matcher :query))
-                               (discard-rules (plist-get matcher :discard-rules)))
+                               ;; (discard-rules (plist-get matcher :discard-rules))
+                               )
                            (and (listp query))))
               (error "Query matchers must have `:query' (and optionally `:discard-rules') but got `%s'" matcher))
             ;; cquery and query should match using `@match' and
@@ -474,7 +473,7 @@ children of NODE. The `:engine' flag determines which, and it
 defaults to `combobulate'. `:discard-rules' is a list of rules
 (or `t' indicating match everything, but not anonymous nodes)."
   (combobulate-procedure-validate procedure)
-  (map-let (:activation-nodes :selector :filter)
+  (map-let (:activation-nodes :selector)
       procedure
     (when-let (procedure-result (combobulate-procedure-apply-activation-nodes
                                  activation-nodes node))
@@ -507,7 +506,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                     (if match-siblings
                         #'combobulate-linear-siblings
                       #'combobulate-node-children)))
-                  (_ (error "Invalid selector: %s" selector))))
+                  (t (error "Invalid selector: %s" selector))))
                 :discard-types (combobulate-procedure-expand-rules combobulate-procedure-discard-rules)
                 :overwrite t
                 :keep-anonymous t)
@@ -561,7 +560,6 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
 (defun combobulate-production-rules-get-inverted (rule-name &optional language)
   "Find the inverted production rule named RULE-NAME."
   (cadr (assoc-string rule-name (combobulate-production-rules--get combobulate-rules-inverse-alist language))))
-
 
 (defun combobulate-production-rules--get (variable &optional language)
   "Get the production rules from VARIABLE."
@@ -678,10 +676,6 @@ exclude node types from all expansion results."
   (when (symbolp (car rules))
     (setq rules (list rules)))
   (combobulate-procedure-expand-rules-1 rules))
-
-
-(defun combobulate-procedure-test-rules (rules node)
-  "Expand RULES into a list of node types and test NODE against them.")
 
 (provide 'combobulate-procedure)
 ;;; combobulate-procedure.el ends here

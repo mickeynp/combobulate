@@ -397,7 +397,6 @@ line when you press
            :selector (:match-query (:query (import_from_statement name: (dotted_name)+ @match)
                                            :engine combobulate)))))
 
-  (setq combobulate-manipulation-indent-method 'first)
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
   (setq combobulate-navigation-defun-procedures

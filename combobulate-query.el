@@ -398,7 +398,7 @@ completion candidates for the current point."
            ((length> parsers 1)
             (cdr (assoc (completing-read "Pick a parser" parsers) parsers)))
            (t (if-let ((p (completing-read "There are no associated parsers. Pick a parser Combobulate knows about: "
-                                           combobulate-rules-list)))
+                                           combobulate-rules-languages)))
                   (combobulate-parser-create (intern p) combobulate-query-builder-target-buffer-name)
                 (error "No parser selected")))))
     (when combobulate-query-builder-parser
@@ -1165,7 +1165,7 @@ highlight Combobulate highlighters.")
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                   (eq feature combobulate-highlight-feature-symbol)))
+                                        (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)
