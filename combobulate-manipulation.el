@@ -54,7 +54,7 @@
     ;; move this into a distinct function that can reproduce stored
     ;; input.
     (goto-char (point-marker))
-    (skip-syntax-backward " ")
+    (combobulate-skip-whitespace-backward)
     (just-one-space 0)
     (setq pt (point))
     (let ((ct 0))
@@ -189,7 +189,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -305,9 +305,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -321,7 +321,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -421,7 +421,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                              (equal (car m) 'discard)))
+                                   (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -743,14 +743,13 @@ after NODE-OR-TEXT."
         (progn
           (unless no-trailing-newline (split-line 0))
           (combobulate--refactor-insert-copied-values
-           (list node-text)))
+           (list (string-trim-right node-text))))
       ;; inline-delimited node
       (save-excursion
         (insert node-text)
         (just-one-space 0)
         (unless (looking-at "\\s-")
-          (insert " ")))
-      (just-one-space))))
+          (insert " "))))))
 
 (defun combobulate--mark-node (node &optional swap beginning-of-line)
   "Mark NODE in the current buffer.
@@ -899,7 +898,10 @@ the current choice and exit."
 (defmacro lambda-slots (slots &rest body)
   "Construct a macro that expands to a lambda with the given SLOTS and BODY.
 
-The SLOTS are bound to the action object using `with-slots'."
+The lambda takes a single argument, ACTION, which is an EIEIO object
+or `cl-defstruct'.
+
+The requested SLOTS are bound to the action object using `with-slots'."
   (declare (indent defun)
            (debug (&define [&or symbolp (symbolp &optional sexp &rest sexp)]
                            def-body)))

@@ -208,6 +208,15 @@
                      (combobulate-splice-self)))
     :per-marker t
     :reverse nil)
+   ;; Cloning
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/clone/*"
+    :collection-name "combobulate-clone-dwim"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0))
+                     (combobulate-clone-node-dwim)))
+    :per-marker t
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop

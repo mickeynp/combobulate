@@ -1,0 +1,8 @@
+# -*- combobulate-test-point-overlays: ((1 outline 128) (2 outline 140)); eval: (combobulate-test-fixture-mode t); -*-
+
+foo:
+  - 1
+  - 2
+  -
+    - 3
+    - 4

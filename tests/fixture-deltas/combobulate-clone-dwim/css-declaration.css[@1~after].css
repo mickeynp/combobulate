@@ -1,0 +1,6 @@
+/* -*- combobulate-test-point-overlays: ((1 outline 155)); eval: (combobulate-test-fixture-mode t); -*- */
+
+.testimonial.middle {
+  width: 90%;
+  margin: 1rem 1rem 2rem 1rem 0rem;
+}

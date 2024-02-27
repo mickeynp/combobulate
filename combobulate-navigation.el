@@ -547,6 +547,12 @@ If NODE is nil, then nil is returned."
    (if skip-newline combobulate-skip-prefix-regexp
      combobulate-skip-prefix-regexp-no-newline)))
 
+(defun combobulate-skip-whitespace-backward (&optional skip-newline)
+  "Skip whitespace backward, including newlines if SKIP-NEWLINE is non-nil."
+  (skip-chars-backward
+   (if skip-newline combobulate-skip-prefix-regexp
+     combobulate-skip-prefix-regexp-no-newline)))
+
 (cl-defmacro with-navigation-nodes ((&key (nodes nil) skip-prefix backward (skip-newline t) (procedures nil)) &rest body)
   "Invoke BODY with a list of specific navigational nodes, and maybe advance point.
 

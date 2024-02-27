@@ -1,0 +1,30 @@
+# -*- combobulate-test-point-overlays: ((1 outline 168) (2 outline 190)); eval: (combobulate-test-fixture-mode t); -*-
+
+version: "3.9"
+
+x-logging:
+  &common-logging
+  driver: "json-file"
+  driver: "json-file"
+  options:
+    max-size: "1k"
+    max-file: "1"
+
+services:
+  redis:
+    logging: *common-logging
+    image: redis:latest
+    volumes:
+      - cache:/data
+  db:
+    logging: *common-logging
+    build:
+      context: .
+      dockerfile: etc/Dockerfile.postgres
+    volumes:
+      - db:/var/lib/postgresql/data/
+      - ./exports:/exports/:ro
+    ports:
+      - "5432:5432"
+    env_file:
+      - etc/postgres.env
