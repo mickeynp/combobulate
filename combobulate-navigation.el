@@ -319,6 +319,10 @@ self-similar to NODE is skipped"
   "Return t if NODE's start position is > point"
   (> (combobulate-node-start node) (point)))
 
+(defun combobulate-node-ends-after-point-p (node)
+  "Return t if NODE's end position is > point"
+  (> (combobulate-node-end node) (point)))
+
 (defun combobulate-node-on-or-after-point-p (node)
   "Return t if NODE's start position is >= point"
   (>= (combobulate-node-start node) (point)))
@@ -662,35 +666,19 @@ of the node."
               (combobulate-all-nodes-at-point)))
 
 (defun combobulate-nav-logical-next ()
-  (when-let* ((tree (flatten-tree
-                     (combobulate-build-sparse-tree
-                      'forward (remove (combobulate-node-type (combobulate-root-node)) combobulate-navigation-default-nodes)
-                      #'combobulate-node-on-or-after-point-p)))
-              (first-node (pop tree)))
-    (when tree
-      (if (combobulate-point-at-beginning-of-node-p first-node)
-          (if (< (combobulate-node-end first-node) (combobulate-node-start (car tree)))
-              first-node
-            (seq-find #'combobulate-node-after-point-p tree))
-        first-node))))
+  "Navigate to the next logical node."
+  (treesit-search-forward
+   (combobulate-node-at-point)
+   #'combobulate-node-after-point-p))
 
 (defun combobulate-nav-logical-previous ()
-  "Navigate to the logical previous node"
-  (when-let* ((tree (reverse (cons
-                              ;; add in `combobulate-root-node' so we
-                              ;; always have a have a base node to
-                              ;; return to.
-                              (combobulate-root-node)
-                              (flatten-tree (combobulate-build-sparse-tree
-                                             'backward combobulate-navigation-default-nodes
-                                             (lambda (n) (or (<= (combobulate-node-end n)
-                                                            (point))
-                                                        (combobulate-point-in-node-range-p n))))))))
-              (first-node (pop tree)))
-    (seq-find #'combobulate-node-before-point-p tree)))
+  "Navigate to the previous logical node."
+  (treesit-search-forward
+   (combobulate-node-at-point)
+   #'combobulate-node-before-point-p t))
 
 (defun combobulate-nodes-share-parent-p (node-a node-b)
-  "Return t if NODE-A and NODE-B have a common navigable ancesor"
+  "Return t if NODE-A and NODE-B have a common navigable ancestor."
   (let ((parent-a (combobulate-nav-get-parent node-a))
         (parent-b (combobulate-nav-get-parent node-b)))
     (and parent-a parent-b (combobulate-node-eq parent-a parent-b))))
