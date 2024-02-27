@@ -917,7 +917,7 @@ The SLOTS are bound to the action object using `with-slots'."
                                              (accept-action 'rollback)
                                              (cancel-action 'commit)
                                              (switch-action 'rollback)
-                                             (recenter t)
+                                             (recenter nil)
                                              (allow-numeric-selection nil)
                                              (signal-on-abort nil)
                                              (start-index 0)
@@ -1192,8 +1192,6 @@ accepts or cancels the proffer. "
                         :reset-point-on-abort t)))
         (combobulate-message "Cloning" node)
         (combobulate--clone-node node (combobulate-node-start node))))))
-
-
 
 (defun combobulate-mark-node-at-point (&optional arg beginning-of-line)
   "Mark the most likely node on or near point ARG times.
@@ -1516,16 +1514,15 @@ Each member of PARTITIONS must be one of:
               (setf (combobulate-proffer-action-refactor-id proffer-action) 'splice)
               (action-function proffer-action)
               (rollback)
-              ;; (combobulate-message
-              ;;  (format
-              ;;   "Spliced. Keep %s. Discard %s."
-              ;;   (combobulate-tally-nodes proxy-matches t)
-              ;;   (combobulate-tally-nodes
-              ;;    (cons target-node
-              ;;          (seq-take (combobulate-proffer-action-proxy-nodes proffer-action)
-              ;;                    (combobulate-proffer-action-index proffer-action)))
-              ;;    t)))
-              )))))))
+              (combobulate-message
+               (format
+                "Spliced. Keep %s. Discard %s."
+                (combobulate-tally-nodes proxy-matches t)
+                (combobulate-tally-nodes
+                 (cons target-node
+                       (seq-take (combobulate-proffer-action-proxy-nodes proffer-action)
+                                 (combobulate-proffer-action-index proffer-action)))
+                 t))))))))))
 
 (defun combobulate-move-past-close-and-reindent (&optional arg)
   (interactive "^p")

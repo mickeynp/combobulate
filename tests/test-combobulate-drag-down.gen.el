@@ -549,11 +549,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 1)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@1~after].html")))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@1~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-2 ()
@@ -562,11 +560,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 2)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@2~after].html")))))
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@2~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-3 ()
@@ -575,11 +571,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 3)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@3~after].html")))))
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@3~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-4 ()
@@ -588,11 +582,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 4)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@4~after].html")))))
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@4~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-5 ()
@@ -601,11 +593,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 5)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@5~after].html")))))
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@5~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-6 ()
@@ -614,11 +604,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-down)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 6)
-		  (combobulate-drag-down)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@6~after].html")))))
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@6~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--elements-7 ()

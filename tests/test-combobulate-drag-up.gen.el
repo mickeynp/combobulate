@@ -549,11 +549,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 7)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@7~after].html")))))
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@7~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-6 ()
@@ -562,11 +560,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 6)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@6~after].html")))))
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@6~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-5 ()
@@ -575,11 +571,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 5)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@5~after].html")))))
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@5~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-4 ()
@@ -588,11 +582,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 4)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@4~after].html")))))
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@4~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-3 ()
@@ -601,11 +593,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 3)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@3~after].html")))))
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@3~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-2 ()
@@ -614,11 +604,9 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 2)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@2~after].html")))))
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@2~after].html")))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-1 ()

@@ -244,7 +244,7 @@ function."
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
                     (let ((cg (prepare-change-group))
-                          (picked-node (nth current-choice nodes))
+                          (picked-node (combobulate-make-proxy (nth current-choice nodes)))
                           (stubbed-refactor-id (combobulate-refactor-setup)))
                       (activate-change-group cg)
                       (setq choice-node picked-node)

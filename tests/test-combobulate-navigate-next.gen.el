@@ -206,24 +206,24 @@
 		 (:language html :mode html-ts-mode :fixture "fixtures/sibling/elements.html")
 	       :tags
 	       '(combobulate html html-ts-mode combobulate-navigate-next)
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-next)))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)))
 
 
 (ert-deftest combobulate-test-python-combobulate-navigate-next--module-statements-8 ()
