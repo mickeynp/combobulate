@@ -269,6 +269,9 @@ See `combobulate-forward-sexp-function'.")
 (defvar-local combobulate-display-ignored-node-types nil
   "Node types that will not appear in the tree display")
 
+(defvar-local combobulate-manipulation-plausible-separators '("," ".")
+  "List of characters that could be valid node separators.")
+
 (defvar-local combobulate-manipulation-trim-whitespace nil
   "Trim whitespace after Combobulate manipulates the tree.
 

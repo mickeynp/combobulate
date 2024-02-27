@@ -709,13 +709,14 @@ after NODE-OR-TEXT."
              (save-excursion
                (combobulate--goto-node node-or-text t)
                (let ((node-after (combobulate-node-on (point) (1+ (point)) nil nil)))
-                 ;; we only care about unnamed nodes: yes, it's
-                 ;; possible named nodes are used for sequence
-                 ;; separators, I suppose, but this is not handled
-                 ;; here at all.
-                 (if (combobulate-node-named-p node-after)
-                     ""
-                   (combobulate-node-text node-after)))))
+                 (cond
+                  ;; named nodes get no sequence separator
+                  ((combobulate-node-named-p node-after) "")
+                  ((and (combobulate-node-anonymous-p node-after)
+                        (member (combobulate-node-text node-after)
+                                combobulate-manipulation-plausible-separators))
+                   (combobulate-node-text node-after))
+                  (t "")))))
             (node-col (save-excursion
                         (combobulate--goto-node node-or-text)
                         (current-indentation))))
