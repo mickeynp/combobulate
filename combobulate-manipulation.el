@@ -1125,10 +1125,15 @@ accepts or cancels the proffer. "
                                   (combobulate--get-all-navigable-nodes-at-point))
                         (lambda-slots (current-node refactor-id)
                           (combobulate-refactor (:id refactor-id)
-                            (mark-node-deleted current-node)
-                            (mark-node-highlighted current-node)
-                            (combobulate-move-to-node current-node)
-                            (combobulate-skip-whitespace-forward)))
+                            (let* ((ov (mark-node-highlighted current-node))
+                                   (start (overlay-start ov))
+                                   (end (overlay-end ov)))
+                              ;; This'll shift around the overlay
+                              ;; extents, so put em back where they
+                              ;; were after cloning.
+                              (combobulate--clone-node current-node (combobulate-node-start current-node))
+                              (setf (overlay-start ov) start)
+                              (setf (overlay-end ov) end))))
                         :reset-point-on-abort t)))
         (combobulate-message "Cloning" node)
         (combobulate--clone-node node (combobulate-node-start node))))))
