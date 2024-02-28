@@ -416,26 +416,22 @@ from `combobulate-manipulation-envelopes') to insert."
              ("jsx_opening_element" "jsx_self_closing_element")))
            ;; but do exclude identifier as that'd match the tag name!
            :selector (:match-children (:match-rules (exclude (rule "jsx_opening_element") "identifier"))))
-          (:activation-nodes
-           ((:nodes
-             ((exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element")))
-             :has-parent
-             ((exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element")))))
-           :selector
-           (:match-children
-            (:discard-rules ("comment" "jsx_closing_element" "jsx_opening_element"))))
+
           ;; for general navigation
           (:activation-nodes
            ((:nodes
-             ((rule "object")
+             ((exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element"))
+              (rule "object")
               (rule "statement")
               (rule "declaration")
+              (rule "statement_block")
               ;; for classes
               (rule "class_body")
               "program" "switch_case")
              :has-parent ("statement_block" "switch_body" "program"
-                          "class_body")))
-           :selector (:match-children (:discard-rules ("comment"))))))
+                          "class_body"
+                          (exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element")))))
+           :selector (:match-children (:discard-rules ("comment" "jsx_closing_element" "jsx_opening_element"))))))
 
   (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
   (setq combobulate-navigation-parent-child-procedures
