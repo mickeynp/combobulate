@@ -433,7 +433,7 @@ from `combobulate-manipulation-envelopes') to insert."
                           (exclude ((rule "jsx_element")) ("jsx_closing_element" "jsx_opening_element")))))
            :selector (:match-children (:discard-rules ("comment" "jsx_closing_element" "jsx_opening_element"))))))
 
-  (setq combobulate-display-ignored-node-types '("jsx_opening_element"))
+  (setq combobulate-display-ignored-node-types '("jsx_opening_element" "jsx_closing_element"))
   (setq combobulate-navigation-parent-child-procedures
         `(;; general navigation into and out of blocks.
           (:activation-nodes
