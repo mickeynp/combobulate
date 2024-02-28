@@ -202,6 +202,7 @@ that may apply."
                       node))
             (push procedure-result matches)
             (unless exhaustive (throw 'done procedure-result))))))
+    (when combobulate-debug (message "Matches: %s" matches))
     matches))
 
 (defun combobulate-procedure-try (procedure node)
