@@ -398,7 +398,7 @@ from `combobulate-manipulation-envelopes') to insert."
                (rule "object_pattern") (rule "array") (rule "arguments") (rule "formal_parameters")
                (rule "expression") (rule "primary_expression") "arrow_function" (rule "tuple_type") (rule "union_type")
                (rule "intersection_type") (rule "type_arguments") (rule "array_pattern") (rule "type_arguments"))
-              "arrow_function")
+              (irule "statement_block"))
              :has-parent
              ("object" "object_type" "import_specifier"
               "object_pattern" "array" "arguments" "formal_parameters"
