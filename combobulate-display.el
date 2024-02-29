@@ -163,11 +163,14 @@
   (with-navigation-nodes (:nodes (seq-difference
                                   combobulate-navigation-default-nodes
                                   combobulate-display-ignored-node-types))
-    (when (member (combobulate-node-type node) combobulate-display-ignored-node-types)
-      (setq node (combobulate--get-nearest-navigable-node)))
-    (when node
-      (save-excursion
-        (combobulate-display-draw-tree-1 (combobulate-display-create-locus node) node)))))
+    (let ((hl-node node))
+      (cond
+       ((member (combobulate-node-type node) combobulate-display-ignored-node-types)
+        (setq node (combobulate--get-nearest-navigable-node)
+              hl-node nil))
+       ((not node) (setq node (combobulate--get-nearest-navigable-node)
+                         hl-node (combobulate--get-nearest-navigable-node))))
+      (combobulate-display-draw-tree-1 (combobulate-display-create-locus node) hl-node))))
 
 
 (defun combobulate-display-create-locus (start-node)
@@ -185,11 +188,10 @@
                         (seq-uniq
                          (seq-remove #'combobulate-node-blank-p
                                      (seq-filter #'combobulate-navigable-node-p
-                                                 (or (combobulate-get-immediate-siblings-of-node start-node)
-                                                     (list
-                                                      (combobulate-node-prev-sibling start-node)
-                                                      start-node
-                                                      (combobulate-node-next-sibling start-node))))))))))
+                                                 (list
+                                                  (combobulate-node-prev-sibling start-node)
+                                                  start-node
+                                                  (combobulate-node-next-sibling start-node)))))))))
     (combobulate-ztree-append-child
      ztree
      (if grand-parent children (cons children nil)))))

@@ -1,0 +1,11 @@
+/* -*- combobulate-test-point-overlays: ((1 outline 227) (2 outline 242) (3 outline 264) (4 outline 286) (5 outline 306) (6 outline 329) (7 outline 351) (8 outline 372)); eval: (combobulate-test-fixture-mode t); -*- */
+h2 {
+  margin: 0px;
+  font-style: italic;
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  font-family: Cardo;
+  font-weight: bold;
+  font-size: 3rem;
+}

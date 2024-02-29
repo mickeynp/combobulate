@@ -1,7 +1,7 @@
 {
   "name": "html",
   "rules": {
-    "fragment": {
+    "document": {
       "type": "REPEAT",
       "content": {
         "type": "SYMBOL",
@@ -44,6 +44,10 @@
         {
           "type": "SYMBOL",
           "name": "doctype"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "entity"
         },
         {
           "type": "SYMBOL",
@@ -367,6 +371,10 @@
       "type": "PATTERN",
       "value": "[^<>\"'=\\s]+"
     },
+    "entity": {
+      "type": "PATTERN",
+      "value": "&(#([xX][0-9a-fA-F]{1,6}|[0-9]{1,5})|[A-Za-z]{1,30});?"
+    },
     "quoted_attribute_value": {
       "type": "CHOICE",
       "members": [
@@ -434,7 +442,7 @@
     },
     "text": {
       "type": "PATTERN",
-      "value": "[^<>\\s]([^<>]*[^<>\\s])?"
+      "value": "[^<>&\\s]([^<>&]*[^<>&\\s])?"
     }
   },
   "extras": [
@@ -490,4 +498,3 @@
   "inline": [],
   "supertypes": []
 }
-

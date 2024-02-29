@@ -1,2 +1,4 @@
 *.elc
 flycheck*
+*#*
+/.envrc

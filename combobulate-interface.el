@@ -64,6 +64,10 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
+(defun combobulate-primary-language ()
+  (combobulate-parser-language (or (car (combobulate-parser-list))
+                                   (error "No parsers available"))))
+
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
 
@@ -74,6 +78,9 @@
   (if (combobulate-node-p node)
       (treesit-node-check node 'named)
     (combobulate-proxy-node-named node)))
+
+(defsubst combobulate-node-anonymous-p (node)
+  (not (combobulate-node-named-p node)))
 
 (defsubst combobulate-node-start (node)
   (if (combobulate-node-p node)
@@ -98,6 +105,12 @@
       (or (treesit-node-text node (not with-properties)) "")
     (or (and node (combobulate-proxy-node-text node)) "")))
 
+(defsubst combobulate-node-next-sibling (node &optional anonymous)
+  (treesit-node-next-sibling node (not anonymous)))
+
+(defsubst combobulate-node-prev-sibling (node &optional anonymous)
+  (treesit-node-prev-sibling node (not anonymous)))
+
 (defsubst combobulate-node-child (node n &optional anonymous)
   (treesit-node-child node n (not anonymous)))
 
@@ -106,12 +119,6 @@
 
 (defsubst combobulate-node-parent (node)
   (treesit-node-parent node))
-
-(defsubst combobulate-node-next-sibling (node &optional anonymous)
-  (treesit-node-next-sibling node (not anonymous)))
-
-(defsubst combobulate-node-prev-sibling (node &optional anonymous)
-  (treesit-node-prev-sibling node (not anonymous)))
 
 (defsubst combobulate-parent-while (node pred)
   (treesit-parent-while node pred))
@@ -142,44 +149,76 @@
 (defsubst combobulate-filter-child (node pred &optional anonymous)
   (treesit-filter-child node pred (not anonymous)))
 
-(cl-defstruct combobulate-proxy-node
+(cl-defstruct (combobulate-proxy-node
+               (:constructor combobulate-proxy-node-create)
+               (:copier nil))
   "Proxy object for a some properties of a real tree-sitter node.
 
 Only some fields are kept: relationships to other nodes are not
 kept."
-  start end text type named field node pp)
+  start end text type named field node pp extra)
 
 
-(defun combobulate-make-proxy (nodes)
+(defun combobulate-proxy-node-make-from-nodes (nodes)
   "Factory that creates a facsimile proxy node of NODES."
-  (let ((proxies (mapcar
-                  (lambda (node)
-                    (if (combobulate-node-p node)
-                        (make-combobulate-proxy-node
-                         :start (set-marker (make-marker) (treesit-node-start node))
-                         :end (set-marker (make-marker) (treesit-node-end node))
-                         :text (treesit-node-text node t)
-                         :type (treesit-node-type node)
-                         :named (treesit-node-check node 'named)
-                         :field (treesit-node-field-name node)
-                         :node node
-                         :pp (combobulate-pretty-print-node node))
-                      node))
-                  (if (consp nodes) nodes (list nodes)))))
+  (let ((proxies
+         (mapcar
+          (pcase-lambda ((or (and (pred consp) `(,mark . ,node)) node))
+            (let ((tgt-node (if (combobulate-node-p node)
+                                (combobulate-proxy-node-create
+                                 :start (set-marker (make-marker) (treesit-node-start node))
+                                 :end (set-marker (make-marker) (treesit-node-end node))
+                                 :text (treesit-node-text node t)
+                                 :type (treesit-node-type node)
+                                 :named (treesit-node-check node 'named)
+                                 :field (treesit-node-field-name node)
+                                 :node node
+                                 :pp (combobulate-pretty-print-node node)
+                                 :extra nil)
+                              node)))
+              (if mark (cons mark tgt-node) tgt-node)))
+          (ensure-list nodes))))
     (if (consp nodes)
         proxies
       (car-safe proxies))))
 
-(defun combobulate-proxy-to-tree-node (proxy-node)
+(defun combobulate-proxy-node-make-from-range (beg end)
+  "Factory that creates a facsimile proxy node of the region BEG END."
+  (combobulate-proxy-node-create
+   :start (set-marker (make-marker) beg)
+   :end (set-marker (make-marker) end)
+   :text (buffer-substring-no-properties beg end)
+   :type "region"
+   :named t
+   :field nil
+   :node nil
+   :pp "Region"
+   :extra nil))
+
+(defun combobulate-proxy-node-make-point-node (&optional pt)
+  "Create a proxy node at `point'."
+  (combobulate-proxy-node-create
+   :start (or pt (point))
+   :end (or pt (point))
+   :text ""
+   :type "point"
+   :named t
+   :node nil
+   :field nil
+   :pp "Point"))
+
+(defun combobulate-proxy-node-to-real-node (proxy-node)
   "Attempt to find the real tree-sitter node PROXY-NODE points to."
   (when proxy-node
     ;; if we are holding on to a valid treesit node then just pass
     ;; that on provided it's still useful.
-    (if t
-        ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
-        ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
-        ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
-        (save-excursion
+    (cond
+     ;; todo: disabled until it is possible to detect if a node belongs to a deleted parser
+     ;; (or (treesit-node-check (combobulate-proxy-node-node proxy-node) 'outdated)
+     ;;     (treesit-node-check (combobulate-proxy-node-node proxy-node) 'missing))
+     ;; check if proxy-node is even a proxy node
+     ((not (combobulate-proxy-node-p proxy-node)) proxy-node)
+     (t (save-excursion
           (combobulate--goto-node proxy-node)
           (car-safe (seq-filter (lambda (pt-node)
                                   (and
@@ -193,8 +232,65 @@ kept."
                                        t)))
                                 (combobulate-filter-nodes
                                  (combobulate-all-nodes-at-point)
-                                 :keep-types (list (combobulate-node-type proxy-node))))))
-      (combobulate-proxy-node-node proxy-node))))
+                                 :keep-types (list (combobulate-node-type proxy-node))))))))))
+
+
+(defmacro combobulate-atomic-change-group (&rest body)
+  "Re-entrant change group, like `atomic-change-group'.
+This means that if BODY exits abnormally,
+all of its changes to the current buffer are undone.
+This works regardless of whether undo is enabled in the buffer.
+
+This mechanism is transparent to ordinary use of undo;
+if undo is enabled in the buffer and BODY succeeds, the
+user can undo the change normally."
+  (declare (indent 0) (debug t))
+  (let ((handle (gensym "--change-group-handle--"))
+	(success (gensym "--change-group-success--")))
+    `(let ((,handle (prepare-change-group))
+	   ;; Don't truncate any undo data in the middle of this.
+	   (undo-outer-limit nil)
+	   (undo-limit most-positive-fixnum)
+	   (undo-strong-limit most-positive-fixnum)
+	   (,success nil))
+       (unwind-protect
+	   (progn
+	     ;; This is inside the unwind-protect because
+	     ;; it enables undo if that was disabled; we need
+	     ;; to make sure that it gets disabled again.
+	     (activate-change-group ,handle)
+	     (prog1 ,(macroexp-progn body)
+	       (setq ,success t)))
+	 ;; Either of these functions will disable undo
+	 ;; if it was disabled before.
+	 (if ,success
+	     (accept-change-group ,handle)
+	   (cancel-change-group ,handle))))))
+
+(cl-defstruct (combobulate-proffer-action
+               (:constructor combobulate-proffer-action-create)
+               (:copier nil))
+  index
+  display-indicator
+  current-node
+  proxy-nodes
+  refactor-id
+  prompt-description
+  extra-map)
+
+(defmacro lambda-slots (slots &rest body)
+  "Construct a macro that expands to a lambda with the given SLOTS and BODY.
+
+The lambda takes a single argument, ACTION, which is an EIEIO object
+or `cl-defstruct'.
+
+The requested SLOTS are bound to the action object using `with-slots'."
+  (declare (indent defun)
+           (debug (&define [&or symbolp (symbolp &optional sexp &rest sexp)]
+                           def-body)))
+  `(lambda (action)
+     (with-slots ,slots action
+       ,@body)))
 
 
 (provide 'combobulate-interface)

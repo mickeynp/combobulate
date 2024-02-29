@@ -33,9 +33,17 @@
 (require 'combobulate-interface)
 (require 'map)
 
+(declare-function combobulate-production-rules-get-rules "combobulate-navigation")
+(declare-function combobulate-procedure-collect-activation-nodes "combobulate-navigation")
+(declare-function combobulate-procedure-start-matches "combobulate-navigation")
+(declare-function combobulate-production-rules-get-inverted "combobulate-navigation")
 
-(declare-function combobulate-procedure-start-aggressive "combobulate-manipulation")
-(declare-function combobulate-procedure-get-activation-nodes "combobulate-manipulation")
+
+(defvar combobulate-skip-prefix-regexp " \t\n"
+  "Skip prefix regexp used to skip past whitespace characters.")
+
+(defvar combobulate-skip-prefix-regexp-no-newline " \t"
+  "Skip prefix regexp used to skip past whitespace characters.")
 
 (defsubst combobulate-group-nodes (labelled-nodes &optional group-fn)
   "Group LABELLED-NODES from a query by their label.
@@ -93,12 +101,12 @@ If HIGHLIGHTED then the node is highlighted with
   (if (combobulate-node-p node)
       (let ((s (funcall combobulate-pretty-print-node-name-function node
                         (combobulate-pretty-print-node-name node ""))))
-        (concat (format "%s%s"
-                        (propertize s 'face
-                                    (cond
-                                     (highlighted 'combobulate-tree-highlighted-node-face)
-                                     (t 'combobulate-tree-normal-node-face)))
-                        (if combobulate-debug (concat " " (combobulate-node-range node)) ""))))
+        (format "%s%s"
+                (propertize s 'face
+                            (cond
+                             (highlighted 'combobulate-tree-highlighted-node-face)
+                             (t 'combobulate-tree-normal-node-face)))
+                (if combobulate-debug (format " %s" (combobulate-node-range node)) "")))
     ;; fallback in case we've got a proxy node
     (if (combobulate-proxy-node-p node)
         (combobulate-proxy-node-pp node)
@@ -141,6 +149,13 @@ Uses `point' and `mark' to infer the boundaries."
         (beginning-of-line)
         (point))
       (point)))))
+
+(defun combobulate-before-point-anonymous-node-p (pt)
+  "Return the node if there is an anonymous node before point."
+  (save-excursion
+    (goto-char pt)
+    (skip-chars-backward combobulate-skip-prefix-regexp)
+    (seq-find #'combobulate-node-anonymous-p (combobulate-all-nodes-at-point t t))))
 
 (defun combobulate-after-point-blank-p (pt)
   "Return t if there is nothing but blank text or a newline after PT."
@@ -206,8 +221,22 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
+
+(defun combobulate-linear-siblings (node &optional anonymous)
+  "Return all linear siblings of NODE.
+
+Linear siblings are nodes that are at the same level in the
+syntax tree."
+  ;; rewind to the first node
+  (let ((siblings) (ref-node node) (start-node))
+    (while (setq ref-node (combobulate-node-prev-sibling ref-node anonymous))
+      (setq start-node ref-node))
+    (cl-do ((node start-node (combobulate-node-next-sibling node anonymous)))
+        ((null node) siblings)
+      (push node siblings))
+    (nreverse siblings)))
 
 (defun combobulate--get-nearest-navigable-node ()
   "Returns the nearest navigable node to point"
@@ -222,7 +251,10 @@ If NODE-ONLY is non-nil then only the node texts are returned"
      parents)))
 
 (defun combobulate-get-specific-parent-type (node specific-types &optional skip-self-similar)
-  "Return the first parent with one of SPECIFIC-TYPES of NODE if such a node exist."
+  "Get the first parent node of NODE that matches one of the SPECIFIC-TYPES
+
+If SKIP-SELF-SIMILAR is non-nil then the first parent node that is
+self-similar to NODE is skipped"
   (let* ((parents (combobulate-get-parents node))
          (self-similar-node nil)
          (match (seq-find (lambda (match-node)
@@ -298,6 +330,10 @@ If NODE-ONLY is non-nil then only the node texts are returned"
   "Return t if NODE's start position is > point"
   (> (combobulate-node-start node) (point)))
 
+(defun combobulate-node-ends-after-point-p (node)
+  "Return t if NODE's end position is > point"
+  (> (combobulate-node-end node) (point)))
+
 (defun combobulate-node-on-or-after-point-p (node)
   "Return t if NODE's start position is >= point"
   (>= (combobulate-node-start node) (point)))
@@ -340,18 +376,6 @@ start."
      node (or end (and auto (= (combobulate-node-start node) (point)))))
     (combobulate--flash-node node)
     node))
-
-(defun combobulate-make-proxy-point-node (&optional pt)
-  "Create a proxy node at `point'."
-  (make-combobulate-proxy-node
-   :start (or pt (point))
-   :end (or pt (point))
-   :text ""
-   :type "point"
-   :named t
-   :node nil
-   :field nil
-   :pp ""))
 
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
@@ -409,70 +433,26 @@ Returns a list of parents ordered closest to farthest."
     (list hierarchical-node-types flat-node-types)))
 
 
-(defun combobulate-node-has-hierarchy-p (node &optional parent-node-types)
-  "Return t if NODE has a hierarchy of NODE-TYPES.
-
-NODE-TYPES must be a list of node types or cons cells. If a cons,
-then the cons cell must only contain strings.
-
-The sequence of NODE-TYPES must match the sequence of parents you
-wish to match.
-"
-  (let ((match)
-        (node-parents (seq-take (combobulate-get-parents node)
-                                (length parent-node-types)))
-        (node-parent))
-    (when (equal (length node-parents) (length parent-node-types))
-      (catch 'stop
-        (dolist (node-type parent-node-types)
-          (setq node-parent (pop node-parents))
-          (catch 'next
-            (cond ((consp node-type)
-                   (dolist (sub-node-type node-type)
-                     (unless (stringp sub-node-type)
-                       (error "Invalid node type: %s" sub-node-type))
-                     (when (equal (combobulate-node-type node-parent)
-                                  sub-node-type)
-                       (throw 'next nil)))
-                   (throw 'stop nil))
-                  ((stringp node-type)
-                   (unless (equal (combobulate-node-type node-parent)
-                                  node-type)
-                     (throw 'stop nil)))
-                  (t (error "Invalid node type: %s" node-type)))))
-        (setq match t)))
-    match))
-
 (defun combobulate-node-at-point (&optional node-types named-only)
   "Return the smallest syntax node at point whose type is one of NODE-TYPES "
-  (seq-let [hierarchical-node-types flat-node-types] (combobulate--split-node-types node-types)
-    (let* ((p (point))
-           (node (treesit-node-on p p nil named-only))
-           (immediate-hierarchical-node-types (mapcar 'car hierarchical-node-types))
-           (rest-hierarchical-node-types (flatten-list (mapcar 'cdr hierarchical-node-types))))
-      (if (or flat-node-types immediate-hierarchical-node-types)
-          (let ((this node))
-            (catch 'done
-              (while this
-                (let ((smallest-node (combobulate-node-descendant-for-range
-                                      this
-                                      (combobulate-node-start this)
-                                      (combobulate-node-start this))))
-                  (cond
-                   ((and (member (combobulate-node-type this) immediate-hierarchical-node-types)
-                         (combobulate-node-has-hierarchy-p this rest-hierarchical-node-types))
-                    (throw 'done this))
-                   ((and (member (combobulate-node-type smallest-node) immediate-hierarchical-node-types)
-                         (combobulate-node-has-hierarchy-p smallest-node rest-hierarchical-node-types))
-                    (throw 'done smallest-node))
-
-                   ((member (combobulate-node-type this) flat-node-types)
-                    (throw 'done this))
-                   ((member (combobulate-node-type smallest-node) flat-node-types)
-                    (throw 'done smallest-node))
-                   (t (setq this (combobulate-node-parent this))))
-                  ))))
-        node))))
+  (let* ((p (point))
+         (node (treesit-node-on p p nil named-only)))
+    (if node-types
+        (let ((this node))
+          (catch 'done
+            (while this
+              (let ((smallest-node (combobulate-node-descendant-for-range
+                                    this
+                                    (combobulate-node-start this)
+                                    (combobulate-node-start this))))
+                (cond
+                 ((member (combobulate-node-type this) node-types)
+                  (throw 'done this))
+                 ((member (combobulate-node-type smallest-node) node-types)
+                  (throw 'done smallest-node))
+                 (t (setq this (combobulate-node-parent this))))
+                ))))
+      node)))
 
 (defun combobulate--get-all-navigable-nodes-at-point ()
   "Returns all navigable nodes that start at `point'.
@@ -481,14 +461,14 @@ The returned list is ordered smallest-to-largest by the node's
 extent."
   (seq-filter #'combobulate-navigable-node-p (combobulate-all-nodes-at-point)))
 
-(defun combobulate-all-nodes-at-point (&optional backward)
+(defun combobulate-all-nodes-at-point (&optional backward anonymous)
   "Returns all nodes that start at `point'.
 
 The returned list is ordered smallest-to-largest by the node's
 extent."
   (let ((nodes)
         (sub-node (combobulate-node-descendant-for-range
-                   (combobulate-root-node) (if backward (1- (point)) (point)) (point))))
+                   (combobulate-root-node) (if backward (1- (point)) (point)) (point) anonymous)))
     (while (and sub-node (= (if backward (combobulate-node-end sub-node) (combobulate-node-start sub-node)) (point)))
       (push sub-node nodes)
       (setq sub-node (combobulate-node-parent sub-node)))
@@ -503,13 +483,18 @@ extent."
   (let ((smallest most-positive-fixnum)
         (largest most-negative-fixnum))
     (mapc (lambda (c)
-            (pcase-let ((`(,start . ,end) (combobulate-node-range c)))
-              (when (< start smallest)
-                (setq smallest start))
-              (when (> end largest)
-                (setq largest end))))
+            (and c (pcase-let ((`(,start . ,end) (combobulate-node-range c)))
+                     (when (< start smallest)
+                       (setq smallest start))
+                     (when (> end largest)
+                       (setq largest end)))))
           nodes)
-    (list smallest largest)))
+    (cons smallest largest)))
+
+
+(defun combobulate-get-error-nodes (&optional node)
+  "Return all nodes in NODES that are of type ERROR."
+  (combobulate-query-capture (or node (combobulate-root-node)) '((ERROR) @node) nil nil t))
 
 (defun combobulate-filter-nodes-by-type (nodes unwanted-node-types)
   "Filter NODES of UNWANTED-NODE-TYPES."
@@ -518,14 +503,14 @@ extent."
       (setq nodes (seq-filter (lambda (node) (not (equal (combobulate-node-type node) unwanted-node-type))) nodes))))
   nodes)
 
-(cl-defun combobulate-filter-nodes (nodes &key keep-types remove-types (testfn nil))
+(cl-defun combobulate-filter-nodes (nodes &key keep-types remove-types (get-fn nil))
   (when (and keep-types remove-types)
     (error "Cannot specify both `:keep-types' and `:remove-types'."))
   (if (and (not keep-types) (not remove-types))
       nodes
     (seq-filter (lambda (elem)
-                  (let ((node-type (combobulate-node-type (if testfn
-                                                              (funcall testfn elem)
+                  (let ((node-type (combobulate-node-type (if get-fn
+                                                              (funcall get-fn elem)
                                                             elem))))
                     (if keep-types
                         (and keep-types (member node-type keep-types))
@@ -549,15 +534,15 @@ If NODE is nil, then nil is returned."
       (combobulate-node-start node))))
 
 
-(defvar combobulate-skip-prefix-regexp " \t\n"
-  "Skip prefix regexp used to skip past whitespace characters.")
-
-(defvar combobulate-skip-prefix-regexp-no-newline " \t"
-  "Skip prefix regexp used to skip past whitespace characters.")
-
 (defun combobulate-skip-whitespace-forward (&optional skip-newline)
   "Skip whitespace forward, including newlines if SKIP-NEWLINE is non-nil."
   (skip-chars-forward
+   (if skip-newline combobulate-skip-prefix-regexp
+     combobulate-skip-prefix-regexp-no-newline)))
+
+(defun combobulate-skip-whitespace-backward (&optional skip-newline)
+  "Skip whitespace backward, including newlines if SKIP-NEWLINE is non-nil."
+  (skip-chars-backward
    (if skip-newline combobulate-skip-prefix-regexp
      combobulate-skip-prefix-regexp-no-newline)))
 
@@ -581,12 +566,9 @@ original position."
     `(let* ((combobulate-navigation-default-nodes
              (or ,nodes
                  (when (and ,procedures (not ,nodes))
-                   (combobulate-procedure-get-activation-nodes ,procedures))
+                   (combobulate-procedure-collect-activation-nodes ,procedures))
                  combobulate-navigation-default-nodes))
-            (combobulate-navigation-hierarchical-first-nodes
-             (mapcar #'cdr (car (combobulate--split-node-types
-                                 combobulate-navigation-default-nodes))))
-            (combobulate-manipulation-default-procedures ,procedures))
+            (combobulate-default-procedures ,procedures))
        (if combobulate-debug (message "with-navigation-nodes: %s" (prin1 ,nodes)))
        ;; keep the old position around: if we skip chars around but
        ;; `body' fails with an error we want to snap back.
@@ -627,10 +609,7 @@ modifier you can pass to many interactive movement commands."
 (defun combobulate-navigable-node-p (node)
   "Returns non-nil if NODE is a navigable node"
   (when node
-    (or (member (combobulate-node-type node) combobulate-navigation-default-nodes)
-        (and combobulate-navigation-hierarchical-first-nodes
-             (combobulate-node-has-hierarchy-p
-              node combobulate-navigation-hierarchical-first-nodes)))))
+    (member (combobulate-node-type node) combobulate-navigation-default-nodes)))
 
 (defun combobulate-point-at-beginning-of-node-p (node)
   "Returns non-nil if the beginning position of NODE is equal to `point'"
@@ -677,19 +656,6 @@ of the node."
                        t)))
               (combobulate-get-parents node)))
 
-(defun combobulate-nav-siblings-after-node (parent node)
-  "Find the sibling after NODE. Both must share PARENT."
-  (combobulate-filter-child parent
-                            (lambda (match-node)
-                              (combobulate-node-after-node-p match-node node))))
-
-(defun combobulate-nav-siblings-before-node (parent node)
-  "Find the sibling before NODE. Both must share PARENT."
-  (reverse (combobulate-filter-child parent
-                                     (lambda (match-node)
-                                       (combobulate-node-after-node-p node match-node)))))
-
-
 (defun combobulate-nav-get-smallest-node-at-point (&optional end)
   "Returns the smallest navigable node at point, possibly from the END"
   (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
@@ -698,65 +664,24 @@ of the node."
                                       node)))
               (combobulate-all-nodes-at-point)))
 
-(defun combobulate-nav-forward (&optional skip-prefix)
-  "Moves forward one navigable node"
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
-    (when-let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
-      (when (combobulate-point-at-beginning-of-node-p node)
-        node))))
-
-(defun combobulate-nav-backward (&optional skip-prefix)
-  "Moves forward one navigable node"
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes :skip-prefix skip-prefix)
-    (let ((node (combobulate-node-looking-at combobulate-navigation-default-nodes)))
-      (when (combobulate-point-at-end-of-node-p node 0)
-        node))))
-
 (defun combobulate-nav-logical-next ()
-  (when-let* ((tree (flatten-tree
-                     (combobulate-build-sparse-tree
-                      'forward (remove (combobulate-node-type (combobulate-root-node)) combobulate-navigation-default-nodes)
-                      #'combobulate-node-on-or-after-point-p)))
-              (first-node (pop tree)))
-    (when tree
-      (if (combobulate-point-at-beginning-of-node-p first-node)
-          (if (< (combobulate-node-end first-node) (combobulate-node-start (car tree)))
-              first-node
-            (seq-find #'combobulate-node-after-point-p tree))
-        first-node))))
+  "Navigate to the next logical node."
+  (treesit-search-forward
+   (combobulate-node-at-point)
+   #'combobulate-node-after-point-p))
 
 (defun combobulate-nav-logical-previous ()
-  "Navigate to the logical previous node"
-  (when-let* ((tree (reverse (cons
-                              ;; add in `combobulate-root-node' so we
-                              ;; always have a have a base node to
-                              ;; return to.
-                              (combobulate-root-node)
-                              (flatten-tree (combobulate-build-sparse-tree
-                                             'backward combobulate-navigation-default-nodes
-                                             (lambda (n) (or (<= (combobulate-node-end n)
-                                                            (point))
-                                                        (combobulate-point-in-node-range-p n))))))))
-              (first-node (pop tree)))
-    (seq-find #'combobulate-node-before-point-p tree)))
+  "Navigate to the previous logical node."
+  (treesit-search-forward
+   (combobulate-node-at-point)
+   #'combobulate-node-before-point-p t))
 
 (defun combobulate-nodes-share-parent-p (node-a node-b)
-  "Return t if NODE-A and NODE-B have a common navigable ancesor"
+  "Return t if NODE-A and NODE-B have a common navigable ancestor."
   (let ((parent-a (combobulate-nav-get-parent node-a))
         (parent-b (combobulate-nav-get-parent node-b)))
     (and parent-a parent-b (combobulate-node-eq parent-a parent-b))))
 
-
-(defun combobulate--get-directed-siblings (sibling direction)
-  "Find siblings of SIBLING in DIRECTION"
-  (let ((siblings))
-    (while (setq sibling (if (eq direction 'forward)
-                             (combobulate-node-next-sibling sibling)
-                           (combobulate-node-prev-sibling sibling)))
-      (push sibling siblings))
-    (if (eq direction 'up)
-        siblings
-      (reverse siblings))))
 
 (defun combobulate-find-matches-by-node-type (node-or-type node-type-list &optional keep-labels)
   (when-let (q (combobulate-look-up-node-type
@@ -769,10 +694,9 @@ of the node."
      ((stringp q) node-or-type)
      (t nil))))
 
-(defun combobulate--get-siblings (node)
-  "Return all siblings of NODE."
-  (mapcar #'cdr (cdr (combobulate-procedure-start-aggressive
-                      (combobulate-node-start node)))))
+(defun combobulate-nav-get-siblings (node)
+  "Return all navigable siblings of NODE."
+  (combobulate-procedure-start-matches node))
 
 (defun combobulate--get-sibling (node direction)
   "Returns the sibling node of NODE in the specified DIRECTION.
@@ -792,7 +716,7 @@ of the current node if the direction if `forward'. This is done
 to try and prevent point from getting stuck at the end of a node
 that technically has another immediate parent."
   (when node
-    (let* ((siblings (combobulate--get-siblings node)))
+    (let* ((siblings (combobulate-nav-get-siblings node)))
       (cond
        ((eq direction 'forward)
         (car (seq-filter #'combobulate-node-after-point-p siblings)))
@@ -826,10 +750,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                       (funcall (if backward
-                                    #'combobulate-point-at-end-of-node-p
-                                  #'combobulate-point-at-beginning-of-node-p)
-                                node)))
+                            (funcall (if backward
+                                         #'combobulate-point-at-end-of-node-p
+                                       #'combobulate-point-at-beginning-of-node-p)
+                                     node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
@@ -837,8 +761,8 @@ that technically has another immediate parent."
 
 This function must be installed in `forward-sexp-function' to
 work properly."
-  (with-navigation-nodes (:nodes combobulate-navigation-sexp-nodes
-                                 :skip-prefix t :backward (< arg 0))
+  (with-navigation-nodes (:procedures combobulate-navigation-sexp-procedures
+                                      :skip-prefix t :backward (< arg 0))
     (let ((node)
           (inc (if (> arg 0) 1 -1))
           (backward (< arg 0)))
@@ -926,27 +850,6 @@ If START-NODE is set, use it in lieu of `combobulate-root-node'."
       nil)))
 
 
-(defun combobulate-get-immediate-siblings-of-node (node)
-  "Find siblings of NODE."
-  (when-let* ((children (combobulate-find-siblings node combobulate-navigation-default-nodes))
-              ;; find `node' in `children'. It may be a smaller node of one
-              ;; of `children' so we want to find the actual node in
-              ;; `children'.
-              (ctx-node (seq-find (lambda (match-node)
-                                    (combobulate-node-contains-node-p node match-node))
-                                  children))
-              (ctx-node-pos (seq-position children ctx-node #'combobulate-node-eq)))
-    (list
-     ;; previous sibling
-     (nth (1- ctx-node-pos) children)
-     ;; `node' but (possibly the parent of it) as found in
-     ;; `children'. This is important because we may be given `node'
-     ;; which is "if" and thus part of "if_statement", the actual node
-     ;; we want.
-     ctx-node
-     ;; next sibling
-     (nth (1+ ctx-node-pos) children))))
-
 (defun combobulate-find-node-in-subtree (tree node &optional starting-offset)
   "Find the subtree containing NODE in TREE.
 
@@ -972,97 +875,6 @@ NODE is found or all depths have been searched."
           (throw 'done subtree))
         (cl-incf offset)))))
 
-
-(defun combobulate-find-siblings (node parent-node-types)
-  "Given NODE find its siblings from a parent of PARENT-NODE-TYPES."
-  (when-let ((nodes (seq-filter (lambda (match-node)
-                                  (and (member (combobulate-node-type match-node) parent-node-types)
-                                       ;; (combobulate-node-on-or-before-point-p match-node)
-                                       (or (combobulate-node-before-point-p match-node)
-                                           ;; dumb hack. if a node
-                                           ;; begins at `point-min'
-                                           ;; then it might fail the
-                                           ;; previous check. However,
-                                           ;; if you expand the check
-                                           ;; to include nodes that
-                                           ;; are before `point-min'
-                                           ;; (not feasible) it may
-                                           ;; not find the actual root
-                                           ;; node.
-                                           (and (= (combobulate-node-start match-node) (point-min))
-                                                (not (combobulate-node-parent match-node))))
-                                       ;; (> (combobulate-node-end match-node) (combobulate-node-end node))
-                                       ))
-                                (combobulate-get-parents node))))
-    (combobulate-get-expanded-children (car nodes))))
-
-(defun combobulate-get-siblings-of-node (node &optional skip-self-similar)
-  (let* ((p (combobulate-get-specific-parent-type node combobulate-navigation-default-nodes
-                                                  skip-self-similar))
-         (parent-node (cdr p))
-         (production-rules
-          (list (combobulate-node-type parent-node))))
-    (when parent-node
-      (with-navigation-nodes (:nodes production-rules)
-        (combobulate-get-expanded-children parent-node combobulate-navigation-rules-overrides)))))
-
-(defun combobulate-production-rules-get (node-type &optional fields)
-  "Get production rules for NODE-TYPE and maybe from its FIELDS.
-
-Rules are sourced from `combobulate-navigation-rules'."
-  (unless combobulate-navigation-rules
-    (error "There are no production rules in `combobulate-navigation-rules'.
-
-If you are adding a new language, ensure the grammar files are:
-
-1. Properly built using `build/build-relationships.py', and that you have sourced the `grammar.json' and `node-types.json' files.
-2. That the rebuilt `combobulate-rules.el' file is evaluated in your Emacs session.
-3. That the name of the grammar matches that in `combobulate-rules.el'."))
-  (setq fields (or fields '(:all t)))
-  (let* ((rules (copy-sequence (cadr (assoc node-type combobulate-navigation-rules))))
-         (all-keys (map-keys rules)))
-    (if rules
-        (apply
-         #'append
-         (mapcar (lambda (prop)
-                   (if (plist-member rules prop)
-                       (plist-get rules prop)
-                     (error "Rule `%s' has no field named `%s'. Known fields: `%s'"
-                            node-type prop all-keys)))
-                 (cond
-                  ((null fields) '(:*unnamed*))
-                  ((plist-get fields :all) all-keys)
-                  (t fields))))
-      (error "Cannot find any rules named `%s'" node-type))))
-
-(defun combobulate-production-rules-get-inverted (rule-name)
-  "Find the inverted production rule named RULE-NAME."
-  (or
-   (cadr (assoc rule-name combobulate-navigation-rules-overrides-inverted))
-   (cadr (assoc rule-name combobulate-navigation-rules-inverted))))
-
-(defun combobulate-production-rules-expand (existing-rules rule fields)
-  "Expand RULE with FIELDS in EXISTING-RULES and remove it."
-  (setq existing-rules (delete rule existing-rules))
-  (append existing-rules (combobulate-production-rules-get rule fields)))
-
-(defun combobulate-production-rules-expand-all (rules &optional replace)
-  "Expand production RULES.
-
-If REPLACE is non-nil, then any rule in RULES is removed if it is
-expanded."
-  (let ((expanded-rules nil))
-    (pcase-dolist (`(,rule . ,fields) rules)
-      (setq expanded-rules (append expanded-rules (combobulate-production-rules-get rule fields))))
-    (if replace
-        (combobulate-filter-nodes-by-type expanded-rules (mapcar 'car rules))
-      expanded-rules)))
-
-(defun combobulate-production-rules-set (rule)
-  "Set (and override, if it exists) RULE."
-  (setq combobulate-navigation-rules-overrides
-        (assoc-delete-all (car rule) combobulate-navigation-rules-overrides))
-  (push (copy-tree rule) combobulate-navigation-rules-overrides))
 
 (cl-defun combobulate-get-children (node &key (anonymous nil) excluded-fields
                                          included-fields remove-types keep-types (all t)
@@ -1141,48 +953,6 @@ at the same time."
                       (member node-type keep-types))
                   (not (member node-type remove-types)))))
          (combobulate-node-children node anonymous))))))
-
-(defun combobulate-get-expanded-children (node &optional rules)
-  "Return a list of expanded children for the given NODE using RULES.
-
-Expanded children are obtained by recursively applying the
-override rules to the children of NODE. The resulting list of
-nodes is sorted using the `combobulate-node-before-node-p'
-function."
-  (let* ((node-type (combobulate-node-type node))
-         (node-rules (assoc node-type (or rules combobulate-navigation-rules-overrides)))
-         (expanded-children)
-         (collected))
-    (pcase-let ((`(,_ . ,spec) node-rules))
-      (map-let (:included-fields
-                :anonymous :excluded-fields
-                :expand-rules :keep-types
-                :expand-nodes :remove-types)
-          spec
-        (setq expanded-children
-              (combobulate-get-children
-               node
-               :anonymous anonymous
-               :included-fields included-fields
-               :excluded-fields excluded-fields
-               :keep-types (append keep-types (combobulate-production-rules-expand-all expand-rules))
-               :remove-types remove-types
-               :all t))
-        (setq collected expanded-children)
-        (when expand-nodes
-          ;; clean this up. time complexity is too high and it can be
-          ;; simplified.
-          (while expanded-children
-            (dolist (expand-node expand-nodes)
-              (let ((child (pop expanded-children)))
-                (setq expanded-children
-                      (nconc (and (equal (car expand-node) (combobulate-node-type child))
-                                  (combobulate-get-expanded-children child (list expand-node)))
-                             expanded-children))
-                (setq collected (combobulate-filter-nodes-by-type
-                                 (append collected expanded-children)
-                                 (list (car expand-node))))))))))
-    (seq-uniq (seq-sort #'combobulate-node-before-node-p collected) #'combobulate-node-eq)))
 
 (defun combobulate-nav-to-defun (direction &optional node)
   "Navigate to a defun in DIRECTION, possibly from NODE.
@@ -1265,59 +1035,8 @@ DIRECTION must be `forward' or `backward'."
   "Navigate forward to the end of the defun."
   (combobulate-nav-to-defun 'forward))
 
-(defun combobulate-navigate-down-list-maybe (&optional arg)
-  "Navigate down into a list or the nearest navigable node ARG times.
-
-This command mimics the existing \\[down-list] command
-but with added support for navigable nodes."
-  (interactive "^p")
-  (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
-      (when-let ((navigable-node (combobulate--get-nearest-navigable-node))
-                 (nearest-node (combobulate-node-at-point))
-                 (targets (seq-filter
-                           ;; Filter elements that are either nil or where the location
-                           ;; it wants to jump to is _behind_ `point'. Then, find the
-                           ;; minimum of the remaining elements and go to that.
-                           (lambda (elem) (and elem (> elem (point))))
-                           (list (save-excursion (ignore-errors (down-list 1 nil) (point)))
-                                 (if (combobulate-point-at-beginning-of-node-p navigable-node)
-                                     (combobulate-node-point navigable-node t))
-                                 (combobulate-node-point (combobulate-nav-get-child navigable-node))
-                                 (combobulate-node-point (combobulate-nav-get-child nearest-node))
-                                 (ignore-errors (save-excursion
-                                                  (backward-up-list 1 nil)
-                                                  (forward-sexp)
-                                                  (point)))))))
-        (when-let (target (apply #'min targets))
-          (goto-char target)
-          (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
-
-(defun combobulate-navigate-up-list-maybe (&optional arg)
-  "Maybe navigate up out of a list or to the nearest navigable node
-
-This command mimics the existing \\[backward-up-list] command
-but with added support for navigable nodes."
-  (interactive "^p")
-  ;; NOTE: Roll up into `combobulate-navigate-down-list-maybe'
-  (with-argument-repetition arg
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
-      (let* ((navigable-node (combobulate--get-nearest-navigable-node))
-             (nearest-node (combobulate-node-at-point))
-             (navigable-node-parent (and navigable-node (combobulate-nav-get-parent navigable-node)))
-             (nearest-node-parent (and nearest-node (combobulate-nav-get-parent nearest-node)))
-             (targets (seq-filter
-                       (lambda (elem) (and elem (< elem (point))))
-                       (list (save-excursion (ignore-errors (backward-up-list 1 t t) (point)))
-                             (combobulate-node-point navigable-node-parent)
-                             (combobulate-node-point nearest-node-parent)))))
-        (when-let (target (and targets (apply #'max targets)))
-          (goto-char target)
-          (combobulate--flash-node (combobulate--get-nearest-navigable-node)))))))
-
-
 (defun combobulate--navigate-up ()
-  (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-parent-child-procedures)
     (combobulate-nav-get-parent
      (combobulate-node-at-point))))
 
@@ -1328,9 +1047,26 @@ but with added support for navigable nodes."
     (combobulate-visual-move-to-node (combobulate--navigate-up))))
 
 (defun combobulate--navigate-down ()
-  (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
-    (combobulate-nav-get-child
-     (combobulate--get-nearest-navigable-node))))
+  (with-navigation-nodes (:skip-prefix nil :procedures combobulate-navigation-parent-child-procedures)
+    (or
+     ;; try to find a procedure that can take us to a valid child node
+     ;; (that starts after point)
+     (car (seq-filter
+           #'combobulate-node-after-point-p
+           (combobulate-procedure-start-matches (combobulate--get-nearest-navigable-node))))
+     ;; ... and if that fails, jump into the first list-like structure
+     ;; ahead of point.
+     ;;
+     ;;
+     ;; NOTE: this is a slightly modified version of `down-list' with
+     ;; the syntax-ppss table check removed as it seems run into parse
+     ;; errors in JSX files.
+     (ignore-errors
+       (let* ((arg 1)
+              (inc (if (> arg 0) 1 -1)))
+         (while (/= arg 0)
+           (goto-char (or (scan-lists (point) inc -1) (buffer-end arg)))
+           (setq arg (- arg inc))))))))
 
 (defun combobulate-navigate-down (&optional arg)
   "Move down into the nearest navigable node ARG times"
@@ -1363,7 +1099,8 @@ but with added support for navigable nodes."
                                      combobulate-navigate-next-move-to-end)))
 
 (defun combobulate--navigate-previous ()
-  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures
+                                      )
     (combobulate-nav-get-prev-sibling
      (combobulate--get-nearest-navigable-node))))
 
@@ -1373,38 +1110,18 @@ but with added support for navigable nodes."
   (with-argument-repetition arg
     (combobulate-visual-move-to-node (combobulate--navigate-previous))))
 
-(defun combobulate--navigate-forward ()
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (combobulate-nav-forward t)))
-
-(defun combobulate-navigate-forward (&optional arg)
-  "If at the beginning of a navigable node, move forward ARG times"
-  (interactive "^p")
-  (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-forward) t)))
-
-(defun combobulate--navigate-backward ()
-  (with-navigation-nodes (:nodes combobulate-navigation-default-nodes)
-    (combobulate-nav-backward t)))
-
-(defun combobulate-navigate-backward (&optional arg)
-  "If at the end of a navigable node, move backward ARG times"
-  (interactive "^p")
-  (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-backward))))
-
 (defun combobulate--navigate-logical-next ()
-  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes :skip-prefix nil)
+  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix t)
     (combobulate-nav-logical-next)))
 
 (defun combobulate-navigate-logical-next (&optional arg)
   "Move to the next logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil t)))
+    (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil nil)))
 
 (defun combobulate--navigate-logical-previous ()
-  (with-navigation-nodes (:nodes combobulate-navigation-logical-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures)
     (combobulate-nav-logical-previous)))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
@@ -1414,7 +1131,7 @@ but with added support for navigable nodes."
     (combobulate-visual-move-to-node (combobulate--navigate-logical-previous))))
 
 (defun combobulate--navigate-end-of-defun ()
-  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
     (combobulate-nav-end-of-defun)))
 
 (defun combobulate-navigate-end-of-defun (&optional arg)
@@ -1424,7 +1141,7 @@ but with added support for navigable nodes."
     (combobulate-visual-move-to-node (combobulate--navigate-end-of-defun) t)))
 
 (defun combobulate--navigate-beginning-of-defun ()
-  (with-navigation-nodes (:nodes combobulate-navigation-defun-nodes)
+  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
     (combobulate-nav-beginning-of-defun)))
 
 (defun combobulate-navigate-beginning-of-defun (&optional arg)
@@ -1638,7 +1355,7 @@ removed."
             ;; handle `field:' terms
             ((and (guard (eq term-type 'field)) (guard (state-p '(node))) field)
              (set-expected-state 'field '(node))
-             (let ((rule (cadr (assoc (combobulate-node-type query-node) combobulate-navigation-rules))))
+             (let ((rule (cadr (assoc-string (combobulate-node-type query-node) (combobulate-production-rules-get-rules)))))
                (unless (map-contains-key rule (intern (concat ":" (to-field field))))
                  (error "Production rule for node `%s' does not support a field named `%s'. Known: `%s'"
                         query-node field (map-keys rule))))

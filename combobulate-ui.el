@@ -64,7 +64,8 @@
    ["DWIM at Point"
     ("c" "Cluster" combobulate-edit-cluster-dwim)
     ("t" "Node Type" combobulate-edit-node-type-dwim)
-    ("x" "Node Text" combobulate-edit-node-by-text-dwim)]
+    ("x" "Node Text" combobulate-edit-node-by-text-dwim)
+    ("s" "Sibling" combobulate-edit-node-siblings-dwim)]
    ["Query"
     ("q" "By Query" combobulate-edit-query)]])
 
@@ -79,9 +80,7 @@
       `[,@(mapcar (lambda (envelope)
                     (map-let (:key :description :function) envelope
                       `(,key ,description ,function)))
-                  combobulate-manipulation-envelopes)]
-      )
-     )])
+                  combobulate-manipulation-envelopes)]))])
 
 
 (transient-define-prefix combobulate ()
@@ -94,10 +93,10 @@
     ("C-M-b" "Backward sexp" backward-sexp :transient t)
     ("a" "Avy …" combobulate-avy)]
    ["Hierarchical"
-    ("C-M-u" "Up into list" combobulate-navigate-up-list-maybe :transient t)
-    ("C-M-d" "Down into list" combobulate-navigate-down-list-maybe :transient t)
+    ("C-M-u" "Up into list" combobulate-navigate-up :transient t)
+    ("C-M-d" "Down into list" combobulate-navigate-down :transient t)
     ("C-M-p" "Backward sibling" combobulate-navigate-previous :transient t)
-    ("C-M-n" "Forward sibling" combobulate-navigate-forward :transient t)]
+    ("C-M-n" "Forward sibling" combobulate-navigate-next :transient t)]
    [:description (lambda () (concat
                         (propertize "Defun " 'face 'transient-heading)
                         (format "(to: %s)"
@@ -123,15 +122,14 @@
     ("t" "Edit …" combobulate-edit)
     ("c" "Clone node DWIM" combobulate-clone-node-dwim)
     ("C-M-t" "Transpose sexp" combobulate-transpose-sexps)
-    ("e" "Envelop …" combobulate-envelop)]
-   ["Experimental"
-    ("M-<up>" "Splice up and out" combobulate-splice-up :transient t)
-    ("M-<down>" "Splice down and out" combobulate-splice-down :transient t)
-    ("M-<left>" "Yeet" combobulate-yeet-forward :transient t)
-    ("M-<right>" "Yoink" combobulate-yoink-forward :transient t)
+    ("e" "Envelop …" combobulate-envelop)
     ("M-P" "Drag node up" combobulate-drag-up :transient t)
-    ("M-N" "Drag node down" combobulate-drag-down :transient t)
-    ("v" "Vanish parent" combobulate-vanish-node)]])
+    ("M-N" "Drag node down" combobulate-drag-down :transient t)]
+   ["Splicing"
+    ("M-<up>" "Elevate before and out" combobulate-splice-up :transient t)
+    ("M-<down>" "Elevate after and out" combobulate-splice-down :transient t)
+    ("M-<left>" "Elevate self and out" combobulate-splice-self :transient t)
+    ("M-<right>" "Elevate all and out" combobulate-splice-parent)]])
 
 (provide 'combobulate-ui)
 ;;; combobulate-ui.el ends here

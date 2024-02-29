@@ -39,6 +39,7 @@
 (require 'combobulate-navigation)
 (require 'combobulate-misc)
 (require 'combobulate-interface)
+(require 'combobulate-rules)
 ;;; base mode for the query builder
 (require 'scheme)
 ;;; for plist stuff
@@ -51,9 +52,7 @@
 (eval-when-compile
   (require 'cl-lib))
 
-
-(declare-function combobulate-get-inverted-rule-symbol "combobulate")
-(declare-function combobulate-get-rule-symbol "combobulate")
+(defvar combobulate-mode)
 
 (defvar combobulate-query-ring-index 0
   "Index of the current query in `combobulate-query-ring'.")
@@ -250,7 +249,7 @@ the xrefs for a query. This variable is used to temporarily bind
 want the default xrefs functionality for normal xrefs but want to
 use something else for Combobulate.
 
-By default ti uses `xref-show-definitions-completing-read' which
+By default it uses `xref-show-definitions-completing-read' which
 shows the xrefs in a completing read prompt."
   :group 'combobulate-query
   :type 'function)
@@ -388,14 +387,22 @@ completion candidates for the current point."
 (defun combobulate-query-builder-change-parser ()
   "Change the parser used by `combobulate-query-mode'."
   (interactive)
+  (unless (buffer-live-p combobulate-query-builder-target-buffer-name)
+    (error "Buffer `%s' is not live" combobulate-query-builder-target-buffer-name))
   (let ((parsers (mapcar (lambda (p) (cons (format "%s" p) p)) (combobulate-parser-list))))
     (setq combobulate-query-builder-parser
-          (if (length> parsers 1)
-              (cdr (assoc (completing-read "Pick a parser" parsers) parsers))
-            (cdr (car parsers))))
+          (cond
+           ((length= parsers 1) (cdr (car parsers)))
+           ((length> parsers 1)
+            (cdr (assoc (completing-read "Pick a parser" parsers) parsers)))
+           (t (if-let ((p (completing-read "There are no associated parsers. Pick a parser Combobulate knows about: "
+                                           combobulate-rules-languages)))
+                  (combobulate-parser-create (intern p) combobulate-query-builder-target-buffer-name)
+                (error "No parser selected")))))
     (when combobulate-query-builder-parser
       (combobulate-message
        (format "Parser changed to `%s'" (combobulate-parser-language combobulate-query-builder-parser))))))
+
 
 (defun combobulate-query-builder--highlight-capture (capture)
   "Highlight CAPTURE in the current buffer."
@@ -563,10 +570,12 @@ Argument PARSER sets the buffer to the parser instance to use for fontifying."
             (combobulate-proffer-choices
              (cons point-node (combobulate-get-parents point-node))
              #'combobulate-proffer-action-highlighter
-             :prompt-description "Pick a node hierarchy to copy"
-             :use-proxy-nodes nil)))
+             :prompt-description "Pick a node hierarchy to copy")))
       (unless parent-node
         (user-error "No node selected"))
+      ;; check if we have a `node' slot in the parent
+      ;; node. `combobulate-proffer-choices' only returns proxy nodes.
+      (setq parent-node (combobulate-proxy-node-node parent-node))
       (combobulate-query-builder-insert
        (combobulate-query-builder-to-string
         (combobulate-build-nested-query
@@ -865,9 +874,11 @@ buffer."
     (define-key map (kbd "C-c x") #'combobulate-query-builder-find-in-xref)
     (define-key map (kbd "C-c h") #'combobulate-query-builder-copy-node-hierarchy-at-point)
     (define-key map (kbd "C-c +") #'fit-window-to-buffer)
+    (define-key map (kbd "C-c q") #'combobulate-query-builder-save-and-quit)
     (define-key map (kbd "C-c M-p") #'combobulate-query-ring-previous-query)
     (define-key map (kbd "C-c M-n") #'combobulate-query-ring-next-query)
     (define-key map (kbd "C-c C-s") #'combobulate-query-ring-save-query)
+    (define-key map (kbd "M-<up>") #'raise-sexp)
     map)
   "Keymap for `combobulate-query-mode'.")
 
@@ -879,6 +890,15 @@ buffer."
   "Signal an error unless the query builder buffer is live."
   (unless (combobulate-query-builder-live-p)
     (user-error "No query builder buffer found")))
+
+(defun combobulate-query-builder-save-and-quit ()
+  "Save the query and quit the query builder buffer."
+  (interactive)
+  (combobulate-query-builder-live-or-error)
+  (with-current-buffer combobulate-query-builder-target-buffer-name
+    (when (yes-or-no-p "Save current query to ring ?")
+      (combobulate-query-ring-save-query)))
+  (kill-buffer combobulate-query-builder-buffer-name))
 
 ;;;###autoload
 (defun combobulate-query-builder ()
@@ -892,10 +912,10 @@ highlighting and node completion."
     (when (eq target-buffer builder-buffer)
       (user-error "This buffer cannot be use as target buffer"))
     (with-current-buffer target-buffer
+      (setq combobulate-query-builder-target-buffer-name target-buffer)
       (combobulate-query-builder-change-parser)
       (add-hook 'combobulate-query-builder-after-change-functions
-                #'combobulate-query-builder--after-change nil :local)
-      (setq combobulate-query-builder-target-buffer-name target-buffer))
+                #'combobulate-query-builder--after-change nil :local))
     (with-current-buffer builder-buffer
       (erase-buffer)
       (combobulate-query-mode)
@@ -923,12 +943,12 @@ To use, call \\[combobulate-query-builder]."
   :group 'combobulate
   :abbrev-table scheme-mode-abbrev-table
   (let ((parser-lang-name (combobulate-parser-language combobulate-query-builder-parser)))
-    (setq combobulate-query-builder-rules (combobulate-get-rule-symbol parser-lang-name))
-    (setq combobulate-query-builder-rule-names (seq-uniq (flatten-list (combobulate-get-inverted-rule-symbol parser-lang-name))))
+    (setq combobulate-query-builder-rules (combobulate-production-rules-get-rules parser-lang-name))
+    (setq combobulate-query-builder-rule-names (combobulate-production-rules-get-types parser-lang-name))
     (setq combobulate-query-builder-field-names
           (mapcar #'combobulate-query-builder-prop-name-to-field-name
                   (seq-remove (lambda (prop) (equal prop :*unnamed*))
-                              (seq-uniq (mapcan #'map-keys (mapcar #'cadr (combobulate-get-rule-symbol parser-lang-name)))))))
+                              (seq-uniq (mapcan #'map-keys (mapcar #'cadr (combobulate-production-rules-get-rules parser-lang-name)))))))
     (setq-local comment-start ";"
                 comment-end "")
     (setq-local completion-at-point-functions '(combobulate-query-builder-completion-at-point-function))
@@ -1059,7 +1079,7 @@ node at point to highlight."
                                              (combobulate-get-parents (combobulate-node-at-point nil t))))))))
         (query))
     (unless node (error "Cannot find a valid context node at point"))
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-nodes)
+    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
       (if-let ((node-parent (combobulate-node-parent node)))
           (progn
             (setq query (combobulate-query-builder-matcher-query
@@ -1090,8 +1110,9 @@ highlight Combobulate highlighters.")
   ;; font lock feature list. This is I think the only way to inject
   ;; custom font lock rules into the tree-sitter-powered font lock
   ;; engine.
-  (unless (member combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))
-    (push combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))))
+  (when treesit-font-lock-feature-list
+    (unless (member combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list))
+      (push combobulate-highlight-feature-symbol (car treesit-font-lock-feature-list)))))
 
 (defun combobulate-highlight-query ()
   (interactive)
@@ -1103,10 +1124,13 @@ highlight Combobulate highlighters.")
       (combobulate-query-builder-expand-match-face query)
       (combobulate-parser-language (car (combobulate-parser-list)))))))
 
-(defun combobulate-highlight-install-query (query language)
-  "Highlight the QUERY in LANGUAGE in the current buffer."
+(defun combobulate-highlight-install-query (query language &optional quiet)
+  "Highlight the QUERY in LANGUAGE in the current buffer.
+
+If QUIET is non-nil, then do not display any warning messages if
+the query fails to compile."
   (if-let (err (combobulate-query-builder-validate-query query))
-      (progn (warn "Query %s failed to compile: %s." query err) nil)
+      (progn (unless quiet (warn "Query %s failed to compile: %s." query err)) nil)
     (setq treesit-font-lock-settings
           (append treesit-font-lock-settings
                   (treesit-font-lock-rules
@@ -1121,20 +1145,21 @@ highlight Combobulate highlighters.")
 
 (defun combobulate-highlight-install (language)
   "Install the font lock rules for LANGUAGE in the current buffer."
-  (combobulate-highlight-setup)
-  ;; do the user-defined rules...
-  (dolist (rule combobulate-highlight-queries-alist)
-    (when (eq language (plist-get rule :language))
+  (when combobulate-mode
+    (combobulate-highlight-setup)
+    ;; do the user-defined rules...
+    (dolist (rule combobulate-highlight-queries-alist)
+      (when (eq language (plist-get rule :language))
+        (combobulate-highlight-install-query
+         (combobulate-query-builder-expand-match-face
+          (combobulate-query-builder-to-string (plist-get rule :query)))
+         language t)))
+    ;; next, the system-supplied rules...
+    (dolist (rule combobulate-highlight-queries-default)
       (combobulate-highlight-install-query
        (combobulate-query-builder-expand-match-face
-        (combobulate-query-builder-to-string (plist-get rule :query)))
-       language)))
-  ;; next, the system-supplied rules...
-  (dolist (rule combobulate-highlight-queries-default)
-    (combobulate-highlight-install-query
-     (combobulate-query-builder-expand-match-face
-      (combobulate-query-builder-to-string rule))
-     language)))
+        (combobulate-query-builder-to-string rule))
+       language t))))
 
 (defun combobulate-highlight-clear ()
   "Clear all Combobulate highlight in the current buffer."

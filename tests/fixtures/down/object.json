@@ -1,0 +1,14 @@
+// -*- combobulate-test-point-overlays: ((1 outline 233) (2 outline 237) (3 outline 244) (4 outline 250) (5 outline 255) (6 outline 263) (7 outline 273) (8 outline 285) (9 outline 290)); eval: (combobulate-test-fixture-mode t); -*-
+{
+  "foo": {
+    "1": [
+      [
+        {
+          "a": 1
+        },
+        2
+      ],
+      "bar"
+    ]
+  }
+}
