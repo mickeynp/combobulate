@@ -62,7 +62,7 @@ Combobulate can also place cursors (using the optional *multiple cursors* packag
 
 You can clone code with ease. If Combobulate cannot guess the exact thing you want to clone, you'll be asked to interactively preview and pick the right node to clone.
 
-.. image:: docs/splice.gif
+.. image:: docs/splicing.gif
 
 Combobulate can *splice* your code. Any code. For instance, you can keep some of your HTML tags and splice them into the parent node, removing it in the process.
 
