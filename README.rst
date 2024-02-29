@@ -127,7 +127,7 @@ Finally, note that any command that edits your code is at best a "best guess" ef
 How do I install Combobulate?
 -----------------------------
 
-**NOTE: The tree-sitter grammars can and do change. If that happens, it can cause issues in Emacs or Combobulate. If you see strange query validation errors or broken highlighting, try using an older grammar checkout from Git.**
+**NOTE: The tree-sitter grammars can and do change. If that happens, it can cause issues in Emacs or Combobulate. If you see strange query validation errors or broken highlighting, try using an older grammar checkout from Git. See the table above or the example code below.**
 
 Combobulate is not on MELPA or any other package repository, yet. For Combobulate to install properly you must meet the following requirements:
 
