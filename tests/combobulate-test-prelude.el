@@ -244,7 +244,7 @@ function."
                   (when ,call-action-fn
                     (and ,error-if-missing (should (<= current-choice (length nodes))))
                     (let ((cg (prepare-change-group))
-                          (picked-node (combobulate-make-proxy (nth current-choice nodes)))
+                          (picked-node (combobulate-proxy-node-make-from-nodes (nth current-choice nodes)))
                           (stubbed-refactor-id (combobulate-refactor-setup)))
                       (activate-change-group cg)
                       (setq choice-node picked-node)
@@ -252,8 +252,8 @@ function."
                         (funcall (or ,replacement-action-fn action-fn)
                                  (combobulate-proffer-action-create
                                   :index current-choice
-                                  :current-node (combobulate-make-proxy picked-node)
-                                  ;; :proxy-nodes (combobulate-make-proxy nodes)
+                                  :current-node (combobulate-proxy-node-make-from-nodes picked-node)
+                                  ;; :proxy-nodes (combobulate-proxy-node-make-from-nodes nodes)
                                   :refactor-id stubbed-refactor-id))
                         (if (eq accept-action 'rollback)
                             (rollback)

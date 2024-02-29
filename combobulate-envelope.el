@@ -105,7 +105,9 @@ If the register does not exist, return DEFAULT or nil."
             (combobulate--refactor-update-field ov tag text (symbol-name tag)))
           (combobulate--refactor-get-overlays))))
 
-(cl-defstruct combobulate-envelope-context
+(cl-defstruct (combobulate-envelope-context
+               (:constructor combobulate-envelope-context-create)
+               (:copier nil))
   "The context of a combobulate envelope during its expansion."
   start end user-actions)
 
@@ -383,7 +385,7 @@ If the register does not exist, return DEFAULT or nil."
                ;; and undoes everything.
                (quit (combobulate-message "Keyboard quit. Undoing expansion."))))
             (_ (error "Unknown sub-instruction: %S" sub-instruction)))))
-      (make-combobulate-envelope-context
+      (combobulate-envelope-context-create
        :start start
        :end end
        :user-actions user-actions))))
@@ -471,7 +473,7 @@ they are given in CATEGORIES."
             (`(choice . ,choices)
              (let ((nodes))
                (pcase-dolist (`(choice ,pt ,name ,missing ,rest-envelope ,text) choices)
-                 (push (make-combobulate-proxy-node
+                 (push (combobulate-proxy-node-create
                         :start pt
                         :end pt
                         :text text
@@ -568,7 +570,7 @@ they are given in CATEGORIES."
                (goto-char (cdr pt))))
             (`(point . ,points)
              (let ((nodes (mapcar (lambda (pt-instruction)
-                                    (combobulate-make-proxy-point-node (cadr pt-instruction)))
+                                    (combobulate-proxy-node-make-point-node (cadr pt-instruction)))
                                   points)))
                ;; Ensure every single point node has a cursor visible
                ;; so the user can see the available cursor choices.
@@ -596,7 +598,7 @@ they are given in CATEGORIES."
         (if combobulate-envelope-static
             (rollback)
           (commit)))
-      (make-combobulate-envelope-context
+      (combobulate-envelope-context-create
        :user-actions remaining-user-actions
        :start nil
        :end end))))
@@ -918,7 +920,7 @@ If REGION is non-nil, envelop the region instead of NODE."
                  ((member point-placement '(start end))
                   (combobulate--goto-node node (eq point-placement 'end)))))
               ;; triggering an envelope will invalidate `node'.
-              (setq node (combobulate-make-proxy node))
+              (setq node (combobulate-proxy-node-make-from-nodes node))
               (prog1 (combobulate-envelope-expand-instructions template)
                 (combobulate-message "Enveloping" node "in" description)))
           (error "Cannot apply envelope `%s'. Point must be in one of \
@@ -980,7 +982,7 @@ See `combobulate-apply-envelope' for more information."
                  ;; create a proxy node at point; that node (and
                  ;; thus `point') will instead be where the
                  ;; envelope is inserted.
-                 (list (combobulate-make-proxy-point-node)))))
+                 (list (combobulate-proxy-node-make-point-node)))))
           (progn
             (setq chosen-node
                   (combobulate-proffer-choices

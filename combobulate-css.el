@@ -98,7 +98,9 @@
                                        (rule "selectors")
                                        (rule "arguments")))))))
   (setq combobulate-navigation-parent-child-procedures
-        '((:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
+        '((:activation-nodes ((:nodes ("block") :position at)) :selector (:choose node :match-children (:match-rules (rule "block"))))
+          (:activation-nodes ((:nodes ("media_statement") :position at)) :selector (:choose node :match-children (:match-rules "block")))
+          (:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 
   (setq combobulate-navigation-sibling-procedures
         '(;; declarations' own property values should be siblings, but

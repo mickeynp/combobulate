@@ -88,7 +88,7 @@
                      session-id))))
    (car (overlay-lists))))
 
-(defun combobulate--refactor-clear-overlays (session-id)
+(defun combobulate--refactor-clear-overlays (&optional session-id)
   "Clear all `combobulate-refactor' overlays with SESSION-ID."
   (mapc #'delete-overlay (combobulate--refactor-get-overlays session-id)))
 
@@ -190,7 +190,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                                    (combobulate--refactor-update-field ov tag text)))
+                               (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -306,9 +306,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -322,7 +322,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -353,7 +353,7 @@ a match."
         (setq ct (length matches))
         (push (cons start-node matches) grouped-matches)))
     (combobulate-refactor ()
-      (let* ((chosen-node (combobulate-proxy-to-tree-node
+      (let* ((chosen-node (combobulate-proxy-node-to-real-node
                            (combobulate-proffer-choices
                             (reverse (mapcar 'car grouped-matches))
                             (lambda-slots (current-node refactor-id)
@@ -362,7 +362,7 @@ a match."
                                 (mark-node-highlighted current-node)
                                 (princ (format "Editing %s in %s%s\n"
                                                (combobulate-pretty-print-node-type current-node)
-                                               (combobulate-proxy-to-tree-node current-node)
+                                               (combobulate-proxy-node-to-real-node current-node)
                                                (and (combobulate-node-field-name current-node)
                                                     (format " (%s)"
                                                             (combobulate-node-field-name current-node)))))
@@ -374,7 +374,7 @@ a match."
                                 ;; node to indicate where the
                                 ;; matching nodes are.
                                 (mapc #'mark-node-cursor
-                                      (cdr (assoc (combobulate-proxy-to-tree-node node)
+                                      (cdr (assoc (combobulate-proxy-node-to-real-node node)
                                                   grouped-matches)))
                                 ;; indicate the locus of editing
                                 ;; by highlighting the entire node
@@ -422,7 +422,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                                   (equal (car m) 'discard)))
+                              (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -951,7 +951,7 @@ accepts or cancels the proffer. "
              combobulate-proffer-allow-numeric-selection))
   (let ((proxy-nodes
          (and nodes
-              (funcall #'combobulate-make-proxy
+              (funcall #'combobulate-proxy-node-make-from-nodes
                        ;; strip out duplicate nodes. That
                        ;; includes nodes that are duplicates
                        ;; of one another; however, we also
@@ -1022,7 +1022,7 @@ accepts or cancels the proffer. "
                                      (if (and flash-node combobulate-flash-node)
                                          (concat "\n"
                                                  (or (combobulate-display-draw-node-tree
-                                                      (combobulate-proxy-to-tree-node current-node))
+                                                      (combobulate-proxy-node-to-real-node current-node))
                                                      ""))
                                        "")))))
                     (cl-flet ((refactor-action (action)
@@ -1081,8 +1081,8 @@ accepts or cancels the proffer. "
                            (keyboard-quit))
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp)) (pred (lambda (n) (and (>= n 1)
-                                                                   (<= n 9)
-                                                                   (<= n (length proxy-nodes)))))
+                                                                        (<= n 9)
+                                                                        (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1193,7 +1193,7 @@ more than one."
         ;; made-up node type.
         (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
                    (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
-          (setq nodes (cons (make-combobulate-proxy-node
+          (setq nodes (cons (combobulate-proxy-node-create
                              :start (car bounds)
                              :end (cdr bounds)
                              :type (symbol-name combobulate-mark-node-or-thing-at-point)
@@ -1388,7 +1388,7 @@ Each member of PARTITIONS must be one of:
         ;; nodes. This does mean that we cannot pick things that are
         ;; disjoint, however.
         (combobulate-node-range-extent matches)
-      (setq source-node (combobulate-make-proxy-from-range start end))
+      (setq source-node (combobulate-proxy-node-make-from-range start end))
       (setf (combobulate-proxy-node-text source-node)
             (combobulate-indent-string-first-line
              (combobulate-node-text source-node)
@@ -1445,7 +1445,7 @@ Each member of PARTITIONS must be one of:
                             (delete-horizontal-space)
                           (just-one-space)))))))
         (let ((proffer-action)
-              (proxy-matches (combobulate-make-proxy matches)))
+              (proxy-matches (combobulate-proxy-node-make-from-nodes matches)))
           (when-let (target-node (combobulate-proffer-choices
                                   legal-splices
                                   (lambda (action)
@@ -1490,9 +1490,9 @@ Each member of PARTITIONS must be one of:
             (combobulate-move-to-node
              (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
                (combobulate-nav-get-parent point-node)))
-            (or (combobulate-make-proxy (combobulate--get-sibling
-                                         (combobulate-node-at-point)
-                                         'forward))
+            (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
+                                                         (combobulate-node-at-point)
+                                                         'forward))
                 (error "No valid sibling node.")))))
     (save-excursion
       (let ((pos))
@@ -1517,9 +1517,9 @@ Each member of PARTITIONS must be one of:
             (combobulate-move-to-node
              (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
                (combobulate-nav-get-parent point-node)))
-            (or (combobulate-make-proxy (combobulate--get-sibling
-                                         (combobulate-node-at-point)
-                                         'forward))
+            (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
+                                                         (combobulate-node-at-point)
+                                                         'forward))
                 (error "No valid sibling node.")))))
     (save-excursion
       (let ((pos-col))

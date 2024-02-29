@@ -56,7 +56,9 @@
                   parent))
               parents)))
 
-(cl-defstruct combobulate-procedure-result
+(cl-defstruct (combobulate-procedure-result
+               (:constructor combobulate-procedure-result-create)
+               (:copier nil))
   "The result of a procedure."
   activation-node
   action-node
@@ -68,7 +70,7 @@
 
 (defun combobulate-procedure-apply-activation-nodes (activation-nodes action-node)
   "Apply ACTIVATION-NODES to NODE."
-  (let ((result (make-combobulate-procedure-result
+  (let ((result (combobulate-procedure-result-create
                  :activation-node nil
                  :action-node action-node
                  :parent-node nil

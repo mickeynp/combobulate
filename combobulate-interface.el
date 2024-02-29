@@ -149,7 +149,9 @@
 (defsubst combobulate-filter-child (node pred &optional anonymous)
   (treesit-filter-child node pred (not anonymous)))
 
-(cl-defstruct combobulate-proxy-node
+(cl-defstruct (combobulate-proxy-node
+               (:constructor combobulate-proxy-node-create)
+               (:copier nil))
   "Proxy object for a some properties of a real tree-sitter node.
 
 Only some fields are kept: relationships to other nodes are not
@@ -157,13 +159,13 @@ kept."
   start end text type named field node pp extra)
 
 
-(defun combobulate-make-proxy (nodes)
+(defun combobulate-proxy-node-make-from-nodes (nodes)
   "Factory that creates a facsimile proxy node of NODES."
   (let ((proxies
          (mapcar
           (pcase-lambda ((or (and (pred consp) `(,mark . ,node)) node))
             (let ((tgt-node (if (combobulate-node-p node)
-                                (make-combobulate-proxy-node
+                                (combobulate-proxy-node-create
                                  :start (set-marker (make-marker) (treesit-node-start node))
                                  :end (set-marker (make-marker) (treesit-node-end node))
                                  :text (treesit-node-text node t)
@@ -180,9 +182,9 @@ kept."
         proxies
       (car-safe proxies))))
 
-(defun combobulate-make-proxy-from-range (beg end)
+(defun combobulate-proxy-node-make-from-range (beg end)
   "Factory that creates a facsimile proxy node of the region BEG END."
-  (make-combobulate-proxy-node
+  (combobulate-proxy-node-create
    :start (set-marker (make-marker) beg)
    :end (set-marker (make-marker) end)
    :text (buffer-substring-no-properties beg end)
@@ -193,7 +195,19 @@ kept."
    :pp "Region"
    :extra nil))
 
-(defun combobulate-proxy-to-tree-node (proxy-node)
+(defun combobulate-proxy-node-make-point-node (&optional pt)
+  "Create a proxy node at `point'."
+  (combobulate-proxy-node-create
+   :start (or pt (point))
+   :end (or pt (point))
+   :text ""
+   :type "point"
+   :named t
+   :node nil
+   :field nil
+   :pp "Point"))
+
+(defun combobulate-proxy-node-to-real-node (proxy-node)
   "Attempt to find the real tree-sitter node PROXY-NODE points to."
   (when proxy-node
     ;; if we are holding on to a valid treesit node then just pass
@@ -253,7 +267,6 @@ user can undo the change normally."
 	     (accept-change-group ,handle)
 	   (cancel-change-group ,handle))))))
 
-;; cl-defstruct to hold all the various prompt display values
 (cl-defstruct (combobulate-proffer-action
                (:constructor combobulate-proffer-action-create)
                (:copier nil))

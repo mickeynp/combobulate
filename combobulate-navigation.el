@@ -33,7 +33,7 @@
 (require 'combobulate-interface)
 (require 'map)
 
-(declare-function combobulate-production-rules-get-rules "combobulate-navigation") 
+(declare-function combobulate-production-rules-get-rules "combobulate-navigation")
 (declare-function combobulate-procedure-collect-activation-nodes "combobulate-navigation")
 (declare-function combobulate-procedure-start-matches "combobulate-navigation")
 (declare-function combobulate-production-rules-get-inverted "combobulate-navigation")
@@ -376,18 +376,6 @@ start."
      node (or end (and auto (= (combobulate-node-start node) (point)))))
     (combobulate--flash-node node)
     node))
-
-(defun combobulate-make-proxy-point-node (&optional pt)
-  "Create a proxy node at `point'."
-  (make-combobulate-proxy-node
-   :start (or pt (point))
-   :end (or pt (point))
-   :text ""
-   :type "point"
-   :named t
-   :node nil
-   :field nil
-   :pp "Point"))
 
 (defun combobulate--make-navigation-query ()
   "Generates a query that matches all default node types"
@@ -1123,14 +1111,14 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-previous))))
 
 (defun combobulate--navigate-logical-next ()
-  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix nil)
+  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix t)
     (combobulate-nav-logical-next)))
 
 (defun combobulate-navigate-logical-next (&optional arg)
   "Move to the next logical and navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil t)))
+    (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil nil)))
 
 (defun combobulate--navigate-logical-previous ()
   (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures)

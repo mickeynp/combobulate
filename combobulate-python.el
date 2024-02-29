@@ -156,10 +156,10 @@ line when you press
                                    ;; special proxy node that will be used to
                                    ;; indent the region.
                                    (if (use-region-p)
-                                       (combobulate-make-proxy-from-range (region-beginning) (region-end))
+                                       (combobulate-proxy-node-make-from-range (region-beginning) (region-end))
                                      ;; if we're not dealing with a region, we
                                      ;; make a proxy node for the closest node.
-                                     (combobulate-make-proxy node))))
+                                     (combobulate-proxy-node-make-from-nodes node))))
                               (setf (combobulate-proxy-node-extra proxy-node)
                                     (- (current-indentation) level))
                               proxy-node)))
