@@ -557,7 +557,8 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                    ((null fields) '(:*unnamed*))
                    ((plist-get fields :all) all-keys)
                    (t fields)))))
-      (error "Cannot find any rules named `%s'" node-type))))
+      (when combobulate-debug
+        (error "Cannot find any rules named `%s'" node-type)))))
 
 (defun combobulate-production-rules-get-inverted (rule-name &optional language)
   "Find the inverted production rule named RULE-NAME."
