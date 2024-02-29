@@ -1126,10 +1126,13 @@ highlight Combobulate highlighters.")
       (combobulate-query-builder-expand-match-face query)
       (combobulate-parser-language (car (combobulate-parser-list)))))))
 
-(defun combobulate-highlight-install-query (query language)
-  "Highlight the QUERY in LANGUAGE in the current buffer."
+(defun combobulate-highlight-install-query (query language &optional quiet)
+  "Highlight the QUERY in LANGUAGE in the current buffer.
+
+If QUIET is non-nil, then do not display any warning messages if
+the query fails to compile."
   (if-let (err (combobulate-query-builder-validate-query query))
-      (progn (warn "Query %s failed to compile: %s." query err) nil)
+      (progn (unless quiet (warn "Query %s failed to compile: %s." query err)) nil)
     (setq treesit-font-lock-settings
           (append treesit-font-lock-settings
                   (treesit-font-lock-rules
@@ -1152,20 +1155,20 @@ highlight Combobulate highlighters.")
         (combobulate-highlight-install-query
          (combobulate-query-builder-expand-match-face
           (combobulate-query-builder-to-string (plist-get rule :query)))
-         language)))
+         language t)))
     ;; next, the system-supplied rules...
     (dolist (rule combobulate-highlight-queries-default)
       (combobulate-highlight-install-query
        (combobulate-query-builder-expand-match-face
         (combobulate-query-builder-to-string rule))
-       language))))
+       language t))))
 
 (defun combobulate-highlight-clear ()
   "Clear all Combobulate highlight in the current buffer."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)
