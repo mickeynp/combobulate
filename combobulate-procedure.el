@@ -147,8 +147,7 @@ name and the cdr is the node. The tagged name should be
        ((or (equal tagged-name 'discard) (equal tagged-name '@discard)) nil)
        (t;; (or (equal tagged-name 'keep) (equal tagged-name '@keep)
         ;;     (equal tagged-name 'match) (equal tagged-name '@match))
-        (push result matches))
-       (t (error "Unknown tagged name `%s'" tagged-name))))
+        (push result matches))))
     (reverse matches)))
 
 (defun combobulate-procedure-start-matches (pt-or-node &optional procedures)
