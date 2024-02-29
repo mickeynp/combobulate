@@ -197,7 +197,7 @@
           ;; sibling-level editing
           (:activation-nodes
            ((:nodes
-             ("self_closing_tag" "expression" "element" "fragment" "script_element" "style_element")
+             ("self_closing_tag" "expression" "element" "document" "script_element" "style_element")
              :position at))
            :selector (:match-siblings (:discard-rules ("comment" "text"))))
           ;; editing an element's opening/closing tag
@@ -240,8 +240,8 @@
            :selector (:choose node :match-siblings (:match-rules ("attribute"))))
           (:activation-nodes
            ((:nodes
-             ((rule "fragment") "comment")
-             :has-parent ((rule "fragment") "fragment" "start_tag" "self_closing_tag")))
+             ((rule "document") "comment")
+             :has-parent ((rule "document") "document" "start_tag" "self_closing_tag")))
            :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))))
   (setq combobulate-pretty-print-node-name-function #'combobulate-html-pretty-print))
 
