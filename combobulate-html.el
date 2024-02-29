@@ -157,7 +157,7 @@
            "<...> ... </...>"
            :name "tag"
            :mark-node t
-           :nodes ("element" "self_closing_tag" "jsx_fragment" "script_element" "style_element")
+           :nodes ("element" "self_closing_tag" "jsx_fragment" "script_element" "style_element" "text")
            :key "t"
            :template ("<" (p tag "Tag Name: ") ">" n>
                       r>
