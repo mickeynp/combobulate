@@ -306,9 +306,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -322,7 +322,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -1407,43 +1407,52 @@ Each member of PARTITIONS must be one of:
              all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action
-                    (combobulate-refactor (:id refactor-id)
-                      (combobulate-move-to-node current-node)
-                      (mark-node-deleted current-node)
-                      (commit)
-                      ;; use an envelope to ensure indentation is handled
-                      ;; properly. quicker and easier than reinventing it
-                      ;; again here.
-                      (seq-let [[start &rest end] &rest _]
-                          (combobulate-envelope-expand-instructions
-                           '((r> text)) `((text . ,(combobulate-proxy-node-text source-node))))
-                        (goto-char start)
-                        (mark-range-highlighted start end))
-                      ;; Test if there's an error node as a result of
-                      ;; our changes.
-                      (when-let (err (seq-filter #'combobulate-point-in-node-range-p (combobulate-get-error-nodes)))
-                        (setf (combobulate-proffer-action-display-indicator action)
-                              (combobulate-display-indicator
-                               index (length proxy-nodes)
-                               'combobulate-error-indicator-face nil "E")
-                              (combobulate-proffer-action-prompt-description action)
-                              (propertize "Invalid" 'face 'combobulate-error-indicator-face)))
-                      ;; if we merge stuff into a line that is not blank,
-                      ;; then elide all but one space and, if there weren't
-                      ;; any, add one.
-                      (unless (combobulate-before-point-blank-p (point))
-                        (if (member
-                             ;; Hacky way of checking if there's an
-                             ;; anonymous node before point, and if
-                             ;; it's the type of anonymous node where
-                             ;; you generally want to leave at least
-                             ;; one space, or zero spaces.
-                             (thread-first
-                               (combobulate-before-point-anonymous-node-p (point))
-                               (combobulate-node-text))
-                             '("(" "{" "[" "<" "\"" "'"))
-                            (delete-horizontal-space)
-                          (just-one-space)))))))
+                    (let ((range-ov))
+                      (combobulate-refactor (:id refactor-id)
+                        (combobulate-move-to-node current-node)
+                        (mark-node-deleted current-node)
+                        (commit)
+                        ;; use an envelope to ensure indentation is handled
+                        ;; properly. quicker and easier than reinventing it
+                        ;; again here.
+                        (seq-let [[start &rest end] &rest _]
+                            (combobulate-envelope-expand-instructions
+                             '((r> text)) `((text . ,(combobulate-proxy-node-text source-node))))
+                          (goto-char start)
+                          ;; Use the range overlay as a crude way to
+                          ;; keep tabs on the text as it shifts around
+                          ;; when we delete horizontal space later.
+                          (setq range-ov (mark-range-highlighted start end)))
+                        ;; Test if there's an error node as a result of
+                        ;; our changes.
+                        (when-let (err (seq-filter #'combobulate-point-in-node-range-p (combobulate-get-error-nodes)))
+                          (setf (combobulate-proffer-action-display-indicator action)
+                                (combobulate-display-indicator
+                                 index (length proxy-nodes)
+                                 'combobulate-error-indicator-face nil "E")
+                                (combobulate-proffer-action-prompt-description action)
+                                (propertize "Invalid" 'face 'combobulate-error-indicator-face)))
+                        ;; if we merge stuff into a line that is not blank,
+                        ;; then elide all but one space and, if there weren't
+                        ;; any, add one.
+                        (unless (combobulate-before-point-blank-p (point))
+                          (if (member
+                               ;; Hacky way of checking if there's an
+                               ;; anonymous node before point, and if
+                               ;; it's the type of anonymous node where
+                               ;; you generally want to leave at least
+                               ;; one space, or zero spaces.
+                               (thread-first
+                                 (combobulate-before-point-anonymous-node-p (point))
+                                 (combobulate-node-text))
+                               '("(" "{" "[" "<" "\"" "'"))
+                              (delete-horizontal-space)
+                            (just-one-space)))
+
+                        (when combobulate-envelope-indent-region-function
+                          (apply combobulate-envelope-indent-region-function
+                                 (combobulate-extend-region-to-whole-lines (overlay-start range-ov)
+                                                                           (overlay-end range-ov)))))))))
         (let ((proffer-action)
               (proxy-matches (combobulate-proxy-node-make-from-nodes matches)))
           (when-let (target-node (combobulate-proffer-choices
