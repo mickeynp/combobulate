@@ -1,0 +1,3 @@
+[submodule "tests/html-ts-mode"]
+	path = tests/html-ts-mode
+	url = git@github.com:mickeynp/html-ts-mode.git

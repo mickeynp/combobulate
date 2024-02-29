@@ -1,14 +1,8 @@
 IMG ?= combobulate
 TAG ?= dev
 DOCKER_CMD ?= docker run --rm -w /opt/ $(DOCKER_ARGS) $(IMG):$(TAG)
-EMACS_CMD = emacs \
-	--batch \
-	--no-init-file \
-	--eval '(princ default-directory)' \
-	--eval '(setq load-prefer-newer t)' \
-	--chdir ./tests/ \
-	-L .. \
-	-L .
+EMACS_BIN ?= emacs
+EMACS_CMD = $(EMACS_BIN)  --batch --no-init-file --chdir ./tests/  -L ..  -L .  -l .ts-test.el
 
 .PHONY:	byte-compile
 byte-compile:
