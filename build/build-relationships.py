@@ -150,10 +150,10 @@ def make_rules_symbol(language, *rest):
 
 def generate_sexp(rules, inv_rules, all_node_types, supertypes, language):
     l = []
-    for rule_name, rule_fields in rules.items():
+    for rule_name, rule_fields in sorted(rules.items()):
         # Ignore named fields and only generate the defaults?
         # without named fields.
-        for field_name, field_values in rule_fields.items():
+        for field_name, field_values in sorted(rule_fields.items()):
             if not field_values:
                 rule_fields[field_name] = Symbol("nil")
         rules = itertools.chain.from_iterable(rule_fields.values())
@@ -298,7 +298,7 @@ def write_elisp_file(forms):
                                 Splice(make_rules_symbol(lang, rules_symbol_extra)),
                             ]
                         )
-                        + "\n  "
+                        + "\n"
                         for lang in sorted(langs)
                     ]
                 )

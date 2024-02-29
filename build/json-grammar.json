@@ -94,17 +94,8 @@
           "type": "FIELD",
           "name": "key",
           "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "string"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "number"
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "string"
           }
         },
         {
