@@ -306,9 +306,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -322,7 +322,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -1099,8 +1099,8 @@ accepts or cancels the proffer. "
                            (keyboard-quit))
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp)) (pred (lambda (n) (and (>= n 1)
-                                                                        (<= n 9)
-                                                                        (<= n (length proxy-nodes)))))
+                                                                   (<= n 9)
+                                                                   (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
