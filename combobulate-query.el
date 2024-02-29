@@ -53,8 +53,6 @@
   (require 'cl-lib))
 
 (defvar combobulate-mode)
-(declare-function combobulate-get-inverted-rule-symbol "combobulate")
-(declare-function combobulate-get-rule-symbol "combobulate")
 
 (defvar combobulate-query-ring-index 0
   "Index of the current query in `combobulate-query-ring'.")
@@ -945,7 +943,7 @@ To use, call \\[combobulate-query-builder]."
   :group 'combobulate
   :abbrev-table scheme-mode-abbrev-table
   (let ((parser-lang-name (combobulate-parser-language combobulate-query-builder-parser)))
-    (setq combobulate-query-builder-rules (combobulate-get-rule-symbol parser-lang-name))
+    (setq combobulate-query-builder-rules (combobulate-production-rules-get-rules parser-lang-name))
     (setq combobulate-query-builder-rule-names (combobulate-production-rules-get-types parser-lang-name))
     (setq combobulate-query-builder-field-names
           (mapcar #'combobulate-query-builder-prop-name-to-field-name
