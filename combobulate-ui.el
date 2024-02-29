@@ -93,10 +93,10 @@
     ("C-M-b" "Backward sexp" backward-sexp :transient t)
     ("a" "Avy …" combobulate-avy)]
    ["Hierarchical"
-    ("C-M-u" "Up into list" combobulate-navigate-up-list-maybe :transient t)
-    ("C-M-d" "Down into list" combobulate-navigate-down-list-maybe :transient t)
+    ("C-M-u" "Up into list" combobulate-navigate-up :transient t)
+    ("C-M-d" "Down into list" combobulate-navigate-down :transient t)
     ("C-M-p" "Backward sibling" combobulate-navigate-previous :transient t)
-    ("C-M-n" "Forward sibling" combobulate-navigate-forward :transient t)]
+    ("C-M-n" "Forward sibling" combobulate-navigate-next :transient t)]
    [:description (lambda () (concat
                         (propertize "Defun " 'face 'transient-heading)
                         (format "(to: %s)"
