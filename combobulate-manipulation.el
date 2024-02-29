@@ -1048,7 +1048,25 @@ accepts or cancels the proffer. "
                                    ;; the unread event loop later if
                                    ;; the key is not recognised.
                                    (setq raw-event
-                                         (read-key-sequence-vector prompt)))
+                                         ;; hooooo boy; so the
+                                         ;; terminal does not like
+                                         ;; certain keys (or key
+                                         ;; sequences) and misbehaves
+                                         ;; especially if something
+                                         ;; like TAB is used. On a
+                                         ;; console, we'll use the one
+                                         ;; way I know that does work
+                                         ;; (albeit imperfectly as it
+                                         ;; swallows whole complete
+                                         ;; key sequences not bound in
+                                         ;; this key map, and it also
+                                         ;; echoes the key which is
+                                         ;; annoying). On a graphical
+                                         ;; display, we'll use the
+                                         ;; normal way.
+                                         (if (display-graphic-p)
+                                             (vector (read-key prompt))
+                                           (read-key-sequence-vector prompt))))
                                 ;; if `condition-case' traps a quit
                                 ;; error, then map it into the symbol
                                 ;; `cancel', which corresponds to the
