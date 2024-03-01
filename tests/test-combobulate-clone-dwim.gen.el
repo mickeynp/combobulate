@@ -468,13 +468,11 @@
 		 (:language yaml :mode yaml-ts-mode :fixture "fixtures/clone/yaml-sequence.yaml")
 	       :tags
 	       '(combobulate yaml yaml-ts-mode combobulate-clone-dwim)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 2)
-		  (combobulate-with-stubbed-proffer-choices
-		      (:choices
-		       '(0 0 0 0))
-		    (combobulate-clone-node-dwim))
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/yaml-sequence.yaml[@2~after].yaml")))))
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/yaml-sequence.yaml[@2~after].yaml")))
 
 

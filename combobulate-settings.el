@@ -444,6 +444,7 @@ be any number of nodes.")
     (json . combobulate-json-setup)
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
+    (toml . combobulate-toml-setup)
     (html . combobulate-html-setup))
   "Alist of setup functions to call when \\[combobulate-mode] is enabled.
 

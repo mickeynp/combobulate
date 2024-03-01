@@ -257,3 +257,17 @@
 	       (combobulate-test-assert-at-marker 9)))
 
 
+(ert-deftest combobulate-test-toml-combobulate-navigate-down--table-3 ()
+ "Test `combobulate' with `fixtures/down/table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/down/table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+

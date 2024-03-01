@@ -1,0 +1,49 @@
+outside = 1
+
+
+[database.connection]
+password = "password123"
+username = "admin"
+
+[[users]]
+  name = "Alice"
+  group = "admin"
+  active = true
+[[users]]
+  name = "Alice"
+  group = "admin"
+  active = true
+
+[[users]]
+  name = "Bob"
+  group = "user"
+  active = false
+
+[colors]
+primary = "#FF0000"
+primary = "#FF0000"
+secondary = "#00FF00"
+tertiary = "#0000FF"
+
+ports = [8000, 8001, 8002]
+server = "localhost"
+enabled = true
+[info]
+version = 1.0
+last_updated = 2022-08-31T18:00:00Z
+
+[settings]
+threshold = 0.5
+timeout = 1000
+logging = "debug"
+compress = true
+
+[metadata."author"]
+name = "Alice"
+email = "alice@example.com"
+
+[metadata."contributor"]
+name = "Bob"
+email = "bob@example.com"
+
+

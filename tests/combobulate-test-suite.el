@@ -292,6 +292,7 @@ doesn't exist."
                                        (css-mode . css-ts-mode)
                                        (typescript-mode . tsx-ts-mode)
                                        (js2-mode . js-ts-mode)
+                                       (conf-toml-mode . toml-ts-mode)
                                        (bash-mode . bash-ts-mode)
                                        (css-mode . css-ts-mode)
                                        (yaml-mode . yaml-ts-mode)
