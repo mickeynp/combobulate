@@ -31,7 +31,7 @@
 (require 'combobulate-rules)
 
 (defun combobulate-json-pretty-print-node-name (node default-name)
-  "Pretty printer for JS and JSX nodes"
+  "Pretty print the node name for JSON mode."
   (pcase (combobulate-node-type node)
     ("pair" (combobulate-node-text (combobulate-node-child-by-field node "key")))
     ("string" (combobulate-string-truncate
