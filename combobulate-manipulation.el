@@ -709,7 +709,9 @@ after NODE-OR-TEXT."
              ;; all, instances.
              (save-excursion
                (combobulate--goto-node node-or-text t)
-               (let ((node-after (combobulate-node-on (point) (1+ (point)) nil nil)))
+               (when-let ((node-after (condition-case err
+                                          (combobulate-node-on (point) (1+ (point)) nil nil)
+                                        (error nil))))
                  (cond
                   ;; named nodes get no sequence separator
                   ((combobulate-node-named-p node-after) "")
