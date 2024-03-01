@@ -1,0 +1,5 @@
+# -*- combobulate-test-point-overlays: ((1 outline 147) (2 outline 168) (3 outline 195)); eval: (combobulate-test-fixture-mode t); -*-
+[database]
+server = "localhost"
+ports = [8000, 8001, 8002]
+enabled = true

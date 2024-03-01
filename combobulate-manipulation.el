@@ -1425,10 +1425,14 @@ Each member of PARTITIONS must be one of:
              all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action
-                    (let ((range-ov))
+                    (let ((range-ov) (trailing-newline))
                       (combobulate-refactor (:id refactor-id)
                         (combobulate-move-to-node current-node)
                         (mark-node-deleted current-node)
+                        (when (save-excursion
+                                (combobulate-move-to-node current-node t)
+                                (looking-back "\n"))
+                          (setq trailing-newline t))
                         (commit)
                         ;; use an envelope to ensure indentation is handled
                         ;; properly. quicker and easier than reinventing it
@@ -1453,6 +1457,11 @@ Each member of PARTITIONS must be one of:
                         ;; if we merge stuff into a line that is not blank,
                         ;; then elide all but one space and, if there weren't
                         ;; any, add one.
+                        (when trailing-newline
+                          (save-excursion
+                            (goto-char (overlay-end range-ov))
+                            (unless (or (looking-at "\n") (looking-back "\n"))
+                              (insert "\n"))))
                         (unless (combobulate-before-point-blank-p (point))
                           (if (member
                                ;; Hacky way of checking if there's an

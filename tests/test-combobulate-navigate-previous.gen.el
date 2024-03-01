@@ -200,6 +200,32 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-toml-combobulate-navigate-previous--document-level-1 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-html-combobulate-navigate-previous--elements-1 ()
  "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
 	     (combobulate-test
@@ -218,6 +244,20 @@
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-toml-combobulate-navigate-previous--inside-table-1 ()
+ "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/inside-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
@@ -418,6 +458,20 @@
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-toml-combobulate-navigate-previous--value-array-1 ()
+ "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/value-array.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)

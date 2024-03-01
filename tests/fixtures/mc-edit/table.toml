@@ -1,0 +1,4 @@
+# -*- eval: (combobulate-test-fixture-mode t); combobulate-test-point-overlays: ((1 outline 126)); -*-
+[database.connection]
+username = "admin"
+password = "password123"

@@ -92,6 +92,8 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------+--------------------+
 |YAML                |✅                  |v0.5.0              |
 +--------------------+--------------------+--------------------+
+|TOML                |✅                  |v0.5.1              |
++--------------------+--------------------+--------------------+
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
 
@@ -170,7 +172,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                     (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
                     (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
                     (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-                    (toml "https://github.com/tree-sitter/tree-sitter-toml")
+                    (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
                     (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                     (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
                     (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
@@ -193,6 +195,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                (typescript-mode . typescript-ts-mode)
                (js2-mode . js-ts-mode)
                (bash-mode . bash-ts-mode)
+               (conf-toml-mode . toml-ts-mode)
                (css-mode . css-ts-mode)
                (json-mode . json-ts-mode)
                (js-json-mode . json-ts-mode)))
@@ -219,6 +222,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
            (html-ts-mode . combobulate-mode)
            (css-ts-mode . combobulate-mode)
            (yaml-ts-mode . combobulate-mode)
+           (toml-ts-mode . combobulate-mode)
            (typescript-ts-mode . combobulate-mode)
            (json-ts-mode . combobulate-mode)
            (tsx-ts-mode . combobulate-mode))
@@ -250,6 +254,7 @@ Simple Combobulate Setup
            (html-ts-mode . combobulate-mode)
            (css-ts-mode . combobulate-mode)
            (yaml-ts-mode . combobulate-mode)
+           (toml-ts-mode . combobulate-mode)
            (typescript-ts-mode . combobulate-mode)
            (json-ts-mode . combobulate-mode)
            (tsx-ts-mode . combobulate-mode))

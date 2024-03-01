@@ -227,6 +227,7 @@ have changed."
 ;;; end internal
 
 ;;; language support
+(require 'combobulate-toml)
 (require 'combobulate-html)
 (require 'combobulate-python)
 (require 'combobulate-js-ts)

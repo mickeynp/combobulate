@@ -102,6 +102,20 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/jsx-elements.tsx[@3~after].tsx")))
 
 
+(ert-deftest combobulate-test-python-combobulate-splice-up--messy-splice-1 ()
+ "Test `combobulate' with `fixtures/splice/messy-splice.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/splice/messy-splice.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-splice-up)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0 0 0))
+		 (combobulate-splice-up))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/messy-splice.py[@1~after].py")))
+
+
 (ert-deftest combobulate-test-html-combobulate-splice-up--nested-elements-1 ()
  "Test `combobulate' with `fixtures/splice/nested-elements.html' in `html-ts-mode' mode."
 	     (combobulate-test
@@ -310,5 +324,19 @@
 		    '(0 0 0 0 0 0))
 		 (combobulate-splice-up))
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/object.json[@3~after].json")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-splice-up--pairs-in-table-1 ()
+ "Test `combobulate' with `fixtures/splice/pairs-in-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/splice/pairs-in-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-splice-up)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0 0 0))
+		 (combobulate-splice-up))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/pairs-in-table.toml[@1~after].toml")))
 
 

@@ -200,6 +200,32 @@
 	       (combobulate-test-assert-at-marker 9)))
 
 
+(ert-deftest combobulate-test-toml-combobulate-navigate-next--document-level-7 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)))
+
+
 (ert-deftest combobulate-test-html-combobulate-navigate-next--elements-7 ()
  "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
 	     (combobulate-test
@@ -224,6 +250,20 @@
 	       (combobulate-test-go-to-marker 6)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 7)))
+
+
+(ert-deftest combobulate-test-toml-combobulate-navigate-next--inside-table-3 ()
+ "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/inside-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
 
 
 (ert-deftest combobulate-test-python-combobulate-navigate-next--module-statements-8 ()
@@ -424,6 +464,20 @@
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 5)))
+
+
+(ert-deftest combobulate-test-toml-combobulate-navigate-next--value-array-3 ()
+ "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/value-array.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
 
 
 (ert-deftest combobulate-test-yaml-combobulate-navigate-next--yaml-block-mapping-pairs-2 ()

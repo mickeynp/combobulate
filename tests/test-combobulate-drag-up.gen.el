@@ -543,6 +543,85 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/def-parameters.py[@1~after].py")))))
 
 
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-7 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@7~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-6 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@6~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-5 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@5~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-4 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@4~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-3 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@3~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-2 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@2~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--document-level-1 ()
+ "Test `combobulate' with `fixtures/sibling/document-level.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/document-level.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/document-level.toml[@1~after].toml")))))
+
+
 (ert-deftest combobulate-test-html-combobulate-drag-up--elements-7 ()
  "Test `combobulate' with `fixtures/sibling/elements.html' in `html-ts-mode' mode."
 	     (combobulate-test
@@ -620,6 +699,41 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@1~after].html")))))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--inside-table-3 ()
+ "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/inside-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/inside-table.toml[@3~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--inside-table-2 ()
+ "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/inside-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/inside-table.toml[@2~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--inside-table-1 ()
+ "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/inside-table.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/inside-table.toml[@1~after].toml")))))
 
 
 (ert-deftest combobulate-test-python-combobulate-drag-up--module-statements-8 ()
@@ -1196,6 +1310,41 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-tuple.py[@1~after].py")))))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--value-array-3 ()
+ "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/value-array.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/value-array.toml[@3~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--value-array-2 ()
+ "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/value-array.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/value-array.toml[@2~after].toml")))
+
+
+(ert-deftest combobulate-test-toml-combobulate-drag-up--value-array-1 ()
+ "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
+	     (combobulate-test
+		 (:language toml :mode toml-ts-mode :fixture "fixtures/sibling/value-array.toml")
+	       :tags
+	       '(combobulate toml toml-ts-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/value-array.toml[@1~after].toml")))))
 
 
 (ert-deftest combobulate-test-yaml-combobulate-drag-up--yaml-block-mapping-pairs-2 ()
