@@ -328,9 +328,15 @@ discard, respectively.
 If keep-mark is non-nil, keep the mark in the result."
   (let ((result))
     (pcase-dolist (`(,mark . ,node) nodes)
-      (when (or (and (eq mark '@match) keep-match)
-                (and (eq mark '@discard) keep-discard))
-        (push (if keep-mark (cons mark node) node) result)))
+      (cond
+       ((or (and (eq mark '@match) keep-match)
+            (and (eq mark '@discard) keep-discard))
+        (push (if keep-mark (cons mark node) node) result))
+       ;; deal with tree-sitter-named nodes
+       ((eq mark 'discard)
+        (push (if keep-mark (cons '@discard node) node) result))
+       ((eq mark 'match)
+        (push (if keep-mark (cons '@match node) node) result))))
     (nreverse result)))
 
 (defun combobulate-procedure--filter-nodes-by-query (selector node)
