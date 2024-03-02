@@ -31,7 +31,7 @@ If you want a guided tour, then I recommend you read:
 
 - `Combobulate: Structured Movement and Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-structured-movement-editing-treesitter>`__, for an in-depth overview of Combobulate.
 - `Combobulate: Editing and Searching with the new Query Builder <https://www.masteringemacs.org/article/combobulate-editing-searching-new-query-builder>`__, demonstrating how Combobulate's query builder and search works.
-
+- `Combobulate: Intuitive, Structured Navigation with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-intuitive-structured-navigation-treesitter>`__, which talks about why it's so hard to write navigation code that works the way you expect it to.
 
 What does Combobulate do exactly?
 ---------------------------------
