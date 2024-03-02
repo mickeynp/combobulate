@@ -66,7 +66,9 @@
   (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default
         '(;; highlight pseudo "comments" that are often designated "//"
-          ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)))
+          ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)
+          ;; catch pairs where the there are duplicate key names.
+          (([(object (pair key: (_) @hl.fiery) (pair key: (_) @hl.silver) (:equal @hl.silver @hl.fiery))]))))
   (setq combobulate-manipulation-edit-procedures
         `(;; edit the value field of a pair
           (:activation-nodes
