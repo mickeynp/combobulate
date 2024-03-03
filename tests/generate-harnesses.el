@@ -202,9 +202,18 @@
     :reverse nil)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-with-fixture-delta
-    :fixture-files "fixtures/splice/*"
+    :fixture-files "fixtures/splice/choice-0-*"
     :collection-name "combobulate-splice-self"
     :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0 0 0))
+                     (combobulate-splice-self)))
+    :per-marker t
+    :reverse nil)
+   ;; Splicing, but use the second choice instead of the first
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/splice/choice-1-*"
+    :collection-name "combobulate-splice-self-offset-1"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(1 1 1 1 1 1 1))
                      (combobulate-splice-self)))
     :per-marker t
     :reverse nil)

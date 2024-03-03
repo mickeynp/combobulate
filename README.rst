@@ -94,6 +94,8 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------+--------------------+
 |TOML                |✅                  |v0.5.1              |
 +--------------------+--------------------+--------------------+
+|Go                  |✅                  |v0.20.0             |
++--------------------+--------------------+--------------------+
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
 

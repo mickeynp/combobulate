@@ -287,7 +287,9 @@ doesn't exist."
   "Generate a test harness for every fixture-files entry."
   (save-window-excursion
     (save-excursion
-      (let* (;; required to ensure the right major mode is chosen.
+      (let* ((auto-mode-alist (append auto-mode-alist
+                                      '(("\\.go\\'" . go-ts-mode))))
+             ;; required to ensure the right major mode is chosen.
              (major-mode-remap-alist '((python-mode . python-ts-mode)
                                        (css-mode . css-ts-mode)
                                        (typescript-mode . tsx-ts-mode)
