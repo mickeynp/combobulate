@@ -116,7 +116,7 @@ That is because of the *concrete syntax tree*. Place your point anywhere in your
 
 For example: your point is on a string; but it's also in a list; which is in a dictionary; which is in an expression statement; which is in a ``for``-loop; which is in a function, and so on.
 
-Because a *concrete syntax tree* is so exacting and so detailed, it's hard for Combobulate to infer what you want to do with the same casual insouciance of commands that don't use a syntax tree: there are simply too choices, and too many nodes.
+Because a *concrete syntax tree* is so exacting and so detailed, it's hard for Combobulate to infer what you want to do with the same casual insouciance of commands that don't use a syntax tree: there are simply too many choices, and too many nodes.
 
 You, the human, know which node you want -- but Combobulate does not necessarily know that!
 
@@ -144,7 +144,7 @@ Combobulate is not on MELPA or any other package repository, yet. For Combobulat
    (Adding support for new languages is reasonably easy though!)
 5. You have a git checkout of Combobulate ready.
 
-Here's a verbose example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter  grammars, then you can leave out the code that does this in the ``:preface``.
+Here's a verbose example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter grammars, then you can leave out the code that does this in the ``:preface``.
 
 There are two code snippets below that will help you get started. One assumes you don't know how to install and set up tree-sitter grammars, whereas the other one does.
 
