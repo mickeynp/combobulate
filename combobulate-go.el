@@ -72,6 +72,25 @@
            ((p value "Value Variable") ", " (p err "Error Variable") " := " @ r> n>
             "if " (f err) " != nil {" n> @ n> "}" > n>))
           (:description
+           "if ... { ... } [else { ... }]"
+           :key "i"
+           :mark-node t
+           :shorthand general-statement
+           :name "if-statement"
+           :template
+           ("if " @ (p true "Condition") " {" n>
+            (choice* :missing
+                     nil
+                     :rest
+                     (r> n>)
+                     :name "if-block")
+            "}" >
+            (choice* :missing
+                     nil
+                     :rest
+                     (" else {" n> @ r> n> "}" > n>)
+                     :name "else-block")))
+          (:description
            "for ... { ... }"
            :key "f"
            :mark-node t
