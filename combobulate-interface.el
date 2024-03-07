@@ -235,6 +235,40 @@ kept."
                                  :keep-types (list (combobulate-node-type proxy-node))))))))))
 
 
+(defmacro combobulate-with-change-group (&rest body)
+  (declare (indent 0) (debug t))
+  (let ((handle (gensym "--change-group-handle--"))
+	(success (gensym "--change-group-success--"))
+        (explicitly-cancelled (gensym "--change-group-explicitly-cancelled--")))
+    `(let ((,handle (prepare-change-group))
+           (,explicitly-cancelled nil)
+	   ;; Don't truncate any undo data in the middle of this.
+	   (undo-outer-limit nil)
+	   (undo-limit most-positive-fixnum)
+	   (undo-strong-limit most-positive-fixnum)
+	   (,success nil))
+       (cl-flet
+           ((accept-changes () (accept-change-group ,handle))
+            (cancel-changes ()
+              (cancel-change-group ,handle)
+              (setq ,explicitly-cancelled t)))
+         (unwind-protect
+	     (progn
+	       ;; This is inside the unwind-protect because
+	       ;; it enables undo if that was disabled; we need
+	       ;; to make sure that it gets disabled again.
+	       (activate-change-group ,handle)
+	       (prog1 ,(macroexp-progn body)
+	         (setq ,success t)))
+	   ;; Either of these functions will disable undo
+	   ;; if it was disabled before.
+	   (cond
+            ;; If we explicitly cancelled, do not cancel or accept the
+            ;; changes.
+            (,explicitly-cancelled nil)
+            (,success (accept-changes))
+	    (t (cancel-changes))))))))
+
 (defmacro combobulate-atomic-change-group (&rest body)
   "Re-entrant change group, like `atomic-change-group'.
 This means that if BODY exits abnormally,
@@ -245,27 +279,8 @@ This mechanism is transparent to ordinary use of undo;
 if undo is enabled in the buffer and BODY succeeds, the
 user can undo the change normally."
   (declare (indent 0) (debug t))
-  (let ((handle (gensym "--change-group-handle--"))
-	(success (gensym "--change-group-success--")))
-    `(let ((,handle (prepare-change-group))
-	   ;; Don't truncate any undo data in the middle of this.
-	   (undo-outer-limit nil)
-	   (undo-limit most-positive-fixnum)
-	   (undo-strong-limit most-positive-fixnum)
-	   (,success nil))
-       (unwind-protect
-	   (progn
-	     ;; This is inside the unwind-protect because
-	     ;; it enables undo if that was disabled; we need
-	     ;; to make sure that it gets disabled again.
-	     (activate-change-group ,handle)
-	     (prog1 ,(macroexp-progn body)
-	       (setq ,success t)))
-	 ;; Either of these functions will disable undo
-	 ;; if it was disabled before.
-	 (if ,success
-	     (accept-change-group ,handle)
-	   (cancel-change-group ,handle))))))
+  `(combobulate-with-change-group
+     ,@body))
 
 (cl-defstruct (combobulate-proffer-action
                (:constructor combobulate-proffer-action-create)

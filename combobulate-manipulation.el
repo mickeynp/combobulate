@@ -498,12 +498,39 @@ If there are no legitimate sexp nodes around point, fall back to
 						 ".")))))
 		 (point)))))
 
+(defun combobulate--consume-node (node &optional balance)
+  "Consume NODE in the current buffer.
 
+If BALANCE is non-nil, more than the requested NODE may be consumeed
+also (and appended to the final string, including any whitespace
+between NODE and the balancing node whitespace) if consuming NODE
+results in one or more `ERROR' nodes appearing in the tree.
 
-(defun combobulate--kill-node (node)
-  "Kill NODE in the current buffer."
-  (and node (kill-region (combobulate-node-start node)
-                         (combobulate-node-end node))))
+If consuming the balancing node leaves the tree in an error state,
+then that consume is undone and only the first consume is kept."
+  (let ((num-errors (length (combobulate-get-error-nodes)))
+        (start) (end)
+        (node-texts))
+    (save-excursion
+      ;; use point as the start and not the node so we capture the
+      ;; whitespace also.
+      (setq start (point)
+            end (combobulate-node-end node))
+      (push (delete-and-extract-region start end) node-texts)
+      (when (and balance (combobulate-get-error-nodes))
+        (push (let ((text))
+                (combobulate-with-change-group
+                  (setq text (delete-and-extract-region
+                              (point)
+                              (save-excursion
+                                (combobulate-skip-whitespace-forward t)
+                                (combobulate-node-end (combobulate-node-at-point)))))
+                  (when (> (length (combobulate-get-error-nodes)) num-errors)
+                    (cancel-changes)
+                    (setq text nil)))
+                text)
+              node-texts)))
+    (string-join (nreverse node-texts) "")))
 
 (defun combobulate--kill-nodes (nodes)
   "Kill between the smallest and greatest range of NODES."
@@ -818,10 +845,21 @@ point relative to the nodes in
 `combobulate-navigation-default-nodes'."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
-      (when-let ((node (combobulate-nav-get-self-sibling (combobulate--get-nearest-navigable-node))))
-        (combobulate-message "Killed" node)
-        (combobulate--kill-node node)))))
+    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+      (when-let* ((nearest (save-excursion
+                             (combobulate-skip-whitespace-forward t)
+                             (combobulate--get-nearest-navigable-node)))
+                  (node (combobulate-proxy-node-make-from-nodes
+                         (or (combobulate-nav-get-self-sibling nearest)
+                             nearest))))
+        ;; prevent killing nodes before point; that'd be weird.
+        (if (combobulate-node-on-or-after-point-p node)
+            (progn (let ((text (combobulate--consume-node node t)))
+                     (if (eq last-command 'combobulate-kill-node-dwim)
+                         (kill-append text nil)
+                       (kill-new text)))
+                   (combobulate-message "Killed node" node))
+          (error "No node to kill"))))))
 
 (defvar-keymap combobulate-proffer-map
   :parent nil
@@ -1419,11 +1457,11 @@ Each member of PARTITIONS must be one of:
              ;; searching because no applicable sibling procedure was
              ;; found.
              (lambda (n) (or disable-check
-                        (and (combobulate-node-parent n)
-                             (or (member (combobulate-node-parent n) valid-parents)
-                                 (member n valid-parents))
-                             (not (equal (combobulate-node-parent n) (car valid-parents)))
-                             (combobulate-node-before-node-p n source-node))))
+                             (and (combobulate-node-parent n)
+                                  (or (member (combobulate-node-parent n) valid-parents)
+                                      (member n valid-parents))
+                                  (not (equal (combobulate-node-parent n) (car valid-parents)))
+                                  (combobulate-node-before-node-p n source-node))))
              all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action

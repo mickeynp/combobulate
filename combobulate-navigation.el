@@ -716,15 +716,17 @@ of the current node if the direction if `forward'. This is done
 to try and prevent point from getting stuck at the end of a node
 that technically has another immediate parent."
   (when node
-    (let* ((siblings (combobulate-nav-get-siblings node)))
-      (cond
-       ((eq direction 'forward)
-        (car (seq-filter #'combobulate-node-after-point-p siblings)))
-       ((eq direction 'backward)
-        (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
-       ((eq direction 'self)
-        (or (car (seq-filter #'combobulate-point-at-beginning-of-node-p siblings))
-            (when (combobulate-point-at-beginning-of-node-p node) node)))))))
+    (save-excursion
+      (combobulate--goto-node node)
+      (let* ((siblings (combobulate-nav-get-siblings node)))
+        (cond
+         ((eq direction 'forward)
+          (car (seq-filter #'combobulate-node-after-point-p siblings)))
+         ((eq direction 'backward)
+          (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
+         ((eq direction 'self)
+          (or (car (seq-filter #'combobulate-point-at-beginning-of-node-p siblings))
+              (when (combobulate-point-at-beginning-of-node-p node) node))))))))
 
 (defun combobulate-nav-get-next-sibling (node)
   "Get the next sibling of NODE"

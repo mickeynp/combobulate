@@ -226,6 +226,22 @@
                      (combobulate-clone-node-dwim)))
     :per-marker t
     :reverse nil)
+   ;; Kill node DWIM
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/kill-node/*"
+    :collection-name "combobulate-kill-dwim"
+    :action-body
+    ;; Unlike most tests, this one has `:per-marker' set to nil so we
+    ;; only create a test for the first marker in a fixture file. The
+    ;; action body instead loops over every test overlay and runs the
+    ;; kill node command for each overlay. No movement is made to each
+    ;; overlay, though.
+    '((combobulate--with-test-overlays
+       (lambda (ov)
+         (combobulate-kill-node-dwim))))
+    :per-marker nil
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop

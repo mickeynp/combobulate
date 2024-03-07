@@ -170,7 +170,10 @@ exists, and nil if not."
 
 If PROCEDURES is not given, use `combobulate-default-procedures'.
 If EXHAUSTIVE is non-nil, then collect all possible procedures
-that may apply."
+that may apply.
+
+This function returns a list of `combobulate-procedure-result'
+objects."
   (let ((matches)
         (nodes
          (seq-uniq
@@ -187,7 +190,7 @@ that may apply."
                        pt-or-node
                      (combobulate-node-at-point))
                    (combobulate-all-nodes-at-point)))
-           ;; then, get all the nodes point is in.
+           ;; then, get all the nodes point is at.
            (combobulate-get-parents (combobulate-node-at-point))))))
     (catch 'done
       (dolist (procedure
