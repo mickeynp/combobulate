@@ -793,6 +793,41 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/elements.html[@7~after].html")))))
 
 
+(ert-deftest combobulate-test-go-combobulate-drag-down--expr-switch-1 ()
+ "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/expr-switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/expr-switch.go[@1~after].go")))
+
+
+(ert-deftest combobulate-test-go-combobulate-drag-down--expr-switch-2 ()
+ "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/expr-switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/expr-switch.go[@2~after].go")))
+
+
+(ert-deftest combobulate-test-go-combobulate-drag-down--expr-switch-3 ()
+ "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/expr-switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/expr-switch.go[@3~after].go")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-down--for-loop-1 ()
  "Test `combobulate' with `fixtures/sibling/for-loop.go' in `go-ts-mode' mode."
 	     (combobulate-test

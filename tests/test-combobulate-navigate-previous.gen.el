@@ -286,6 +286,20 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--expr-switch-1 ()
+ "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/expr-switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-previous--for-loop-1 ()
  "Test `combobulate' with `fixtures/sibling/for-loop.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -625,9 +639,9 @@
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
-	       (should-error
-		(progn
-		  (combobulate-navigate-previous)))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
 
 
 (ert-deftest combobulate-test-go-combobulate-navigate-previous--type-declaration-1 ()
