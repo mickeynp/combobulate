@@ -494,7 +494,8 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
  procedure result with a matched activation node")
       (if selector
           (map-let (:choose :match-query :match-children :match-siblings) selector
-            ;; use `:choose' to determine whether to operate on the action node or its parent
+            ;; use `:choose' to determine whether to operate on the
+            ;; action node or its parent
             (when-let ((chosen-node
                         (cond
                          ((equal choose 'node)
@@ -614,7 +615,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
          (setq collected-node-types
                (append collected-node-types
                        (seq-filter (lambda (node-type)
-                                     (string-match-p regexp node-type))
+                                     (string-match-p (apply #'rx-to-string (ensure-list regexp)) node-type))
                                    (combobulate-production-rules-get-types)))))
         ;; A production rule with optional fields which defaults to
         ;; nil, because `production-rules-get' interprets that to mean
