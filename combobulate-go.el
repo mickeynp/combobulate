@@ -115,17 +115,17 @@
   (setq combobulate-envelope-indent-region-function #'indent-region)
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
-  (setq combobulate-manipulation-edit-procedures nil)
+  (setq combobulate-procedures-edit nil)
   (setq combobulate-pretty-print-node-name-function
         #'combobulate-go-pretty-print-node-name)
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-procedures nil)
+  (setq combobulate-procedures-sexp nil)
   (setq combobulate-manipulation-plausible-separators '(";" "," "\n"))
-  (setq combobulate-navigation-defun-procedures
+  (setq combobulate-procedures-defun
         '((:activation-nodes ((:nodes ("function_declaration"))))))
-  (setq combobulate-navigation-logical-procedures
+  (setq combobulate-procedures-logical
         '((:activation-nodes ((:nodes (all))))))
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         `((:activation-nodes
            ((:nodes
              ((rule "literal_value")
@@ -189,7 +189,7 @@
            :selector (:choose
                       node
                       :match-children t))))
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         `((:activation-nodes
            ((:nodes "block" :position at))
            :selector (:choose node :match-children t))

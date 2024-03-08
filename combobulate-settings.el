@@ -230,15 +230,15 @@ vector or an escaped string."
 
 ;;;; Other settings
 
-(defvar-local combobulate-navigation-defun-procedures nil
+(defvar-local combobulate-procedures-defun nil
   "Node procedures used to navigate by defun.
 
 See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
 
-(defvar-local combobulate-navigation-parent-child-procedures nil
-  "Node procedures used to navigate by parent and child nodes.")
+(defvar-local combobulate-procedures-hierarchy nil
+  "Node procedures used to navigate hierarchically up or down nodes.")
 
-(defvar-local combobulate-navigation-default-procedures '((:activation-nodes ((:nodes (all)))))
+(defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
   "Node procedures as the default in the absence of more specific procedures.
 
 The `combobulate-navigation-default-nodes' variable is populated
@@ -252,7 +252,7 @@ The macro `with-navigation-nodes' binds to this variable and
 locally overrides the navigation nodes by Combobulate's node
 tools.")
 
-(defvar-local combobulate-manipulation-edit-procedures nil
+(defvar-local combobulate-procedures-edit nil
   "List of edit procedures.")
 
 (defvar-local combobulate-default-procedures nil
@@ -264,16 +264,16 @@ This is typically set by `with-navigation-nodes' by passing a
 (defvar-local combobulate-procedure-discard-rules '("comment")
   "List of rules to always apply to discard operations.")
 
-(defvar-local combobulate-navigation-sexp-procedures nil
+(defvar-local combobulate-procedures-sexp nil
   "Node procedures used to navigate by sexp.
 
 See `combobulate-forward-sexp-function'.")
 
-(defvar-local combobulate-navigation-logical-procedures
+(defvar-local combobulate-procedures-logical
     '((:activation-nodes ((:nodes (all)))))
   "Node procedures used to navigate by logical units.")
 
-(defvar-local combobulate-navigation-defun-procedures nil
+(defvar-local combobulate-procedures-defun nil
   "Node procedures used to navigate by defun.")
 
 (defvar-local combobulate-display-ignored-node-types nil
@@ -368,7 +368,7 @@ Where LANGUAGE must be a valid `treesit-parser-language' symbol
 to bind the envelopes against. ENVELOPES must be a list of
 envelopes.")
 
-(defvar-local combobulate-navigation-sibling-procedures nil
+(defvar-local combobulate-procedures-sibling nil
   "Nodes used for sibling movement")
 
 (defvar-local combobulate-highlight-queries-default nil

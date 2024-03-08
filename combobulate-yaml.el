@@ -56,7 +56,7 @@
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
 
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         '((:activation-nodes
            ((:nodes ("block_sequence")))
            :selector (:match-query
@@ -70,13 +70,13 @@
                        (block_node (block_mapping (_)+ @match))
                        :discard-rules ("comment"))))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("flow_node" "block_node"))))))
-  (setq combobulate-navigation-defun-procedures
+  (setq combobulate-procedures-defun
         '((:activation-nodes ((:nodes ("stream" "block_node"))))))
-  (setq combobulate-navigation-logical-procedures
+  (setq combobulate-procedures-logical
         '((:activation-nodes ((:nodes ("stream" "flow_node" "block_node" "block_mapping_pair"))))))
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         `((:activation-nodes
            ((:nodes
              ("comment")
@@ -87,13 +87,13 @@
              ("block_mapping_pair" "block_sequence_item")
              :has-parent ("block_mapping" "block_sequence")))
            :selector (:match-children t))))
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         `(;; basic down navigation between pairs and sequences
           (:activation-nodes
            ((:nodes ("block_mapping_pair" "block_sequence_item")))
            :selector (:choose node :match-children t))))
 
-  (setq combobulate-navigation-default-procedures
+  (setq combobulate-procedures-default
         '((:activation-nodes ((:nodes ("block_sequence" "block_node" "block_mapping_pair")))))))
 
 (provide 'combobulate-yaml)

@@ -141,7 +141,7 @@
    (t default-name)))
 
 (defun combobulate-html-setup (_)
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("element" "attribute" "text" "script_element" "style_element"))))))
   (setq combobulate-navigation-context-nodes '("attribute_name" "attribute_value" "tag_name" "text"))
   (local-set-key (kbd "=") #'combobulate-maybe-insert-attribute)
@@ -187,7 +187,7 @@
            :name "attr-string"
            :template ("=" "\"" @ "\""))))
 
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         '((:activation-nodes
            ((:nodes
              ("attribute")
@@ -211,7 +211,7 @@
                           (end_tag (tag_name) @match))
                        :engine combobulate
                        :discard-rules ("comment"))))))
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         '(;; seamless navigation between elements and their children.
           (:activation-nodes
            ((:nodes ("element" "script_element" "style_element") :position at))
@@ -233,7 +233,7 @@
   ;; beginnings and ends.
   (setq combobulate-procedure-discard-rules nil)
   (setq combobulate-display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag" "tag_name"))
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         '((:activation-nodes
            ((:nodes
              ("attribute")))

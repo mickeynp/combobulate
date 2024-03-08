@@ -84,7 +84,7 @@
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
 
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         '((:activation-nodes
            ((:nodes ("declaration") :position in :has-ancestor "block"))
            :selector (:match-query (:query (block (declaration ":" (_) @match)+)
@@ -93,16 +93,16 @@
            ((:nodes ("block")))
            :selector (:match-query ((block) (_)+ @match)))))
 
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("comment" "property_name"
                                        (rule "selectors")
                                        (rule "arguments")))))))
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         '((:activation-nodes ((:nodes ("block") :position at)) :selector (:choose node :match-children (:match-rules (rule "block"))))
           (:activation-nodes ((:nodes ("media_statement") :position at)) :selector (:choose node :match-children (:match-rules "block")))
           (:activation-nodes ((:nodes (all))) :selector (:choose node :match-children t))))
 
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         '(;; declarations' own property values should be siblings, but
           ;; not property_name as it's a child of declaration also,
           ;; and that'd mean the LHS and RHS are siblings of another,
@@ -132,7 +132,7 @@
              ("declaration")
              :has-parent ("block")))
            :selector (:match-children (:discard-rules ("comment" "property_name"))))))
-  (setq combobulate-navigation-defun-procedures
+  (setq combobulate-procedures-defun
         '((:activation-nodes ((:nodes (exclude (all) "declaration")))))))
 
 

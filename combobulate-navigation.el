@@ -221,7 +221,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -752,10 +752,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                            (funcall (if backward
-                                         #'combobulate-point-at-end-of-node-p
-                                       #'combobulate-point-at-beginning-of-node-p)
-                                     node)))
+                       (funcall (if backward
+                                    #'combobulate-point-at-end-of-node-p
+                                  #'combobulate-point-at-beginning-of-node-p)
+                                node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
@@ -763,7 +763,7 @@ that technically has another immediate parent."
 
 This function must be installed in `forward-sexp-function' to
 work properly."
-  (with-navigation-nodes (:procedures combobulate-navigation-sexp-procedures
+  (with-navigation-nodes (:procedures combobulate-procedures-sexp
                                       :skip-prefix t :backward (< arg 0))
     (let ((node)
           (inc (if (> arg 0) 1 -1))
@@ -1038,7 +1038,7 @@ DIRECTION must be `forward' or `backward'."
   (combobulate-nav-to-defun 'forward))
 
 (defun combobulate--navigate-up ()
-  (with-navigation-nodes (:procedures combobulate-navigation-parent-child-procedures)
+  (with-navigation-nodes (:procedures combobulate-procedures-hierarchy)
     (combobulate-nav-get-parent
      (combobulate-node-at-point))))
 
@@ -1049,7 +1049,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-up))))
 
 (defun combobulate--navigate-down ()
-  (with-navigation-nodes (:skip-prefix nil :procedures combobulate-navigation-parent-child-procedures)
+  (with-navigation-nodes (:skip-prefix nil :procedures combobulate-procedures-hierarchy)
     (or
      ;; try to find a procedure that can take us to a valid child node
      ;; (that starts after point)
@@ -1077,7 +1077,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-down))))
 
 (defun combobulate--navigate-next ()
-  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+  (with-navigation-nodes (:skip-prefix t :procedures combobulate-procedures-sibling)
     (combobulate-nav-get-next-sibling
      (combobulate--get-nearest-navigable-node))))
 
@@ -1089,7 +1089,7 @@ DIRECTION must be `forward' or `backward'."
                                      combobulate-navigate-next-move-to-end)))
 
 (defun combobulate--navigate-self-end ()
-  (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+  (with-navigation-nodes (:skip-prefix t :procedures combobulate-procedures-sibling)
     (combobulate-nav-get-self-sibling
      (combobulate--get-nearest-navigable-node))))
 
@@ -1101,7 +1101,7 @@ DIRECTION must be `forward' or `backward'."
                                      combobulate-navigate-next-move-to-end)))
 
 (defun combobulate--navigate-previous ()
-  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures
+  (with-navigation-nodes (:procedures combobulate-procedures-sibling
                                       )
     (combobulate-nav-get-prev-sibling
      (combobulate--get-nearest-navigable-node))))
@@ -1113,7 +1113,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-previous))))
 
 (defun combobulate--navigate-logical-next ()
-  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures :skip-prefix t)
+  (with-navigation-nodes (:procedures combobulate-procedures-logical :skip-prefix t)
     (combobulate-nav-logical-next)))
 
 (defun combobulate-navigate-logical-next (&optional arg)
@@ -1123,7 +1123,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-logical-next) nil nil)))
 
 (defun combobulate--navigate-logical-previous ()
-  (with-navigation-nodes (:procedures combobulate-navigation-logical-procedures)
+  (with-navigation-nodes (:procedures combobulate-procedures-logical)
     (combobulate-nav-logical-previous)))
 
 (defun combobulate-navigate-logical-previous (&optional arg)
@@ -1133,7 +1133,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-logical-previous))))
 
 (defun combobulate--navigate-end-of-defun ()
-  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
+  (with-navigation-nodes (:procedures combobulate-procedures-defun)
     (combobulate-nav-end-of-defun)))
 
 (defun combobulate-navigate-end-of-defun (&optional arg)
@@ -1143,7 +1143,7 @@ DIRECTION must be `forward' or `backward'."
     (combobulate-visual-move-to-node (combobulate--navigate-end-of-defun) t)))
 
 (defun combobulate--navigate-beginning-of-defun ()
-  (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures)
+  (with-navigation-nodes (:procedures combobulate-procedures-defun)
     (combobulate-nav-beginning-of-defun)))
 
 (defun combobulate-navigate-beginning-of-defun (&optional arg)

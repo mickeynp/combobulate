@@ -1079,7 +1079,7 @@ node at point to highlight."
                                              (combobulate-get-parents (combobulate-node-at-point nil t))))))))
         (query))
     (unless node (error "Cannot find a valid context node at point"))
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
+    (with-navigation-nodes (:nodes combobulate-procedures-hierarchy)
       (if-let ((node-parent (combobulate-node-parent node)))
           (progn
             (setq query (combobulate-query-builder-matcher-query
@@ -1166,7 +1166,7 @@ the query fails to compile."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                   (eq feature combobulate-highlight-feature-symbol)))
+                                        (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

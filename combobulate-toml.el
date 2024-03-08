@@ -53,7 +53,7 @@
   (setq combobulate-manipulation-trim-whitespace 'backward)
   (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default nil)
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         `((:activation-nodes
            ((:nodes
              ("bare_key" "dotted_key")
@@ -72,11 +72,11 @@
                       :match-query
                       (:query (_ (pair (_) (_) @match)+) :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("table"))))))
-  (setq combobulate-navigation-defun-procedures '((:activation-nodes ((:nodes ("table" "table_array_element"))))))
+  (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("table" "table_array_element"))))))
 
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         '(;; array navigation
           (:activation-nodes
            ((:nodes
@@ -105,7 +105,7 @@
                       :match-query
                       (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
 
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         '(;; in and out of tables
           (:activation-nodes
            ((:nodes ("table" "table_array_element") :position at))
@@ -114,7 +114,7 @@
           (:activation-nodes
            ((:nodes (exclude (all) "string") :position at))
            :selector (:choose node :match-children t))))
-  (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
+  (setq combobulate-procedures-logical '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-toml)
 ;;; combobulate-toml.el ends here

@@ -304,7 +304,7 @@ from `combobulate-manipulation-envelopes') to insert."
           ((call_expression function: (member_expression object: (identifier) @name @hl.serene
                                                          property: (property_identifier)
                                                          (:match "^console$" @name))))))
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         '(;; edit the keys or values in an object
           (:activation-nodes
            ((:nodes
@@ -363,7 +363,7 @@ from `combobulate-manipulation-envelopes') to insert."
                                                         (jsx_closing_element (identifier) @match))
                                            :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("jsx_element"
                                        "regex"
                                        ;; NOTE: you could make a
@@ -383,10 +383,10 @@ from `combobulate-manipulation-envelopes') to insert."
                                        "jsx_fragment"
                                        "jsx_self_closing_element"))))))
 
-  (setq combobulate-navigation-defun-procedures
+  (setq combobulate-procedures-defun
         '((:activation-nodes ((:nodes ("arrow_function" "function_declaration" "class_declaration" "method_definition"))))))
 
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         `(;; for lists, arrays, objects, etc.
           (:activation-nodes
            ((:nodes
@@ -434,7 +434,7 @@ from `combobulate-manipulation-envelopes') to insert."
            :selector (:match-children (:discard-rules ("comment" "jsx_closing_element" "jsx_opening_element"))))))
 
   (setq combobulate-display-ignored-node-types '("jsx_opening_element" "jsx_closing_element"))
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         `(;; general navigation into and out of blocks.
           (:activation-nodes
            ((:nodes
@@ -502,7 +502,7 @@ from `combobulate-manipulation-envelopes') to insert."
              :has-parent ((exclude (all) "jsx_opening_element" "jsx_self_closing_element"))))
            :selector (:choose node :match-children t))))
 
-  (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
+  (setq combobulate-procedures-logical '((:activation-nodes ((:nodes (all)))))))
 
 
 (provide 'combobulate-js-ts)

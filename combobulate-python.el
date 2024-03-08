@@ -361,7 +361,7 @@ line when you press
               r>)))))
 
   (add-to-list 'python-indent-trigger-commands 'combobulate-python-indent-for-tab-command)
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         '(;; edit comments in blocks
           (:activation-nodes
            ((:nodes ("comment") :has-parent ("block")))
@@ -399,12 +399,12 @@ line when you press
 
   (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
   (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
-  (setq combobulate-navigation-defun-procedures
+  (setq combobulate-procedures-defun
         '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("function_definition"  "class_definition" "lambda"
                                        "for_in_clause" "string" "decorated_definition"))))))
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         '((:activation-nodes
            ((:nodes
              ("string_content" "interpolation")
@@ -451,7 +451,7 @@ line when you press
              :has-parent ("case_clause" "match_statement" "module" "block")))
            :selector (:match-children (:discard-rules ("block"))))))
 
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         '(;; statements are treated with `at' so you can descend into sub-statements.
           (:activation-nodes
            ((:nodes ((rule "_compound_statement")
@@ -469,7 +469,7 @@ line when you press
            ((:nodes ((all)) :has-parent ((all))))
            :selector (:choose node
                               :match-children (:discard-rules ("block"))))))
-  (setq combobulate-navigation-logical-procedures
+  (setq combobulate-procedures-logical
         '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-python)

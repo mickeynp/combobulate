@@ -69,7 +69,7 @@
           ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)
           ;; catch pairs where the there are duplicate key names.
           (([(object (pair key: (_) @hl.fiery) (pair key: (_) @hl.silver) (:equal @hl.silver @hl.fiery))]))))
-  (setq combobulate-manipulation-edit-procedures
+  (setq combobulate-procedures-edit
         `(;; edit the value field of a pair
           (:activation-nodes
            ((:nodes
@@ -91,11 +91,11 @@
                       :match-query
                       (:query (object (pair (_) @match)+) :engine combobulate)))))
   (setq combobulate-navigation-sibling-skip-prefix t)
-  (setq combobulate-navigation-sexp-procedures
+  (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("pair"))))))
-  (setq combobulate-navigation-defun-procedures '((:activation-nodes ((:nodes ("document"))))))
+  (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("document"))))))
 
-  (setq combobulate-navigation-sibling-procedures
+  (setq combobulate-procedures-sibling
         '(;; general navigation
           (:activation-nodes
            ((:nodes
@@ -117,12 +117,12 @@
                       :match-query
                       (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
 
-  (setq combobulate-navigation-parent-child-procedures
+  (setq combobulate-procedures-hierarchy
         '(;; general navigation
           (:activation-nodes
            ((:nodes (exclude (all) "string") :position at))
            :selector (:choose node :match-children t))))
-  (setq combobulate-navigation-logical-procedures '((:activation-nodes ((:nodes (all)))))))
+  (setq combobulate-procedures-logical '((:activation-nodes ((:nodes (all)))))))
 
 (provide 'combobulate-json)
 ;;; combobulate-json.el ends here
