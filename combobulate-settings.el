@@ -113,23 +113,6 @@ it finds, regardless of hierarchy."
           (const :tag "Self and Sibling First" self-and-sibling-first)
           (const :tag "Linear" linear)))
 
-(defcustom combobulate-navigate-next-move-to-end nil
-  "Make \\[combobulate-navigate-next] move to the end of the node.
-
-If non-nil, the point is placed at the end of the next sibling
-node. This is the default behavior in major modes -- like elisp
-mode -- that properly places the point at the end of the sibling
-node you navigated to.
-
-However, this can result in placing the point at the end of a
-node that is also technically inside the parent of another, due
-to how node ranges can overlap.
-
-Setting this to nil always places the point at the beginning of
-the node."
-  :type 'boolean
-  :group 'combobulate)
-
 (defcustom combobulate-pulse-node-wait-time 0.5
   "How long to wait (in seconds) at the pulsed node before returning."
   :type 'float
@@ -287,14 +270,6 @@ See `combobulate-forward-sexp-function'.")
 
 This should probably be nil in whitespace-sensitive languages.")
 
-(defvar-local combobulate-manipulation-trim-whitespace nil
-  "Trim whitespace after Combobulate manipulates the tree.
-
-It can be one of the following values:
-
-`nil' does nothing; `backward' only deletes whitespaces behind
-where point is left; `all' deletes forward and backward.")
-
 (defvar-local combobulate-calculate-indent-function
     #'combobulate-baseline-indentation-default
   "Function that determines the baseline indentation of a given position.
@@ -302,34 +277,8 @@ where point is left; `all' deletes forward and backward.")
 The function must take one argument, POS, and from that point
 determine the indentation.")
 
-(defvar-local combobulate-manipulation-trim-empty-lines t
-  "Non-nil trims empty lines after Combobulate manipulates the tree.")
-
 (defvar-local combobulate-navigation-sibling-skip-prefix nil
   "If non-nil, skip prefixes in the direction of travel when finding a sibling.")
-
-(defvar-local combobulate-navigation-rules nil
-  "Contains the auto-generated production rules.
-
-This must be set in the setup function for the respective mode.")
-
-(defvar-local combobulate-navigation-rules-all nil
-  "Contains the auto-generated production rules.
-
-This must be set in the setup function for the respective mode.")
-
-(defvar-local combobulate-navigation-rules-inverted nil
-  "Contains the auto-generated inverted production rules.
-
-This must be set in the setup function for the respective mode.")
-
-(defvar-local combobulate-navigation-rules-overrides-inverted nil
-  "Alist of override rules for the inverted production rules.
-
-A RULE must be an alist with the KEY being the look-up item and
-the VALUE a list of rules:
-
-   \\='((KEY . (VALUE ... VALUE_N)))")
 
 (defvar-local combobulate-envelope-indent-region-function #'indent-region
   "Function to call to indent an envelope after it is inserted.
@@ -360,13 +309,6 @@ Shorthands are used in lieu of inlining the procedure in the
 
 (defvar-local combobulate-manipulation-envelopes nil
   "Code generators that wrap -- envelop -- nodes")
-
-(defvar combobulate-manipulation-envelopes-custom nil
-  "Alist of (LANGUAGE . ENVELOPES).
-
-Where LANGUAGE must be a valid `treesit-parser-language' symbol
-to bind the envelopes against. ENVELOPES must be a list of
-envelopes.")
 
 (defvar-local combobulate-procedures-sibling nil
   "Nodes used for sibling movement")

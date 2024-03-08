@@ -62,8 +62,6 @@
            ("[" r> "]"))))
 
   (setq combobulate-pretty-print-node-name-function #'combobulate-json-pretty-print-node-name)
-  (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default
         '(;; highlight pseudo "comments" that are often designated "//"
           ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)

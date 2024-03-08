@@ -1628,22 +1628,6 @@ Each member of PARTITIONS must be one of:
 ;;     (with-navigation-nodes (:procedures combobulate-procedures-sibling)
 ;;       (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
 
-(defun combobulate-delete-whitespace ()
-  "Maybe deletes excess whitespace around point.
-
-Whether this function does anything or not depends on
-`combobulate-manipulation-trim-whitespace'."
-  (cond ((eq combobulate-manipulation-trim-whitespace 'backward)
-         (delete-horizontal-space t))
-        ((eq combobulate-manipulation-trim-whitespace 'all)
-         (delete-horizontal-space))))
-
-
-(defun combobulate-delete-empty-lines ()
-  "Delete empty lines around point"
-  (when combobulate-manipulation-trim-empty-lines
-    (delete-blank-lines)))
-
 (defun combobulate--drag (direction)
   "Perform a drag operation on the current navigation node in DIRECTION.
 

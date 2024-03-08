@@ -170,9 +170,7 @@ created."
            (kbd (format "%s e" combobulate-key-prefix))
            ;; todo: this should be a single-shot setup per mode.
            (let ((map (make-sparse-keymap)))
-             (dolist (envelope (combobulate--setup-envelopes
-                                (append combobulate-manipulation-envelopes
-                                        (alist-get parser-lang combobulate-manipulation-envelopes-custom))))
+             (dolist (envelope (combobulate--setup-envelopes combobulate-manipulation-envelopes))
                (map-let (:function :key :extra-key) envelope
                  (define-key map (kbd key) function)
                  (when extra-key

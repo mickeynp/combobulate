@@ -50,8 +50,6 @@
   (setq combobulate-manipulation-envelopes nil)
 
   (setq combobulate-pretty-print-node-name-function #'combobulate-toml-pretty-print-node-name)
-  (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-highlight-queries-default nil)
   (setq combobulate-procedures-edit
         `((:activation-nodes

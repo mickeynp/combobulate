@@ -877,85 +877,6 @@ NODE is found or all depths have been searched."
           (throw 'done subtree))
         (cl-incf offset)))))
 
-
-(cl-defun combobulate-get-children (node &key (anonymous nil) excluded-fields
-                                         included-fields remove-types keep-types (all t)
-                                         (all-nodes nil))
-  "Return the children of NODE, filtered by the specified fields.
-
-If `:anonymous' is non-nil, return anonymous children as well.
-
-If `:excluded-fields' is specified, return all children except
-those with field names in the given list. If `:all' is non-nil,
-`:excluded-fields' is allowed; otherwise, an error is signaled.
-
-If `:included-fields' is specified, return only the children with
-field names in the given list.
-
-If neither `:excluded-fields' nor `:included-fields' is
-specified, return all children if `:all' is non-nil, otherwise
-signal an error.
-
-`:excluded-fields' and `:included-fields' cannot be used
-together, and cannot contain duplicate field names. If either
-condition is violated, an error is signaled.
-
-`:remove-types' is an optional list of node types to filter in
-the final selection process before the children are returned.
-
-`:keep-types' is an optional list of node types to keep.
-
-`:all-nodes', if non-nil, matches all nodes and then applies
-either `:keep-types' *or* `:remove-types'. Both are not supported
-at the same time."
-  ;; Set theory house keeping.
-  (cond
-   ((not (or excluded-fields included-fields keep-types all all-nodes))
-    (error "Must have `excluded-fields' and/or `:included-fields', or `:all'"))
-   ((and excluded-fields (not all))
-    (error "Cannot use `:excluded-fields' unless `:all' is non-nil."))
-   ((seq-intersection excluded-fields included-fields)
-    (error "`:excluded-fields' and `:included-fields' share one or more field values: %s"
-           (seq-intersection excluded-fields included-fields))))
-  ;; We need all the rules, and the fields they belong to, so we can
-  ;; act on them in turn. This is stored in
-  ;; `combobulate-navigation-rules'.
-  (let* ((rules (cadr (assoc (combobulate-node-type node) combobulate-navigation-rules)))
-         ;; Collect the field values -- rules -- we care about. Either
-         ;; what is in `:included-fields', or all of them, if that is
-         ;; nil
-         (allowed-types (apply #'append (mapcar (lambda (k) (plist-get rules k))
-                                                (or included-fields (and all (map-keys rules)))))))
-    ;; If we ask for `:all' *and* we have `:excluded-fields', then
-    ;; that is equivalent to explicitly asking for the difference
-    ;; between the allowed types of fields, and the fields we've
-    ;; excluded. So do that. This simplifies the code paths as we can
-    ;; complement the search space and avoid lots of tedious
-    ;; repetition.
-    (if (and all excluded-fields)
-        (combobulate-get-children
-         node
-         :anonymous anonymous
-         :included-fields (seq-difference allowed-types excluded-fields)
-         :keep-types keep-types
-         :remove-types remove-types
-         :all nil)
-      (if all-nodes
-          (combobulate-filter-nodes
-           (combobulate-node-children node anonymous)
-           :keep-types keep-types
-           :remove-types remove-types)
-        (seq-filter
-         (lambda (child)
-           ;; If the node type is either in `:allowed-types' or
-           ;; `:keep-types', we keep it *unless* it is also in
-           ;; `:remove-types', which supercedes a keep request.
-           (let ((node-type (combobulate-node-type child)))
-             (and (or (member node-type allowed-types)
-                      (member node-type keep-types))
-                  (not (member node-type remove-types)))))
-         (combobulate-node-children node anonymous))))))
-
 (defun combobulate-nav-to-defun (direction &optional node)
   "Navigate to a defun in DIRECTION, possibly from NODE.
 
@@ -1085,8 +1006,7 @@ DIRECTION must be `forward' or `backward'."
   "Move to the next navigable sibling ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-next)
-                                     combobulate-navigate-next-move-to-end)))
+    (combobulate-visual-move-to-node (combobulate--navigate-next))))
 
 (defun combobulate--navigate-self-end ()
   (with-navigation-nodes (:skip-prefix t :procedures combobulate-procedures-sibling)
@@ -1097,8 +1017,7 @@ DIRECTION must be `forward' or `backward'."
   "Move to the end of the current navigable node ARG times"
   (interactive "^p")
   (with-argument-repetition arg
-    (combobulate-visual-move-to-node (combobulate--navigate-self-end)
-                                     combobulate-navigate-next-move-to-end)))
+    (combobulate-visual-move-to-node (combobulate--navigate-self-end))))
 
 (defun combobulate--navigate-previous ()
   (with-navigation-nodes (:procedures combobulate-procedures-sibling

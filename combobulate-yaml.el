@@ -53,8 +53,6 @@
           "double_quote_scalar" "string_scalar" "single_quote_scalar"))
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function nil)
-  (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-trim-empty-lines t)
 
   (setq combobulate-procedures-edit
         '((:activation-nodes

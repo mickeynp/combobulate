@@ -885,14 +885,7 @@ expansion:
 (defun combobulate-get-envelope-by-name (name)
   "Find an envelope with `:name' equal to NAME."
   (seq-find (lambda (envelope) (equal (plist-get envelope :name) name))
-            (append combobulate-manipulation-envelopes
-                    (combobulate-get-envelopes-by-major-mode))))
-
-(defun combobulate-get-envelopes-by-major-mode ()
-  (mapcan
-   (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
-   (combobulate-parser-list)))
+            combobulate-manipulation-envelopes))
 
 (defun combobulate-get-envelope-function-by-name (name)
   "Find an envelope with `:name' equal to NAME."

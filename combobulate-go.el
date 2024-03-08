@@ -113,8 +113,6 @@
         '("identifier" "false" "true" "float_literal" "field_identifier" "type_identifier"))
   (setq combobulate-manipulation-indent-after-edit nil)
   (setq combobulate-envelope-indent-region-function #'indent-region)
-  (setq combobulate-manipulation-trim-whitespace 'backward)
-  (setq combobulate-manipulation-trim-empty-lines t)
   (setq combobulate-procedures-edit nil)
   (setq combobulate-pretty-print-node-name-function
         #'combobulate-go-pretty-print-node-name)
