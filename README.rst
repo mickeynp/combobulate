@@ -42,7 +42,7 @@ There's a large emphasis on Combobulate being both easy to use, and a natural ex
 
 .. image:: docs/sibling-nav-jsx.gif
 
-For instance, navigating up or down list structures with ``C-M-u`` and ``C-M-d`` is much improved. Whether you're navigating in or out of structures in Python or JSX elements in Typescript of Javascript.
+For instance, navigating up or down list structures with ``C-M-u`` and ``C-M-d`` is much improved. Whether you're navigating in or out of structures in Python or JSX elements in Typescript or Javascript.
 
 Combobulate also improves list-like navigation bound to ``C-M-n`` and ``C-M-p``, as shown above also. They now understand hierarchical code much better, and they will navigate between statements in code as well as parameters in functions or key pairs in dictionaries.
 
@@ -143,8 +143,6 @@ Combobulate is not on MELPA or any other package repository, yet. For Combobulat
 
    (Adding support for new languages is reasonably easy though!)
 5. You have a git checkout of Combobulate ready.
-
-Here's a verbose example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter grammars, then you can leave out the code that does this in the ``:preface``.
 
 There are two code snippets below that will help you get started. One assumes you don't know how to install and set up tree-sitter grammars, whereas the other one does.
 
