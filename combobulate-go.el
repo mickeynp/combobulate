@@ -116,7 +116,7 @@
   (setq combobulate-procedures-edit nil)
   (setq combobulate-pretty-print-node-name-function
         #'combobulate-go-pretty-print-node-name)
-  (setq combobulate-navigation-sibling-skip-prefix t)
+
   (setq combobulate-procedures-sexp nil)
   (setq combobulate-manipulation-plausible-separators '(";" "," "\n"))
   (setq combobulate-procedures-defun

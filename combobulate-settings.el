@@ -213,119 +213,118 @@ vector or an escaped string."
 
 ;;;; Other settings
 
-(defvar-local combobulate-procedures-defun nil
-  "Node procedures used to navigate by defun.
+;; (defvar-local combobulate-procedures-defun nil
+;;   "Node procedures used to navigate by defun.
 
-See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
+;; See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
 
-(defvar-local combobulate-procedures-hierarchy nil
-  "Node procedures used to navigate hierarchically up or down nodes.")
+;; (defvar-local combobulate-procedures-hierarchy nil
+;;   "Node procedures used to navigate hierarchically up or down nodes.")
 
-(defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
-  "Node procedures as the default in the absence of more specific procedures.
+;; (defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
+;;   "Node procedures as the default in the absence of more specific procedures.
 
-The `combobulate-navigation-default-nodes' variable is populated
-with the node types from all the expanded activation node
-procedure rules.")
+;; The `combobulate-default-nodes' variable is populated
+;; with the node types from all the expanded activation node
+;; procedure rules.")
 
-(defvar-local combobulate-navigation-default-nodes nil
-  "Node procedures used for general navigation and as a placeholder.
+(defvar combobulate-default-nodes nil
+  "List of node types used for general navigation and as a placeholder.
 
-The macro `with-navigation-nodes' binds to this variable and
-locally overrides the navigation nodes by Combobulate's node
-tools.")
-
-(defvar-local combobulate-procedures-edit nil
-  "List of edit procedures.")
+The macro `with-navigation-nodes' binds all activation nodes to
+this variable, so that Combobulate can act on those node types
+without requiring that they are lisetd explicitly.")
 
 (defvar-local combobulate-default-procedures nil
-  "List of default procedures.
+  "List of default procedures to use for general navigation and editing.
 
 This is typically set by `with-navigation-nodes' by passing a
-`:procedures' property with the procedures to use..")
+`:procedures' property with the list of procedures to use.")
 
-(defvar-local combobulate-procedure-discard-rules '("comment")
-  "List of rules to always apply to discard operations.")
 
-(defvar-local combobulate-procedures-sexp nil
-  "Node procedures used to navigate by sexp.
+;; (defvar-local combobulate-procedures-edit nil
+;;   "List of edit procedures.")
 
-See `combobulate-forward-sexp-function'.")
 
-(defvar-local combobulate-procedures-logical
-    '((:activation-nodes ((:nodes (all)))))
-  "Node procedures used to navigate by logical units.")
+;; (defvar-local combobulate-procedure-discard-rules '("comment")
+;;   "List of rules to always apply to discard operations.")
 
-(defvar-local combobulate-procedures-defun nil
-  "Node procedures used to navigate by defun.")
+;; (defvar-local combobulate-procedures-sexp nil
+;;   "Node procedures used to navigate by sexp.
 
-(defvar-local combobulate-display-ignored-node-types nil
-  "Node types that will not appear in the tree display")
+;; See `combobulate-forward-sexp-function'.")
 
-(defvar-local combobulate-manipulation-plausible-separators '(",")
-  "List of characters that could be valid node separators.")
+;; (defvar-local combobulate-procedures-logical
+;;     '((:activation-nodes ((:nodes (all)))))
+;;   "Node procedures used to navigate by logical units.")
 
-(defvar-local combobulate-manipulation-indent-after-edit t
-  "Non-nil indents the inserted text after a Combobulate refactor text operation.
+;; (defvar-local combobulate-procedures-defun nil
+;;   "Node procedures used to navigate by defun.")
 
-This should probably be nil in whitespace-sensitive languages.")
+;; (defvar-local combobulate-display-ignored-node-types nil
+;;   "Node types that will not appear in the tree display")
 
-(defvar-local combobulate-calculate-indent-function
-    #'combobulate-baseline-indentation-default
-  "Function that determines the baseline indentation of a given position.
+;; (defvar-local combobulate-manipulation-plausible-separators '(",")
+;;   "List of characters that could be valid node separators.")
 
-The function must take one argument, POS, and from that point
-determine the indentation.")
+;; (defvar-local combobulate-manipulation-indent-after-edit t
+;;   "Non-nil indents the inserted text after a Combobulate refactor text operation.
 
-(defvar-local combobulate-navigation-sibling-skip-prefix nil
-  "If non-nil, skip prefixes in the direction of travel when finding a sibling.")
+;; This should probably be nil in whitespace-sensitive languages.")
 
-(defvar-local combobulate-envelope-indent-region-function #'indent-region
-  "Function to call to indent an envelope after it is inserted.
+;; (defvar-local combobulate-calculate-indent-function
+;;     #'combobulate-baseline-indentation-default
+;;   "Function that determines the baseline indentation of a given position.
 
-Note that this defaults to `indent-region', but that may work
-well in indentation-sensitive languages like YAML or Python.")
+;; The function must take one argument, POS, and from that point
+;; determine the indentation.")
 
-(defvar-local combobulate-envelope-deindent-function nil
-  "Function to call to calculate the previous indentation level of point.
+;; (defvar-local combobulate-envelope-indent-region-function #'indent-region
+;;   "Function to call to indent an envelope after it is inserted.
 
-The function must determine, from its current position in the
-buffer, the *preceding* indentation level.
+;; Note that this defaults to `indent-region', but that may work
+;; well in indentation-sensitive languages like YAML or Python.")
 
-This is little use to anything except whitespace-sensitive
-languages like YAML and Python.")
+;; (defvar-local combobulate-envelope-deindent-function nil
+;;   "Function to call to calculate the previous indentation level of point.
+
+;; The function must determine, from its current position in the
+;; buffer, the *preceding* indentation level.
+
+;; This is little use to anything except whitespace-sensitive
+;; languages like YAML and Python.")
 
 (defvar combobulate-envelope-symbol-prefix "combobulate-envelop-"
   "Prefix to use for symbol functions and variables for envelopes.")
 
-(defvar-local combobulate-envelope-procedure-shorthand-alist nil
-  "Alist of shorthand symbols for envelope procedures.
+;; (defvar-local combobulate-envelope-procedure-shorthand-alist nil
+;;   "Alist of shorthand symbols for envelope procedures.
 
-Each entry must be an alist with the key being the shorthand
-symbol and the value being a valid combobulate procedure.
+;; Each entry must be an alist with the key being the shorthand
+;; symbol and the value being a valid combobulate procedure.
 
-Shorthands are used in lieu of inlining the procedure in the
-`:nodes' property for an envelope. It is local to a language.")
+;; Shorthands are used in lieu of inlining the procedure in the
+;; `:nodes' property for an envelope. It is local to a language.")
 
-(defvar-local combobulate-manipulation-envelopes nil
-  "Code generators that wrap -- envelop -- nodes")
+;; (defvar-local combobulate-manipulation-envelopes nil
+;;   "Code generators that wrap -- envelop -- nodes")
 
-(defvar-local combobulate-procedures-sibling nil
-  "Nodes used for sibling movement")
+;; (defvar-local combobulate-procedures-sibling nil
+;;   "Nodes used for sibling movement")
 
-(defvar-local combobulate-highlight-queries-default nil
-  "List of Combobulate-provided node queries to highlight.
+;; (defvar-local combobulate-highlight-queries-default nil
+;;   "List of Combobulate-provided node queries to highlight.
 
-This list is set internally by the setup function responsible for
-configuring Combobulate in a tree-sitter buffer.
+;; This list is set internally by the setup function responsible for
+;; configuring Combobulate in a tree-sitter buffer.
 
-Each query should be a well-formed tree-sitter query. Capture
-groups should use the name of the face to highlight with. See
-`combobulate-query-node-match-faces' for a selection of example
-faces to use.
+;; Each query should be a well-formed tree-sitter query. Capture
+;; groups should use the name of the face to highlight with. See
+;; `combobulate-query-node-match-faces' for a selection of example
+;; faces to use.
 
-Users who wish to programmatically add their own queries should
-use `combobulate-highlight-queries-alist' instead.")
+;; Users who wish to programmatically add their own queries should
+;; use `combobulate-highlight-queries-alist' instead.")
 
 (defvar-local combobulate-highlight-queries-alist nil
   "List of node queries to highlight.
@@ -342,17 +341,17 @@ use the name of the face to highlight with. See
 
 (put 'combobulate-highlight-queries-alist 'safe-local-variable #'listp)
 
-(defvar-local combobulate-navigation-context-nodes nil
-  "List of contextual nodes for use with querying and highlighting.
+;; (defvar-local combobulate-navigation-context-nodes nil
+;;   "List of contextual nodes for use with querying and highlighting.
 
-Most language grammars have one or two nodes that are \"atoms\"
-and usually hold the literal text of the nodes around it. For
-instance function declarations or variable assignments will
-typically contain an `identifier' (or similar) node that holds
-the name of the function or the variable being assigned to.
+;; Most language grammars have one or two nodes that are \"atoms\"
+;; and usually hold the literal text of the nodes around it. For
+;; instance function declarations or variable assignments will
+;; typically contain an `identifier' (or similar) node that holds
+;; the name of the function or the variable being assigned to.
 
-For many language's it's `identifier' or `string', but it could
-be any number of nodes.")
+;; For many language's it's `identifier' or `string', but it could
+;; be any number of nodes.")
 
 (defvar combobulate-setup-functions-alist
   '((python . combobulate-python-setup)
@@ -381,14 +380,14 @@ counterparts.")
 (declare-function combobulate--pretty-print-node "combobulate-navigation")
 (declare-function combobulate-pretty-print-node-name "combobulate-navigation")
 
-(defvar-local combobulate-pretty-print-function #'combobulate--pretty-print-node
-  "Buffer local function that pretty prints a combobulate node")
+;; (defvar-local combobulate-pretty-print-function #'combobulate--pretty-print-node
+;;   "Buffer local function that pretty prints a combobulate node")
 
-(defvar-local combobulate-pretty-print-node-name-function #'combobulate-pretty-print-node-name
-  "Buffer local function that pretty prints the node name
+;; (defvar-local combobulate-pretty-print-node-name-function #'combobulate-pretty-print-node-name
+;;   "Buffer local function that pretty prints the node name
 
-This variable must be called by the function in
-`combobulate-pretty-print-function'.")
+;; This variable must be called by the function in
+;; `combobulate-pretty-print-function'.")
 
 
 (defvar combobulate-after-setup-hook nil

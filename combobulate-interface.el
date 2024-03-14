@@ -33,6 +33,11 @@
 (declare-function combobulate--goto-node "combobulate-navigation")
 
 
+(defsubst combobulate-language-available-p (language)
+  (treesit-language-available-p language))
+
+(defsubst combobulate-create-language (language &optional buffer no-reuse)
+  (treesit-parser-create language buffer no-reuse))
 
 (defsubst combobulate-node-p (node)
   (treesit-node-p node))
@@ -64,9 +69,10 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
-(defun combobulate-primary-language ()
+(defun combobulate-primary-language (&optional quiet)
   (combobulate-parser-language (or (car (combobulate-parser-list))
-                                   (error "No parsers available"))))
+                                   (unless quiet
+                                     (error "No parsers available")))))
 
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))

@@ -1071,7 +1071,7 @@ node at point to highlight."
   (interactive (list (combobulate-highlight-read-face-name "Face: ")
                      (y-or-n-p "Match similar types only? ")))
   ;; determine the right node at point to collect.
-  (let ((node (with-navigation-nodes (:nodes combobulate-navigation-context-nodes)
+  (let ((node (with-navigation-nodes (:procedures context-nodes)
                 (car-safe
                  (seq-sort #'combobulate-node-larger-than-node-p
                            (seq-filter #'combobulate-navigable-node-p
@@ -1079,7 +1079,7 @@ node at point to highlight."
                                              (combobulate-get-parents (combobulate-node-at-point nil t))))))))
         (query))
     (unless node (error "Cannot find a valid context node at point"))
-    (with-navigation-nodes (:nodes combobulate-procedures-hierarchy)
+    (with-navigation-nodes (:procedures procedures-hierarchy)
       (if-let ((node-parent (combobulate-node-parent node)))
           (progn
             (setq query (combobulate-query-builder-matcher-query

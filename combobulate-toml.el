@@ -69,7 +69,7 @@
                       parent
                       :match-query
                       (:query (_ (pair (_) (_) @match)+) :engine combobulate)))))
-  (setq combobulate-navigation-sibling-skip-prefix t)
+  
   (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("table"))))))
   (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("table" "table_array_element"))))))

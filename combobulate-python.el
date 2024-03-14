@@ -230,247 +230,251 @@ line when you press
        ;; for everything else, use the regular indentation mechanism.
        (t (indent-for-tab-command arg))))))
 
+(defconst combobulate-python-definitions
+  '((context-nodes '("identifier"))
+    ;; do not indent envelopes.
+    (envelope-indent-region-function nil)
+    ;; install a handful of useful highlighting rules.
+    (highlight-queries-default
+     '(;; highlight breakpoint function calls
+       (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
+       ;; catch trailing commas that inadvertently turn expressions into tuples
+       ((expression_list (_)+ "," @hl.gold :anchor))))
+    (indent-after-edit nil)
+    (pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
+    (envelope-procedure-shorthand-alist
+     '((expressions . ((rule "expression") (rule "primary_expression")))
+       (statements . ((rule "_compound_statement") (rule "_simple_statement")
+                      (rule "expression_statement") (rule "block")))))
+    (envelope-list
+     `((:description
+        "( ... )"
+        :key "("
+        :extra-key "M-("
+        :mark-node t
+        :shorthand expressions
+        :name "wrap-parentheses"
+        :template (@ "(" r ")"))
+       (:description
+        "Decorate class or function"
+        :key "@"
+        :mark-node nil
+        :nodes ("function_definition" "class_definition")
+        :name "decorate"
+        :template ((p @decorator "Decorator name"
+                      (lambda (text)
+                        (if (string-prefix-p "@" text)
+                            text
+                          (concat "@" text))))
+                   n>))
+       (:description
+        "if ...: ... [else: ...]"
+        :key "bi"
+        :mark-node t
+        :shorthand statements
+        :name "nest-if-else"
+        :template
+        ("if " @ (p True "Bool") ":" n>
+         (choice* :missing
+                  nil
+                  :rest
+                  ((save-column r> n) < "else:" (save-column n> "pass" n))
+                  :name "if-block")
+         (choice* :missing
+                  nil
+                  :rest
+                  (@ (save-column "pass" n> "else:" n> r> n))
+                  :name "else-block")))
+       (:description
+        "try ... except ...: ..."
+        :key "bte"
+        :mark-node t
+        :shorthand statements
+        :name "nest-try-except"
+        :template
+        ((save-column
+          "try:" n>
+          (choice* :name "statement-block"
+                   :missing
+                   (@ "pass")
+                   :rest
+                   (r>))
+          n)
+         "except " (p Exception "Exception") ":" n>
+         (choice* :name "handler-block"
+                  :missing
+                  (@ "pass" n>)
+                  :rest
+                  (r> n))))
+       (:description
+        "try ... finally: ..."
+        :key "btf"
+        :mark-node t
+        :shorthand statements
+        :name "nest-try-finally"
+        :template
+        ((save-column
+          @ "try:" n>
+          (choice* :missing (@ "pass") :rest (r>) :name "try-block") n)
+         "finally:" n>
+         (choice* :missing (@ "pass") :rest (r>) :name "finally-block")))
+       (:description
+        "def ...():"
+        :key "bd"
+        :mark-node t
+        :shorthand statements
+        :name "nest-def"
+        :template
+        ("def " (p name "Name") "(" @ ")" ":" n>
+         r>))
+       (:description
+        "for ...:"
+        :key "bf"
+        :mark-node t
+        :shorthand statements
+        :name "nest-for"
+        :template
+        ("for " @ ":" n>
+         r>))
+       (:description
+        "with ...:"
+        :key "bW"
+        :mark-node t
+        :shorthand statements
+        :name "nest-with"
+        :template
+        ("with " @ ":" n>
+         r>))
+       (:description
+        "while ...:"
+        :key "bw"
+        :mark-node t
+        :shorthand statements
+        :name "nest-while"
+        :template
+        ("while " @ ":" n>
+         r>))))
+    (procedures-edit
+     '(;; edit comments in blocks
+       (:activation-nodes
+        ((:nodes ("comment") :has-parent ("block")))
+        :selector (:match-query (:query (block (comment)+ @match)
+                                        :engine combobulate)))
+       ;; edit pairs in dictionaries
+       (:activation-nodes
+        ((:nodes ("pair") :has-parent "dictionary")
+         (:nodes ("dictionary")))
+        :selector (:match-query (:query (dictionary (pair)+ @match)
+                                        :engine combobulate)))
+       ;; edit parameters in functions
+       (:activation-nodes
+        ((:nodes ("function_definition")))
+        :selector (:match-query (:query (function_definition (parameters (_)+ @match))
+                                        :engine combobulate)))
+       ;; edit elements in containers and blocks
+       (:activation-nodes
+        ((:nodes ("block" "tuple_pattern" "set" "list" "tuple")))
+        :selector (:choose
+                   node
+                   :match-query (:query ((_) (_)+ @match)
+                                        :engine combobulate))
+        :selector (:match-children t))
+       ;; edit arguments in calls
+       (:activation-nodes
+        ((:nodes ("argument_list")))
+        :selector (:match-query (:query ((argument_list) (_)+ @match)
+                                        :engine combobulate)))
+       ;; edit imports
+       (:activation-nodes
+        ((:nodes "import_from_statement" :find-parent "module"))
+        :selector (:match-query (:query (import_from_statement name: (dotted_name)+ @match)
+                                        :engine combobulate)))))
+    (indent-calculate-function #'combobulate-python-calculate-indent)
+    (envelope-deindent-function #'combobulate-python-envelope-deindent-level)
+    (procedures-defun
+     '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
+    (procedures-sexp
+     '((:activation-nodes ((:nodes ("function_definition"  "class_definition" "lambda"
+                                    "for_in_clause" "string" "decorated_definition"))))))
+    (procedures-sibling
+     '((:activation-nodes
+        ((:nodes
+          ("string_content" "interpolation")
+          :has-parent ("string")))
+        :selector (:match-children
+                   (:discard-rules
+                    ("string_start" "string_end")
+                    :default-mark @match)))
+       (:activation-nodes
+        ((:nodes
+          ;; pattern is a special supertype. It is not a node in the CST.
+          ((rule "pattern"))
+          ;; Note that we do not find all the parents of pattern
+          ;; but only a couple. The main reason is that otherwise
+          ;; they'd become potential next/prev siblings in a block
+          ;; and that's generally not what people expect when
+          ;; they're navigating siblings in a block. By limiting
+          ;; ourselves to explicit tuples/lists, the user would
+          ;; have to enter these nodes explicitly to navigate them.
+          :has-parent ("tuple_pattern" "list_pattern"))
+         (:nodes
+          ((rule "import_from_statement"))
+          :has-parent ("import_from_statement"))
+         (:nodes
+          ((rule "dictionary"))
+          :has-parent ("dictionary"))
+         (:nodes
+          ((rule "set") (rule "tuple") (rule "list"))
+          :has-parent ("set" "tuple" "list"))
+         (:nodes
+          ((rule "parameter")
+           (rule "argument_list")
+           (rule "expression")
+           (rule "expression_list")
+           (rule "primary_expression"))
+          :has-parent ("parameters" "lambda_parameters" "argument_list" "expression_list")))
+        :selector (:match-children t))
+       (:activation-nodes
+        ((:nodes
+          ((rule "_simple_statement")
+           (rule "_compound_statement")
+           (rule "module")
+           "module" "case_clause")
+          :has-parent ("case_clause" "match_statement" "module" "block")))
+        :selector (:match-children (:discard-rules ("block"))))))
+    (procedures-hierarchy
+     '(;; statements are treated with `at' so you can descend into sub-statements.
+       (:activation-nodes
+        ((:nodes ((rule "_compound_statement")
+                  ;; not in compound statement
+                  "case_clause")
+                 :position at))
+        :selector (:choose node
+                           :match-children (:match-rules ("block"))))
+       (:activation-nodes
+        ((:nodes ((rule "lambda"))
+                 :position at))
+        :selector (:choose node
+                           :match-children (:match-rules (rule "lambda" :body))))
+       (:activation-nodes
+        ((:nodes ((all)) :has-parent ((all))))
+        :selector (:choose node
+                           :match-children (:discard-rules ("block"))))))))
+
+(define-combobulate-language
+ :name python
+ :language python
+ :major-modes (python-mode python-ts-mode)
+ :custom combobulate-python-definitions
+ :setup-fn combobulate-python-setup)
+
+
+
 (defun combobulate-python-setup (_)
-  (setq combobulate-navigation-context-nodes '("identifier"))
-
-  ;; do not indent envelopes.
-  (setq combobulate-envelope-indent-region-function nil)
-  (when combobulate-python-smart-indent
+  (when (combobulate-read smart-indent)
     ;; Override `indent-for-tab-command'
-    (local-set-key [remap indent-for-tab-command] #'combobulate-python-indent-for-tab-command))
-  ;; install a handful of useful highlighting rules.
-  (setq combobulate-highlight-queries-default
-        '(;; highlight breakpoint function calls
-          (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
-          ;; catch trailing commas that inadvertently turn expressions into tuples
-          ((expression_list (_)+ "," @hl.gold :anchor))))
-  (setq combobulate-manipulation-indent-after-edit nil)
-  (setq combobulate-pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
-  (let ((statement-nodes
-         (append (combobulate-production-rules-get "_compound_statement")
-                 (combobulate-production-rules-get "_simple_statement")
-                 '("expression_statement" "block"))))
-    (setq combobulate-manipulation-envelopes
-          `((:description
-             "( ... )"
-             :key "("
-             :extra-key "M-("
-             :mark-node t
-             :nodes ,(append (combobulate-production-rules-get "primary_expression")
-                             (combobulate-production-rules-get "expression"))
-             :name "wrap-parentheses"
-             :template (@ "(" r ")"))
-            (:description
-             "Decorate class or function"
-             :key "@"
-             :mark-node nil
-             :nodes ("function_definition" "class_definition")
-             :name "decorate"
-             :template ((p @decorator "Decorator name"
-                           (lambda (text)
-                             (if (string-prefix-p "@" text)
-                                 text
-                               (concat "@" text))))
-                        n>))
-            (:description
-             "if ...: ... [else: ...]"
-             :key "bi"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-if-else"
-             :template
-             ("if " @ (p True "Bool") ":" n>
-              (choice* :missing
-                       nil
-                       :rest
-                       ((save-column r> n) < "else:" (save-column n> "pass" n))
-                       :name "if-block")
-              (choice* :missing
-                       nil
-                       :rest
-                       (@ (save-column "pass" n> "else:" n> r> n))
-                       :name "else-block")))
-            (:description
-             "try ... except ...: ..."
-             :key "bte"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-try-except"
-             :template
-             ((save-column
-               "try:" n>
-               (choice* :name "statement-block"
-                        :missing
-                        (@ "pass")
-                        :rest
-                        (r>))
-               n)
-              "except " (p Exception "Exception") ":" n>
-              (choice* :name "handler-block"
-                       :missing
-                       (@ "pass" n>)
-                       :rest
-                       (r> n))))
-            (:description
-             "try ... finally: ..."
-             :key "btf"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-try-finally"
-             :template
-             ((save-column
-               @ "try:" n>
-               (choice* :missing (@ "pass") :rest (r>) :name "try-block") n)
-              "finally:" n>
-              (choice* :missing (@ "pass") :rest (r>) :name "finally-block")))
-            (:description
-             "def ...():"
-             :key "bd"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-def"
-             :template
-             ("def " (p name "Name") "(" @ ")" ":" n>
-              r>))
-            (:description
-             "for ...:"
-             :key "bf"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-for"
-             :template
-             ("for " @ ":" n>
-              r>))
-            (:description
-             "with ...:"
-             :key "bW"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-with"
-             :template
-             ("with " @ ":" n>
-              r>))
-            (:description
-             "while ...:"
-             :key "bw"
-             :mark-node t
-             :nodes ,statement-nodes
-             :name "nest-while"
-             :template
-             ("while " @ ":" n>
-              r>)))))
-
-  (add-to-list 'python-indent-trigger-commands 'combobulate-python-indent-for-tab-command)
-  (setq combobulate-procedures-edit
-        '(;; edit comments in blocks
-          (:activation-nodes
-           ((:nodes ("comment") :has-parent ("block")))
-           :selector (:match-query (:query (block (comment)+ @match)
-                                           :engine combobulate)))
-          ;; edit pairs in dictionaries
-          (:activation-nodes
-           ((:nodes ("pair") :has-parent "dictionary")
-            (:nodes ("dictionary")))
-           :selector (:match-query (:query (dictionary (pair)+ @match)
-                                           :engine combobulate)))
-          ;; edit parameters in functions
-          (:activation-nodes
-           ((:nodes ("function_definition")))
-           :selector (:match-query (:query (function_definition (parameters (_)+ @match))
-                                           :engine combobulate)))
-          ;; edit elements in containers and blocks
-          (:activation-nodes
-           ((:nodes ("block" "tuple_pattern" "set" "list" "tuple")))
-           :selector (:choose
-                      node
-                      :match-query (:query ((_) (_)+ @match)
-                                           :engine combobulate))
-           :selector (:match-children t))
-          ;; edit arguments in calls
-          (:activation-nodes
-           ((:nodes ("argument_list")))
-           :selector (:match-query (:query ((argument_list) (_)+ @match)
-                                           :engine combobulate)))
-          ;; edit imports
-          (:activation-nodes
-           ((:nodes "import_from_statement" :find-parent "module"))
-           :selector (:match-query (:query (import_from_statement name: (dotted_name)+ @match)
-                                           :engine combobulate)))))
-
-  (setq combobulate-calculate-indent-function #'combobulate-python-calculate-indent)
-  (setq combobulate-envelope-deindent-function #'combobulate-python-envelope-deindent-level)
-  (setq combobulate-procedures-defun
-        '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
-  (setq combobulate-procedures-sexp
-        '((:activation-nodes ((:nodes ("function_definition"  "class_definition" "lambda"
-                                       "for_in_clause" "string" "decorated_definition"))))))
-  (setq combobulate-procedures-sibling
-        '((:activation-nodes
-           ((:nodes
-             ("string_content" "interpolation")
-             :has-parent ("string")))
-           :selector (:match-children
-                      (:discard-rules
-                       ("string_start" "string_end")
-                       :default-mark @match)))
-          (:activation-nodes
-           ((:nodes
-             ;; pattern is a special supertype. It is not a node in the CST.
-             ((rule "pattern"))
-             ;; Note that we do not find all the parents of pattern
-             ;; but only a couple. The main reason is that otherwise
-             ;; they'd become potential next/prev siblings in a block
-             ;; and that's generally not what people expect when
-             ;; they're navigating siblings in a block. By limiting
-             ;; ourselves to explicit tuples/lists, the user would
-             ;; have to enter these nodes explicitly to navigate them.
-             :has-parent ("tuple_pattern" "list_pattern"))
-            (:nodes
-             ((rule "import_from_statement"))
-             :has-parent ("import_from_statement"))
-            (:nodes
-             ((rule "dictionary"))
-             :has-parent ("dictionary"))
-            (:nodes
-             ((rule "set") (rule "tuple") (rule "list"))
-             :has-parent ("set" "tuple" "list"))
-            (:nodes
-             ((rule "parameter")
-              (rule "argument_list")
-              (rule "expression")
-              (rule "expression_list")
-              (rule "primary_expression"))
-             :has-parent ("parameters" "lambda_parameters" "argument_list" "expression_list")))
-           :selector (:match-children t))
-          (:activation-nodes
-           ((:nodes
-             ((rule "_simple_statement")
-              (rule "_compound_statement")
-              (rule "module")
-              "module" "case_clause")
-             :has-parent ("case_clause" "match_statement" "module" "block")))
-           :selector (:match-children (:discard-rules ("block"))))))
-
-  (setq combobulate-procedures-hierarchy
-        '(;; statements are treated with `at' so you can descend into sub-statements.
-          (:activation-nodes
-           ((:nodes ((rule "_compound_statement")
-                     ;; not in compound statement
-                     "case_clause")
-                    :position at))
-           :selector (:choose node
-                              :match-children (:match-rules ("block"))))
-          (:activation-nodes
-           ((:nodes ((rule "lambda"))
-                    :position at))
-           :selector (:choose node
-                              :match-children (:match-rules (rule "lambda" :body))))
-          (:activation-nodes
-           ((:nodes ((all)) :has-parent ((all))))
-           :selector (:choose node
-                              :match-children (:discard-rules ("block"))))))
-  (setq combobulate-procedures-logical
-        '((:activation-nodes ((:nodes (all)))))))
+    (define-key (combobulate-read map) [remap indent-for-tab-command] #'combobulate-python-indent-for-tab-command))
+  (add-to-list 'python-indent-trigger-commands 'combobulate-python-indent-for-tab-command))
 
 (provide 'combobulate-python)
 ;;; combobulate-python.el ends here

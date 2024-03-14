@@ -88,7 +88,7 @@
                       parent
                       :match-query
                       (:query (object (pair (_) @match)+) :engine combobulate)))))
-  (setq combobulate-navigation-sibling-skip-prefix t)
+
   (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("pair"))))))
   (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("document"))))))

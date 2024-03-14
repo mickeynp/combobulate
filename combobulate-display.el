@@ -161,7 +161,7 @@
 (defun combobulate-display-draw-node-tree (node)
   "Renders a navigation tree in node-list mode around NODE"
   (with-navigation-nodes (:nodes (seq-difference
-                                  combobulate-navigation-default-nodes
+                                  combobulate-default-nodes
                                   combobulate-display-ignored-node-types))
     (let ((hl-node node))
       (cond

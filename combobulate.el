@@ -111,8 +111,6 @@
 
 (make-variable-buffer-local 'forward-sexp-function)
 
-
-
 (defun combobulate--setup-envelopes (envelopes)
   "Prepare ENVELOPES for interactive use.
 
@@ -158,9 +156,9 @@ created."
         (hack-local-variables)
         ;; install the highlighter rules
         (combobulate-highlight-install parser-lang)
-        ;; `combobulate-navigation-default-nodes' draws its nodes from
+        ;; `combobulate-default-nodes' draws its nodes from
         ;; `combobulate-procedures-default'.
-        (setq-local combobulate-navigation-default-nodes
+        (setq-local combobulate-default-nodes
                     (combobulate-procedure-collect-activation-nodes
                      combobulate-procedures-default))
         ;; this should come after the funcall to `setup-fn' as we need
@@ -181,17 +179,61 @@ created."
 
 Customize `combobulate-setup-functions-alist' to change the language setup alist." parser-lang major-mode)))
 
-;;;###autoload
-(define-minor-mode combobulate-mode "Navigate and edit text by syntactic constructs
+(defun combobulate-maybe-activate (&optional raise-if-missing)
+  "Maybe activate Combobulate in the current buffer.
 
-\\{combobulate-key-map}"
-  :init-value nil :lighter "©" :keymap combobulate-key-map
-  (condition-case nil
-      (when combobulate-mode
-        (combobulate-setup))
-    (user-error
-     (combobulate-message "There is either no tree sitter language in this buffer, or Combobulate does not support it.")
-     (combobulate-mode -1))))
+Do not call this directly. Please use \\[combobulate-mode] to
+enable Combobulate."
+  ;; (unless combobulate-mode
+  ;;   (error "Do not call `combobulate-maybe-activate' directly. Invoke \\[combobulate-mode] instead"))
+  ;; Combobulate can activate in any major mode provided it's listed
+  ;; in `combobulate-registered-languages-alist'.
+  ;;
+  (pcase-dolist (`(,language ,major-modes ,minor-mode-fn) combobulate-registered-languages-alist)
+    (cond
+     ((member major-mode major-modes)
+      ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
+      ;; behaviour is that Combobulate may get activated in major
+      ;; modes for which no grammar exists. Raising an error
+      ;; unconditionally in that case would be annoying to users.
+      (if (and raise-if-missing (not (combobulate-language-available-p language)))
+          (error "Cannot activate Combobulate in buffer `%s' because tree-sitter is missing a language library.
+
+The major mode `%s' is registered as supporting the tree-sitter
+language `%s' but that language is not known to tree-sitter.
+
+Try reinstalling the grammar for that language and try again."
+                 (current-buffer) major-mode language)
+        ;; Language parser exists. Make sure that, if we already have
+        ;; an initialised language in the buffer that it is not
+        ;; different from the one we think it should be.
+        (when-let ((existing-parsers (mapcar #'combobulate-parser-language (combobulate-parser-list))))
+          (unless (member language existing-parsers)
+            (error "Cannot activate Combobulate in buffer `%s' because of a parser mismatch.
+
+The buffer's language is `%s' and does not match Combobulate's
+expected language of `%s'. This can happen if you have major
+modes with conflicting ideas of what type of language to use."
+                   (current-buffer) (car-safe existing-parsers) language)))
+        ;; Okay. All good, then... Create the language parser.
+        (combobulate-create-language language (current-buffer) t)
+        (let ((toggle (if combobulate-mode
+                          ;; We exploit the fact that the variable holding whether the
+                          ;; minor mode is enabled or not is the same as the name of the
+                          ;; function to toggle it.
+                          ;; (symbol-value `,minor-mode-fn)
+                          -1 1)))
+          (funcall minor-mode-fn toggle)))))))
+
+;;;###autoload
+(defun combobulate-mode (&rest _)
+  "Navigate and edit by syntactic constructs.
+
+This is a helper command that tries to activate the right
+Combobulate minor mode suitable for the current buffer."
+  (interactive)
+  ;; This is no longer an actual minor mode, but instead a function.
+  (combobulate-maybe-activate))
 
 (defun combobulate-setup (&optional arg)
   "Setup combobulate in the current buffer.
@@ -209,50 +251,375 @@ have changed."
         (progress-reporter-done prog))
     (combobulate-setup-1)))
 
-;; (cl-defmacro define-combobulate-language (&key name language setup-fn major-modes)
-;;   "Define a new language for Combobulate.
+(defun combobulate-get (language shorthand &optional check)
+  "Generate a symbol that belongs to LANGUAGE named SHORTHAND.
 
-;; NAME is the name of the language as it'll be known to
-;; Combobulate; LANGUAGE is the tree sitter language symbol, and
-;; MAJOR-MODES is a list of major modes that should be set up for
-;; this language."
-;;   (cl-assert (symbolp language) t "LANGUAGE must be a symbol")
-;;   (cl-assert (symbolp name) t "NAME must be a symbol")
-;;   (let ((setup-fn (intern (format "combobulate-setup-%s" name)))
-;;         (group-name (intern (format "combobulate-language-%s" name))))
-;;     ;; Create a customize group for the language
-;;     (pcase-dolist (`(,var . ,doc) '(("combobulate-%s-navigation-defun-nodes" .
-;;                                      "Nodes used to navigate between defuns.")
-;;                                     ("combobulate-%s-navigation-default-nodes" .
-;;                                      "Nodes used for general navigation.")
-;;                                     ("combobulate-%s-navigation-editable-nodes" .
-;;                                      "Node names used to determine the correct edit procedure.")
-;;                                     ("combobulate-%s-navigation-sexp-nodes" .
-;;                                      "Node names used to navigate by s-expression.")
-;;                                     ("combobulate-%s-navigation-logical-nodes" .
-;;                                      "Node names used for logical navigation")
-;;                                     ("combobulate-%s-navigation-parent-child-nodes" .
-;;                                      "Node names used for navigating up or down hierarchies.")
-;;                                     ("combobulate-%s-navigation-sibling-procedures" .
-;;                                      "Procedures that determine what constitutes a sibling node and in what context.")
-;;                                     ("combobulate-%s-navigation-context-nodes" . "Node names that are contextual and hold useful information.")
-;;                                     ("combobulate-%s-manipulation-edit-procedures" . "")
-;;                                     ("combobulate-%s-manipulation-splicing-procedures" . "")
-;;                                     ("combobulate-%s-envelopes" . "")
-;;                                     ("combobulate-%s-envelopes-custom" . "")))
-;;       (defcustom (intern (format var name)) nil
-;;         (format "Customize this variable to override the default %s for %s"
-;;                 (substring var 12 -6) name)
-;;         :group group-name))
-;;     `(progn
-;;        (defgroup ,group-name nil
-;;          ,(format "Language settings for `%s'" name)
-;;          :group 'combobulate))))
+If CHECK is non-nil raise an assertion if the variable with that
+SHORTHAND for that LANGUAGE is unbound."
+  (let ((var (intern (format "combobulate-%s-%s" language shorthand))))
+    (when (and (not (boundp var)) check)
+      (cl-assert (boundp var) nil
+                 "Variable `%s' does exist in language `%s' with shorthand `%s'"
+                 var language shorthand))
+    var))
 
-;; (define-combobulate-language
-;;  :name foo
-;;  :language python
-;;  :major-modes '(python-mode python-ts-mode))
+(defmacro combobulate-read (shorthand &optional language)
+  "Read a variable belonging to LANGUAGE with SHORTHAND.
+
+Both LANGUAGE and SHORTHAND must be unquoted. If LANGUAGE is nil,
+use the primary language for the current buffer.
+
+SHORTHAND is the postfix to use to find the variable named after
+the LANGUAGE. That name generated by `combobulate-get' and is
+usually named `combobulate-LANGUAGE-SHORTHAND'.
+
+A complete list of known shorthands are found in
+`combobulate-LANGUAGE-defined-variables'."
+  `(symbol-value (combobulate-get
+                  (or ,language (combobulate-primary-language))
+                  ',shorthand t)))
+
+(defvar combobulate-registered-languages-alist nil
+  "Alist of tree-sitter languages and major modes supported by Combobulate.
+
+Each entry must be of the form
+
+   (LANGUAGE MAJOR-MODES MINOR-MODE-FN)
+
+Where LANGUAGE is the tree-sitter language symbol; MAJOR-MODES is
+a list of supported major modes; and MINOR-MODE-FN is a minor
+mode function that Combobulate must use for that language and
+those major modes.")
+
+(defun combobulate-register-language (language major-modes minor-mode-fn)
+  (if-let ((def (cdr (assoc language combobulate-registered-languages-alist))))
+      ;; Check if the definition's identical to what we want to
+      ;; add. If it is, do nothing; if it is not, raise an error.
+      (unless (equal def (list major-modes minor-mode-fn))
+        (error "Language `%s' is already registered with a different definition." language))
+    (push (list language major-modes minor-mode-fn)
+          combobulate-registered-languages-alist)))
+
+(defvar combobulate-mode nil
+  "Non-nil if the language-specific minor mode is enabled in this buffer.
+
+Note that `combobulate-mode' is not a true minor mode: it is a
+helper command that calls the proper Combobulate minor mode
+suitable for the major mode of the current buffer.")
+
+(cl-defmacro define-combobulate-language (&key name language
+                                               major-modes custom
+                                               setup-fn
+                                               (keymap-var nil)
+                                               (extra-defcustoms nil)
+                                               (extra-defvars nil))
+  "Define a new language for Combobulate.
+
+NAME is the name of the language as it'll be known to
+Combobulate; LANGUAGE is the tree sitter language symbol, and
+MAJOR-MODES is a list of major modes that should be set up for
+this language."
+  (cl-assert (symbolp language) t "LANGUAGE must be a list")
+  (cl-assert (symbolp name) t "NAME must be a symbol")
+  ;; (cl-assert (symbolp setup-fn) t "SETUP-FN must be a symbol")
+  (let ((group-name (intern (format "combobulate-language-%s" name))))
+    ;; Create a customize group for the language
+    (let ((known-vars)
+          (defvars
+           ;; ((SHORTHAND DOCSTRING DEFAULT-VALUE) ... )
+           (append
+            '((procedures-defun
+               "Procedures that control navigation to the next/previous defun."
+               nil)
+              (procedures-hierarchy
+               "Procedures that control navigation in and out of node hierarchies."
+               nil)
+              (procedures-default
+               "Node procedures used by Combobulate when more specific procedures don't apply.
+
+The `combobulate-default-nodes' variable is populated
+with the node types from all the expanded activation node
+procedure rules."
+               '((:activation-nodes ((:nodes (all))))))
+              (default-nodes
+               "List of active node types used for node discovery.
+
+This variable is almost always auto-populated by Combobulate when
+a set of procedures are activated, and should only be let-bound
+or set with `with-navigation-nodes'."
+               nil)
+              (procedures-edit
+               "Procedures used to mark clusters of editable nodes.
+
+This is used by some Combobulate commands that edit nodes. Most
+commonly multi-cursor editing."
+               nil)
+              (default-procedures
+               "List of active procedures used by Combobulate's procedure system.
+
+This variable is almost always auto-populated by Combobulate from
+one of the other procedure variables, and should only be
+let-bound or set with `with-navigation-nodes'.")
+              (procedures-sexp
+               "Procedures that control navigation to the next/previous sexp.
+
+This is used by by Combobulate's backwards-compatible sexp
+navigation system, and it applies to all `-sexp' commands in
+Emacs."
+               nil)
+              (procedures-logical
+               "Procedures that control logical navigation forward and backward."
+               '((:activation-nodes ((:nodes (all))))))
+              (procedures-sibling
+               "Procedures that control navigation between sibling nodes."
+               nil)
+              (display-ignored-node-types
+               "List of node types to never display in the Combobulate display tree."
+               nil)
+              (plausible-separators
+               "List of strings of plausible separators found in this language.
+
+This is a fairly blunt way of instructing Combobulate of the type
+of separators to expect in a language. It's used to help with
+editing. The default value is usually good enough for most
+languages."
+               '(","))
+              (procedure-discard-rules
+               "List of discard rules to apply to procedure matches.
+
+This is a generic filter to apply across all procedures. Any rule
+specified in this list will be applied to all procedures,
+regardless of the procedure's activation rules."
+               '("comment"))
+              (indent-after-edit
+               "Non-nil indents the inserted text after a Combobulate refactor text operation.
+
+This should probably be nil in whitespace-sensitive languages."
+               t)
+              (indent-calculate-function
+               "Function that determines the baseline indentation of a given position.
+
+The function must take one argument, POS, and from that point
+determine the indentation."
+               #'combobulate-baseline-indentation-default)
+              (envelope-indent-region-function
+               "Function to call to indent an envelope after it is inserted.
+
+Note that this defaults to `indent-region', but that may work
+well in indentation-sensitive languages like YAML or Python."
+               nil)
+              (envelope-deindent-function
+               "Function to call to calculate the previous indentation level of point.
+
+The function must determine, from its current position in the
+buffer, the *preceding* indentation level.
+
+This is little use to anything except whitespace-sensitive
+languages like YAML and Python."
+               nil)
+              (envelope-procedure-shorthand-alist
+               "Alist of shorthand symbols for envelope procedures.
+
+Each entry must be an alist with the key being the shorthand
+symbol and the value being a valid combobulate procedure.
+
+Shorthands are used in lieu of inlining the procedure in the
+`:nodes' property for an envelope, and instead lets you refer to
+a procedure by a `:shorthand' property matching the key in this
+alist."
+               nil)
+              (envelope-list
+               "List of envelope definitions for this language.
+
+Each entry is a list of properties that define the envelope. The
+properties are:
+
+  (:description STRING
+   :name STRING
+   :key STRING
+   :mark-node <t/nil>
+   :template ENVELOPE
+   [:extra-key STRING]
+   [:shorthand SHORTHAND-SYMBOL]
+   [:nodes NODES]
+   [:point-placement <stay/after/before>])
+
+Where `:description' is a human-readable description of the
+envelope.
+
+`:name' is the name of the envelope that will be
+inserted into the envelope command.
+
+`:key' is the key binding (in `kbd' macro format) to bind to the
+envelope such that it is created under `C-c o e
+<key>'. `:extra-key' is an optional key binding that is bound to
+any arbitrary key binding.
+
+`:shorthand' is a shorthand symbol to use in place of
+`:nodes' (see the shorthand procedures alist variable)
+
+ `:nodes'is a list of nodes to look for at/around point before
+ expanding the envelope template.
+
+`:mark-node' is a boolean that determines whether to mark the
+node that `:nodes' (or `:shorthand') matches and remove it and
+insert it into the `r'/`r>' registers.
+
+`:template' is the template to insert. See
+`combobulate-envelope-expand-instructions' for a complete
+description of the template format.
+
+`:point-placement' is a symbol that determines where point is
+placed after the envelope is inserted. It can be `stay',
+`after', or `before'."
+               nil)
+              (highlight-queries-default
+               "List of Combobulate-provided node queries to highlight.
+
+This list is set internally by the setup function responsible for
+configuring Combobulate in a tree-sitter buffer.
+
+Each query should be a well-formed tree-sitter query. Capture
+groups should use the name of the face to highlight with. See the
+keys in `combobulate-query-match-face-alist' for a selection of
+example faces to use.
+
+Users who wish to programmatically add their own queries using
+file/directory-local variables, or through customization, should
+use `combobulate-highlight-queries-alist' instead."
+               nil)
+              (context-nodes
+               "List of contextual nodes for use with querying and highlighting.
+
+Most language grammars have one or two nodes that are \"atoms\"
+and usually hold the literal text of the nodes around it. For
+instance function declarations or variable assignments will
+typically contain an `identifier' (or similar) node that holds
+the name of the function or the variable being assigned to.
+
+For many languages it's usually something like `identifier' or
+`string', but it could be any number of nodes."
+               nil)
+              (pretty-print-function
+               "Function that pretty prints a Combobulate node."
+               #'combobulate--pretty-print-node)
+              (pretty-print-node-name-function
+               "Function that pretty prints a node name."
+               #'combobulate-pretty-print-node-name))
+            (symbol-value extra-defvars)))
+          (defcustoms
+           (append
+            `((major-modes
+               "List of major modes where this language applies.
+
+Combobulate will set up tree-sitter to use that language as the
+primary buffer language if the major mode does not do this
+itself. This is also useful for modes that lack tree-sitter
+support where you still want to use Combobulate's features."
+               ',major-modes
+               :type '(repeat symbol)))
+            (symbol-value extra-defcustoms)))
+          (known-variable-shorthands)
+          (decls))
+      (cl-flet*
+          ((intern-var (lang-name variable)
+             (combobulate-get lang-name variable))
+           (intern-lang-var (variable)
+             (push (if (stringp variable)
+                       (intern variable)
+                     variable)
+                   known-variable-shorthands)
+             (intern-var name variable)))
+        (push `(custom-declare-group
+                ',group-name nil ,(format "Language settings for `%s'" name)
+                :group 'combobulate)
+              decls)
+        ;; Create the `defvar' forms.
+        (pcase-dolist (`(,shorthand-var ,docstring ,default) defvars)
+          ;; (push shorthand-var known-variable-shorthands)
+          (push `(defvar ,(intern-lang-var shorthand-var) ,default ,docstring) decls))
+        ;; Create the `defcustom' forms.
+        (pcase-dolist (`(,shorthand-var ,docstring ,default . ,rest) defcustoms)
+          ;; (push shorthand-var known-variable-shorthands)
+          (push `(defcustom ,(intern-lang-var shorthand-var) ,default ,docstring
+                   ,@rest
+                   :group ',group-name)
+                decls))
+        ;; Walk through the `:custom' property and assign the values.
+        (pcase-dolist (`(,shorthand-var . ,value) (symbol-value custom))
+          (cl-assert (member shorthand-var known-variable-shorthands) t
+                     "Key `%s' is not a known variable shorthand in definition `%s'"
+                     shorthand-var name)
+          ;; use the new `setopt' helper macro here. If we ever add
+          ;; edge-triggers to `defcustom's they'll be properly executed.
+          (push `(setopt ,(intern-lang-var shorthand-var) ,(car-safe (ensure-list value)))
+                decls))
+        ;; Store a representation of all variable shorthand names used.
+
+        ;; Create (or reuse) a key map and create a minor mode for
+        ;; LANGUAGE.
+        (let ((language-keymap (or keymap-var (intern-lang-var "map")))
+              (envelope-keymap (or keymap-var (intern-lang-var "envelope-map")))
+              (minor-mode-fn (intern-lang-var "minor-mode")))
+          ;; General key map for this language
+          (push `(defvar-keymap ,language-keymap
+                   :doc ,(format "Keymap for Combobulate language for `%s'." language)
+                   :full nil
+                   :parent combobulate-key-map)
+                decls)
+          ;; This is the envelope-specific keymap
+          (push `(defvar-keymap ,envelope-keymap
+                   :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
+                   :full nil)
+                decls)
+          (push `(keymap-set ,language-keymap "e" ,envelope-keymap)
+                decls)
+          ;; Create a minor mode for this language.
+          (push `(define-minor-mode ,minor-mode-fn
+                   ,(format "Combobulate minor mode the `%s' tree-sitter language." language)
+                   :init-value nil
+                   :lighter "©"
+                   :keymap ,language-keymap
+                   ;; Recycle `combobulate-mode' as the variable used
+                   ;; to store the toggle state of this minor mode
+                   ;; even though it is effectively 'shared' across
+                   ;; all the various minor modes we may create when
+                   ;; this macro is called. This has two beneficial
+                   ;; advantages:
+                   ;;
+                   ;;  1. `M-x combobulate-mode' is the default
+                   ;;  entrypoint for the package, and people expect
+                   ;;  the "mode" variable to match the command name.
+                   ;;
+                   ;;  2. It is not possible to engage more than one
+                   ;;  minor mode in the same buffer.
+                   :variable combobulate-mode
+                   ;; Hm... leaving this to nil is probably for the
+                   ;; best. We do not want to encourage people to go
+                   ;; around experimenting with minor mode as that
+                   ;; could circumvent other setup processes.
+                   :interactive nil
+                   ;; This is the generic setup function that is
+                   ;; always run.
+                   (combobulate-setup-1)
+                   ;; If a language has a custom setup function, we
+                   ;; run it with the language we are being
+                   ;; triggered in.
+                   ,(when setup-fn
+                      `(,setup-fn ',language)))
+                decls)
+          (push `(combobulate-register-language ',language ',major-modes #',minor-mode-fn)
+                decls)
+          (push `(defconst ,(intern-lang-var "defined-variables")
+                   ',known-variable-shorthands
+                   ,(format "List of variable shorthands known to `%s'.
+
+Each shorthand is a symbol referencing a variable belonging to
+that language. They are best accessed with the `combobulate-read'
+macro which optionally takes a language argument to retrieve that
+language's setting." language))
+                decls)))
+      `(progn ,@(nreverse decls)))))
 
 ;;; internal
 (require 'combobulate-rules)

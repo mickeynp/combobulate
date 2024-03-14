@@ -67,7 +67,7 @@
                       (:query
                        (block_node (block_mapping (_)+ @match))
                        :discard-rules ("comment"))))))
-  (setq combobulate-navigation-sibling-skip-prefix t)
+  
   (setq combobulate-procedures-sexp
         '((:activation-nodes ((:nodes ("flow_node" "block_node"))))))
   (setq combobulate-procedures-defun
