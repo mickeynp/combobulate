@@ -130,21 +130,31 @@
                    parent
                    :match-children
                    (:discard-rules ("literal_value"))))
+       ;; This is intended to match the two types of switch
+       ;; statement but only the actual case clauses and not the
+       ;; identifier alias clause itself.
        (:activation-nodes
-        ((:nodes ((rule "type_case"))
+        ((:nodes (rule-rx ("switch_statement" eol))
                  :position at
-                 :has-parent ("type_case" ))
-         (:nodes ((rule "block") (rule "source_file"))
+                 :has-parent (rx ("switch_statement" eol))))
+        :selector (:choose parent :match-children (:match-rules (rx ("case" eol)))))
+       (:activation-nodes
+        ((:nodes (rule "_statement")
+                 :has-parent (rx ("case" eol))))
+        :selector (:choose parent :match-children t))
+       ;; -- End switch
+       (:activation-nodes
+        ((:nodes ((rule "block") (rule "source_file"))
                  :position at
                  :has-parent ("block" "source_file")))
         :selector (:choose parent :match-children t))
        ;; lists with declarations as immediate childre
        (:activation-nodes
-        ((:nodes ((rx "declaration_list$"))))
+        ((:nodes ((rx ("declaration_list" eol)))))
         :selector (:choose
                    node
                    :match-children
-                   (:match-rules (rx "_declaration$"))))
+                   (:match-rules (rx ("_declaration" eol)))))
        (:activation-nodes
         ((:nodes ((rule "argument_list"))
                  :has-parent ("argument_list"))
@@ -154,17 +164,23 @@
                    parent
                    :match-children t))
        (:activation-nodes
-        ((:nodes ((rx "statement$"))))
-        :selector (:choose
-                   node
-                   :match-children t))
-       (:activation-nodes
         ((:nodes ("import_spec_list")))
         :selector (:choose
                    node
                    :match-children t))
        (:activation-nodes
-        ((:nodes ((rule "_statement"))))
+        ((:nodes  (rule "_statement")
+                  :has-parent ((rule "_statement"))))
+        :selector (:choose
+                   parent
+                   :match-children t))
+       (:activation-nodes
+        ((:nodes  (rx ("_declaration" eol))))
+        :selector (:choose
+                   node
+                   :match-children t))
+       (:activation-nodes
+        ((:nodes ((rx ("statement" eol)))))
         :selector (:choose
                    node
                    :match-children t))))

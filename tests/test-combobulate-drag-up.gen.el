@@ -1566,11 +1566,9 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 6)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@6~after].py")))))
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@6~after].py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-drag-up--python-string-5 ()
@@ -1579,11 +1577,9 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 5)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@5~after].py")))))
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@5~after].py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-drag-up--python-string-4 ()
@@ -1603,11 +1599,9 @@
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 3)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@3~after].py")))))
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@3~after].py")))
 
 
 (ert-deftest combobulate-test-python-combobulate-drag-up--python-string-2 ()
