@@ -1066,7 +1066,7 @@ If STRICT is non-nil, then the parent node of the node at point
 is used to constrain the search.  Otherwise, the parent node is
 marked `_' indicating a wildcard.
 
-Uses `combobulate-navigation-context-nodes' to determine the right
+Uses `context-nodes' to determine the right
 node at point to highlight."
   (interactive (list (combobulate-highlight-read-face-name "Face: ")
                      (y-or-n-p "Match similar types only? ")))
@@ -1155,7 +1155,7 @@ the query fails to compile."
           (combobulate-query-builder-to-string (plist-get rule :query)))
          language t)))
     ;; next, the system-supplied rules...
-    (dolist (rule combobulate-highlight-queries-default)
+    (dolist (rule (combobulate-read highlight-queries-default))
       (combobulate-highlight-install-query
        (combobulate-query-builder-expand-match-face
         (combobulate-query-builder-to-string rule))
@@ -1166,7 +1166,7 @@ the query fails to compile."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

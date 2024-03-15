@@ -43,76 +43,79 @@
      (_ default-name))
    40))
 
-(defun combobulate-toml-setup (_)
-  (setq combobulate-navigation-context-nodes
-        '("string" "float" "integer"))
+(defvar combobulate-toml-definitions
+  '((context-nodes '("string" "float" "integer"))
+    (envelope-list nil)
+    (pretty-print-node-name-function #'combobulate-toml-pretty-print-node-name)
+    (highlight-queries-default nil)
+    (procedures-edit
+     `((:activation-nodes
+        ((:nodes
+          ("bare_key" "dotted_key")
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (_ (pair (_) @match)+) :engine combobulate)))
+       ;; edit the value field of a pair
+       (:activation-nodes
+        ((:nodes
+          ((exclude (rule "pair") "bare_key" "dotted_key"))
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (_ (pair (_) (_) @match)+) :engine combobulate)))))
+    (procedures-sexp
+     '((:activation-nodes ((:nodes ("table"))))))
+    (procedures-defun '((:activation-nodes ((:nodes ("table" "table_array_element"))))))
+    (procedures-sibling
+     '(;; array navigation
+       (:activation-nodes
+        ((:nodes
+          ((rule "array"))
+          :position at
+          :has-parent ((rule "array"))))
+        :selector (:match-children t))
+       ;; table navigation
+       (:activation-nodes
+        ((:nodes
+          ((rule "document"))
+          :position at
+          :has-parent ("document")))
+        :selector (:match-children t))
+       ;; pair-wise navigation (key side)
+       (:activation-nodes
+        ((:nodes ("pair") :position at :has-parent ("table" "table_array_element")))
+        :selector (:match-children (:match-rules ("pair"))))
+       (:activation-nodes
+        ((:nodes
+          ((rule "pair"))
+          :has-fields "value"
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
+    (procedures-hierarchy
+     '(;; in and out of tables
+       (:activation-nodes
+        ((:nodes ("table" "table_array_element") :position at))
+        :selector (:choose node :match-children (:match-rules (exclude (all) "bare_key"))))
+       ;; general navigation
+       (:activation-nodes
+        ((:nodes (exclude (all) "string") :position at))
+        :selector (:choose node :match-children t))))
+    (procedures-logical '((:activation-nodes ((:nodes (all))))))))
 
-  (setq combobulate-manipulation-envelopes nil)
+(define-combobulate-language
+ :name toml
+ :language toml
+ :major-modes (toml-ts-mode toml-mode)
+ :custom combobulate-toml-definitions
+ :setup-fn combobulate-toml-setup)
 
-  (setq combobulate-pretty-print-node-name-function #'combobulate-toml-pretty-print-node-name)
-  (setq combobulate-highlight-queries-default nil)
-  (setq combobulate-procedures-edit
-        `((:activation-nodes
-           ((:nodes
-             ("bare_key" "dotted_key")
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (_ (pair (_) @match)+) :engine combobulate)))
-          ;; edit the value field of a pair
-          (:activation-nodes
-           ((:nodes
-             ((exclude (rule "pair") "bare_key" "dotted_key"))
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (_ (pair (_) (_) @match)+) :engine combobulate)))))
-  
-  (setq combobulate-procedures-sexp
-        '((:activation-nodes ((:nodes ("table"))))))
-  (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("table" "table_array_element"))))))
-
-  (setq combobulate-procedures-sibling
-        '(;; array navigation
-          (:activation-nodes
-           ((:nodes
-             ((rule "array"))
-             :position at
-             :has-parent ((rule "array"))))
-           :selector (:match-children t))
-          ;; table navigation
-          (:activation-nodes
-           ((:nodes
-             ((rule "document"))
-             :position at
-             :has-parent ("document")))
-           :selector (:match-children t))
-          ;; pair-wise navigation (key side)
-          (:activation-nodes
-           ((:nodes ("pair") :position at :has-parent ("table" "table_array_element")))
-           :selector (:match-children (:match-rules ("pair"))))
-          (:activation-nodes
-           ((:nodes
-             ((rule "pair"))
-             :has-fields "value"
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
-
-  (setq combobulate-procedures-hierarchy
-        '(;; in and out of tables
-          (:activation-nodes
-           ((:nodes ("table" "table_array_element") :position at))
-           :selector (:choose node :match-children (:match-rules (exclude (all) "bare_key"))))
-          ;; general navigation
-          (:activation-nodes
-           ((:nodes (exclude (all) "string") :position at))
-           :selector (:choose node :match-children t))))
-  (setq combobulate-procedures-logical '((:activation-nodes ((:nodes (all)))))))
+(defun combobulate-toml-setup (_))
 
 (provide 'combobulate-toml)
 ;;; combobulate-toml.el ends here

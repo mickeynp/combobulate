@@ -519,7 +519,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                         #'combobulate-linear-siblings
                       #'combobulate-node-children)))
                   (t (error "Invalid selector: %s" selector))))
-                :discard-types (combobulate-procedure-expand-rules combobulate-procedure-discard-rules)
+                :discard-types (combobulate-procedure-expand-rules (combobulate-read procedure-discard-rules))
                 :overwrite t
                 :keep-anonymous t)
                ;; acknowledge that the selector filter was used

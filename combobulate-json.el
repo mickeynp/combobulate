@@ -39,88 +39,95 @@
                40))
     (_ default-name)))
 
-(defun combobulate-json-setup (_)
-  (setq combobulate-navigation-context-nodes
-        '("string" "string_content" "number" "null" "true" "false"))
+(defvar combobulate-json-definitions
+  '((context-nodes
+     '("string" "string_content" "number" "null" "true" "false"))
+    (envelope-list
+     `((:description
+        "\"...\": { ... }"
+        :key "o"
+        :mark-node t
+        :nodes ("pair")
+        :name "nest-pair-object"
+        :template
+        ("\"" (p pair "Pair") "\": " "{" n> r> n> "}" >))
+       (:description
+        "[ ... ]"
+        :key "a"
+        :mark-node t
+        :nodes ("string" "array" "number" "null" "true" "false")
+        :name "nest-array"
+        :template
+        ("[" r> "]"))))
+    (pretty-print-node-name-function #'combobulate-json-pretty-print-node-name)
+    (highlight-queries-default
+     '(;; highlight pseudo "comments" that are often designated "//"
+       ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)
+       ;; catch pairs where the there are duplicate key names.
+       (([(object (pair key: (_) @hl.fiery) (pair key: (_) @hl.silver) (:equal @hl.silver @hl.fiery))]))))
+    (procedures-edit
+     `(;; edit the value field of a pair
+       (:activation-nodes
+        ((:nodes
+          ((rule "pair"))
+          :has-fields "value"
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (object (pair (_) (_) @match)+) :engine combobulate)))
+       ;; edit the key field of a pair
+       (:activation-nodes
+        ((:nodes
+          ((rule "pair"))
+          :has-fields "key"
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (object (pair (_) @match)+) :engine combobulate)))))
 
-  (setq combobulate-manipulation-envelopes
-        `((:description
-           "\"...\": { ... }"
-           :key "o"
-           :mark-node t
-           :nodes ("pair")
-           :name "nest-pair-object"
-           :template
-           ("\"" (p pair "Pair") "\": " "{" n> r> n> "}" >))
-          (:description
-           "[ ... ]"
-           :key "a"
-           :mark-node t
-           :nodes ("string" "array" "number" "null" "true" "false")
-           :name "nest-array"
-           :template
-           ("[" r> "]"))))
+    (procedures-sexp
+     '((:activation-nodes ((:nodes ("pair"))))))
+    (procedures-defun '((:activation-nodes ((:nodes ("document"))))))
 
-  (setq combobulate-pretty-print-node-name-function #'combobulate-json-pretty-print-node-name)
-  (setq combobulate-highlight-queries-default
-        '(;; highlight pseudo "comments" that are often designated "//"
-          ((pair key: (string (string_content) @hl.comment (:match "^//$" @hl.comment))) @hl.comment)
-          ;; catch pairs where the there are duplicate key names.
-          (([(object (pair key: (_) @hl.fiery) (pair key: (_) @hl.silver) (:equal @hl.silver @hl.fiery))]))))
-  (setq combobulate-procedures-edit
-        `(;; edit the value field of a pair
-          (:activation-nodes
-           ((:nodes
-             ((rule "pair"))
-             :has-fields "value"
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))
-          ;; edit the key field of a pair
-          (:activation-nodes
-           ((:nodes
-             ((rule "pair"))
-             :has-fields "key"
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (object (pair (_) @match)+) :engine combobulate)))))
+    (procedures-sibling
+     '(;; general navigation
+       (:activation-nodes
+        ((:nodes
+          ((rule "array"))
+          :position at
+          :has-parent ((rule "array"))))
+        :selector (:match-children t))
+       ;; pair-wise navigation (key side)
+       (:activation-nodes
+        ((:nodes ("pair") :position at :has-parent ("object")))
+        :selector (:match-children t))
+       (:activation-nodes
+        ((:nodes
+          ((rule "pair"))
+          :has-fields "value"
+          :has-ancestor ((irule "pair"))))
+        :selector (:choose
+                   parent
+                   :match-query
+                   (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
 
-  (setq combobulate-procedures-sexp
-        '((:activation-nodes ((:nodes ("pair"))))))
-  (setq combobulate-procedures-defun '((:activation-nodes ((:nodes ("document"))))))
+    (procedures-hierarchy
+     '(;; general navigation
+       (:activation-nodes
+        ((:nodes (exclude (all) "string") :position at))
+        :selector (:choose node :match-children t))))
+    (procedures-logical '((:activation-nodes ((:nodes (all))))))))
 
-  (setq combobulate-procedures-sibling
-        '(;; general navigation
-          (:activation-nodes
-           ((:nodes
-             ((rule "array"))
-             :position at
-             :has-parent ((rule "array"))))
-           :selector (:match-children t))
-          ;; pair-wise navigation (key side)
-          (:activation-nodes
-           ((:nodes ("pair") :position at :has-parent ("object")))
-           :selector (:match-children t))
-          (:activation-nodes
-           ((:nodes
-             ((rule "pair"))
-             :has-fields "value"
-             :has-ancestor ((irule "pair"))))
-           :selector (:choose
-                      parent
-                      :match-query
-                      (:query (object (pair (_) (_) @match)+) :engine combobulate)))))
+(define-combobulate-language
+ :name json
+ :language json
+ :major-modes (json-mode json-ts-mode js-json-mode)
+ :custom combobulate-json-definitions
+ :setup-fn combobulate-json-setup)
 
-  (setq combobulate-procedures-hierarchy
-        '(;; general navigation
-          (:activation-nodes
-           ((:nodes (exclude (all) "string") :position at))
-           :selector (:choose node :match-children t))))
-  (setq combobulate-procedures-logical '((:activation-nodes ((:nodes (all)))))))
+(defun combobulate-json-setup (_))
 
 (provide 'combobulate-json)
 ;;; combobulate-json.el ends here

@@ -224,11 +224,11 @@ vector or an escaped string."
 ;; (defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
 ;;   "Node procedures as the default in the absence of more specific procedures.
 
-;; The `combobulate-default-nodes' variable is populated
+;; The `combobulate-navigable-nodes' variable is populated
 ;; with the node types from all the expanded activation node
 ;; procedure rules.")
 
-(defvar combobulate-default-nodes nil
+(defvar combobulate-navigable-nodes nil
   "List of node types used for general navigation and as a placeholder.
 
 The macro `with-navigation-nodes' binds all activation nodes to

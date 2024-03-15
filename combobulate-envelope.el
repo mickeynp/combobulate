@@ -32,7 +32,6 @@
 (require 'combobulate-manipulation)
 (require 'eieio)
 
-(defvar combobulate-envelope-indent-region-function)
 
 (defvar combobulate-envelope-prompt-history nil
   "History for `combobulate-envelope-prompt'.")
@@ -250,8 +249,8 @@ If the register does not exist, return DEFAULT or nil."
             ;;
             ;; For whitespace-sensitive languages, this is a way to move
             ;; back one level of indentation.
-            ('< (let ((col (or (and combobulate-envelope-deindent-function
-                                    (funcall combobulate-envelope-deindent-function))
+            ('< (let ((col (or (and (combobulate-read envelope-deindent-function)
+                                    (funcall (combobulate-read envelope-deindent-function)))
                                0)))
                   (delete-horizontal-space)
                   (insert (make-string col ? ))))
@@ -261,7 +260,7 @@ If the register does not exist, return DEFAULT or nil."
             ;; `combobulate-envelope--registers') or, if there is no
             ;; register specified, default to the REGISTER `region' (or
             ;; `region-indented' if
-            ;; `combobulate-envelope-indent-region-function' is nil) which
+            ;; `envelope-indent-region-function' is nil) which
             ;; holds that captured region (if any).
             ;;
             ;; Forms ending with `>' are indented as per the major mode's
@@ -288,19 +287,19 @@ If the register does not exist, return DEFAULT or nil."
                    (let indent nil)))
              (setq default (combobulate-envelope-get-register
                             (or register
-                                (if (and (null combobulate-envelope-indent-region-function) indent)
+                                (if (and (null (combobulate-read envelope-indent-region-function)) indent)
                                     'region-indented
                                   'region))
                             default))
              (cond
-              ((and combobulate-envelope-indent-region-function indent)
-               (funcall combobulate-envelope-indent-region-function
+              ((and (combobulate-read envelope-indent-region-function) indent)
+               (funcall (combobulate-read envelope-indent-region-function)
                         (point) (progn (insert default) (point))))
-              ;; if `combobulate-envelope-indent-region-function' is nil
+              ;; if `envelope-indent-region-function' is nil
               ;; then we default to a simplistic indentation style that
               ;; works well with the likes of Python where crass,
               ;; region-based indentation will never work.
-              ((and (not combobulate-envelope-indent-region-function) indent)
+              ((and (not (combobulate-read envelope-indent-region-function)) indent)
                (let ((offset (current-indentation)))
                  (delete-horizontal-space)
                  (setf start (point))
@@ -670,7 +669,7 @@ expansion:
  `r>'
 
    Insert REGISTER at point. Where REGISTER defaults to
-   `region' (when `combobulate-envelope-indent-region-function'
+   `region' (when `envelope-indent-region-function'
    is non-nil) or `region-indented' when it is nil.
 
    Both register names hold the marked region (which is likely
@@ -686,7 +685,7 @@ expansion:
    `indent-region' for languages that are not
    whitespace-sensitive.
 
-   However, if `combobulate-envelope-indent-region-function' is
+   However, if `envelope-indent-region-function' is
    nil (as it is in the likes of `python-mode') then a
    specialized indentation system is used instead. The relative
    indentation at the point of envelope invocation is preserved
@@ -868,8 +867,8 @@ expansion:
     ;; Throw a courtesy region indent call if we support such a
     ;; thing. (We do not in the likes of Python, where indenting a
     ;; region is dangerous.
-    (when combobulate-envelope-indent-region-function
-      (apply combobulate-envelope-indent-region-function
+    (when (combobulate-read envelope-indent-region-function)
+      (apply (combobulate-read envelope-indent-region-function)
              (combobulate-extend-region-to-whole-lines start end)))
     (cons (cons start end) selected-point)))
 
@@ -885,7 +884,7 @@ expansion:
 (defun combobulate-get-envelope-by-name (name)
   "Find an envelope with `:name' equal to NAME."
   (seq-find (lambda (envelope) (equal (plist-get envelope :name) name))
-            combobulate-manipulation-envelopes))
+            (combobulate-read envelope-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
   "Find an envelope with `:name' equal to NAME."
@@ -923,7 +922,7 @@ these nodes: `%s'." name nodes))))))
   "Get the procedure given a SHORTHAND.
 
 Raise an error if the SHORTHAND is not valid."
-  (let ((procedure (alist-get shorthand combobulate-envelope-procedure-shorthand-alist)))
+  (let ((procedure (alist-get shorthand (combobulate-read envelope-procedure-shorthand-alist))))
     (unless procedure
       (error "Shorthand `%s' is not valid." shorthand))
     procedure))

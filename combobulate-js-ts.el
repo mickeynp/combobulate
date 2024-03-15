@@ -48,7 +48,7 @@
                 '((lexical_declaration (variable_declarator name: (_) @name)))
                 node t))))
 
-(defun combobulate-javascript-pretty-print-node-name (node default-name)
+(defun combobulate-js-ts-pretty-print (node default-name)
   "Pretty printer for JS and JSX nodes"
   (cl-flet ((make-tag-text (node &optional before after)
               (concat "<" (or before "") (combobulate-node-text node) (or after "") ">"))
@@ -228,7 +228,7 @@
         :name "attr-string"
         :template ("=" "\"" @ "\""))))
 
-    (pretty-print-node-name-function #'combobulate-javascript-pretty-print-node-name)
+    (pretty-print-node-name-function #'combobulate-js-ts-pretty-print)
     (highlight-queries-default
      '(;; highlight the left-hand side of sequence expressions
        ;; ("the comma operator")
@@ -478,8 +478,7 @@ expression object attribute."
      "Pick a sensible value for a JSX attribute when you type `='.
 
 This uses `combobulate-js-ts-attribute-envelope-alist' to
-determine the attribute and the corresponding envelope (sourced
-from `combobulate-manipulation-envelopes') to insert."
+determine the attribute and the corresponding envelope to insert."
      t
      :type 'boolean)))
 
@@ -495,9 +494,17 @@ from `combobulate-manipulation-envelopes') to insert."
  :setup-fn combobulate-js-ts-setup)
 
 (define-combobulate-language
+ :name typescript
+ :language typescript
+ :major-modes (typescript-ts-mode)
+ :custom combobulate-jsx-definitions
+ :extra-defcustoms combobulate-jsx-extra-defcustoms
+ :setup-fn combobulate-js-ts-setup)
+
+(define-combobulate-language
  :name tsx
  :language tsx
- :major-modes (typescript-mode typescript-ts-mode tsx-ts-mode)
+ :major-modes (tsx-ts-mode)
  :custom combobulate-jsx-definitions
  :extra-defcustoms combobulate-jsx-extra-defcustoms
  :setup-fn combobulate-js-ts-setup)

@@ -72,7 +72,7 @@
           (goto-char pt))))
     (back-to-indentation)
     (setq after-marker (point-marker))
-    (when combobulate-manipulation-indent-after-edit
+    (when (combobulate-read indent-after-edit)
       (indent-region start-marker (save-excursion
                                     (goto-char after-marker)
                                     (end-of-line)
@@ -190,7 +190,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -282,7 +282,7 @@ Combobulate will use its definition of siblings as per
   "Precisely edit targeted clusters of nodes.
 
 This looks for clusters of nodes to edit in
-`combobulate-procedures-edit'.
+`procedures-edit'.
 
 If you specify a prefix ARG, then the points are placed at the
 end of each edited node."
@@ -299,7 +299,7 @@ end of each edited node."
   "Edit nodes of the same type by node locus.
 
 This looks for nodes of any type found in
-`combobulate-default-nodes'."
+`combobulate-navigable-nodes'."
   (interactive "P")
   (with-navigation-nodes (:procedures procedures-default)
     (if-let ((node (combobulate--get-nearest-navigable-node)))
@@ -315,7 +315,7 @@ This looks for nodes of any type found in
   "Edit nodes with the same text by node locus.
 
 This looks for nodes of of any type found in
-`combobulate-default-nodes' that have the same text as
+`combobulate-navigable-nodes' that have the same text as
 the node at point."
   (interactive "P")
   (if-let ((node (combobulate-node-at-point nil t)))
@@ -744,7 +744,7 @@ after NODE-OR-TEXT."
                   ((combobulate-node-named-p node-after) "")
                   ((and (combobulate-node-anonymous-p node-after)
                         (member (combobulate-node-text node-after)
-                                combobulate-manipulation-plausible-separators))
+                                (combobulate-read plausible-separators)))
                    (combobulate-node-text node-after))
                   (t "")))))
             (node-col (save-excursion
@@ -842,7 +842,7 @@ the deleted node are removed."
 
 The exact node that is killed will depend on the location of
 point relative to the nodes in
-`combobulate-default-nodes'."
+`combobulate-navigable-nodes'."
   (interactive "p")
   (with-argument-repetition arg
     (with-navigation-nodes (:procedures procedures-sibling)
@@ -1202,7 +1202,7 @@ accepts or cancels the proffer. "
 
 The exact node that is marked will depend on the location of
 point relative to the nodes in
-`combobulate-default-nodes'."
+`combobulate-navigable-nodes'."
   (interactive "^p")
   (with-argument-repetition arg
     ;; if the mark's ahead of point then we're at the beginning of the
@@ -1221,7 +1221,7 @@ point relative to the nodes in
 
 The exact node that is marked will depend on the location of
 point relative to the nodes in
-`combobulate-default-nodes'.
+`combobulate-navigable-nodes'.
 
 If BEGINNING-OF-LINE is non-nil, then the marked node has its point and
 mark extended, if possible, to the whole line.
@@ -1305,7 +1305,7 @@ more than one."
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.
 
-Uses `combobulate-procedures-defun' to determine what a
+Uses `procedures-defun' to determine what a
 defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
@@ -1370,6 +1370,9 @@ Each member of PARTITIONS must be one of:
          ;; Some nodes are discarded globally by default -- usually
          ;; `comment', as line comments mess up the TS tree -- but
          ;; here we'd want to keep them also.
+         ;;
+         ;; FIXME: should use the shorthand version and shadow it, or
+         ;; have another override flag.
          (combobulate-procedure-discard-rules)
          ;; Begin the search at the point node.
          (procedure)
@@ -1517,8 +1520,8 @@ Each member of PARTITIONS must be one of:
                               (delete-horizontal-space)
                             (just-one-space)))
 
-                        (when combobulate-envelope-indent-region-function
-                          (apply combobulate-envelope-indent-region-function
+                        (when (combobulate-read envelope-indent-region-function)
+                          (apply (combobulate-read envelope-indent-region-function)
                                  (combobulate-extend-region-to-whole-lines (overlay-start range-ov)
                                                                            (overlay-end range-ov)))))))))
         (let ((proffer-action)
@@ -1565,7 +1568,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-procedures-hierarchy)
+             (with-navigation-nodes (:procedures procedures-hierarchy)
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1592,7 +1595,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-procedures-hierarchy)
+             (with-navigation-nodes (:procedures procedures-hierarchy)
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1652,7 +1655,7 @@ moved to the modified node."
 
 (defun combobulate-baseline-indentation (node-or-pos)
   "Determine the baseline column offset of NODE-OR-POS."
-  (funcall combobulate-calculate-indent-function
+  (funcall (combobulate-read indent-calculate-function)
            (cond ((combobulate-node-p node-or-pos) (combobulate-node-start node-or-pos))
                  ((or (markerp node-or-pos)
                       (integerp node-or-pos))

@@ -160,18 +160,14 @@
 
 (defun combobulate-display-draw-node-tree (node)
   "Renders a navigation tree in node-list mode around NODE"
-  (with-navigation-nodes (:nodes (seq-difference
-                                  combobulate-default-nodes
-                                  combobulate-display-ignored-node-types))
-    (let ((hl-node node))
-      (cond
-       ((member (combobulate-node-type node) combobulate-display-ignored-node-types)
-        (setq node (combobulate--get-nearest-navigable-node)
-              hl-node nil))
-       ((not node) (setq node (combobulate--get-nearest-navigable-node)
-                         hl-node (combobulate--get-nearest-navigable-node))))
-      (combobulate-display-draw-tree-1 (combobulate-display-create-locus node) hl-node))))
-
+  (let ((hl-node node))
+    (cond
+     ((member (combobulate-node-type node) (combobulate-read display-ignored-node-types))
+      (setq node (combobulate--get-nearest-navigable-node)
+            hl-node nil))
+     ((not node) (setq node (combobulate--get-nearest-navigable-node)
+                       hl-node (combobulate--get-nearest-navigable-node))))
+    (combobulate-display-draw-tree-1 (combobulate-display-create-locus node) hl-node)))
 
 (defun combobulate-display-create-locus (start-node)
   (let* ((parent (combobulate-nav-get-parent start-node))

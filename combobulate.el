@@ -122,6 +122,7 @@ created."
        (let ((fn-name (intern (string-replace
                                " " "-"
                                (concat
+                                ;; FIXME
                                 combobulate-envelope-symbol-prefix
                                 (symbol-name major-mode)
                                 "-"
@@ -140,44 +141,40 @@ created."
    envelopes))
 
 (defun combobulate-setup-1 ()
-  (if-let* ((lang (car-safe (treesit-parser-list)))
-            (parser-lang (treesit-parser-language lang))
-            (setup-fn (alist-get parser-lang combobulate-setup-functions-alist)))
-      (progn
-        ;; prepare the sexp functions so they use our version
-        (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
-        (setq-local transpose-sexps-function #'combobulate-transpose-sexp-function)
-        (funcall setup-fn parser-lang)
-        ;; Handle the highlighting. For some reason we have to force
-        ;; Emacs to load the file/directory-local variables as they're
-        ;; otherwise loaded after? Perhaps this has to do with the
-        ;; fact that Combobulate is often run in a major mode hook?
-        (hack-dir-local-variables-non-file-buffer)
-        (hack-local-variables)
-        ;; install the highlighter rules
-        (combobulate-highlight-install parser-lang)
-        ;; `combobulate-default-nodes' draws its nodes from
-        ;; `combobulate-procedures-default'.
-        (setq-local combobulate-default-nodes
-                    (combobulate-procedure-collect-activation-nodes
-                     combobulate-procedures-default))
-        ;; this should come after the funcall to `setup-fn' as we need
-        ;; the procedures setup and ready before we continue.
-        (when combobulate-key-prefix
-          (local-set-key
-           (kbd (format "%s e" combobulate-key-prefix))
-           ;; todo: this should be a single-shot setup per mode.
-           (let ((map (make-sparse-keymap)))
-             (dolist (envelope (combobulate--setup-envelopes combobulate-manipulation-envelopes))
-               (map-let (:function :key :extra-key) envelope
-                 (define-key map (kbd key) function)
-                 (when extra-key
-                   (define-key combobulate-key-map (kbd extra-key) function))))
-             map)))
-        (run-hooks 'combobulate-after-setup-hook))
-    (user-error "Combobulate cannot find a setup function for this tree sitter language and major mode: %s (%s).
+  (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
+  (setq-local transpose-sexps-function #'combobulate-transpose-sexp-function)
+  ;; Handle the highlighting. For some reason we have to force
+  ;; Emacs to load the file/directory-local variables as they're
+  ;; otherwise loaded after? Perhaps this has to do with the
+  ;; fact that Combobulate is often run in a major mode hook?
+  (hack-dir-local-variables-non-file-buffer)
+  (hack-local-variables)
+  ;; install the highlighter rules
+  (combobulate-highlight-install (combobulate-primary-language))
+  ;;         ;; `combobulate-navigable-nodes' draws its nodes from
+  ;;         ;; `combobulate-procedures-default'.
+  (set (combobulate-get (combobulate-primary-language) 'default-nodes)
+       (combobulate-procedure-collect-activation-nodes
+        (combobulate-read procedures-default)))
+  ;;         ;; this should come after the funcall to `setup-fn' as we need
+  ;;         ;; the procedures setup and ready before we continue.
+  ;;         (when combobulate-key-prefix
+  ;;           (local-set-key
+  ;;            (kbd (format "%s e" combobulate-key-prefix))
+  ;;            ;; todo: this should be a single-shot setup per mode.
+  ;;            (let ((map (make-sparse-keymap)))
+  ;;              (dolist (envelope (combobulate--setup-envelopes (combobulate-read envelope-list)))
+  ;;                (map-let (:function :key :extra-key) envelope
+  ;;                  (define-key map (kbd key) function)
+  ;;                  (when extra-key
+  ;;                    ;; FIXME
+  ;;                    (define-key combobulate-key-map (kbd extra-key) function))))
+  ;;              map)))
+  ;;         (run-hooks 'combobulate-after-setup-hook))
+  ;;     (user-error "Combobulate cannot find a setup function for this tree sitter language and major mode: %s (%s).
 
-Customize `combobulate-setup-functions-alist' to change the language setup alist." parser-lang major-mode)))
+  ;; Customize `combobulate-setup-functions-alist' to change the language setup alist." parser-lang major-mode))
+  )
 
 (defun combobulate-maybe-activate (&optional raise-if-missing)
   "Maybe activate Combobulate in the current buffer.
@@ -300,7 +297,7 @@ those major modes.")
     (push (list language major-modes minor-mode-fn)
           combobulate-registered-languages-alist)))
 
-(defvar combobulate-mode nil
+(defvar-local combobulate-mode nil
   "Non-nil if the language-specific minor mode is enabled in this buffer.
 
 Note that `combobulate-mode' is not a true minor mode: it is a
@@ -337,7 +334,7 @@ this language."
               (procedures-default
                "Node procedures used by Combobulate when more specific procedures don't apply.
 
-The `combobulate-default-nodes' variable is populated
+The `combobulate-navigable-nodes' variable is populated
 with the node types from all the expanded activation node
 procedure rules."
                '((:activation-nodes ((:nodes (all))))))
@@ -395,7 +392,7 @@ regardless of the procedure's activation rules."
                "Non-nil indents the inserted text after a Combobulate refactor text operation.
 
 This should probably be nil in whitespace-sensitive languages."
-               t)
+               nil)
               (indent-calculate-function
                "Function that determines the baseline indentation of a given position.
 
@@ -572,7 +569,7 @@ support where you still want to use Combobulate's features."
                    :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
                    :full nil)
                 decls)
-          (push `(keymap-set ,language-keymap "e" ,envelope-keymap)
+          (push `(keymap-set ,language-keymap (format "%s e" combobulate-key-prefix) ,envelope-keymap)
                 decls)
           ;; Create a minor mode for this language.
           (push `(define-minor-mode ,minor-mode-fn
@@ -596,7 +593,7 @@ support where you still want to use Combobulate's features."
                    :variable combobulate-mode
                    ;; Hm... leaving this to nil is probably for the
                    ;; best. We do not want to encourage people to go
-                   ;; around experimenting with minor mode as that
+                   ;; around experimenting with the minor mode as that
                    ;; could circumvent other setup processes.
                    :interactive nil
                    ;; This is the generic setup function that is
