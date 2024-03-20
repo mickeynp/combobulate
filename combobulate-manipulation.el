@@ -271,7 +271,7 @@ Combobulate will use its definition of siblings as per
 \\[combobulate-navigate-next] and
 \\[combobulate-navigate-previous]."
   (interactive "P")
-  (with-navigation-nodes (:procedures procedures-sibling)
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
     (let ((node (combobulate--get-nearest-navigable-node)))
       (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
                                   (combobulate--edit-node-determine-action arg)
@@ -287,7 +287,7 @@ This looks for clusters of nodes to edit in
 If you specify a prefix ARG, then the points are placed at the
 end of each edited node."
   (interactive "P")
-  (with-navigation-nodes (:procedures procedures-edit)
+  (with-navigation-nodes (:procedures (combobulate-read procedures-edit))
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-cluster
          node
@@ -301,7 +301,7 @@ end of each edited node."
 This looks for nodes of any type found in
 `combobulate-navigable-nodes'."
   (interactive "P")
-  (with-navigation-nodes (:procedures procedures-default)
+  (with-navigation-nodes (:procedures (combobulate-read procedures-default))
     (if-let ((node (combobulate--get-nearest-navigable-node)))
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
@@ -422,7 +422,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                                   (equal (car m) 'discard)))
+                              (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -431,7 +431,7 @@ The action can be one of the following:
   "Vanishes the node at point and attempts to preserve its children."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node)
                           '(before after around self)))))
 
@@ -443,7 +443,7 @@ The action can be one of the following:
   "Capture a transposable node, either forward or BACKWARD."
   ;; do not set `:nodes' here to allow this function to work with any
   ;; node type group set in the caller.
-  (with-navigation-nodes (:procedures procedures-sexp
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sexp)
                                       :backward backward :skip-prefix t)
     (combobulate-forward-sexp-function-1 backward)))
 
@@ -845,7 +845,7 @@ point relative to the nodes in
 `combobulate-navigable-nodes'."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (when-let* ((nearest (save-excursion
                              (combobulate-skip-whitespace-forward t)
                              (combobulate--get-nearest-navigable-node)))
@@ -886,6 +886,9 @@ the current choice and exit."
     (combobulate-refactor (:id refactor-id)
       (mark-node-highlighted current-node))))
 
+
+(defvar combobulate-proffer-after-action-hook nil
+  "Hook to run after an action is taken in `combobulate-proffer-choices'.")
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key
                                              (first-choice nil)
@@ -1079,6 +1082,7 @@ accepts or cancels the proffer. "
                       (if (or (= (length proxy-nodes) 1) first-choice)
                           (progn (refactor-action accept-action)
                                  (setq state 'accept))
+                        (run-hooks 'combobulate-proffer-after-action-hook)
                         (setq result
                               (condition-case nil
                                   (lookup-key
@@ -1114,6 +1118,7 @@ accepts or cancels the proffer. "
                                 ;; machine below.
                                 (quit 'cancel)
                                 (t (rollback) 'cancel)))
+                        (run-hooks 'combobulate-proffer-after-action-hook)
                         (and after-switch-fn (funcall after-switch-fn))
                         (pcase result
                           ('prev
@@ -1140,8 +1145,8 @@ accepts or cancels the proffer. "
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp))
                                 (pred (lambda (n) (and (>= n 1)
-                                                       (<= n 9)
-                                                       (<= n (length proxy-nodes)))))
+                                                  (<= n 9)
+                                                  (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1156,7 +1161,8 @@ accepts or cancels the proffer. "
                            (when (length> raw-event 0)
                              (push (aref raw-event 0) unread-command-events))
                            (refactor-action accept-action)
-                           (setq state 'accept)))))))
+                           (setq state 'accept)))
+                        (run-hooks 'combobulate-proffer-after-action-hook)))))
                 (when change-group
                   (cancel-change-group change-group)))
               (activate-change-group change-group))))
@@ -1178,7 +1184,7 @@ accepts or cancels the proffer. "
   "Clone node at point ARG times."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (when-let ((node (combobulate-proffer-choices
                         (seq-sort #'combobulate-node-larger-than-node-p
                                   (combobulate--get-all-navigable-nodes-at-point))
@@ -1309,7 +1315,7 @@ Uses `procedures-defun' to determine what a
 defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-defun :skip-prefix t)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-defun) :skip-prefix t)
       (unless (combobulate-mark-node-at-point nil t)
         (if (< arg 0)
             (combobulate-navigate-beginning-of-defun)
@@ -1336,19 +1342,19 @@ defun is.  Repeat calls expands the scope."
 (defun combobulate-splice-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self after around)))))
 
 (defun combobulate-splice-self (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self)))))
 
 (defun combobulate-splice-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures procedures-sibling)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self before around)))))
 
 (defvar combobulate-refactor--copied-values nil)
@@ -1568,7 +1574,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:procedures procedures-hierarchy)
+             (with-navigation-nodes (:procedures (combobulate-read procedures-hierarchy))
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1595,7 +1601,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:procedures procedures-hierarchy)
+             (with-navigation-nodes (:procedures (combobulate-read procedures-hierarchy))
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1618,19 +1624,6 @@ Each member of PARTITIONS must be one of:
                (indent-to pos-col))
              (point)))
           (commit))))))
-
-;;; not ready for prime time
-;; (defun combobulate-yoink-forward (arg)
-;;   (interactive "^p")
-;;   (with-argument-repetition arg
-;;     (with-navigation-nodes (:procedures procedures-sibling)
-;;       (combobulate--yoink (combobulate--get-nearest-navigable-node)))))
-
-;; (defun combobulate-yeet-forward (arg)
-;;   (interactive "^p")
-;;   (with-argument-repetition arg
-;;     (with-navigation-nodes (:procedures procedures-sibling)
-;;       (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
 
 (defun combobulate--drag (direction)
   "Perform a drag operation on the current navigation node in DIRECTION.
@@ -1843,16 +1836,17 @@ If BEFORE is non-nil, then the label is placed (using the special
 (defun combobulate-drag-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures procedures-sibling)
+    (with-navigation-nodes (:skip-prefix t :procedures (combobulate-read procedures-sibling))
       (combobulate-visual-move-to-node (combobulate--drag 'up)))))
 
 (defun combobulate-drag-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures procedures-sibling)
+    (with-navigation-nodes (:skip-prefix t :procedures (combobulate-read procedures-sibling))
       (combobulate-visual-move-to-node (combobulate--drag 'down)))))
 
 (provide 'combobulate-manipulation)
 ;;; combobulate-manipulation.el ends here
+
 
 

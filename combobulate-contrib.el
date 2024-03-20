@@ -50,7 +50,7 @@
 (defun combobulate-avy-jump-defun ()
   "Use avy to jump to a defun"
   (interactive)
-  (with-navigation-nodes (:procedures procedures-defun)
+  (with-navigation-nodes (:procedures (combobulate-read procedures-defun))
     (combobulate-avy-jump)))
 
 (defvar multiple-cursors-mode)
