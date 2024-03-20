@@ -41,10 +41,6 @@
 (require 'combobulate-settings)
 (declare-function combobulate-procedure-collect-activation-nodes "combobulate-procedure")
 
-(defvar-local combobulate-options-envelope-key-map
-    (make-sparse-keymap "Combobulate Envelopes")
-  "Dynamically set key map of Combobulate envelopes.")
-
 (defvar combobulate-query-key-map
   (let ((map (make-sparse-keymap "Combobulate Query")))
     (define-key map (kbd "q") #'combobulate-query-builder)
@@ -106,39 +102,9 @@
     (define-key map (kbd "M-k") #'combobulate-kill-node-dwim)
     map))
 
+(make-variable-buffer-local 'forward-sexp-function)
 (when combobulate-key-prefix
   (define-key combobulate-key-map (kbd combobulate-key-prefix) combobulate-options-key-map))
-
-(make-variable-buffer-local 'forward-sexp-function)
-
-(defun combobulate--setup-envelopes (envelopes)
-  "Prepare ENVELOPES for interactive use.
-
-Each envelope is read and an interactive function for it
-created."
-  (mapcar
-   (lambda (envelope)
-     (map-let (:description :name :template :point-placement) envelope
-       (let ((fn-name (intern (string-replace
-                               " " "-"
-                               (concat
-                                ;; FIXME
-                                combobulate-envelope-symbol-prefix
-                                (symbol-name major-mode)
-                                "-"
-                                name)))))
-         (set fn-name template)
-         ;; Store the function symbol for later recall in things like
-         ;; transient.
-         (setf envelopes
-               (plist-put envelope
-                          :function
-                          (defalias fn-name
-                            `(lambda () ,description
-                               (interactive)
-                               (combobulate-execute-envelope ,name)))))
-         (setf envelopes (plist-put envelope :point-placement (or point-placement 'start))))))
-   envelopes))
 
 (defun combobulate-setup-1 ()
   (setq-local forward-sexp-function #'combobulate-forward-sexp-function)
@@ -156,25 +122,8 @@ created."
   (set (combobulate-get (combobulate-primary-language) 'default-nodes)
        (combobulate-procedure-collect-activation-nodes
         (combobulate-read procedures-default)))
-  ;;         ;; this should come after the funcall to `setup-fn' as we need
-  ;;         ;; the procedures setup and ready before we continue.
-  ;;         (when combobulate-key-prefix
-  ;;           (local-set-key
-  ;;            (kbd (format "%s e" combobulate-key-prefix))
-  ;;            ;; todo: this should be a single-shot setup per mode.
-  ;;            (let ((map (make-sparse-keymap)))
-  ;;              (dolist (envelope (combobulate--setup-envelopes (combobulate-read envelope-list)))
-  ;;                (map-let (:function :key :extra-key) envelope
-  ;;                  (define-key map (kbd key) function)
-  ;;                  (when extra-key
-  ;;                    ;; FIXME
-  ;;                    (define-key combobulate-key-map (kbd extra-key) function))))
-  ;;              map)))
-  ;;         (run-hooks 'combobulate-after-setup-hook))
-  ;;     (user-error "Combobulate cannot find a setup function for this tree sitter language and major mode: %s (%s).
-
-  ;; Customize `combobulate-setup-functions-alist' to change the language setup alist." parser-lang major-mode))
-  )
+  (dolist (envelope (combobulate-read envelope-list))
+    (apply #'combobulate-define-envelope envelope)))
 
 (defun combobulate-maybe-activate (&optional raise-if-missing)
   "Maybe activate Combobulate in the current buffer.
@@ -187,8 +136,7 @@ enable Combobulate."
   ;; in `combobulate-registered-languages-alist'.
   ;;
   (pcase-dolist (`(,language ,major-modes ,minor-mode-fn) combobulate-registered-languages-alist)
-    (cond
-     ((member major-mode major-modes)
+    (when (member major-mode major-modes)
       ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
       ;; behaviour is that Combobulate may get activated in major
       ;; modes for which no grammar exists. Raising an error
@@ -214,13 +162,8 @@ modes with conflicting ideas of what type of language to use."
                    (current-buffer) (car-safe existing-parsers) language)))
         ;; Okay. All good, then... Create the language parser.
         (combobulate-create-language language (current-buffer) t)
-        (let ((toggle (if combobulate-mode
-                          ;; We exploit the fact that the variable holding whether the
-                          ;; minor mode is enabled or not is the same as the name of the
-                          ;; function to toggle it.
-                          ;; (symbol-value `,minor-mode-fn)
-                          -1 1)))
-          (funcall minor-mode-fn toggle)))))))
+        (let ((toggle (if (combobulate-read minor-mode) -1 1)))
+          (funcall minor-mode-fn toggle))))))
 
 ;;;###autoload
 (defun combobulate-mode (&rest _)
@@ -564,14 +507,21 @@ support where you still want to use Combobulate's features."
                    :full nil
                    :parent combobulate-key-map)
                 decls)
+
           ;; This is the envelope-specific keymap
           (push `(defvar-keymap ,envelope-keymap
                    :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
                    :full nil)
                 decls)
-          (push `(keymap-set ,language-keymap (format "%s e" combobulate-key-prefix) ,envelope-keymap)
+          ;; (push `(keymap-set ,language-keymap (format "%s e" combobulate-key-prefix) ,envelope-keymap)
+          ;;       decls)
+          (push `(define-key ,language-keymap (kbd ,(format "%s e" combobulate-key-prefix))
+                             ,envelope-keymap)
                 decls)
           ;; Create a minor mode for this language.
+          (push `(defvar-local ,minor-mode-fn nil
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language))
+                decls)
           (push `(define-minor-mode ,minor-mode-fn
                    ,(format "Combobulate minor mode the `%s' tree-sitter language." language)
                    :init-value nil
@@ -590,7 +540,7 @@ support where you still want to use Combobulate's features."
                    ;;
                    ;;  2. It is not possible to engage more than one
                    ;;  minor mode in the same buffer.
-                   :variable combobulate-mode
+                   :variable ,minor-mode-fn
                    ;; Hm... leaving this to nil is probably for the
                    ;; best. We do not want to encourage people to go
                    ;; around experimenting with the minor mode as that

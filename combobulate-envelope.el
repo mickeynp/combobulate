@@ -194,17 +194,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                        (goto-char prompt-point)
-                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                        (unless combobulate-envelope-static
-                                          (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                              (combobulate-envelope-prompt
-                                                               prompt tag nil
-                                                               (lambda ()
-                                                                 (combobulate-envelope--update-prompts
-                                                                  buf tag (minibuffer-contents)))))))
-                                            (push (cons tag new-text) combobulate-envelope--registers)
-                                            (combobulate-envelope--update-prompts buf tag new-text))))))
+                                   (goto-char prompt-point)
+                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (unless combobulate-envelope-static
+                                     (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                         (combobulate-envelope-prompt
+                                                          prompt tag nil
+                                                          (lambda ()
+                                                            (combobulate-envelope--update-prompts
+                                                             buf tag (minibuffer-contents)))))))
+                                       (push (cons tag new-text) combobulate-envelope--registers)
+                                       (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -900,7 +900,7 @@ If REGION is non-nil, envelop the region instead of NODE."
       (error "Envelope `%s' is not valid." envelope))
     (if region
         (combobulate-envelop-region template)
-      (with-navigation-nodes (:nodes nodes :procedures procedures-procedures)
+      (with-navigation-nodes (:nodes nodes :procedures procedures)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
             (save-excursion
               ;; If we are asked to mark the node, we do. If not, we still go to
@@ -1008,6 +1008,57 @@ See `combobulate-apply-envelope' for more information."
         ;; an explicit node skips the proffering process entirely.
         (when (and chosen-node accepted)
           (combobulate-execute-envelope envelope-name chosen-node))))))
+
+(defun combobulate-define-envelope (&rest args)
+  "Define an envelope using ARGS.
+
+ARGS is a list of keyword arguments. The following keywords are
+supported:
+
+`:name' (required) - The name of the envelope.
+
+`:description' (required) - A description of the envelope.
+
+`:template' (required) - The template to apply to the nodes.
+
+`:nodes' - A list of node types that the envelope can be applied
+to.
+
+`:procedures' - A list of procedures that the envelope can be
+applied to. If `:nodes' is defined, then this is ignored.
+
+`:shorthand' - A shorthand for the nodes that the envelope can be
+applied to. This shorthand is a string that is used to look up a
+procedure in the language-specific `procedure-shorthand-alist'.
+
+`:point-placement' - Where to place point after the envelope is
+applied. This can be either `start', `stay' or `end'. The default
+is `start'.
+
+`:key' (required) - A key to bind the envelope to. It will be
+bound to the language-specific key map
+`combobulate-LANGUAGE-envelope-map', which itself is bound to
+`combobulate-key-map' under the sub prefix `e'.
+
+`:extra-key' - An extra key to bind the envelope to. It will be
+bound to the language-specific map directly and so any key is
+valid."
+  (map-let (:description :key :extra-key :name :template :point-placement) args
+    (let ((fn-name (combobulate-get
+                    (combobulate-primary-language)
+                    (string-replace " " "-" (concat "envelope-" name)))))
+      ;; Store the function symbol for later recall in things like
+      ;; transient.
+      (defalias fn-name
+        `(lambda () ,(format "%s\n%s" description
+                        "This command triggers Combobulate's envelope system.")
+           (interactive)
+           (combobulate-execute-envelope ,name)))
+      (define-key (combobulate-read envelope-map) (kbd key) fn-name)
+      (when extra-key
+        (define-key (combobulate-read map) (kbd extra-key) fn-name)))))
+
+
 
 (provide 'combobulate-envelope)
 ;;; combobulate-envelope.el ends here

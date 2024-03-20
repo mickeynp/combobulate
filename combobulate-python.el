@@ -243,9 +243,13 @@ line when you press
     (indent-after-edit nil)
     (pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
     (envelope-procedure-shorthand-alist
-     '((expressions . ((rule "expression") (rule "primary_expression")))
-       (statements . ((rule "_compound_statement") (rule "_simple_statement")
-                      (rule "expression_statement") (rule "block")))))
+     '((expressions . ((:activation-nodes
+                        ((:nodes
+                          ((rule "expression") (rule "primary_expression")))))))
+       (statements . ((:activation-nodes
+                       ((:nodes
+                         ((rule "_compound_statement") (rule "_simple_statement")
+                          (rule "expression_statement") (rule "block")))))))))
     (envelope-list
      `((:description
         "( ... )"
