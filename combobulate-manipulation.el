@@ -1236,77 +1236,78 @@ Setting FIRST-CHOICE to non-nil disables proffered choices if there is
 more than one."
   (interactive "^p")
   (with-argument-repetition arg
-    ;; if the mark's ahead of point then we're at the beginning of the
-    ;; region; if so, swap places.
-    (when (and mark-active (> (point) (mark)))
-      (exchange-point-and-mark))
-    (let ((nodes (cons (combobulate--get-nearest-navigable-node)
-                       (combobulate-nav-get-parents
-                        (combobulate-node-at-point)))))
-      ;; maybe mark the thing at point first even though it may (or may
-      ;; not) match the extents of a node.
-      ;;
-      ;; Because we shift point around all the time, we don't want the
-      ;; `thing-at-point' machinery to pick up stray "things" at the
-      ;; edges of our region; that would be confusing. So only apply
-      ;; it if we don't have a region (i.e., the first time we run
-      ;; this command)
-      (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
-        ;; NOTE: this may need refinement over time; for now we
-        ;; hardcode the `:type' to be the symbol name of the thing
-        ;; we're looking for, though obviously that is most likely a
-        ;; made-up node type.
-        (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
-                   (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
-          (setq nodes (cons (combobulate-proxy-node-create
-                             :start (car bounds)
-                             :end (cdr bounds)
-                             :type (symbol-name combobulate-mark-node-or-thing-at-point)
-                             :named nil
-                             :node nil
-                             :field nil
-                             :pp (capitalize (symbol-name combobulate-mark-node-or-thing-at-point))
-                             :text thing)
-                            nodes))))
-      (combobulate-proffer-choices
-       (seq-drop-while #'combobulate-node-in-region-p nodes)
-       (lambda-slots (index current-node proxy-nodes refactor-id)
-         (combobulate-refactor (:id refactor-id)
-           ;; highlight the current node so the user can see the
-           ;; extent of the region.
-           (combobulate--mark-node current-node t beginning-of-line)
-           ;; also, if it exists, mark the *next* node in the list
-           ;; with a highlight outline
-           (when-let (next-node (nth (1+ index) proxy-nodes))
-             (mark-node-highlighted next-node))
-           ;; if the user enabled numeric selection, then label the
-           ;; first ten nodes.
-           (when (and (display-graphic-p) combobulate-proffer-allow-numeric-selection)
-             (dotimes (i 9)
-               (when-let ((idx-node (nth i proxy-nodes)))
-                 (mark-range-label
-                  (combobulate-node-start idx-node)
-                  (1+ (combobulate-node-start idx-node))
-                  (int-to-string (1+ i)) nil t))))))
-       ;; this feature only works properly on displays that support
-       ;; ctrl-<number> keys.
-       :allow-numeric-selection (display-graphic-p)
-       :reset-point-on-abort t
-       :cancel-action 'rollback
-       :reset-point-on-accept nil
-       ;; This allows repetition of the command that
-       ;; `combobulate-mark-node-dwim' is bound to, but this should be
-       ;; built into `combobulate-proffer-choices'. Furthermore, is
-       ;; `where-is-internal' really the best way to do this?
-       :extra-map (append
-                   (mapcar (lambda (key) (cons key 'next))
-                           (where-is-internal #'combobulate-mark-node-dwim
-                                              combobulate-key-map))
-                   ;; `M-h' (default) will expand the region; `M-H'
-                   ;; contracts it.
-                   (list (cons (kbd "M-H") 'prev)))
-       :flash-node t
-       :first-choice first-choice))))
+    (with-navigation-nodes (:procedures (combobulate-read procedures-default) :skip-prefix t)
+      ;; if the mark's ahead of point then we're at the beginning of the
+      ;; region; if so, swap places.
+      (when (and mark-active (> (point) (mark)))
+        (exchange-point-and-mark))
+      (let ((nodes (cons (combobulate--get-nearest-navigable-node)
+                         (combobulate-nav-get-parents
+                          (combobulate-node-at-point)))))
+        ;; maybe mark the thing at point first even though it may (or may
+        ;; not) match the extents of a node.
+        ;;
+        ;; Because we shift point around all the time, we don't want the
+        ;; `thing-at-point' machinery to pick up stray "things" at the
+        ;; edges of our region; that would be confusing. So only apply
+        ;; it if we don't have a region (i.e., the first time we run
+        ;; this command)
+        (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
+          ;; NOTE: this may need refinement over time; for now we
+          ;; hardcode the `:type' to be the symbol name of the thing
+          ;; we're looking for, though obviously that is most likely a
+          ;; made-up node type.
+          (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
+                     (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
+            (setq nodes (cons (combobulate-proxy-node-create
+                               :start (car bounds)
+                               :end (cdr bounds)
+                               :type (symbol-name combobulate-mark-node-or-thing-at-point)
+                               :named nil
+                               :node nil
+                               :field nil
+                               :pp (capitalize (symbol-name combobulate-mark-node-or-thing-at-point))
+                               :text thing)
+                              nodes))))
+        (combobulate-proffer-choices
+         (seq-drop-while #'combobulate-node-in-region-p nodes)
+         (lambda-slots (index current-node proxy-nodes refactor-id)
+           (combobulate-refactor (:id refactor-id)
+             ;; highlight the current node so the user can see the
+             ;; extent of the region.
+             (combobulate--mark-node current-node t beginning-of-line)
+             ;; also, if it exists, mark the *next* node in the list
+             ;; with a highlight outline
+             (when-let (next-node (nth (1+ index) proxy-nodes))
+               (mark-node-highlighted next-node))
+             ;; if the user enabled numeric selection, then label the
+             ;; first ten nodes.
+             (when (and (display-graphic-p) combobulate-proffer-allow-numeric-selection)
+               (dotimes (i 9)
+                 (when-let ((idx-node (nth i proxy-nodes)))
+                   (mark-range-label
+                    (combobulate-node-start idx-node)
+                    (1+ (combobulate-node-start idx-node))
+                    (int-to-string (1+ i)) nil t))))))
+         ;; this feature only works properly on displays that support
+         ;; ctrl-<number> keys.
+         :allow-numeric-selection (display-graphic-p)
+         :reset-point-on-abort t
+         :cancel-action 'rollback
+         :reset-point-on-accept nil
+         ;; This allows repetition of the command that
+         ;; `combobulate-mark-node-dwim' is bound to, but this should be
+         ;; built into `combobulate-proffer-choices'. Furthermore, is
+         ;; `where-is-internal' really the best way to do this?
+         :extra-map (append
+                     (mapcar (lambda (key) (cons key 'next))
+                             (where-is-internal #'combobulate-mark-node-dwim
+                                                combobulate-key-map))
+                     ;; `M-h' (default) will expand the region; `M-H'
+                     ;; contracts it.
+                     (list (cons (kbd "M-H") 'prev)))
+         :flash-node t
+         :first-choice first-choice)))))
 
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.

@@ -161,7 +161,7 @@ expected language of `%s'. This can happen if you have major
 modes with conflicting ideas of what type of language to use."
                    (current-buffer) (car-safe existing-parsers) language)))
         ;; Okay. All good, then... Create the language parser.
-        (combobulate-create-language language (current-buffer) t)
+        (combobulate-create-language language (current-buffer) nil)
         (let ((toggle (if (combobulate-read minor-mode) -1 1)))
           (funcall minor-mode-fn toggle))))))
 
@@ -347,7 +347,7 @@ determine the indentation."
 
 Note that this defaults to `indent-region', but that may work
 well in indentation-sensitive languages like YAML or Python."
-               nil)
+               #'indent-region)
               (envelope-deindent-function
                "Function to call to calculate the previous indentation level of point.
 

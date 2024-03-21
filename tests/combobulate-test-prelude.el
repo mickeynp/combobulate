@@ -521,7 +521,7 @@ macros are available for use in the test body."
              ;; we'll use the root of the ./tests/ directory by
              ;; looking for the combobulate-test-prelude file
              ;; (setq default-directory (file-name-directory (locate-library "combobulate-test-prelude")))
-             (should combobulate-mode)
+             (should (combobulate-read minor-mode))
              (should (treesit-parser-list))
              (erase-buffer)
              (when ,fixture

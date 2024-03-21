@@ -900,7 +900,7 @@ If REGION is non-nil, envelop the region instead of NODE."
       (error "Envelope `%s' is not valid." envelope))
     (if region
         (combobulate-envelop-region template)
-      (with-navigation-nodes (:nodes nodes :procedures procedures)
+      (with-navigation-nodes (:nodes nodes :procedures (combobulate-read procedures-default))
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
             (save-excursion
               ;; If we are asked to mark the node, we do. If not, we still go to
