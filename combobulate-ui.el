@@ -82,7 +82,7 @@
       transient--prefix
       `[,@(mapcar (lambda (envelope)
                     (map-let (:key :description :function) envelope
-                      `(,key ,description ,function)))
+                      `(,key ,description ,(combobulate--envelope-get-function-name envelope))))
                   (combobulate-read envelope-list))]))])
 
 
