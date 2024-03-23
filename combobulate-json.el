@@ -29,6 +29,7 @@
 (require 'combobulate-manipulation)
 (require 'combobulate-interface)
 (require 'combobulate-rules)
+(require 'combobulate-setup)
 
 (defun combobulate-json-pretty-print-node-name (node default-name)
   "Pretty print the node name for JSON mode."

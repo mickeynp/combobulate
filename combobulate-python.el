@@ -32,6 +32,7 @@
 (require 'combobulate-navigation)
 (require 'combobulate-interface)
 (require 'combobulate-rules)
+(require 'combobulate-setup)
 (require 'combobulate-manipulation)
 (declare-function combobulate--mark-node "combobulate-manipulation")
 (declare-function combobulate-indent-region "combobulate-manipulation")

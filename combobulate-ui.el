@@ -32,6 +32,8 @@
 (require 'transient)
 
 (require 'combobulate-settings)
+(require 'combobulate-setup)
+
 
 (transient-define-prefix combobulate-highlight ()
   "Highlight nodes in the buffer"
@@ -80,7 +82,7 @@
       `[,@(mapcar (lambda (envelope)
                     (map-let (:key :description :function) envelope
                       `(,key ,description ,function)))
-                  combobulate-manipulation-envelopes)]))])
+                  (combobulate-read envelope-list))]))])
 
 
 (transient-define-prefix combobulate ()

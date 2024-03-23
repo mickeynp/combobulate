@@ -357,14 +357,19 @@ If keep-mark is non-nil, keep the mark in the result."
        :overwrite t
        :keep-anonymous t))))
 
+(defvar combobulate-procedure-apply-shared-discard-rules nil
+  "Whether to apply the shared discard rules to the result of a procedure.
+
+This shared rules are set with the variable `procedure-discard-rules'")
+
 (defvar combobulate-procedure-include-anonymous-nodes nil
   "Whether to include anonymous nodes in the result of a procedure.")
 
 (defun combobulate-procedure--filter-nodes-by-relationship (selector node fn)
   "Filter NODES by the relationship defined by FN against NODE.
 
-FN should be a function that takes a node and whether to include
-anonymous nodes and return the nodes that match the relationship."
+  FN should be a function that takes a node and whether to include
+  anonymous nodes and return the nodes that match the relationship."
   (map-let (:match-rules :discard-rules :default-mark :anonymous)
       ;; we can have either a plist or `t', indicating that we want
       ;; all matches
@@ -376,7 +381,7 @@ anonymous nodes and return the nodes that match the relationship."
             (or default-mark
                 (and match-rules discard-rules
                      (error "Cannot have both `:match-rules' and `:discard-rules'
-without explicitly setting `:default-mark'"))
+  without explicitly setting `:default-mark'"))
                 (if match-rules '@discard '@match)))
            (anonymous (or anonymous combobulate-procedure-include-anonymous-nodes))
            (nodes (funcall fn node anonymous)))
@@ -409,10 +414,10 @@ without explicitly setting `:default-mark'"))
 (defun combobulate-procedure-apply (procedure node)
   "Apply PROCEDURE to NODE.
 
-PROCEDURE is a form matching the following pattern:
+  PROCEDURE is a form matching the following pattern:
 
-   (:activation-nodes (ACTIVATION-NODE-RULES ...))
-    :selector SELECTOR-RULES)
+  (:activation-nodes (ACTIVATION-NODE-RULES ...))
+  :selector SELECTOR-RULES)
 
 Where ACTIVATION-NODE-RULES is a list of activation nodes, each
 of which is a form matching the following pattern:
@@ -519,7 +524,8 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                         #'combobulate-linear-siblings
                       #'combobulate-node-children)))
                   (t (error "Invalid selector: %s" selector))))
-                :discard-types (combobulate-procedure-expand-rules (combobulate-read procedure-discard-rules))
+                :discard-types (unless combobulate-procedure-apply-shared-discard-rules
+                                 (combobulate-procedure-expand-rules (combobulate-read procedure-discard-rules)))
                 :overwrite t
                 :keep-anonymous t)
                ;; acknowledge that the selector filter was used

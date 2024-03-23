@@ -30,6 +30,7 @@
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
 (require 'combobulate-rules)
+(require 'combobulate-setup)
 (require 'subr-x)
 
 (defun combobulate-css-pretty-print-node-name (node default-name)
@@ -127,6 +128,7 @@
         :selector (:match-children (:discard-rules ("comment" "property_name"))))))
     (procedures-defun
      '((:activation-nodes ((:nodes (exclude (all) "declaration"))))))))
+
 
 (define-combobulate-language
  :name css

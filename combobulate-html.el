@@ -29,6 +29,7 @@
 
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
+(require 'combobulate-setup)
 (require 'combobulate-rules)
 
 (defvar combobulate-js-ts-attribute-envelope-default)

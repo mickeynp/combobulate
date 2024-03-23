@@ -26,6 +26,7 @@
 
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
+(require 'combobulate-setup)
 (require 'combobulate-manipulation)
 (require 'combobulate-rules)
 

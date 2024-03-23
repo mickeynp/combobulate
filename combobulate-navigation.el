@@ -31,12 +31,13 @@
 (require 'combobulate-settings)
 (require 'combobulate-misc)
 (require 'combobulate-interface)
+(require 'combobulate-setup)
 (require 'map)
 
-(declare-function combobulate-production-rules-get-rules "combobulate-navigation")
-(declare-function combobulate-procedure-collect-activation-nodes "combobulate-navigation")
-(declare-function combobulate-procedure-start-matches "combobulate-navigation")
-(declare-function combobulate-production-rules-get-inverted "combobulate-navigation")
+(declare-function combobulate-production-rules-get-rules "combobulate-procedure")
+(declare-function combobulate-production-rules-get-inverted "combobulate-procedure")
+(declare-function combobulate-procedure-start-matches "combobulate-procedure")
+(declare-function combobulate-procedure-collect-activation-nodes "combobulate-procedure")
 
 
 (defvar combobulate-skip-prefix-regexp " \t\n"
@@ -549,7 +550,7 @@ original position."
         (--err (gensym)))
     `(let* ((procedure-value
              (and
-              (not (eq ',procedures nil))
+              (not (equal ',procedures nil))
               ,procedures))
             (combobulate-navigable-nodes
              (or ,nodes

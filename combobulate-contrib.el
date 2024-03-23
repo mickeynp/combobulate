@@ -29,6 +29,7 @@
 
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
+(require 'combobulate-setup)
 (defvar mc--default-cmds-to-run-once)
 (declare-function avy-process "avy.el")
 (declare-function mc/remove-fake-cursors "multiple-cursors-core.el")

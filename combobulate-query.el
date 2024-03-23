@@ -52,8 +52,6 @@
 (eval-when-compile
   (require 'cl-lib))
 
-(defvar combobulate-mode)
-
 (defvar combobulate-query-ring-index 0
   "Index of the current query in `combobulate-query-ring'.")
 
@@ -1145,7 +1143,7 @@ the query fails to compile."
 
 (defun combobulate-highlight-install (language)
   "Install the font lock rules for LANGUAGE in the current buffer."
-  (when combobulate-mode
+  (when (combobulate-read minor-mode)
     (combobulate-highlight-setup)
     ;; do the user-defined rules...
     (dolist (rule combobulate-highlight-queries-alist)

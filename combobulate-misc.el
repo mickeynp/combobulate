@@ -30,6 +30,8 @@
 (require 'subr-x)
 (require 'combobulate-settings)
 (require 'combobulate-interface)
+(require 'combobulate-setup)
+
 (declare-function combobulate-node-start "combobulate-navigation")
 (declare-function combobulate-node-end "combobulate-navigation")
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
@@ -97,9 +99,8 @@ No effort is made to account for, or exclude, overlaps."
 
 (defun combobulate--flash-node (node)
   "Flashes NODE on the screen."
-  (with-navigation-nodes ()
-    (when (and node combobulate-flash-node)
-      (message "%s" (combobulate-display-draw-node-tree node)))))
+  (when (and node combobulate-flash-node)
+    (message "%s" (combobulate-display-draw-node-tree node))))
 
 (defsubst combobulate-debug (s &rest args)
   (princ (apply #'format (concat s "\n") args)))

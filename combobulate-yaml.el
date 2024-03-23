@@ -29,8 +29,6 @@
 (require 'combobulate-manipulation)
 (require 'combobulate-rules)
 
-
-
 (defvar combobulate-yaml-definitions
   '((envelope-list
      '((:description
@@ -90,7 +88,7 @@
 (define-combobulate-language
  :name yaml
  :language yaml
- :major-modes (yaml-mode yaml-ts-mode)
+ :major-modes (yaml-ts-mode)
  :custom combobulate-yaml-definitions
  :setup-fn combobulate-yaml-setup)
 

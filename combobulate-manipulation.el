@@ -32,6 +32,7 @@
 (require 'combobulate-misc)
 (require 'combobulate-interface)
 (require 'combobulate-procedure)
+(require 'combobulate-setup)
 (require 'eieio)
 (require 'map)
 ;;; for python-specific indent stuff
@@ -48,6 +49,7 @@
 (declare-function combobulate-query-ring-current-query "combobulate-query")
 (declare-function combobulate-query-ring--execute "combobulate-query")
 (defvar combobulate-envelope--undo-on-quit)
+(defvar combobulate-procedure-apply-shared-discard-rules)
 (defvar combobulate-key-map)
 
 (defun combobulate--refactor-insert-copied-values (values)
@@ -306,9 +308,9 @@ This looks for nodes of any type found in
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -322,7 +324,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -422,7 +424,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                              (equal (car m) 'discard)))
+                                   (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -736,7 +738,7 @@ after NODE-OR-TEXT."
              ;; all, instances.
              (save-excursion
                (combobulate--goto-node node-or-text t)
-               (when-let ((node-after (condition-case err
+               (when-let ((node-after (condition-case nil
                                           (combobulate-node-on (point) (1+ (point)) nil nil)
                                         (error nil))))
                  (cond
@@ -1145,8 +1147,8 @@ accepts or cancels the proffer. "
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp))
                                 (pred (lambda (n) (and (>= n 1)
-                                                  (<= n 9)
-                                                  (<= n (length proxy-nodes)))))
+                                                       (<= n 9)
+                                                       (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1380,7 +1382,7 @@ Each member of PARTITIONS must be one of:
          ;;
          ;; FIXME: should use the shorthand version and shadow it, or
          ;; have another override flag.
-         (combobulate-procedure-discard-rules)
+         (combobulate-procedure-apply-shared-discard-rules nil)
          ;; Begin the search at the point node.
          (procedure)
          (legal-splices)
@@ -1482,7 +1484,7 @@ Each member of PARTITIONS must be one of:
                         (mark-node-deleted current-node)
                         (when (save-excursion
                                 (combobulate-move-to-node current-node t)
-                                (looking-back "\n"))
+                                (looking-back "\n" nil))
                           (setq trailing-newline t))
                         (commit)
                         ;; use an envelope to ensure indentation is handled
@@ -1511,7 +1513,7 @@ Each member of PARTITIONS must be one of:
                         (when trailing-newline
                           (save-excursion
                             (goto-char (overlay-end range-ov))
-                            (unless (or (looking-at "\n") (looking-back "\n"))
+                            (unless (or (looking-at "\n") (looking-back "\n" nil))
                               (insert "\n"))))
                         (unless (combobulate-before-point-blank-p (point))
                           (if (member

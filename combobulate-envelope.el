@@ -30,6 +30,7 @@
 (require 'generator)
 (require 'combobulate-settings)
 (require 'combobulate-manipulation)
+(require 'combobulate-setup)
 (require 'eieio)
 
 
@@ -194,17 +195,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                   (goto-char prompt-point)
-                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                   (unless combobulate-envelope-static
-                                     (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                         (combobulate-envelope-prompt
-                                                          prompt tag nil
-                                                          (lambda ()
-                                                            (combobulate-envelope--update-prompts
-                                                             buf tag (minibuffer-contents)))))))
-                                       (push (cons tag new-text) combobulate-envelope--registers)
-                                       (combobulate-envelope--update-prompts buf tag new-text))))))
+                                        (goto-char prompt-point)
+                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                        (unless combobulate-envelope-static
+                                          (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                              (combobulate-envelope-prompt
+                                                               prompt tag nil
+                                                               (lambda ()
+                                                                 (combobulate-envelope--update-prompts
+                                                                  buf tag (minibuffer-contents)))))))
+                                            (push (cons tag new-text) combobulate-envelope--registers)
+                                            (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -900,7 +901,7 @@ If REGION is non-nil, envelop the region instead of NODE."
       (error "Envelope `%s' is not valid." envelope))
     (if region
         (combobulate-envelop-region template)
-      (with-navigation-nodes (:nodes nodes :procedures (combobulate-read procedures-default))
+      (with-navigation-nodes (:nodes nodes :procedures procedures)
         (if (setq node (or node (combobulate--get-nearest-navigable-node)))
             (save-excursion
               ;; If we are asked to mark the node, we do. If not, we still go to
@@ -1009,6 +1010,9 @@ See `combobulate-apply-envelope' for more information."
         (when (and chosen-node accepted)
           (combobulate-execute-envelope envelope-name chosen-node))))))
 
+(defun combobulate--envelope-get-function-name (envelope)
+  (map-let (:name) envelope (combobulate-get (string-replace " " "-" (concat "envelope-" name)))))
+
 (defun combobulate-define-envelope (&rest args)
   "Define an envelope using ARGS.
 
@@ -1043,10 +1047,8 @@ bound to the language-specific key map
 `:extra-key' - An extra key to bind the envelope to. It will be
 bound to the language-specific map directly and so any key is
 valid."
-  (map-let (:description :key :extra-key :name :template :point-placement) args
-    (let ((fn-name (combobulate-get
-                    (combobulate-primary-language)
-                    (string-replace " " "-" (concat "envelope-" name)))))
+  (map-let (:description :key :extra-key :name) args
+    (let ((fn-name (combobulate--envelope-get-function-name args)))
       ;; Store the function symbol for later recall in things like
       ;; transient.
       (defalias fn-name
