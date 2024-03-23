@@ -461,7 +461,10 @@ completion candidates for the current point."
   "Validate QUERY and return a cons cell if the query is invalid."
   (ignore-errors
     (condition-case err
-        (progn (combobulate-query-capture (combobulate-root-node) query) nil)
+        (progn (combobulate-query-capture
+                (combobulate-root-node)
+                query (point-min) (1+ (point-min)))
+               nil)
       ;; this can easily happen during startup.
       (treesit-query-error
        (pcase-let ((`(,_ ,message ,start . ,_) err))
