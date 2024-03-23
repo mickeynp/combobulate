@@ -1409,7 +1409,13 @@ Each member of PARTITIONS must be one of:
       (setq procedure nil)
       (let ((largest-pt-node)
             (possible-nodes (reverse (save-excursion
-                                       (combobulate-move-to-node point-node)
+                                       ;; NOTE: Doing this seems to
+                                       ;; cut down on the number of
+                                       ;; useful choices we can splice
+                                       ;; from.
+                                       ;;
+                                       ;; (combobulate-move-to-node
+                                       ;; point-node)
                                        (combobulate-all-nodes-at-point)))))
         ;; Starting from the largest node that starts at point,
         ;; repeatedly try to generate a procedure that yields a valid
