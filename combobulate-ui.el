@@ -74,6 +74,7 @@
 (transient-define-prefix combobulate-envelop ()
   "Envelop node on or around point with a template"
   ["Envelopes"
+   :class transient-column
    :setup-children
    (lambda (_)
      ;; This is... not pretty.
