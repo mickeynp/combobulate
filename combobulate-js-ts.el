@@ -496,7 +496,7 @@ determine the attribute and the corresponding envelope to insert."
 (define-combobulate-language
  :name typescript
  :language typescript
- :major-modes (typescript-ts-mode)
+ :major-modes (typescript-mode typescript-ts-mode)
  :custom combobulate-jsx-definitions
  :extra-defcustoms combobulate-jsx-extra-defcustoms
  :setup-fn combobulate-js-ts-setup)
