@@ -456,11 +456,22 @@ line when you press
                  :position at))
         :selector (:choose node
                            :match-children (:match-rules ("block"))))
+       ;; Lambdas do not have blocks, so we need to limit our scope to
+       ;; the body field a lambda rule can have
        (:activation-nodes
         ((:nodes ((rule "lambda"))
                  :position at))
         :selector (:choose node
                            :match-children (:match-rules (rule "lambda" :body))))
+       ;; Decorated definitions need special care. A
+       ;; `decorated_definition' has at least one `decorator' child
+       ;; element; the `decorator' elements themselves, if there is
+       ;; more than one, are siblings. So we must find either anything
+       ;; a `decorated_definition' can contain, a block inside the
+       ;; class/function to jump to.
+       (:activation-nodes
+        ((:nodes ("decorator") :position at :has-parent ("decorated_definition")))
+        :selector (:choose parent :match-children (:match-rules ((rule "decorated_definition") "block"))))
        (:activation-nodes
         ((:nodes ((all)) :has-parent ((all))))
         :selector (:choose node
