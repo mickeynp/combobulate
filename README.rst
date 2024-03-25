@@ -146,8 +146,6 @@ Here's a quick summary of recently added and changed features:
 Top Tips for using Combobulate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Combobulate is a minor mode. Its keys are bound to ``combobulate-LANGUAGE-map`` where LANGUAGE is a tree-sitter grammar language, such as ``go`` or ``python``. Use ``M-x describe-keymap`` to display the key bindings, or browse the transient UI bound to ``C-c o o``. Every key in the transient UI exist elsewhere also. You do not have to use it.
-
 Unlike most of Emacs's major modes and the specialized movement and editing they (may) offer, Combobulate is quite strict. It's strict about *where* you invoke certain commands or key bindings, and what happens when you type in different parts of the same line of code.
 
 That is because of the *concrete syntax tree*. Place your point anywhere in your source code and there might be 5, 10, 15 or more "nodes" in the tree where that point intersects wildly different nodes.
@@ -161,6 +159,16 @@ You, the human, know which node you want -- but Combobulate does not necessarily
 So, for the best results, put your point at the *beginning* of the thing you want to interact with --- at least until you've gotten the hang of how Combobulate decides what it thinks you're asking for.
 
 Finally, note that any command that edits your code is at best a "best guess" effort. Carefully scrutinize what Combobulate does after you invoke any command that edits your code.
+
+Key Bindings
+~~~~~~~~~~~~
+
+Combobulate is a minor mode, and you can activate it with ``combobulate-mode``. Each grammar has its own (private!) minor mode which is chosen for you automatically. Its keys are bound in ``combobulate-LANGUAGE-map``, where LANGUAGE is a tree-sitter grammar language, such as ``go`` or ``python``. Most key bindings are the same between the language-specific minor modes. If you want to make changes that apply to all of Combobulate, then make them to ``combobulate-key-map``; conversely, use the language-specific map if you want changes made local to each language.
+
+Customization
+~~~~~~~~~~~~~
+
+Each language has its own *Customize* group inside the Combobulate group. I would encourage you to browse the available options: ``M-x customize-group RET combobulate RET``.
 
 How do I install Combobulate?
 -----------------------------
