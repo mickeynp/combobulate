@@ -7,7 +7,7 @@
 What is Combobulate?
 ====================
 
-**Combobulate is under active development. Expect bugs.**
+**Combobulate is under active development. Expect bugs. The development branch is usually ahead of the master branch.**
 
 Combobulate is a package that adds structured editing and movement to a wide range of programming languages. Unlike most programming major modes that use error-prone imperative code and regular expressions to determine what's what in your code, Combobulate uses Emacs 29's tree-sitter library. Tree-sitter maintains a *concrete syntax tree* of your code; it gives Combobulate absolute clarity of all aspects of your code, enabling more correct movement and editing than you would otherwise have.
 
@@ -27,10 +27,12 @@ Combobulate's design philosophy is this:
 
 4. Combobulate must have a shallow learning curve.
 
-If you want a guided tour, then I recommend you read:
+If you want a guided tour and a deeper understanding of why Combobulate is built the way it is, then I recommend you read:
 
-- `Combobulate: Structured Movement and Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-structured-movement-editing-treesitter>`__, for an in-depth overview of Combobulate.
+- `Combobulate: Structured Movement and Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-structured-movement-editing-treesitter>`__, for an overview of Combobulate.
+- `Combobulate: Intuitive, Structured Navigation with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-intuitive-structured-navigation-treesitter>`__, which talks about the challenges around building sensible and intuitive navigation.
 - `Combobulate: Editing and Searching with the new Query Builder <https://www.masteringemacs.org/article/combobulate-editing-searching-new-query-builder>`__, demonstrating how Combobulate's query builder and search works.
+- `Combobulate: Interactive Node Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-interactive-node-editing-treesitter>`__, where I talk about the *carousel* interface and how it makes it possible to preview complex edits to your buffer before accepting them.
 
 
 What does Combobulate do exactly?
@@ -75,27 +77,40 @@ Combobulate has to support your programming language for it to work properly. Mo
 
 Here is a list of the languages currently supported.
 
-+--------------------+--------------------+--------------------+
-|          Language  |Supported?          | Grammar Version    |
-+--------------------+--------------------+--------------------+
-|CSS                 |✅                  |v0.20.0             |
-+--------------------+--------------------+--------------------+
-|HTML                |✅ [1]              |v0.20.1             |
-+--------------------+--------------------+--------------------+
-|JSON                |✅                  |v0.20.2             |
-+--------------------+--------------------+--------------------+
-|Javascript+JSX      |✅                  |v0.20.1             |
-+--------------------+--------------------+--------------------+
-|Typescript+TSX      |✅                  |v0.20.3             |
-+--------------------+--------------------+--------------------+
-|Python              |✅                  |v0.20.4             |
-+--------------------+--------------------+--------------------+
-|YAML                |✅                  |v0.5.0              |
-+--------------------+--------------------+--------------------+
-|TOML                |✅                  |v0.5.1              |
-+--------------------+--------------------+--------------------+
-|Go                  |✅                  |v0.20.0             |
-+--------------------+--------------------+--------------------+
++--------------------+--------------------+----------------------+--------------------+
+|          Language  |Support             |Major Modes           | Grammar Version    |
++--------------------+--------------------+----------------------+--------------------+
+|CSS                 |✅                  |css-mode,             |v0.20.0             |
+|                    |                    |css-ts-mode           |                    |
++--------------------+--------------------+----------------------+--------------------+
+|HTML                |✅ [1]              |html-mode,            |v0.20.1             |
+|                    |                    |html-ts-mode,         |                    |
+|                    |                    |mhtml-mode,           |                    |
+|                    |                    |sgml-mode             |                    |
++--------------------+--------------------+----------------------+--------------------+
+|JSON                |✅                  |json-mode,            |v0.20.2             |
+|                    |                    |json-ts-mode          |                    |
++--------------------+--------------------+----------------------+--------------------+
+|Javascript+JSX      |✅                  |js-mode, jsN-mode,    |v0.20.1             |
+|                    |                    |js-ts-mode,           |                    |
+|                    |                    |js-jsx-mode,          |                    |
+|                    |                    |js2-jsx-mode          |                    |
++--------------------+--------------------+----------------------+--------------------+
+|Typescript+TSX      |✅                  |typescript-mode,      |v0.20.3             |
+|                    |                    |typescript-ts-mode,   |                    |
+|                    |                    |tsx-ts-mode           |                    |
++--------------------+--------------------+----------------------+--------------------+
+|Python              |✅                  |python-mode,          |v0.20.4             |
+|                    |                    |python-ts-mode        |                    |
++--------------------+--------------------+----------------------+--------------------+
+|YAML                |✅                  |yaml-mode,            |v0.5.0              |
+|                    |                    |yaml-ts-mode          |                    |
++--------------------+--------------------+----------------------+--------------------+
+|TOML                |✅                  |toml-ts-mode,         |v0.5.1              |
+|                    |                    |conf-toml-mode        |                    |
++--------------------+--------------------+----------------------+--------------------+
+|Go                  |✅                  |go-mode, go-ts-mode   |v0.20.0             |
++--------------------+--------------------+----------------------+--------------------+
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
 
@@ -111,8 +126,26 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
 
  [1] Either use the version built into *Emacs 30*, or you can download my ``html-ts-mode`` `here <https://github.com/mickeynp/html-ts-mode>`__, and read more about how to build your own tree-sitter major mode by reading `Let's Write a Tree-Sitter Major Mode <https://www.masteringemacs.org/article/lets-write-a-treesitter-major-mode>`__.
 
+Recent Changes / What's New
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's a quick summary of recently added and changed features:
+
+- `The carousel interface <https://www.masteringemacs.org/article/combobulate-interactive-node-editing-treesitter>`__ is now used in most edit commands.
+- Splicing is now more advanced than ever, and works everywhere.
+
+  Vanish parent node is now bound to ``M-<right>`` and is know as splice outer.
+- Sibling navigation is much improved. Dragging now uses the same code as sibling navigation, so node dragging will work where sibling navigation is possible.
+- Combobulate now works in non-tree-sitter modes by activating tree-sitter support in the background. For instance, instead of *only* working in ``python-ts-mode``, Combobulate now also works in ``python-mode``. Most common (third party included) modes are known to Combobulate.
+- Defining new languages for Combobulate to work with is much simpler.
+- Most code now uses the *procedure* system, a simple DSL for specifying how to pick nodes at/around point.
+- Envelope (code templating) system is greatly improved.
+- More languages are supported out of the box (Go, TOML.)
+
 Top Tips for using Combobulate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Combobulate is a minor mode. Its keys are bound to ``combobulate-LANGUAGE-map`` where LANGUAGE is a tree-sitter grammar language, such as ``go`` or ``python``. Use ``M-x describe-keymap`` to display the key bindings, or browse the transient UI bound to ``C-c o o``. Every key in the transient UI exist elsewhere also. You do not have to use it.
 
 Unlike most of Emacs's major modes and the specialized movement and editing they (may) offer, Combobulate is quite strict. It's strict about *where* you invoke certain commands or key bindings, and what happens when you type in different parts of the same line of code.
 
@@ -148,20 +181,19 @@ Combobulate is not on MELPA or any other package repository, yet. For Combobulat
    (Adding support for new languages is reasonably easy though!)
 5. You have a git checkout of Combobulate ready.
 
-Here's a verbose example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter  grammars, then you can leave out the code that does this in the ``:preface``.
+There's a verbose and a simple example of how to configure Combobulate in Emacs with ``use-package``. Note that if you already know how to install tree-sitter  grammars, then skip to the simple config below.
 
-There are two code snippets below that will help you get started. One assumes you don't know how to install and set up tree-sitter grammars, whereas the other one does.
+Combobulate works in non-tree-sitter-enabled major modes *as well as* the new Emacs 29 tree-sitter modes.
 
 Complete Example with Tree-Sitter Grammar Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*This is a complete example and is for illustration only.*
+*Note: if you have used Combobulate before, know that the setup for it has been simplified greatly.*
 
 Note that this example uses ``major-mode-remap-alist`` to turn your regular major modes into the tree-sitter-enabled modes. You can always undo the changes made to this variable to return to what you had before.
 
 .. code-block:: elisp
 
-    ;; `M-x combobulate' (default: `C-c o o') to start using Combobulate
     (use-package treesit
       :mode (("\\.tsx\\'" . tsx-ts-mode))
       :preface
@@ -169,15 +201,20 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
         "Install Tree-sitter grammars if they are absent."
         (interactive)
         (dolist (grammar
-                  '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
-                    (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
-                    (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
-                    (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
-                    (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-                    (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
-                    (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
-                    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
-                    (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
+                 ;; Note the version numbers. These are the versions that
+                 ;; are known to work with Combobulate *and* Emacs.
+                 '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+                   (go . ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
+                   (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
+                   (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
+                   (json ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+                   (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+                   (python ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+                   (rust "https://github.com/tree-sitter/tree-sitter-rust")
+                   (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
+                   (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
+                   (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
+                   (yaml ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
           (add-to-list 'treesit-language-source-alist grammar)
           ;; Only install `grammar' if we don't already have it
           ;; installed. However, if you want to *update* a grammar then
@@ -185,22 +222,23 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
           (unless (treesit-language-available-p (car grammar))
             (treesit-install-language-grammar (car grammar)))))
 
-      ;; Optional, but recommended. Tree-sitter enabled major modes are
-      ;; distinct from their ordinary counterparts.
-      ;;
+      ;; Optional. Combobulate works in both xxxx-ts-modes and
+      ;; non-ts-modes.
+
       ;; You can remap major modes with `major-mode-remap-alist'. Note
       ;; that this does *not* extend to hooks! Make sure you migrate them
       ;; also
       (dolist (mapping
-             '((python-mode . python-ts-mode)
-               (css-mode . css-ts-mode)
-               (typescript-mode . typescript-ts-mode)
-               (js2-mode . js-ts-mode)
-               (bash-mode . bash-ts-mode)
-               (conf-toml-mode . toml-ts-mode)
-               (css-mode . css-ts-mode)
-               (json-mode . json-ts-mode)
-               (js-json-mode . json-ts-mode)))
+               '((python-mode . python-ts-mode)
+                 (css-mode . css-ts-mode)
+                 (typescript-mode . typescript-ts-mode)
+                 (js2-mode . js-ts-mode)
+                 (bash-mode . bash-ts-mode)
+                 (conf-toml-mode . toml-ts-mode)
+                 (go-mode . go-ts-mode)
+                 (css-mode . css-ts-mode)
+                 (json-mode . json-ts-mode)
+                 (js-json-mode . json-ts-mode)))
         (add-to-list 'major-mode-remap-alist mapping))
       :config
       (mp-setup-install-grammars)
@@ -209,57 +247,28 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
       ;;  M-x customize-group RET combobulate RET
       ;;
       (use-package combobulate
-        :preface
+        :custom
         ;; You can customize Combobulate's key prefix here.
         ;; Note that you may have to restart Emacs for this to take effect!
-        (setq combobulate-key-prefix "C-c o")
-
-        ;; Optional, but recommended.
-        ;;
-        ;; You can manually enable Combobulate with `M-x
-        ;; combobulate-mode'.
-        :hook
-          ((python-ts-mode . combobulate-mode)
-           (js-ts-mode . combobulate-mode)
-           (html-ts-mode . combobulate-mode)
-           (css-ts-mode . combobulate-mode)
-           (yaml-ts-mode . combobulate-mode)
-           (toml-ts-mode . combobulate-mode)
-           (typescript-ts-mode . combobulate-mode)
-           (json-ts-mode . combobulate-mode)
-           (tsx-ts-mode . combobulate-mode))
+        (combobulate-key-prefix "C-c o")
+        :hook ((prog-mode . combobulate-mode))
         ;; Amend this to the directory where you keep Combobulate's source
         ;; code.
         :load-path ("path-to-git-checkout-of-combobulate")))
-
 
 Simple Combobulate Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+This is the basic setup for Combobulate. It assumes you have installed/can install tree-sitter grammars and set it up on your own.
+
 .. code-block:: elisp
 
-    (use-package treesit
-      :mode (("\\.tsx\\'" . tsx-ts-mode))
-      :config
-      ;; Do not forget to customize Combobulate to your liking:
-      ;;
-      ;;  M-x customize-group RET combobulate RET
-      ;;
-      (use-package combobulate
-        :preface
-        ;; You can customize Combobulate's key prefix here.
-        ;; Note that you may have to restart Emacs for this to take effect!
-        (setq combobulate-key-prefix "C-c o")
-        :hook
-          ((python-ts-mode . combobulate-mode)
-           (js-ts-mode . combobulate-mode)
-           (html-ts-mode . combobulate-mode)
-           (css-ts-mode . combobulate-mode)
-           (yaml-ts-mode . combobulate-mode)
-           (toml-ts-mode . combobulate-mode)
-           (typescript-ts-mode . combobulate-mode)
-           (json-ts-mode . combobulate-mode)
-           (tsx-ts-mode . combobulate-mode))
-        ;; Amend this to the directory where you keep Combobulate's source
-        ;; code.
-        :load-path ("path-to-git-checkout-of-combobulate")))
+    (use-package combobulate
+       :custom
+       ;; You can customize Combobulate's key prefix here.
+       ;; Note that you may have to restart Emacs for this to take effect!
+       (combobulate-key-prefix "C-c o")
+       :hook ((prog-mode . combobulate-mode))
+       ;; Amend this to the directory where you keep Combobulate's source
+       ;; code.
+       :load-path ("path-to-git-checkout-of-combobulate"))
