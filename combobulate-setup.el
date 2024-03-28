@@ -117,7 +117,7 @@
 (declare-function combobulate-drag-up "combobulate-manipulation")
 (declare-function combobulate-mark-node-dwim "combobulate-manipulation")
 (declare-function combobulate-kill-node-dwim "combobulate-manipulation")
-
+(declare-function combobulate-message "combobulate-misc")
 (declare-function combobulate-define-envelope "combobulate-envelope")
 
 (defvar combobulate-key-map
@@ -563,8 +563,7 @@ support where you still want to use Combobulate's features."
                    :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
                    :full nil)
                 decls)
-          ;; (push `(keymap-set ,language-keymap (format "%s e" combobulate-key-prefix) ,envelope-keymap)
-          ;;       decls)
+          ;; This maps the `e' key to the envelope keymap.
           (push `(define-key ,language-keymap (kbd ,(format "%s e" combobulate-key-prefix))
                              ,envelope-keymap)
                 decls)
@@ -573,7 +572,7 @@ support where you still want to use Combobulate's features."
                    ,(format "Combobulate minor mode for the `%s' tree-sitter language." language))
                 decls)
           (push `(define-minor-mode ,minor-mode-fn
-                   ,(format "Combobulate minor mode the `%s' tree-sitter language." language)
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language)
                    :init-value nil
                    :lighter "©"
                    :keymap ,language-keymap
