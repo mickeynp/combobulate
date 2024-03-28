@@ -231,6 +231,7 @@ objects."
                       (seq-find (pcase-lambda (`(,mark . ,_))
                                   (or (eq mark '@match) (eq mark 'match)))
                                 selected-nodes)))
+         (when combobulate-debug (combobulate-procedure-debug-print-result procedure-result))
          procedure-result))
       (_ (error "Unknown procedure result `%s'" procedure-result)))))
 
