@@ -1065,13 +1065,16 @@ bound to the language-specific map directly and so any key is
 valid."
   (map-let (:description :key :extra-key :name) args
     (let ((fn-name (combobulate--envelope-get-function-name args)))
-      ;; Store the function symbol for later recall in things like
-      ;; transient.
-      (defalias fn-name
-        `(lambda () ,(format "%s\n%s" description
-                        "This command triggers Combobulate's envelope system.")
-           (interactive)
-           (combobulate-execute-envelope ,name)))
+      ;; Do not redefine the function if it already exists. This can
+      ;; actually cause a serious performance cascade as each invocation.
+      (unless (fboundp fn-name)
+        ;; Store the function symbol for later recall in things like
+        ;; transient.
+        (defalias fn-name
+          `(lambda () ,(format "%s\n%s" description
+                          "This command triggers Combobulate's envelope system.")
+             (interactive)
+             (combobulate-execute-envelope ,name))))
       (define-key (combobulate-read envelope-map) (kbd key) fn-name)
       (when extra-key
         (define-key (combobulate-read map) (kbd extra-key) fn-name)))))
