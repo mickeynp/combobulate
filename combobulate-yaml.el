@@ -30,16 +30,7 @@
 (require 'combobulate-rules)
 
 (defvar combobulate-yaml-definitions
-  '((envelope-list
-     '((:description
-        "...:"
-        :key "m"
-        :mark-node t
-        :nodes ("block_node")
-        :name "block"
-        :template
-        (@ ":" n
-           >))))
+  '((envelope-list)
     (context-nodes
      '("alias_name" "anchor_name" "block_sequence_item" "plain_scalar"
        "double_quote_scalar" "string_scalar" "single_quote_scalar"))
@@ -88,7 +79,7 @@
 (define-combobulate-language
  :name yaml
  :language yaml
- :major-modes (yaml-ts-mode)
+ :major-modes (yaml-ts-mode yaml-mode)
  :custom combobulate-yaml-definitions
  :setup-fn combobulate-yaml-setup)
 
