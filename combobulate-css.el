@@ -50,17 +50,9 @@
 
 (defvar combobulate-css-definitions
   '((envelope-procedure-shorthand-alist
-     '((rhs . ((:activation-nodes ((:nodes ((rule "arguments")))))))))
+     '((wrap-expressions . ((:activation-nodes ((:nodes ((rule "arguments")))))))))
     (envelope-list
      '((:description
-        "( ... )"
-        :key "("
-        :extra-key "M-("
-        :mark-node t
-        :shorthand rhs
-        :name "wrap-parentheses"
-        :template (> @ "(" r ")"))
-       (:description
         "Envelop in a media query"
         :key "@m"
         :mark-node t

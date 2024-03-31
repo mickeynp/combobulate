@@ -86,6 +86,15 @@
                         "jsx_fragment" "jsx_attribute" (rule "jsx_attribute"))
                        "jsx_expression")
               :has-parent (irule "jsx_expression"))))))
+       (expressions
+        . ((:activation-nodes
+            ((:nodes ((rule "primary_expression") (rule "expression")))))))
+       (wrap-expressions
+        . ((:activation-nodes
+            ((:nodes ((rule "primary_expression") (rule "expression")))))))
+       (inside-arrow
+        . ((:activation-nodes
+            ((:nodes (rule "arrow_function" :body) :has-parent "arrow_function")))))
        (general-statement
         . ((:activation-nodes ((:nodes (rule "statement") :has-parent (irule "statement"))))))))
     (envelope-list
@@ -133,16 +142,6 @@
                    > "const " (p cachedFn "Cached Name") " = useCallback(() => {" n>
                    > r> n
                    > "}, [" @ "])"))
-       (:description
-        "( ... )"
-        :key "("
-        :extra-key "M-("
-        :mark-node t
-        :nodes ,(append
-                 (combobulate-production-rules-get "primary_expression")
-                 (combobulate-production-rules-get "expression"))
-        :name "wrap-parentheses"
-        :template (@ "(" r ")"))
        (:description
         "<...> ... </...>"
         :name "tag"

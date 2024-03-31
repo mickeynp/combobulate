@@ -266,6 +266,12 @@ Shorthands are used in lieu of inlining the procedure in the
 a procedure by a `:shorthand' property matching the key in this
 alist."
      nil)
+    (envelope-procedure-shorthand-default-alist
+     "Alist of default shorthand symbols for envelope procedures."
+     '((wrap-expressions
+        . ((:activation-nodes
+            ;; hope-and-a-prayer guess at what an expression is in a language
+            ((:nodes (rule-rx "expression"))))))))
     (envelope-list
      "List of envelope definitions for this language.
 
@@ -311,6 +317,17 @@ description of the template format.
 placed after the envelope is inserted. It can be `stay',
 `after', or `before'."
      nil)
+    (envelope-default-list
+     "Default envelopes to also include in the `envelope-list'."
+     '((:description
+        "( ... )"
+        :key "("
+        :extra-key "M-("
+        :mark-node t
+        :split-node t
+        :shorthand wrap-expressions
+        :name "wrap-parentheses"
+        :template (@ "(" r ")"))))
     (highlight-queries-default
      "List of Combobulate-provided node queries to highlight.
 
@@ -369,6 +386,9 @@ SHORTHAND for that LANGUAGE is unbound."
                  var language shorthand))
     var))
 
+;; Allow for `setf' to be used with `combobulate-get'.
+(gv-define-setter combobulate-get (value var) `(set (combobulate-get ,var) ,value))
+
 (defmacro combobulate-read (shorthand &optional language)
   "Read a variable belonging to LANGUAGE with SHORTHAND.
 
@@ -403,11 +423,18 @@ A complete list of known shorthands are found in
   (combobulate-highlight-install (combobulate-primary-language))
   ;;         ;; `combobulate-navigable-nodes' draws its nodes from
   ;;         ;; `combobulate-procedures-default'.
-  (set (combobulate-get 'default-nodes)
-       (combobulate-procedure-collect-activation-nodes
-        (combobulate-read procedures-default)))
+  (setf (combobulate-get 'envelope-list)
+        (append (combobulate-read envelope-default-list)
+                (combobulate-read envelope-list)))
+  (setf (combobulate-get 'envelope-procedure-shorthand-alist)
+        (append (combobulate-read envelope-procedure-shorthand-default-alist)
+                (combobulate-read envelope-procedure-shorthand-alist)))
+  (setf (combobulate-get 'default-nodes)
+        (combobulate-procedure-collect-activation-nodes
+         (combobulate-read procedures-default)))
   (dolist (envelope (combobulate-read envelope-list))
     (apply #'combobulate-define-envelope envelope)))
+
 
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.

@@ -195,17 +195,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                        (goto-char prompt-point)
-                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                        (unless combobulate-envelope-static
-                                          (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                              (combobulate-envelope-prompt
-                                                               prompt tag nil
-                                                               (lambda ()
-                                                                 (combobulate-envelope--update-prompts
-                                                                  buf tag (minibuffer-contents)))))))
-                                            (push (cons tag new-text) combobulate-envelope--registers)
-                                            (combobulate-envelope--update-prompts buf tag new-text))))))
+                                   (goto-char prompt-point)
+                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (unless combobulate-envelope-static
+                                     (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                         (combobulate-envelope-prompt
+                                                          prompt tag nil
+                                                          (lambda ()
+                                                            (combobulate-envelope--update-prompts
+                                                             buf tag (minibuffer-contents)))))))
+                                       (push (cons tag new-text) combobulate-envelope--registers)
+                                       (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -944,11 +944,24 @@ Only one can be used." envelope))
            (procedure-elements
             (append (seq-filter #'listp nodes)
                     (and shorthand (combobulate-envelope-get-shorthand-procedure shorthand)))))
-      (mapcar #'combobulate-procedure-result-action-node
-              (append
-               (and procedure-elements (combobulate-procedure-start (point) procedure-elements t))
-               ;; As we have no selectors nor a parent discriminator, we just use the action node.
-               (combobulate-procedure-start (point) `((:activation-nodes ((:nodes ,string-elements)))) t))))))
+      (seq-sort #'combobulate-node-after-node-p
+                (mapcar #'combobulate-procedure-result-action-node
+                        (append
+                         (and procedure-elements (combobulate-procedure-start (point) procedure-elements t))
+                         ;; As we have no selectors nor a parent discriminator, we just use the action node.
+                         (combobulate-procedure-start (point) `((:activation-nodes ((:nodes ,string-elements)))) t)))))))
+
+(defun combobulate-envelope-smart-sort (a b)
+  "Sort A and B based on their distance from point."
+  ;; "Smart" sorting that orders by largest node first but
+  ;; *only* when the distance from `point' to the start of `a'
+  ;; is 0 (i.e., the node starts at point.)
+  ;;
+  ;; For all other instances, we measure distance from point.
+  (if (= (- (combobulate-node-start a) (point)) 0)
+      (combobulate-node-larger-than-node-p a b)
+    (> (- (combobulate-node-start a) (point))
+       (- (combobulate-node-start b) (point)))))
 
 (defun combobulate-execute-envelope (envelope-name &optional node force)
   "Executes any envelope with a `:name' equal to ENVELOPE-NAME.
@@ -967,30 +980,33 @@ See `combobulate-apply-envelope' for more information."
       (if node
           (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
             (goto-char target-pt))
-        (let ((combobulate-envelope-static t)
-              (envelope-nodes
-               (if (or (plist-member envelope :nodes) (plist-member envelope :shorthand))
-                   (combobulate-envelope-get-applicable-nodes envelope force)
-                 ;; if we don't have any assigned envelope nodes,
-                 ;; create a proxy node at point; that node (and
-                 ;; thus `point') will instead be where the
-                 ;; envelope is inserted.
-                 (list (combobulate-proxy-node-make-point-node)))))
-          (progn
+        (map-let (:nodes :shorthand :split-node) envelope
+          (let* ((combobulate-envelope-static t)
+                 (envelope-nodes (seq-sort #'combobulate-envelope-smart-sort
+                                           (if (or nodes shorthand)
+                                               (combobulate-envelope-get-applicable-nodes envelope force)
+                                             ;; if we don't have any assigned envelope nodes,
+                                             ;; create a proxy node at point; that node (and
+                                             ;; thus `point') will instead be where the
+                                             ;; envelope is inserted.
+                                             (list (combobulate-proxy-node-make-point-node))))))
+            ;; Walk through the collected envelope nodes and
+            ;; determine if point is at the beginning of any of
+            ;; them. If that is not the case, we'll create a
+            ;; pseudo-node at point that extends to the farthest of
+            ;; the envelope nodes.
+            (when (and envelope-nodes
+                       split-node
+                       (not (seq-find #'combobulate-point-at-node-p envelope-nodes)))
+              (let* ((source-node (car envelope-nodes))
+                     (split-node (combobulate-proxy-node-make-from-range
+                                  (point)
+                                  (combobulate-node-end source-node)
+                                  "split-node" (format "Split %s" (combobulate-pretty-print-node-type source-node)))))
+                (setq envelope-nodes (append (list split-node) envelope-nodes))))
             (setq chosen-node
                   (combobulate-proffer-choices
-                   (seq-sort
-                    (lambda (a b)
-                      ;; "Smart" sorting that orders by largest node first but
-                      ;; *only* when the distance from `point' to the start of `a'
-                      ;; is 0 (i.e., the node starts at point.)
-                      ;;
-                      ;; For all other instances, we measure distance from point.
-                      (if (= (- (combobulate-node-start a) (point)) 0)
-                          (combobulate-node-larger-than-node-p a b)
-                        (> (- (combobulate-node-start a) (point))
-                           (- (combobulate-node-start b) (point)))))
-                    (reverse envelope-nodes))
+                   envelope-nodes
                    (lambda-slots (current-node refactor-id)
                      (combobulate-refactor (:id refactor-id)
                        (let ((ov (mark-node-highlighted current-node))

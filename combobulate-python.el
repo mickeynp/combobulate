@@ -253,14 +253,6 @@ line when you press
                           (rule "expression_statement") (rule "block")))))))))
     (envelope-list
      `((:description
-        "( ... )"
-        :key "("
-        :extra-key "M-("
-        :mark-node t
-        :shorthand expressions
-        :name "wrap-parentheses"
-        :template (@ "(" r ")"))
-       (:description
         "Decorate class or function"
         :key "@"
         :mark-node nil

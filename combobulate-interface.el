@@ -188,17 +188,17 @@ kept."
         proxies
       (car-safe proxies))))
 
-(defun combobulate-proxy-node-make-from-range (beg end)
+(defun combobulate-proxy-node-make-from-range (beg end &optional type pp)
   "Factory that creates a facsimile proxy node of the region BEG END."
   (combobulate-proxy-node-create
    :start (set-marker (make-marker) beg)
    :end (set-marker (make-marker) end)
    :text (buffer-substring-no-properties beg end)
-   :type "region"
+   :type (or type "region")
    :named t
    :field nil
    :node nil
-   :pp "Region"
+   :pp (or pp "Region")
    :extra nil))
 
 (defun combobulate-proxy-node-make-point-node (&optional pt)
