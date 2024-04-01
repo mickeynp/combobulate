@@ -414,7 +414,7 @@ Returns nil if no match is found."
   "Compare the output from the current buffer to a fixture-delta file."
   (combobulate-test-compare-string-with-file (current-buffer) fixture-delta-fn))
 
-(defmacro combobulate-for-each-marker (action-fn &key (reverse nil))
+(cl-defmacro combobulate-for-each-marker (action-fn &key (reverse nil))
   "Execute ACTION-FN for each marker in the current buffer.
 
 The point is first moved to the start of the first marker. After
