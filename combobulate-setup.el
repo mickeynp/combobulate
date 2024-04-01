@@ -551,10 +551,6 @@ support where you still want to use Combobulate's features."
         (push '(declare-function combobulate-baseline-indentation-default "combobulate-manipulation") decls)
         (push '(defvar combobulate-key-map) decls)
         (push '(defvar combobulate-options-key-map) decls)
-        ;; Create the `defvar' forms.
-        (pcase-dolist (`(,shorthand-var ,docstring ,default) defvars)
-          ;; (push shorthand-var known-variable-shorthands)
-          (push `(defvar ,(intern-lang-var shorthand-var) ,default ,docstring) decls))
         ;; Create the `defcustom' forms.
         (pcase-dolist (`(,shorthand-var ,docstring ,default . ,rest) defcustoms)
           ;; (push shorthand-var known-variable-shorthands)
@@ -562,17 +558,19 @@ support where you still want to use Combobulate's features."
                    ,@rest
                    :group ',group-name)
                 decls))
-        ;; Walk through the `:custom' property and assign the values.
-        (pcase-dolist (`(,shorthand-var . ,value) (and (boundp custom) (symbol-value custom)))
-          (cl-assert (member shorthand-var known-variable-shorthands) t
-                     "Key `%s' is not a known variable shorthand in definition `%s'. Known shorthands: %s."
-                     shorthand-var name known-variable-shorthands)
-          ;; use the new `setopt' helper macro here. If we ever add
-          ;; edge-triggers to `defcustom's they'll be properly executed.
-          (push `(setopt ,(intern-lang-var shorthand-var) ,(car-safe (ensure-list value)))
+        ;; Create the `defvar' forms.
+        (pcase-dolist (`(,shorthand-var ,docstring ,default) defvars)
+          ;; (push shorthand-var known-variable-shorthands)
+          (push `(defvar ,(intern-lang-var shorthand-var)
+                   ;; We must check that we have an association record
+                   ;; explicitly (and not just the value) as it could
+                   ;; be nil, which would then roll over to default,
+                   ;; which is not what we want.
+                   ,(if-let ((v (assoc shorthand-var (symbol-value custom))))
+                        (cadr v)
+                      default)
+                   ,docstring)
                 decls))
-        ;; Store a representation of all variable shorthand names used.
-
         ;; Create (or reuse) a key map and create a minor mode for
         ;; LANGUAGE.
         (let ((language-keymap (or keymap-var (intern-lang-var "map")))

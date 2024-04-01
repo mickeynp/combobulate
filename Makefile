@@ -9,11 +9,14 @@ clean-elc:
 	find . -name "*.elc" -delete
 
 .PHONY:	byte-compile
-byte-compile:
-	@for file in *.el; do \
-		rm -f $$filec; \
-		emacs --no-init-file --eval '(setq load-prefer-newer t)' --directory $(PWD) --batch --funcall batch-byte-compile $$file; \
-	done
+byte-compile: clean-elc
+	$(EMACS_BIN) \
+	--no-init-file \
+	--batch \
+	--directory $(PWD) \
+	--funcall batch-byte-compile \
+	$(PWD) \
+	*.el
 
 .PHONY:	rebuild-relationships
 rebuild-relationships:
@@ -39,7 +42,7 @@ build-tests: clean-tests
 ELFILES := $(sort $(shell find ${srcdir} -name "test-*.el" ! -name ".*" -print))
 
 .PHONY:	run-tests
-run-tests: clean-elc
+run-tests: byte-compile
 	$(EMACS_CMD) -l ert \
 	$(patsubst %,-l %,$(ELFILES:.el=)) \
 	--eval "(setq ert-summarize-tests-batch-and-exit nil)" \

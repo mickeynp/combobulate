@@ -370,9 +370,9 @@ Returns nil if no match is found."
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
     (apply #'ediff-files
-           (plist-get (cdadr (cl-etypecase result
-                               (ert-test-failed-condition
-                                (ert-test-result-with-condition-condition result))))
+           (plist-get (cdadr (with-no-warnings (cl-etypecase result
+                                                 (ert-test-failed-condition
+                                                  (ert-test-result-with-condition-condition result)))))
                       :files))))
 
 (defun combobulate-test-compare-string-with-file (buf fn)

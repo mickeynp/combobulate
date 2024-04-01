@@ -141,100 +141,101 @@
     (combobulate-node-text node))
    (t default-name)))
 
-(defvar combobulate-html-definitions
-  '((procedures-sexp '((:activation-nodes ((:nodes ("element" "attribute" "text" "script_element" "style_element"))))))
-    (context-nodes '("attribute_name" "attribute_value" "tag_name" "text"))
-    (envelope-list
-     '((:description
-        "<...> ... </...>"
-        :name "tag"
-        :mark-node t
-        :nodes ("element" "self_closing_tag" "jsx_fragment" "script_element" "style_element" "text")
-        :key "t"
-        :template ("<" (p tag "Tag Name: ") ">" n>
-                   r>
-                   n> "</" (field tag) ">"))
-       (:description
-        "...={ ... }"
-        :key "=e"
-        :mark-node nil
-        :point-placement 'stay
-        :nodes ("start_tag" "self_closing_tag" "script_element" "style_element")
-        :name "attr-expression"
-        :template ("=" "{" @ "}"))
-       (:description
-        "...={{ ... }}"
-        :key "=E"
-        :mark-node nil
-        :point-placement 'stay
-        :nodes ("start_tag" "self_closing_tag")
-        :name "attr-expression-object"
-        :template ("=" "{{" @ "}}"))
-       (:description
-        "...=\" ... \""
-        :key "=s"
-        :mark-node nil
-        :point-placement 'stay
-        :nodes ("start_tag" "self_closing_tag")
-        :name "attr-string"
-        :template ("=" "\"" @ "\""))))
-    (procedures-edit
-     '((:activation-nodes
-        ((:nodes
-          ("attribute")
-          :has-parent ("start_tag" "self_closing_tag" "script_element" "style_element")))
-        :selector (:match-query (:query ((_) (attribute)+ @match)
-                                        :engine combobulate)))
-       ;; sibling-level editing
-       (:activation-nodes
-        ((:nodes
-          ("self_closing_tag" "expression" "element" "document" "script_element" "style_element")
-          :position at))
-        :selector (:match-siblings (:discard-rules ("comment" "text"))))
-       ;; editing an element's opening/closing tag
-       (:activation-nodes
-        ((:node
-          ("element" "script_element" "style_element")
-          :position in))
-        :selector (:match-query
-                   (:query
-                    (_ (start_tag (tag_name) @match)
-                       (end_tag (tag_name) @match))
-                    :engine combobulate
-                    :discard-rules ("comment"))))))
-    (procedures-hierarchy
-     '(;; seamless navigation between elements and their children.
-       (:activation-nodes
-        ((:nodes ("element" "script_element" "style_element") :position at))
-        ;; do not discard "end_tag" as it lets us navigate into a
-        ;; tag without any children. Bit of a hack...
-        :selector (:choose node :match-children (:discard-rules ("start_tag" "tag_name"))))
-       ;; go into attribute if point is inside the start tag
-       (:activation-nodes
-        ((:nodes ("start_tag" "self_closing_tag") :position in))
-        :selector (:choose node
-                           :match-children
-                           (:match-rules ("attribute"))))
-       ;; if we're inside an attribute, go to its value
-       (:activation-nodes
-        ((:nodes ("attribute") :position in))
-        :selector (:choose node :match-children t))))
-    ;; Ordinarily, we discard comments as they tend to be line
-    ;; comments. This is not a problem in HTML where they have
-    ;; beginnings and ends.
-    (procedure-discard-rules nil)
-    (display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag" "tag_name"))
-    (procedures-sibling
-     '((:activation-nodes
-        ((:nodes
-          ("attribute")))
-        :selector (:choose node :match-siblings (:match-rules ("attribute"))))
-       (:activation-nodes
-        ((:nodes
-          ((rule "document") "comment")
-          :has-parent ((rule "document") "document" "start_tag" "self_closing_tag")))
-        :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))))
-    (pretty-print-node-name-function #'combobulate-html-pretty-print)))
+(eval-and-compile
+  (defvar combobulate-html-definitions
+    '((procedures-sexp '((:activation-nodes ((:nodes ("element" "attribute" "text" "script_element" "style_element"))))))
+      (context-nodes '("attribute_name" "attribute_value" "tag_name" "text"))
+      (envelope-list
+       '((:description
+          "<...> ... </...>"
+          :name "tag"
+          :mark-node t
+          :nodes ("element" "self_closing_tag" "jsx_fragment" "script_element" "style_element" "text")
+          :key "t"
+          :template ("<" (p tag "Tag Name: ") ">" n>
+                     r>
+                     n> "</" (field tag) ">"))
+         (:description
+          "...={ ... }"
+          :key "=e"
+          :mark-node nil
+          :point-placement 'stay
+          :nodes ("start_tag" "self_closing_tag" "script_element" "style_element")
+          :name "attr-expression"
+          :template ("=" "{" @ "}"))
+         (:description
+          "...={{ ... }}"
+          :key "=E"
+          :mark-node nil
+          :point-placement 'stay
+          :nodes ("start_tag" "self_closing_tag")
+          :name "attr-expression-object"
+          :template ("=" "{{" @ "}}"))
+         (:description
+          "...=\" ... \""
+          :key "=s"
+          :mark-node nil
+          :point-placement 'stay
+          :nodes ("start_tag" "self_closing_tag")
+          :name "attr-string"
+          :template ("=" "\"" @ "\""))))
+      (procedures-edit
+       '((:activation-nodes
+          ((:nodes
+            ("attribute")
+            :has-parent ("start_tag" "self_closing_tag" "script_element" "style_element")))
+          :selector (:match-query (:query ((_) (attribute)+ @match)
+                                          :engine combobulate)))
+         ;; sibling-level editing
+         (:activation-nodes
+          ((:nodes
+            ("self_closing_tag" "expression" "element" "document" "script_element" "style_element")
+            :position at))
+          :selector (:match-siblings (:discard-rules ("comment" "text"))))
+         ;; editing an element's opening/closing tag
+         (:activation-nodes
+          ((:node
+            ("element" "script_element" "style_element")
+            :position in))
+          :selector (:match-query
+                     (:query
+                      (_ (start_tag (tag_name) @match)
+                         (end_tag (tag_name) @match))
+                      :engine combobulate
+                      :discard-rules ("comment"))))))
+      (procedures-hierarchy
+       '(;; seamless navigation between elements and their children.
+         (:activation-nodes
+          ((:nodes ("element" "script_element" "style_element") :position at))
+          ;; do not discard "end_tag" as it lets us navigate into a
+          ;; tag without any children. Bit of a hack...
+          :selector (:choose node :match-children (:discard-rules ("start_tag" "tag_name"))))
+         ;; go into attribute if point is inside the start tag
+         (:activation-nodes
+          ((:nodes ("start_tag" "self_closing_tag") :position in))
+          :selector (:choose node
+                             :match-children
+                             (:match-rules ("attribute"))))
+         ;; if we're inside an attribute, go to its value
+         (:activation-nodes
+          ((:nodes ("attribute") :position in))
+          :selector (:choose node :match-children t))))
+      ;; Ordinarily, we discard comments as they tend to be line
+      ;; comments. This is not a problem in HTML where they have
+      ;; beginnings and ends.
+      (procedure-discard-rules nil)
+      (display-ignored-node-types '("start_tag" "self_closing_tag" "end_tag" "tag_name"))
+      (procedures-sibling
+       '((:activation-nodes
+          ((:nodes
+            ("attribute")))
+          :selector (:choose node :match-siblings (:match-rules ("attribute"))))
+         (:activation-nodes
+          ((:nodes
+            ((rule "document") "comment")
+            :has-parent ((rule "document") "document" "start_tag" "self_closing_tag")))
+          :selector (:match-children (:match-rules (exclude (all) "start_tag" "end_tag" "self_closing_tag"))))))
+      (pretty-print-node-name-function #'combobulate-html-pretty-print))))
 
 (define-combobulate-language
  :name html
