@@ -240,8 +240,8 @@ objects."
   ;; assert that there are no keys beyond these three
   (when-let (unknown-keys (seq-difference (map-keys procedure)
                                           '(:activation-nodes :selector)))
-    (error "Unknown key in procedure `%s'. Only `:activation-nodes',
-`:selector' or `:filter' are valid" unknown-keys))
+    (error "Unknown key in procedure `%s'. Only `:activation-nodes' or
+ `:selector' are valid" unknown-keys))
   (map-let (:activation-nodes :selector)
       procedure
     (unless (listp activation-nodes)
