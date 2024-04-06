@@ -113,7 +113,7 @@
       ;;             :mock-prompt-actions ("blah")
       ;;             :mock-expansion-actions (yes yes no))
       ;; choice and choice*
-      (:test-name "choice*-with-complex-missing-field"
+      (:test-name "choicestar-with-complex-missing-field"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
@@ -138,7 +138,7 @@
     :reverse nil
     :harness-factory-matrix
     '(;; choice and choice*
-      (:test-name "choice*-with-complex-missing-field-consequence"
+      (:test-name "choicestar-with-complex-missing-field-consequence"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
@@ -147,7 +147,7 @@
                   :mock-proffer-choices (1 0)
                   :mock-registers ((region . "<div>Some jsx element</div>"))
                   :mock-prompt-actions nil)
-      (:test-name "choice*-with-complex-missing-field-alt"
+      (:test-name "choicestar-with-complex-missing-field-alt"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))

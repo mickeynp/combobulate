@@ -448,7 +448,7 @@
 			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[field-before-prompt@1~after].py")))))))
 
 
-(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-choice*-with-complex-missing-field-blank-1 ()
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-choicestar-with-complex-missing-field-blank-1 ()
  "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
 	     (combobulate-test
 		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
@@ -483,7 +483,7 @@
 			     (:choices combobulate-envelope-proffer-choices)
 			   (combobulate-test-go-to-marker 1)
 			   (combobulate-envelope-expand-instructions instructions)
-			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[choice*-with-complex-missing-field@1~after].py")))))))
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[choicestar-with-complex-missing-field@1~after].py")))))))
 
 
 (ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-choice-simple-0-blank-1 ()
