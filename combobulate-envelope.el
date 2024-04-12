@@ -998,7 +998,7 @@ See `combobulate-apply-envelope' for more information."
             (when (and envelope-nodes
                        split-node
                        (not (seq-find #'combobulate-point-at-node-p envelope-nodes)))
-              (let* ((source-node (car envelope-nodes))
+              (let* ((source-node (car (seq-sort #'combobulate-node-larger-than-node-p envelope-nodes)))
                      (split-node (combobulate-proxy-node-make-from-range
                                   (point)
                                   (combobulate-node-end source-node)
