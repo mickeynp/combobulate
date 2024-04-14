@@ -577,6 +577,7 @@ support where you still want to use Combobulate's features."
               (envelope-keymap (or keymap-var (intern-lang-var "envelope-map")))
               (minor-mode-fn (intern-lang-var "minor-mode")))
           ;; General key map for this language
+          (push `(makunbound ',language-keymap) decls)
           (push `(defvar-keymap ,language-keymap
                    :doc ,(format "Keymap for Combobulate language for `%s'." language)
                    :full nil
