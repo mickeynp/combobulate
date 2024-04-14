@@ -302,7 +302,22 @@ If the register does not exist, return DEFAULT or nil."
               ;; region-based indentation will never work.
               ((and (not (combobulate-read envelope-indent-region-function)) indent)
                (let ((offset (current-indentation)))
-                 (delete-horizontal-space)
+                 ;; Check if point has nothing but whitespace before
+                 ;; it. Only if it does do we delete it. This is
+                 ;; perhaps the only reasonable way of checking if
+                 ;; we're dealing with something that a
+                 ;; whitespace-based language's indentation function
+                 ;; can reasonably indent again after the whitespace
+                 ;; has been deleted.
+                 ;;
+                 ;; Whitespace in any other place may in fact be
+                 ;; either syntactically mandatory or used for
+                 ;; formatting. We should avoid touching that.
+                 (when (save-excursion
+                         (skip-chars-backward combobulate-skip-prefix-regexp
+                                              (line-beginning-position))
+                         (bolp))
+                   (delete-horizontal-space))
                  (setf start (point))
                  ;; clear whitespace from the start of the line
                  (let ((before-pt (point)))
@@ -313,7 +328,7 @@ If the register does not exist, return DEFAULT or nil."
                             :rest-lines-operation 'relative))
                    (save-excursion
                      (goto-char before-pt)
-                     (back-to-indentation)
+                     (combobulate-skip-whitespace-forward)
                      (push `(point ,(point-marker)) user-actions)))))
               (t (insert default))))
             ;; "string"
