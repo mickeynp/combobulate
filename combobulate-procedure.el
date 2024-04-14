@@ -358,7 +358,7 @@ If keep-mark is non-nil, keep the mark in the result."
        :overwrite t
        :keep-anonymous t))))
 
-(defvar combobulate-procedure-apply-shared-discard-rules nil
+(defvar combobulate-procedure-apply-shared-discard-rules t
   "Whether to apply the shared discard rules to the result of a procedure.
 
 This shared rules are set with the variable `procedure-discard-rules'")
@@ -525,7 +525,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
                         #'combobulate-linear-siblings
                       #'combobulate-node-children)))
                   (t (error "Invalid selector: %s" selector))))
-                :discard-types (unless combobulate-procedure-apply-shared-discard-rules
+                :discard-types (when combobulate-procedure-apply-shared-discard-rules
                                  (combobulate-procedure-expand-rules (combobulate-read procedure-discard-rules)))
                 :overwrite t
                 :keep-anonymous t)
