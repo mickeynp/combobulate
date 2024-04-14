@@ -250,8 +250,7 @@ line when you press
                             ((rule "expression") (rule "primary_expression")))))))
          (statements . ((:activation-nodes
                          ((:nodes
-                           ((rule "_compound_statement") (rule "_simple_statement")
-                            (rule "expression_statement") (rule "block")))))))))
+                           ((rule "_compound_statement") (rule "_simple_statement") (rule "block")))))))))
       (envelope-list
        `((:description
           "Decorate class or function"
