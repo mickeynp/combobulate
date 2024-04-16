@@ -849,7 +849,8 @@ buffer."
     ("p" "Change parser" combobulate-query-builder-change-parser)
     ("M-w" "Copy query as form to kill ring" combobulate-query-builder-copy-query-as-form)
     ("w" "Copy query to kill ring" combobulate-query-builder-copy-query)
-    ("+" "Fit window to buffer" fit-window-to-buffer)]
+    ("+" "Fit window to buffer" fit-window-to-buffer)
+    ("q" "Quit" combobulate-query-builder-save-and-quit)]
    ["History"
     ("C-s" "Save query to ring" combobulate-query-ring-save-query)
     ("M-n" "Next query in ring" combobulate-query-ring-next-query :transient t)
@@ -880,6 +881,7 @@ buffer."
     (define-key map (kbd "C-c M-n") #'combobulate-query-ring-next-query)
     (define-key map (kbd "C-c C-s") #'combobulate-query-ring-save-query)
     (define-key map (kbd "M-<up>") #'raise-sexp)
+    (define-key map (kbd "q") #'combobulate-query-builder-save-and-quit)
     map)
   "Keymap for `combobulate-query-mode'.")
 
