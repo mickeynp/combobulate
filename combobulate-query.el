@@ -186,6 +186,16 @@ If this value is set, it will be used as the default query when
   "Face for highlighting query matches."
   :group 'combobulate-faces)
 
+(defface combobulate-query-highlight-underline-red-face
+  '((t (:underline (:color "LightCoral" :style line))))
+  "Face for highlighting query matches."
+  :group 'combobulate-faces)
+
+(defface combobulate-query-highlight-underline-blue-face
+  '((t (:underline (:color "DodgerBlue" :style line))))
+  "Face for highlighting query matches."
+  :group 'combobulate-faces)
+
 (defcustom combobulate-query-node-match-faces
   '(combobulate-query-highlight-regal-ripples-face
     combobulate-query-highlight-gleaming-gold-face
@@ -212,6 +222,9 @@ If this value is set, it will be used as the default query when
     ("hl.mercury" . 'combobulate-query-highlight-majestic-mercury-face)
     ("hl.rind" . 'combobulate-query-highlight-radiant-rind-face)
     ("hl.comment" . 'font-lock-comment-face)
+    ;; less bashful colours
+    ("hl.red.underline" . 'combobulate-query-highlight-underline-red-face)
+    ("hl.blue.underline" . 'combobulate-query-highlight-underline-blue-face)
     ;; for combobulate's edit nodes facility
     ("before" . 'combobulate-query-highlight-silver-shadows-face)
     ("after" . 'combobulate-query-highlight-regal-ripples-face)
