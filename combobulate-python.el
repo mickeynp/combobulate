@@ -241,7 +241,9 @@ line when you press
        '(;; highlight breakpoint function calls
          (((call (identifier) @hl.fiery (:match "^breakpoint$" @hl.fiery))))
          ;; catch trailing commas that inadvertently turn expressions into tuples
-         ((expression_list (_)+ "," @hl.gold :anchor))))
+         ((expression_list (_)+ "," @hl.gold :anchor))
+         ;; try to catch precedence errors when using `&' and `|' operators.
+         ((comparison_operator [(binary_operator "&") (binary_operator "|")] @hl.red.underline))))
       (indent-after-edit nil)
       (pretty-print-node-name-function #'combobulate-python-pretty-print-node-name)
       (envelope-procedure-shorthand-alist
