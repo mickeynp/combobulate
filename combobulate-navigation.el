@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -260,9 +260,6 @@ self-similar to NODE is skipped"
                                    t)))
                           parents)))
     (cons self-similar-node match)))
-
-
-
 
 (defun combobulate-find-similar-ancestors (node parents)
   "Find PARENTS of NODE that share common production rules."
@@ -421,7 +418,7 @@ Returns a list of parents ordered closest to farthest."
 (defun combobulate-node-at-point (&optional node-types named-only)
   "Return the smallest syntax node at point whose type is one of NODE-TYPES "
   (let* ((p (point))
-         (node (treesit-node-on p p nil named-only)))
+         (node (combobulate-node-on p p nil named-only)))
     (if node-types
         (let ((this node))
           (catch 'done

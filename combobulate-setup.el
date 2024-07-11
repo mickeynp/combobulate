@@ -436,6 +436,14 @@ A complete list of known shorthands are found in
     (apply #'combobulate-define-envelope envelope)))
 
 
+(defun combobulate-get-registered-language (mm)
+  "Get the registered language for a major mode MM.
+
+Returns a list of the form `(LANGUAGE MAJOR-MODES MINOR-MODE-FN)'."
+  (seq-find (pcase-lambda ((and v `(,language ,major-modes ,minor-mode-fn)))
+              (member mm major-modes))
+            combobulate-registered-languages-alist))
+
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.
 
@@ -446,8 +454,8 @@ enable Combobulate."
   ;; Combobulate can activate in any major mode provided it's listed
   ;; in `combobulate-registered-languages-alist'.
   ;;
-  (pcase-dolist (`(,language ,major-modes ,minor-mode-fn) combobulate-registered-languages-alist)
-    (when (member major-mode major-modes)
+  (when-let (match (combobulate-get-registered-language major-mode))
+    (pcase-let ((`(,language ,major-modes ,minor-mode-fn) match))
       ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
       ;; behaviour is that Combobulate may get activated in major
       ;; modes for which no grammar exists. Raising an error
@@ -473,7 +481,7 @@ modes with conflicting ideas of what type of language to use."
                    (current-buffer) (car-safe existing-parsers) language)))
         ;; Okay. All good, then... Create the language parser.
         (combobulate-create-language language (current-buffer) nil)
-        (let ((toggle (if (combobulate-read minor-mode) -1 1)))
+        (let ((toggle (if (combobulate-read minor-mode language) -1 1)))
           (prog1
               (funcall minor-mode-fn toggle)
             (when (and (> toggle 0) called-interactively)

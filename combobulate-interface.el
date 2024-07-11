@@ -31,7 +31,7 @@
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
 (declare-function combobulate-node-at-point "combobulate-navigation")
 (declare-function combobulate--goto-node "combobulate-navigation")
-
+(declare-function combobulate-get-registered-language "combobulate-setup")
 
 (defsubst combobulate-language-available-p (language)
   (treesit-language-available-p language))
@@ -43,13 +43,13 @@
   (treesit-node-p node))
 
 (defsubst combobulate-buffer-root-node (&optional language)
-  (treesit-buffer-root-node language))
+  (treesit-buffer-root-node (or language (combobulate-primary-language))))
 
 (defsubst combobulate-node-on (beg end &optional parser-or-lang named)
-  (treesit-node-on beg end parser-or-lang named))
+  (treesit-node-on beg end (or parser-or-lang (combobulate-primary-language)) named))
 
 (defsubst combobulate-node-at (pos &optional parser-or-lang named)
-  (treesit-node-at pos parser-or-lang named))
+  (treesit-node-at pos (or parser-or-lang (combobulate-primary-language)) named))
 
 (defsubst combobulate-induce-sparse-tree (root predicate &optional process-fn limit)
   (treesit-induce-sparse-tree root predicate process-fn limit))
@@ -70,9 +70,12 @@
   (treesit-node-parser node))
 
 (defun combobulate-primary-language (&optional quiet)
-  (combobulate-parser-language (or (car (combobulate-parser-list))
-                                   (unless quiet
-                                     (error "No parsers available")))))
+  (or
+   (treesit-language-at (point))
+   (car (combobulate-get-registered-language major-mode))
+   (combobulate-parser-language (car (combobulate-parser-list)))
+   (unless quiet
+     (error "No parsers available"))))
 
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
@@ -141,7 +144,8 @@
     (eq node1 node2)))
 
 (defsubst combobulate-root-node ()
-  (treesit-buffer-root-node))
+  (treesit-buffer-root-node
+   (combobulate-primary-language)))
 
 (defsubst combobulate-node-descendant-for-range (node beg end &optional all)
   (treesit-node-descendant-for-range node beg end (not all)))
