@@ -376,7 +376,7 @@ a match."
                                 ;; node to indicate where the
                                 ;; matching nodes are.
                                 (mapc #'mark-node-cursor
-                                      (cdr (assoc (combobulate-proxy-node-to-real-node node)
+                                      (cdr (assoc (combobulate-proxy-node-to-real-node current-node)
                                                   grouped-matches)))
                                 ;; indicate the locus of editing
                                 ;; by highlighting the entire node
