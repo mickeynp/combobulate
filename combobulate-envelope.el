@@ -195,17 +195,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                   (goto-char prompt-point)
-                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                   (unless combobulate-envelope-static
-                                     (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                         (combobulate-envelope-prompt
-                                                          prompt tag nil
-                                                          (lambda ()
-                                                            (combobulate-envelope--update-prompts
-                                                             buf tag (minibuffer-contents)))))))
-                                       (push (cons tag new-text) combobulate-envelope--registers)
-                                       (combobulate-envelope--update-prompts buf tag new-text))))))
+                                        (goto-char prompt-point)
+                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                        (unless combobulate-envelope-static
+                                          (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                              (combobulate-envelope-prompt
+                                                               prompt tag nil
+                                                               (lambda ()
+                                                                 (combobulate-envelope--update-prompts
+                                                                  buf tag (minibuffer-contents)))))))
+                                            (push (cons tag new-text) combobulate-envelope--registers)
+                                            (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -1013,7 +1013,14 @@ See `combobulate-apply-envelope' for more information."
             (when (and envelope-nodes
                        split-node
                        (not (seq-find #'combobulate-point-at-node-p envelope-nodes)))
-              (let* ((source-node (car (seq-sort #'combobulate-node-larger-than-node-p envelope-nodes)))
+              (let* ((source-node (or
+                                   (let ((point-node (combobulate-node-at-point)))
+                                     (seq-find (lambda (parent-node)
+                                                 (> (combobulate-node-end parent-node)
+                                                    (combobulate-node-end point-node)))
+                                               (combobulate-get-parents point-node)))
+                                   (car (seq-sort #'combobulate-node-larger-than-node-p
+                                                  envelope-nodes))))
                      (split-node (combobulate-proxy-node-make-from-range
                                   (point)
                                   (combobulate-node-end source-node)

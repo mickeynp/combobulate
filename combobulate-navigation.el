@@ -728,10 +728,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                       (funcall (if backward
-                                    #'combobulate-point-at-end-of-node-p
-                                  #'combobulate-point-at-beginning-of-node-p)
-                                node)))
+                            (funcall (if backward
+                                         #'combobulate-point-at-end-of-node-p
+                                       #'combobulate-point-at-beginning-of-node-p)
+                                     node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
