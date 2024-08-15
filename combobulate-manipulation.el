@@ -411,7 +411,7 @@ The action can be one of the following:
 
 
 (defun combobulate-edit-cluster (node action)
-  "Edit CLUSTER of nodes at, or around, NODE."
+  "Find the cluster(s) of nodes belonging to NODE and ACTION them."
   (pcase-let (((cl-struct combobulate-procedure-result
                           (selected-nodes selected-nodes)
                           (parent-node parent-node))
