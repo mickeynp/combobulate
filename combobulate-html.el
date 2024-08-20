@@ -194,15 +194,16 @@
           :selector (:match-siblings (:discard-rules ("comment" "text"))))
          ;; editing an element's opening/closing tag
          (:activation-nodes
-          ((:node
+          ((:nodes
             ("element" "script_element" "style_element")
             :position in))
-          :selector (:match-query
-                     (:query
-                      (_ (start_tag (tag_name) @match)
-                         (end_tag (tag_name) @match))
-                      :engine combobulate
-                      :discard-rules ("comment"))))))
+          :selector (:choose node
+                             :match-query
+                             (:query
+                              (_ (start_tag (tag_name) @match)
+                                 (end_tag (tag_name) @match))
+                              :engine combobulate
+                              :discard-rules ("comment"))))))
       (procedures-hierarchy
        '(;; seamless navigation between elements and their children.
          (:activation-nodes
