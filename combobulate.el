@@ -45,6 +45,7 @@
 (require 'combobulate-ui)
 (require 'combobulate-misc)
 (require 'combobulate-query)
+(require 'combobulate-cursor)
 ;;; end internal
 
 

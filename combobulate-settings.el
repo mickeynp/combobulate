@@ -143,6 +143,28 @@ vector or an escaped string."
   :type 'string
   :group 'combobulate)
 
+;;; Group for multi-cursor editing
+(defgroup combobulate-multi-cursor nil
+  "Settings for Combobulate's multi-cursor editing."
+  :group 'combobulate
+  :prefix "combobulate-multi-cursor-")
+
+(defcustom combobulate-multi-cursor-tool 'combobulate
+  "The tool to use for multi-cursor editing.
+
+This can be `combobulate', `multiple-cursors', or `iedit'.
+
+`combobulate' is the default and uses Combobulate's own
+(basic and rudimentary) multi-cursor editing system.
+
+`multiple-cursors' uses the third-party package `multiple-cursors.el'.
+
+`iedit' uses the third-party package `iedit.el'."
+  :group 'combobulate-multi-cursor
+  :type '(choice
+          (const :tag "Combobulate" combobulate)
+          (const :tag "Multiple Cursors" multiple-cursors)
+          (const :tag "Iedit" iedit)))
 
 (defface combobulate-refactor-highlight-face '((((background light))
                                                 :background "gray80")
