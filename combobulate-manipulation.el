@@ -192,7 +192,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                                    (combobulate--refactor-update-field ov tag text)))
+                               (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -358,7 +358,7 @@ a match."
       (let* ((chosen-node (combobulate-proxy-node-to-real-node
                            (combobulate-proffer-choices
                             (reverse (mapcar 'car grouped-matches))
-                            (lambda-slots (current-node refactor-id)
+                            (lambda-slots (current-node proxy-nodes refactor-id)
                               (combobulate-refactor (:id refactor-id)
                                 (rollback)
                                 (mark-node-highlighted current-node)
@@ -382,11 +382,22 @@ a match."
                                 ;; by highlighting the entire node
                                 ;; boundary.
                                 (mark-node-highlighted current-node)))
+                            :flash-node t
                             :unique-only nil
                             :prompt-description
-                            (format "Edit %s in"
-                                    (propertize (combobulate-pretty-print-node-type node)
-                                                'face 'combobulate-tree-branch-face)))))
+                            (lambda-slots (current-node proxy-nodes)
+                              (concat
+                               (propertize
+                                (format "[%d/%d]"
+                                        (length (cdr (assoc (combobulate-proxy-node-to-real-node current-node)
+                                                            grouped-matches)))
+                                        ct)
+                                'face 'shadow)
+                               " "
+                               (format "Edit `%s' in"
+
+                                       (propertize (combobulate-pretty-print-node-type node)
+                                                   'face 'combobulate-tree-branch-face)))))))
              (matches (cdr (assoc chosen-node grouped-matches))))
         (rollback)
         (combobulate--mc-edit-nodes matches action chosen-node)))))
@@ -1054,7 +1065,10 @@ accepts or cancels the proffer. "
                             (substitute-command-keys
                              (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
                                      display-indicator
-                                     (concat prompt-description " ")
+                                     (concat (cond ((stringp prompt-description) prompt-description)
+                                                   ((functionp prompt-description) (funcall prompt-description proffer-action))
+                                                   (t ""))
+                                             " ")
                                      ;; (propertize " → " 'face 'shadow)
                                      (propertize (combobulate-pretty-print-node current-node) 'face
                                                  'combobulate-tree-highlighted-node-face)
@@ -1147,8 +1161,8 @@ accepts or cancels the proffer. "
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp))
                                 (pred (lambda (n) (and (>= n 1)
-                                                       (<= n 9)
-                                                       (<= n (length proxy-nodes)))))
+                                                  (<= n 9)
+                                                  (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
