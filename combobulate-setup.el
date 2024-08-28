@@ -440,7 +440,7 @@ A complete list of known shorthands are found in
   "Get the registered language for a major mode MM.
 
 Returns a list of the form `(LANGUAGE MAJOR-MODES MINOR-MODE-FN)'."
-  (seq-find (pcase-lambda ((and v `(,language ,major-modes ,minor-mode-fn)))
+  (seq-find (pcase-lambda (`(_ ,major-modes _))
               (member mm major-modes))
             combobulate-registered-languages-alist))
 
@@ -455,7 +455,7 @@ enable Combobulate."
   ;; in `combobulate-registered-languages-alist'.
   ;;
   (when-let (match (combobulate-get-registered-language major-mode))
-    (pcase-let ((`(,language ,major-modes ,minor-mode-fn) match))
+    (pcase-let ((`(,language _ ,minor-mode-fn) match))
       ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
       ;; behaviour is that Combobulate may get activated in major
       ;; modes for which no grammar exists. Raising an error
