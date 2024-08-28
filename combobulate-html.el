@@ -32,8 +32,6 @@
 (require 'combobulate-setup)
 (require 'combobulate-rules)
 
-(defvar combobulate-js-ts-attribute-envelope-default)
-(defvar combobulate-js-ts-attribute-envelope-alist)
 (defvar-local combobulate-sgml-open-tag nil)
 (defvar-local combobulate-sgml-close-tag nil)
 (defvar-local combobulate-sgml-whole-tag nil)
@@ -112,7 +110,7 @@
         (combobulate-atomic-change-group
           (catch 'done
             (unless (equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
-              (pcase-dolist (`(,attribute . ,envelope) combobulate-js-ts-attribute-envelope-alist)
+              (pcase-dolist (`(,attribute . ,envelope) (combobulate-read attribute-envelope-alist))
                 (when (looking-back (concat "\\<" attribute "\\>") (length attribute))
                   (combobulate-execute-envelope envelope node)
                   (throw 'done t))))
@@ -122,8 +120,8 @@
                  ;; html can only do strings, so just use that.
                  ((equal (combobulate-parser-language (combobulate-parser-node node)) 'html)
                   (combobulate-execute-envelope "attr-string" node))
-                 (combobulate-js-ts-attribute-envelope-default
-                  (combobulate-execute-envelope combobulate-js-ts-attribute-envelope-default node))
+                 ((combobulate-read attribute-envelope-default)
+                  (combobulate-execute-envelope (combobulate-read attribute-envelope-default) node))
                  (t (self-insert-command 1 ?=)))
               (self-insert-command 1 ?=)))))
     (self-insert-command 1 ?=)))

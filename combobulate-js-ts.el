@@ -454,7 +454,7 @@ and `attr-expression' for expression-based attributes."
       (attribute-envelope-default
        "Default envelope name to apply to a JSX attribute.
 
-Only applied if `combobulate-js-ts-attribute-envelope-alist' does
+Only applied if `attribute-envelope-alist' does
 not contain a valid JSX attribute alist entry.
 
 If this value is `nil', then no envelope is applied.
@@ -477,7 +477,7 @@ expression object attribute."
       (enable-attribute-envelopes
        "Pick a sensible value for a JSX attribute when you type `='.
 
-This uses `combobulate-js-ts-attribute-envelope-alist' to
+This uses `attribute-envelope-alist' to
 determine the attribute and the corresponding envelope to insert."
        t
        :type 'boolean))))
