@@ -390,6 +390,8 @@ line when you press
                                           :engine combobulate)))))
       (indent-calculate-function #'combobulate-python-calculate-indent)
       (envelope-deindent-function #'combobulate-python-envelope-deindent-level)
+      (procedures-sequence
+       '((:activation-nodes ((:nodes ("identifier"))))))
       (procedures-defun
        '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
       (procedures-sexp

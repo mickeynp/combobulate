@@ -68,14 +68,14 @@
     (define-key map (kbd "b") #'combobulate-xref-find-query-buffer-references)
     map))
 
-(declare-function combobulate-edit-cluster-dwim "combobulate-manipulation")
+(declare-function combobulate-edit-sequence-dwim "combobulate-manipulation")
 (declare-function combobulate-edit-node-type-dwim "combobulate-manipulation")
 (declare-function combobulate-edit-node-by-text-dwim "combobulate-manipulation")
 (declare-function combobulate-edit-node-siblings-dwim "combobulate-manipulation")
 
 (defvar combobulate-edit-key-map
   (let ((map (make-sparse-keymap "Combobulate Edit")))
-    (define-key map (kbd "c") #'combobulate-edit-cluster-dwim)
+    (define-key map (kbd "c") #'combobulate-edit-sequence-dwim)
     (define-key map (kbd "t") #'combobulate-edit-node-type-dwim)
     (define-key map (kbd "x") #'combobulate-edit-node-by-text-dwim)
     (define-key map (kbd "s") #'combobulate-edit-node-siblings-dwim)
@@ -140,6 +140,8 @@
     (define-key map (kbd "M-e") #'combobulate-navigate-logical-next)
     (define-key map (kbd "M-h") #'combobulate-mark-node-dwim)
     (define-key map (kbd "M-k") #'combobulate-kill-node-dwim)
+    (define-key map (kbd "M-n") #'combobulate-navigate-sequence-next)
+    (define-key map (kbd "M-p") #'combobulate-navigate-sequence-previous)
     map))
 
 
@@ -185,6 +187,12 @@ procedure rules."
 This variable is almost always auto-populated by Combobulate when
 a set of procedures are activated, and should only be let-bound
 or set with `with-navigation-nodes'."
+     nil)
+    (procedures-sequence
+     "Procedures that control navigation to the next/previous sequence.
+
+This variable is used by some Combobulate commands that navigate
+sequences of nodes, regardless of their relative positions in the tree."
      nil)
     (procedures-edit
      "Procedures used to mark clusters of editable nodes.
@@ -650,6 +658,31 @@ macro which optionally takes a language argument to retrieve that
 language's setting." language))
                 decls)))
       `(progn ,@(nreverse decls)))))
+
+
+;;; Context mode
+
+(defun combobulate-highlight-context-setup ()
+  (when combobulate-highlight-context--idle-timer
+    (cancel-timer combobulate-highlight-context--idle-timer)
+    (setq combobulate-highlight-context--idle-timer nil))
+  (setq combobulate-highlight-context--idle-timer (run-with-idle-timer
+                                                   combobulate-highlight-context-delay t
+                                                   #'combobulate-highlight-context-function))
+  (unless combobulate-highlight-context-mode
+    (combobulate-highlight-context--delete-overlays)))
+
+(defun combobulate-highlight-context--delete-overlays ()
+  (delete-overlay combobulate-highlight-context--overlay)
+  (delete-overlay combobulate-highlight-context--overlay-1))
+
+(defvar combobulate-highlight-context--idle-timer nil)
+(defvar combobulate-highlight-context--overlay
+  (let ((ol (make-overlay (point) (point) nil t))) (delete-overlay ol) ol)
+  "Overlay used to highlight the matching sequence.")
+(defvar combobulate-highlight-context--overlay-1
+  (let ((ol (make-overlay (point) (point) nil t))) (delete-overlay ol) ol)
+  "Overlay used to highlight the paren at point.")
 
 (provide 'combobulate-setup)
 ;;; combobulate-setup.el ends here

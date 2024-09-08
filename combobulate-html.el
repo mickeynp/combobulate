@@ -177,31 +177,14 @@
           :nodes ("start_tag" "self_closing_tag")
           :name "attr-string"
           :template ("=" "\"" @ "\""))))
-      (procedures-edit
+      (procedures-sequence
        '((:activation-nodes
-          ((:nodes
-            ("attribute")
-            :has-parent ("start_tag" "self_closing_tag" "script_element" "style_element")))
-          :selector (:match-query (:query ((_) (attribute)+ @match)
-                                          :engine combobulate)))
-         ;; sibling-level editing
-         (:activation-nodes
-          ((:nodes
-            ("self_closing_tag" "expression" "element" "document" "script_element" "style_element")
-            :position at))
-          :selector (:match-siblings (:discard-rules ("comment" "text"))))
-         ;; editing an element's opening/closing tag
-         (:activation-nodes
-          ((:nodes
-            ("element" "script_element" "style_element")
-            :position in))
-          :selector (:choose node
-                             :match-query
+          ((:nodes ("tag_name") :position any :has-ancestor ("element")))
+          :selector (:choose parent :match-query
                              (:query
                               (_ (start_tag (tag_name) @match)
                                  (end_tag (tag_name) @match))
-                              :engine combobulate
-                              :discard-rules ("comment"))))))
+                              :engine combobulate)))))
       (procedures-hierarchy
        '(;; seamless navigation between elements and their children.
          (:activation-nodes

@@ -61,16 +61,28 @@ manually.")
   :doc "Keymap for envelope prompts."
   :parent minibuffer-local-map)
 
-(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn)
+(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn initial-contents)
   "Insert text into fields using the minibuffer with PROMPT and DEFAULT-VALUE.
 
 BUFFER if optionally the buffer (and its associated window) to
-use. If it is nil, then `current-buffer' is used."
+use. If it is nil, then `current-buffer' is used.
+
+UPDATE-FN is a function that is called after `post-command-hook' is triggered in the
+minibuffer. It is passed the current minibuffer contents.
+
+INITIAL-CONTENTS is the initial contents of the minibuffer prompt."
   (let ((win (when (eq (window-buffer) (or buffer (current-buffer)))
                (selected-window))))
     (minibuffer-with-setup-hook
         (lambda ()
           (setq combobulate-envelope-prompt-window win)
+          ;; Required for things that set intangible properties on
+          ;; text.
+          (cursor-intangible-mode 1)
+          ;; If INITIAL-CONTENTS is not empty then the point is placed
+          ;; at the end of the text, which is probably not what people
+          ;; want?
+          (beginning-of-line)
           ;; not presently used.
           ;; (add-hook 'minibuffer-exit-hook #'combobulate-envelope-prompt-exit nil t)
           (add-hook 'post-command-hook update-fn nil t))
@@ -78,7 +90,7 @@ use. If it is nil, then `current-buffer' is used."
        (format-prompt
         prompt
         (or default-value (car combobulate-envelope-prompt-history) ""))
-       nil
+       initial-contents
        combobulate-envelope-prompt-map
        nil
        'combobulate-envelope-prompt-history
@@ -195,17 +207,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                        (goto-char prompt-point)
-                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                        (unless combobulate-envelope-static
-                                          (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                              (combobulate-envelope-prompt
-                                                               prompt tag nil
-                                                               (lambda ()
-                                                                 (combobulate-envelope--update-prompts
-                                                                  buf tag (minibuffer-contents)))))))
-                                            (push (cons tag new-text) combobulate-envelope--registers)
-                                            (combobulate-envelope--update-prompts buf tag new-text))))))
+                                   (goto-char prompt-point)
+                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (unless combobulate-envelope-static
+                                     (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                         (combobulate-envelope-prompt
+                                                          prompt tag nil
+                                                          (lambda ()
+                                                            (combobulate-envelope--update-prompts
+                                                             buf tag (minibuffer-contents)))))))
+                                       (push (cons tag new-text) combobulate-envelope--registers)
+                                       (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -1094,7 +1106,7 @@ valid."
         ;; transient.
         (defalias fn-name
           `(lambda () ,(format "%s\n%s" description
-                          "This command triggers Combobulate's envelope system.")
+                               "This command triggers Combobulate's envelope system.")
              (interactive)
              (combobulate-execute-envelope ,name))))
       (define-key (combobulate-read envelope-map) (kbd key) fn-name)

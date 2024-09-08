@@ -56,10 +56,10 @@
          (should (equal (sort stub/combobulate--mc-place-cursor #'>)
                         (sort (mapcar #'overlay-start (combobulate--with-test-overlays)) #'>)))))))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-cluster-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-edit-sequence-dwim ()
   :tags '(multiple-cursors manipulation)
   (with-stubbed-mc
-   #'combobulate-edit-cluster-dwim
+   #'combobulate-edit-sequence-dwim
    python
    python-ts-mode
    "./fixtures/mc-edit/python-dict-keys.py"))

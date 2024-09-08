@@ -143,6 +143,14 @@ vector or an escaped string."
   :type 'string
   :group 'combobulate)
 
+(defcustom combobulate-highlight-context t
+  "Highlight contextual nodes that belong to the same sequence.
+
+This is similar to `show-paren-mode' but for Combobulate's notion of
+what a \"pair\" is."
+  :type 'boolean
+  :group 'combobulate)
+
 ;;; Group for multi-cursor editing
 (defgroup combobulate-multi-cursor nil
   "Settings for Combobulate's multi-cursor editing."
@@ -204,7 +212,7 @@ This can be `combobulate', `multiple-cursors', or `iedit'.
   "Face for dimmed indicators, like the indentation display."
   :group 'combobulate-faces)
 
-(defface combobulate-active-indicator-face '((t (:foreground "dodger blue")))
+(defface combobulate-active-indicator-face '((t (:foreground "light blue")))
   "Face for active indicators, like the indentation display."
   :group 'combobulate-faces)
 
@@ -232,6 +240,27 @@ This can be `combobulate', `multiple-cursors', or `iedit'.
 (defface combobulate-tree-normal-node-face '((t (:inherit default)))
   "Face for regular combobulate nodes in the display tree"
   :group 'combobulate-faces)
+
+(defface combobulate-highlight-context-face '((t (:inherit combobulate-refactor-field-face)))
+  "Face for the context of the current node in the display tree."
+  :group 'combobulate-faces)
+
+;;;; Other settings
+
+;; (defvar-local combobulate-procedures-defun nil
+;;   "Node procedures used to navigate by defun.
+
+;; See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
+
+;; (defvar-local combobulate-procedures-hierarchy nil
+;;   "Node procedures used to navigate hierarchically up or down nodes.")
+
+;; (defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
+;;   "Node procedures as the default in the absence of more specific procedures.
+
+;; The `combobulate-navigable-nodes' variable is populated
+;; with the node types from all the expanded activation node
+;; procedure rules.")
 
 (defvar combobulate-navigable-nodes nil
   "List of node types used for general navigation and as a placeholder.
