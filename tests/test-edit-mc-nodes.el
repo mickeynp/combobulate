@@ -34,7 +34,8 @@
 (defmacro with-stubbed-mc (edit-fn language mode fixture)
   `(let ((stub/combobulate--mc-clear-cursors)
          (stub/combobulate--mc-enable)
-         (stub/combobulate--mc-place-cursor))
+         (stub/combobulate--mc-place-cursor)
+         (combobulate-cursor-tool 'multiple-cursors))
      (cl-letf (((symbol-function 'combobulate--mc-active)
                 (lambda () nil))
                ((symbol-function 'combobulate--mc-assert-is-supported)
@@ -58,11 +59,10 @@
 
 (ert-deftest combobulate-test-mc-combobulate-edit-sequence-dwim ()
   :tags '(multiple-cursors manipulation)
-  (with-stubbed-mc
-   #'combobulate-edit-sequence-dwim
-   python
-   python-ts-mode
-   "./fixtures/mc-edit/python-dict-keys.py"))
+  (with-stubbed-mc #'combobulate-edit-sequence-dwim
+                   tsx
+                   tsx-ts-mode
+                   "./fixtures/mc-edit/sequence.tsx"))
 
 (ert-deftest combobulate-test-mc-combobulate-edit-node-by-text-dwim ()
   :tags '(multiple-cursors manipulation)

@@ -189,6 +189,8 @@
                     (add-marker (combobulate--refactor-mark-field
                                  pt tag (or text (symbol-name tag))
                                  transformer-fn)))
+                  (toggle-field (pt tag)
+                    (combobulate--refactor-toggle-field pt tag))
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
@@ -305,9 +307,9 @@ end of each edited node."
         (combobulate-edit-identical-nodes
          node (combobulate--edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-edit-node-by-text-dwim (arg)
@@ -321,7 +323,7 @@ the node at point."
       (combobulate-edit-identical-nodes
        node (combobulate--edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
+                             (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-edit-identical-nodes (node action &optional match-fn)
@@ -428,7 +430,7 @@ The action can be one of the following:
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                                   (equal (car m) 'discard)))
+                              (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
@@ -1154,8 +1156,8 @@ accepts or cancels the proffer. "
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp))
                                 (pred (lambda (n) (and (>= n 1)
-                                                       (<= n 9)
-                                                       (<= n (length proxy-nodes)))))
+                                                  (<= n 9)
+                                                  (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1483,11 +1485,11 @@ Each member of PARTITIONS must be one of:
              ;; searching because no applicable sibling procedure was
              ;; found.
              (lambda (n) (or disable-check
-                             (and (combobulate-node-parent n)
-                                  (or (member (combobulate-node-parent n) valid-parents)
-                                      (member n valid-parents))
-                                  (not (equal (combobulate-node-parent n) (car valid-parents)))
-                                  (combobulate-node-before-node-p n source-node))))
+                        (and (combobulate-node-parent n)
+                             (or (member (combobulate-node-parent n) valid-parents)
+                                 (member n valid-parents))
+                             (not (equal (combobulate-node-parent n) (car valid-parents)))
+                             (combobulate-node-before-node-p n source-node))))
              all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action
@@ -1787,11 +1789,13 @@ If BEFORE is non-nil, then the label is placed (using the special
       (overlay-put ov 'face 'diff-changed))
     ov))
 
+(defun combobulate--refactor--get-field (pt tag)
+  "Return the field overlay at PT, if any."
+  (seq-find (lambda (ov) (combobulate--refactor-field-has-tag-p ov tag 'field)) (overlays-at pt)))
+
 (defun combobulate--refactor-mark-field (pt tag text &optional transformer-fn)
   ;; check if there is already a field overlay at this position with `tag' at `pt':
-  (if-let (ov (seq-find (lambda (ov)
-                          (combobulate--refactor-field-has-tag-p ov tag 'field))
-                        (overlays-at pt)))
+  (if-let (ov (combobulate--refactor--get-field pt tag))
       ov
     (let ((ov (make-overlay pt pt nil t nil)))
       ;; args 2 and 3 refer to respectively `tag' and the default value.
@@ -1799,12 +1803,20 @@ If BEFORE is non-nil, then the label is placed (using the special
       (overlay-put ov 'face 'combobulate-refactor-field-face)
       (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
       (overlay-put ov 'combobulate-refactor-field-original-text text)
+      (overlay-put ov 'combobulate-refactor-field-enabled t)
       (combobulate--refactor-set-field ov text (or text (symbol-name tag)))
       ov)))
 
+(defun combobulate--refactor-toggle-field (pt tag)
+  (when-let ((ov (combobulate--refactor--get-field pt tag)))
+    (overlay-put ov 'combobulate-refactor-field-enabled
+                 (not (overlay-get ov 'combobulate-refactor-field-enabled)))
+    (overlay-put ov 'face (if (overlay-get ov 'combobulate-refactor-field-enabled)
+                              'combobulate-refactor-field-face
+                            'combobulate-refactor-disabled-field-face))))
+
 (defun combobulate--refactor-mark-cursor (pt)
   (let ((ov (make-overlay pt (1+ pt) nil t nil)))
-    ;; args 2 and 3 refer to respectively `tag' and the default value.
     (overlay-put ov 'combobulate-refactor-actions `((cursor)))
     (overlay-put ov 'face 'combobulate-refactor-cursor-face)
     ov))
@@ -1828,7 +1840,6 @@ If BEFORE is non-nil, then the label is placed (using the special
     match))
 
 (defun combobulate--refactor-update-field (ov tag text &optional default-text)
-  (message "updating field %s to %s" tag text)
   (let ((actions (overlay-get ov 'combobulate-refactor-actions)))
     (when (combobulate--refactor-field-has-tag-p ov tag)
       (map-put! actions 'field (cons tag text))

@@ -198,7 +198,7 @@ sequences of nodes, regardless of their relative positions in the tree."
      "Procedures used to mark clusters of editable nodes.
 
 This is used by some Combobulate commands that edit nodes. Most
-commonly multi-cursor editing."
+commonly cursor editing."
      nil)
     (default-procedures
      "List of active procedures used by Combobulate's procedure system.

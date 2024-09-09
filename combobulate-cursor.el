@@ -43,11 +43,9 @@
 (when (fboundp 'multiple-cursors-mode)
   (require 'multiple-cursors))
 
-(when (fboundp 'iedit-mode)
-  (require 'iedit))
-
-;; Generic wrappers for multiple cursors. Add support for other types
-;; of multi-cursor editing (like iedit)
+;; Generic wrappers for multiple cursors.
+;;
+;; TODO: Add support for other types of cursor editing (like iedit)
 
 (defun combobulate--mc-assert-is-supported ()
   (unless (fboundp 'multiple-cursors-mode)
@@ -157,120 +155,244 @@ Overlays must be valid `combobulate-refactor' field overlays."
       (with-current-buffer buf
         (let ((ovs (combobulate--refactor-get-overlays)))
           (mapc (lambda (ov)
-                  ;; Essential. There's a million things in here that
-                  ;; throw errors left and right that'll trigger
-                  ;; `post-command-hook' to eject us from it,
-                  ;; preventing us from updating again.
-                  (ignore-errors
-                    (combobulate--refactor-update-field
-                     ov tag
-                     (let* ((to (query-replace-compile-replacement minibuffer-text t))
-                            ;; `replace-eval-replacement' and
-                            ;; `query-replace-compile-replacement'
-                            ;; rewrites `\,(...)'  elisp forms and
-                            ;; detects regexp backslash groups such as
-                            ;; `\N' and rewrites them as
-                            ;; `(match-string N)' --- great. However,
-                            ;; we cannot use this feature as it
-                            ;; assumes match data is set (as it
-                            ;; ordinarily would be in a normal
-                            ;; search&replace loop) and the coterie of
-                            ;; functions that depend on it.
+                  (when (overlay-get ov 'combobulate-refactor-field-enabled)
+                    ;; Essential. There's a million things in here
+                    ;; that throw errors left and right that'll
+                    ;; trigger `post-command-hook' to eject us from
+                    ;; it, preventing us from updating again.
+                    (ignore-errors
+                      (combobulate--refactor-update-field
+                       ov tag
+                       (let* ((to (query-replace-compile-replacement minibuffer-text t))
+                              ;; `replace-eval-replacement' and
+                              ;; `query-replace-compile-replacement'
+                              ;; rewrites `\,(...)'  elisp forms and
+                              ;; detects regexp backslash groups such
+                              ;; as `\N' and rewrites them as
+                              ;; `(match-string N)' ---
+                              ;; great. However, we cannot use this
+                              ;; feature as it assumes match data is
+                              ;; set (as it ordinarily would be in a
+                              ;; normal search&replace loop) and the
+                              ;; coterie of functions that depend on
+                              ;; it.
+                              ;;
+                              ;; As we're effectively hacking up the
+                              ;; replace machinery to work with
+                              ;; Combobulate's refactoring system, we
+                              ;; either need to rewrite uses of
+                              ;; `match-string' to a custom function
+                              ;; of our own choosing; ensure match
+                              ;; data is set so it matches the field
+                              ;; overlays in the buffer, which is
+                              ;; complex; or just `cl-letf' it here
+                              ;; temporarily.
+                              (replacement-text
+                               (cl-letf  (((symbol-function 'match-string)
+                                           (lambda (n &optional string)
+                                             ;; Subtract 1 because 0
+                                             ;; refers to the whole
+                                             ;; match
+                                             (overlay-get
+                                              (nth (1- n) ovs)
+                                              'combobulate-refactor-field-original-text))))
+                                 (or (replace-eval-replacement
+                                      (cond
+                                       ((null to) "")
+                                       ((stringp to)
+		                        (list 'concat to))
+		                       (t (cdr to)))
+                                      idx)
+                                     ""))))
+                         (replace-regexp-in-string
+                          combobulate-cursor-substitute-match
+                          (lambda (sub)
+                            ;; Avoid using any sort of matching
+                            ;; functions here that touches match
+                            ;; data. It does not work well due to
+                            ;; `replace-regexp-in-string' doing its own
+                            ;; thing with the data.
                             ;;
-                            ;; As we're effectively hacking up the
-                            ;; replace machinery to work with
-                            ;; Combobulate's refactoring system, we
-                            ;; either need to rewrite uses of
-                            ;; `match-string' to a custom function of
-                            ;; our own choosing; ensure match data is
-                            ;; set so it matches the field overlays in
-                            ;; the buffer, which is complex; or just
-                            ;; `cl-letf' it here temporarily.
-                            (replacement-text
-                             (cl-letf  (((symbol-function 'match-string)
-                                         (lambda (n &optional string)
-                                           (overlay-get (nth n ovs) 'combobulate-refactor-field-original-text))))
-                               (or (replace-eval-replacement
-                                    (cond
-                                     ((null to) "")
-                                     ((stringp to)
-		                      (list 'concat to))
-		                     (t (cdr to)))
-                                    idx)
-                                   ""))))
-                       (replace-regexp-in-string
-                        combobulate-cursor-substitute-match
-                        (lambda (sub)
-                          ;; Avoid using any sort of matching
-                          ;; functions here that touches match
-                          ;; data. It does not work well due to
-                          ;; `replace-regexp-in-string' doing its own
-                          ;; thing with the data.
-                          ;;
-                          ;; Thankfully,
-                          ;; `combobulate-cursor-substitute-match' is
-                          ;; set to match backslash groups and they
-                          ;; are syntactically simple: the first
-                          ;; character is a backslash and the rest is
-                          ;; a number. We can just extract the number
-                          ;; and use it to index into the overlays.
-                          (if-let (matched-ov (let ((num (string-to-number (substring sub 1))))
-                                                ;; The number 0 is
-                                                ;; special. In an
-                                                ;; ordinary
-                                                ;; search&replace loop
-                                                ;; it refers to the
-                                                ;; whole match. Here
-                                                ;; we repurpose it to
-                                                ;; mean the original
-                                                ;; text of the CURRENT
-                                                ;; field.
-                                                (if (= num 0) (nth idx ovs) (nth num ovs))))
-                              (overlay-get matched-ov 'combobulate-refactor-field-original-text)
-                            ;; No match, return the default text in the minibuffer.
-                            minibuffer-text))
-                        replacement-text))
-                     ;; required, as we need to ensure `default-text' is
-                     ;; set to a default value that won't cause issues
-                     ;; down the road if the eval replacement call does
-                     ;; not yield anything.
-                     ""))
+                            ;; Thankfully,
+                            ;; `combobulate-cursor-substitute-match'
+                            ;; is set to match backslash groups and
+                            ;; they are syntactically simple: the
+                            ;; first character is a backslash and the
+                            ;; rest is a number. We can just extract
+                            ;; the number and use it to index into the
+                            ;; overlays.
+                            (if-let (matched-ov
+                                     (let ((num (string-to-number (substring sub 1))))
+                                       ;; The number 0 is special. In
+                                       ;; an ordinary search&replace
+                                       ;; loop it refers to the whole
+                                       ;; match. Here we repurpose it
+                                       ;; to mean the original text of
+                                       ;; the CURRENT field.  Also,
+                                       ;; subtract 1 to account for
+                                       ;; the 0-based whole match
+                                       ;; index.
+                                       (if (= num 0) (nth idx ovs) (nth (1- num) ovs))))
+                                (overlay-get matched-ov 'combobulate-refactor-field-original-text)
+                              ;; No match, return the default text in the minibuffer.
+                              minibuffer-text))
+                          replacement-text))
+                       ;; required, as we need to ensure `default-text' is
+                       ;; set to a default value that won't cause issues
+                       ;; down the road if the eval replacement call does
+                       ;; not yield anything.
+                       "")))
                   (cl-incf idx))
                 ovs))))))
+
+(defvar combobulate-cursor--field-tag 'combobulate-cursor-field
+  "Tag used to identify Combobulate cursor fields.")
+
+(defvar combobulate-cursor--refactor-id nil
+  "The ID of the current refactoring operation in progress.")
+
+(defvar combobulate-cursor--active-buffer nil
+  "The buffer that is currently being refactored.")
+
+(defun combobulate-cursor-goto-field (direction)
+  "Move to the next or previous field in DIRECTION."
+  (with-current-buffer combobulate-cursor--active-buffer
+    (let* ((ovs (combobulate--refactor-get-overlays combobulate-cursor--refactor-id))
+           (wnd (get-buffer-window combobulate-cursor--active-buffer))
+           (window-point (window-point wnd)))
+      (if-let (ov (if (eq direction 'next)
+                      (seq-find (lambda (ov) (> (overlay-start ov) window-point)) ovs)
+                    (seq-find (lambda (ov) (< (overlay-start ov) window-point)) (reverse ovs))))
+          (set-window-point wnd (overlay-start ov))
+        (user-error "No more fields in this direction.")))))
+
+(defun combobulate-cursor-next-field ()
+  "Move to the next field in the cursor editing prompt."
+  (interactive)
+  (combobulate-cursor-goto-field 'next))
+
+(defun combobulate-cursor-prev-field ()
+  "Move to the previous field in the cursor editing prompt."
+  (interactive)
+  (combobulate-cursor-goto-field 'prev))
+
+(defun combobulate-cursor-toggle-field (&optional pt)
+  "Enable or disable the current field in the cursor editing prompt."
+  (interactive "d")
+  (with-current-buffer combobulate-cursor--active-buffer
+    (combobulate-refactor (:id combobulate-cursor--refactor-id)
+      (toggle-field (or pt (window-point (get-buffer-window combobulate-cursor--active-buffer)))
+                    combobulate-cursor--field-tag))))
+
+(defun combobulate-cursor-invert-fields ()
+  "Invert the enabled/disabled state of all fields in the cursor editing prompt."
+  (interactive)
+  (with-current-buffer combobulate-cursor--active-buffer
+    (combobulate-refactor (:id combobulate-cursor--refactor-id)
+      (let ((ovs (combobulate--refactor-get-overlays combobulate-cursor--refactor-id)))
+        (dolist (ov ovs)
+          (combobulate-cursor-toggle-field (overlay-start ov)))))))
+
+(defun combobulate-cursor-help ()
+  (interactive)
+  (with-electric-help
+   (lambda ()
+     (insert (substitute-command-keys "Combobulate Cursor Editing Help:
+
+The default prompt value maps to the original text of each node,
+represented by `\\0'.
+
+You can use the value from a particular field by using the backslash
+followed by the field number. For example, `\\1' refers to the first
+field, `\\2' refers to the second field, and so on.
+
+Like Emacs's normal replace commands, you can use the `\\#' shorthand to
+insert a number equal to the index of the field, starting from the count
+of 0.
+
+You can also evaluate Emacs lisp forms in the context of each field with
+the `\,(...)` syntax. For example, `\\,(upcase \\0)' will convert each
+field to uppercase.
+
+Cursor Key Bindings:
+
+\\`C-n' - Move to the next field.
+\\`C-p' - Move to the previous field.
+\\`C-v' - Toggle the current field on or off.
+\\`C-i' - Invert the enabled/disabled state of all fields.
+
+General Key Bindings:
+
+\\`C-h' - Show this help message.
+\\`RET' - Accept the current prompt.
+\\`C-g' - Abort the cursor editing.")))))
+
+(defvar-keymap combobulate-cursor-key-map
+  :parent combobulate-envelope-prompt-map
+  :doc "Keymap for Combobulate's cursor editing prompt."
+  "C-n" #'combobulate-cursor-next-field
+  "C-p" #'combobulate-cursor-prev-field
+  "C-v" #'combobulate-cursor-toggle-field
+  "C-i" #'combobulate-cursor-invert-fields
+  "C-h" #'combobulate-cursor-help)
+
+
 
 (defun combobulate-cursor-edit-nodes (nodes &optional action ctx-node)
   "Edit NODES with multiple cursors placed at ACTION.
 
-Where ACTION is `before', `after', or `mark'.
+NODES is a list of nodes to edit.
+
+ACTION is the action to take. Depending on the value of
+`combobulate-cursor-tool', this can be either `combobulate' or
+`multiple-cursors'. If it is `combobulate', the nodes are edited with
+Combobulate's refactoring system. If the value is `multiple-cursors',
+the nodes are edited with multiple cursors.
+
+For `multiple-cursors', ACTION must be `before', `after', or `mark'. For
+`combobulate', the value is disregarded.
 
 CTX-NODE is the node that was used to generate NODES, such as a
 parent node. It is only used for messaging."
-  (let ((prompt (concat "Editing " (combobulate-tally-nodes nodes t)
-                        (and ctx-node (format " in `%s'"
-                                              (propertize
-                                               (combobulate-pretty-print-node ctx-node)
-                                               'face 'combobulate-active-indicator-face))))))
-    (cond
-     ((null nodes) (error "There are no editable nodes."))
-     (t (let ((proxy-nodes (combobulate-proxy-node-make-from-nodes nodes))
-              (tag 'edit))
-          (combobulate-refactor ()
-            (mapc #'mark-node-deleted proxy-nodes)
-            (commit)
-            (mapc (lambda (node)
-                    (mark-field (combobulate-node-start node) tag (combobulate-node-text node)))
-                  proxy-nodes)
-            (let ((buf (current-buffer)))
-              (save-match-data
-                (combobulate-envelope-prompt
-                 prompt
-                 nil
-                 buf
-                 (combobulate-cursor--update-function buf tag)
-                 combobulate-cursor-substitute-default)))
-            (commit))))
-     (nil (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes))
-          (combobulate-message prompt)))))
+  (cond
+   ((null nodes) (error "There are no editable nodes."))
+   ((eq combobulate-cursor-tool 'combobulate)
+    (let ((proxy-nodes (combobulate-proxy-node-make-from-nodes nodes))
+
+          (combobulate-cursor--refactor-id (combobulate-refactor-setup))
+          (combobulate-cursor--active-buffer (current-buffer)))
+      (combobulate-refactor (:id combobulate-cursor--refactor-id)
+        ;; Ditch the proxy nodes' text in the buffer and commit the
+        ;; deletions immediately. The fields we insert will be the new
+        ;; values.
+        (mapc #'mark-node-deleted proxy-nodes)
+        (commit)
+        ;; Create new fields with the new values in the same places
+        ;; as the old ones.
+        (mapc (lambda (node)
+                (mark-field (combobulate-node-start node)
+                            combobulate-cursor--field-tag
+                            (combobulate-node-text node)))
+              proxy-nodes)
+        (save-match-data
+          (combobulate-envelope-prompt
+           (substitute-command-keys "Editing fields. Use \\`C-h' for help.")
+           nil
+           combobulate-cursor--active-buffer
+           (combobulate-cursor--update-function
+            combobulate-cursor--active-buffer
+            combobulate-cursor--field-tag)
+           combobulate-cursor-substitute-default
+           combobulate-cursor-key-map))
+        (commit))))
+   ((eq combobulate-cursor-tool 'multiple-cursors)
+    (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes))
+    (combobulate-message (concat "Editing " (combobulate-tally-nodes nodes t)
+                                 (and ctx-node (format " in `%s'"
+                                                       (propertize
+                                                        (combobulate-pretty-print-node ctx-node)
+                                                        'face 'combobulate-active-indicator-face))))))
+   (t (error "Unknown cursor tool: %s" combobulate-cursor-tool))))
 
 (provide 'combobulate-cursor)
 ;;; combobulate-cursor.el ends here

@@ -151,28 +151,25 @@ what a \"pair\" is."
   :type 'boolean
   :group 'combobulate)
 
-;;; Group for multi-cursor editing
-(defgroup combobulate-multi-cursor nil
-  "Settings for Combobulate's multi-cursor editing."
+;;; Group for cursor editing
+(defgroup combobulate-cursor nil
+  "Settings for Combobulate's cursor editing."
   :group 'combobulate
-  :prefix "combobulate-multi-cursor-")
+  :prefix "combobulate-cursor-")
 
-(defcustom combobulate-multi-cursor-tool 'combobulate
-  "The tool to use for multi-cursor editing.
+(defcustom combobulate-cursor-tool 'combobulate
+  "The tool to use for cursor editing.
 
-This can be `combobulate', `multiple-cursors', or `iedit'.
+This can be `combobulate' or `multiple-cursors'.
 
 `combobulate' is the default and uses Combobulate's own
-(basic and rudimentary) multi-cursor editing system.
+refactoring system to perform cursor editing.
 
-`multiple-cursors' uses the third-party package `multiple-cursors.el'.
-
-`iedit' uses the third-party package `iedit.el'."
-  :group 'combobulate-multi-cursor
+`multiple-cursors' uses the third-party package `multiple-cursors.el'."
+  :group 'combobulate-cursor
   :type '(choice
           (const :tag "Combobulate" combobulate)
-          (const :tag "Multiple Cursors" multiple-cursors)
-          (const :tag "Iedit" iedit)))
+          (const :tag "Multiple Cursors" multiple-cursors)))
 
 (defface combobulate-refactor-highlight-face '((((background light))
                                                 :background "gray80")
@@ -193,7 +190,11 @@ This can be `combobulate', `multiple-cursors', or `iedit'.
   :group 'combobulate-faces)
 
 (defface combobulate-refactor-inactive-field-face '((t (:background "#342261" :foreground "#6e4bc0")))
-  "Face for prompts and fields during editing or refactoring."
+  "Face for inactive prompts and fields during editing or refactoring."
+  :group 'combobulate-faces)
+
+(defface combobulate-refactor-disabled-field-face '((t (:background "gray20" :foreground "gray80")))
+  "Face for disabled prompts and fields during editing or refactoring."
   :group 'combobulate-faces)
 
 (defface combobulate-refactor-choice-face '((t (:background "aquamarine4" :foreground "aquamarine1")))
@@ -212,7 +213,7 @@ This can be `combobulate', `multiple-cursors', or `iedit'.
   "Face for dimmed indicators, like the indentation display."
   :group 'combobulate-faces)
 
-(defface combobulate-active-indicator-face '((t (:foreground "light blue")))
+(defface combobulate-active-indicator-face '((t (:foreground "SlateBlue1")))
   "Face for active indicators, like the indentation display."
   :group 'combobulate-faces)
 
@@ -246,21 +247,6 @@ This can be `combobulate', `multiple-cursors', or `iedit'.
   :group 'combobulate-faces)
 
 ;;;; Other settings
-
-;; (defvar-local combobulate-procedures-defun nil
-;;   "Node procedures used to navigate by defun.
-
-;; See `combobulate-beginning-of-defun' and `combobulate-end-of-defun'.")
-
-;; (defvar-local combobulate-procedures-hierarchy nil
-;;   "Node procedures used to navigate hierarchically up or down nodes.")
-
-;; (defvar-local combobulate-procedures-default '((:activation-nodes ((:nodes (all)))))
-;;   "Node procedures as the default in the absence of more specific procedures.
-
-;; The `combobulate-navigable-nodes' variable is populated
-;; with the node types from all the expanded activation node
-;; procedure rules.")
 
 (defvar combobulate-navigable-nodes nil
   "List of node types used for general navigation and as a placeholder.

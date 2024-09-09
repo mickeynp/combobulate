@@ -237,6 +237,14 @@
          ((call_expression function: (member_expression object: (identifier) @name @hl.serene
                                                         property: (property_identifier)
                                                         (:match "^console$" @name))))))
+      (procedures-sequence
+       '((:activation-nodes
+          ((:nodes ("identifier") :position any :has-ancestor ("jsx_element")))
+          :selector (:choose parent :match-query
+                             (:query
+                              (_ (jsx_opening_element (identifier) @match)
+                                 (jsx_closing_element (identifier) @match))
+                              :engine combobulate)))))
       (procedures-edit
        '(;; edit the keys or values in an object
          (:activation-nodes

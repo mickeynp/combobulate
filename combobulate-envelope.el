@@ -61,16 +61,20 @@ manually.")
   :doc "Keymap for envelope prompts."
   :parent minibuffer-local-map)
 
-(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn initial-contents)
+(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn initial-contents map)
   "Insert text into fields using the minibuffer with PROMPT and DEFAULT-VALUE.
 
-BUFFER if optionally the buffer (and its associated window) to
-use. If it is nil, then `current-buffer' is used.
+BUFFER if optionally the buffer (and its associated window) to use. If
+it is nil, then `current-buffer' is used.
 
-UPDATE-FN is a function that is called after `post-command-hook' is triggered in the
-minibuffer. It is passed the current minibuffer contents.
+UPDATE-FN is a function that is called after `post-command-hook' is
+triggered in the minibuffer. It is passed the current minibuffer
+contents.
 
-INITIAL-CONTENTS is the initial contents of the minibuffer prompt."
+INITIAL-CONTENTS is the initial contents of the minibuffer prompt.
+
+MAP is the keymap to use for the minibuffer. It defaults to
+`combobulate-envelope-prompt-map'."
   (let ((win (when (eq (window-buffer) (or buffer (current-buffer)))
                (selected-window))))
     (minibuffer-with-setup-hook
@@ -88,10 +92,10 @@ INITIAL-CONTENTS is the initial contents of the minibuffer prompt."
           (add-hook 'post-command-hook update-fn nil t))
       (read-from-minibuffer
        (format-prompt
-        prompt
+        (concat combobulate-sigil " " prompt)
         (or default-value (car combobulate-envelope-prompt-history) ""))
        initial-contents
-       combobulate-envelope-prompt-map
+       (or map combobulate-envelope-prompt-map)
        nil
        'combobulate-envelope-prompt-history
        (car combobulate-envelope-prompt-history)
@@ -1106,7 +1110,7 @@ valid."
         ;; transient.
         (defalias fn-name
           `(lambda () ,(format "%s\n%s" description
-                               "This command triggers Combobulate's envelope system.")
+                          "This command triggers Combobulate's envelope system.")
              (interactive)
              (combobulate-execute-envelope ,name))))
       (define-key (combobulate-read envelope-map) (kbd key) fn-name)
