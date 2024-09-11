@@ -661,30 +661,5 @@ language's setting." language))
                 decls)))
       `(progn ,@(nreverse decls)))))
 
-
-;;; Context mode
-
-(defun combobulate-highlight-context-setup ()
-  (when combobulate-highlight-context--idle-timer
-    (cancel-timer combobulate-highlight-context--idle-timer)
-    (setq combobulate-highlight-context--idle-timer nil))
-  (setq combobulate-highlight-context--idle-timer (run-with-idle-timer
-                                                   combobulate-highlight-context-delay t
-                                                   #'combobulate-highlight-context-function))
-  (unless combobulate-highlight-context-mode
-    (combobulate-highlight-context--delete-overlays)))
-
-(defun combobulate-highlight-context--delete-overlays ()
-  (delete-overlay combobulate-highlight-context--overlay)
-  (delete-overlay combobulate-highlight-context--overlay-1))
-
-(defvar combobulate-highlight-context--idle-timer nil)
-(defvar combobulate-highlight-context--overlay
-  (let ((ol (make-overlay (point) (point) nil t))) (delete-overlay ol) ol)
-  "Overlay used to highlight the matching sequence.")
-(defvar combobulate-highlight-context--overlay-1
-  (let ((ol (make-overlay (point) (point) nil t))) (delete-overlay ol) ol)
-  "Overlay used to highlight the paren at point.")
-
 (provide 'combobulate-setup)
 ;;; combobulate-setup.el ends here

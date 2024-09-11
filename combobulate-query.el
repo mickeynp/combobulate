@@ -52,6 +52,9 @@
 (eval-when-compile
   (require 'cl-lib))
 
+(declare-function combobulate-cursor-edit-nodes "combobulate-cursor.el")
+
+
 (defvar combobulate-query-ring-index 0
   "Index of the current query in `combobulate-query-ring'.")
 
@@ -1183,7 +1186,7 @@ the query fails to compile."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                        (eq feature combobulate-highlight-feature-symbol)))
+                                   (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

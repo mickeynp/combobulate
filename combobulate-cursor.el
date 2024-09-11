@@ -30,6 +30,10 @@
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
 (require 'combobulate-setup)
+(require 'combobulate-manipulation)
+(require 'combobulate-envelope)
+(require 'combobulate-query)
+
 (defvar mc--default-cmds-to-run-once)
 
 
@@ -189,7 +193,7 @@ Overlays must be valid `combobulate-refactor' field overlays."
                               ;; temporarily.
                               (replacement-text
                                (cl-letf  (((symbol-function 'match-string)
-                                           (lambda (n &optional string)
+                                           (lambda (n &optional _string)
                                              ;; Subtract 1 because 0
                                              ;; refers to the whole
                                              ;; match
@@ -416,7 +420,7 @@ parent node. It is only used for messaging."
         ((equal arg '(16)) 'mark)
         (t 'before)))
 
-(defun combobulate-cursor-edit-query (arg)
+(defun combobulate-cursor-edit-query ()
   "Edit clusters of nodes by query.
 
 Uses the head of the ring `combobulate-query-ring' as the
@@ -425,7 +429,7 @@ query. If the ring is empty, then throw an error.
 By default, point is placed at the start of each match. When
 called with one prefix argument, place point at the end of the
 matches. With two prefix arguments, mark the node instead."
-  (interactive "P")
+  (interactive)
   (combobulate-query-ring--execute
    "Edit nodes matching this query?"
    "Placed cursors"
