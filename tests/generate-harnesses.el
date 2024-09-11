@@ -242,6 +242,21 @@
          (combobulate-kill-node-dwim))))
     :per-marker nil
     :reverse nil)
+   ;; Sequence navigation
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/sequence/*"
+    :collection-name "combobulate-navigate-sequence-previous"
+    :action-body '((combobulate-navigate-sequence-previous))
+    :per-marker nil
+    :reverse t)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/sequence/*"
+    :collection-name "combobulate-navigate-sequence-next"
+    :action-body '((combobulate-navigate-sequence-next))
+    :per-marker nil
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
