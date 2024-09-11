@@ -67,12 +67,12 @@
   "Edit nodes with multiple cursors..."
   ["Edit with multiple cursors"
    ["DWIM at Point"
-    ("c" "Sequence" combobulate-edit-sequence-dwim)
-    ("t" "Node Type" combobulate-edit-node-type-dwim)
-    ("x" "Node Text" combobulate-edit-node-by-text-dwim)
-    ("s" "Sibling" combobulate-edit-node-siblings-dwim)]
+    ("c" "Sequence" combobulate-cursor-edit-sequence-dwim)
+    ("t" "Node Type" combobulate-cursor-edit-node-type-dwim)
+    ("x" "Node Text" combobulate-cursor-edit-node-by-text-dwim)
+    ("s" "Sibling" combobulate-cursor-edit-node-siblings-dwim)]
    ["Query"
-    ("q" "By Query" combobulate-edit-query)]])
+    ("q" "By Query" combobulate-cursor-edit-query)]])
 
 (transient-define-prefix combobulate-envelop ()
   "Envelop node on or around point with a template"
@@ -97,14 +97,14 @@
     ("M-e" "Logical next" combobulate-navigate-logical-next :transient t)
     ("C-M-f" "Forward sexp" forward-sexp :transient t)
     ("C-M-b" "Backward sexp" backward-sexp :transient t)
+    ("M-p" "Previous sequent" combobulate-navigate-sequence-previous :transient t)
+    ("M-n" "Next sequent" combobulate-navigate-sequence-next :transient t)
     ("a" "Avy …" combobulate-avy)]
    ["Hierarchical"
     ("C-M-u" "Up into list" combobulate-navigate-up :transient t)
     ("C-M-d" "Down into list" combobulate-navigate-down :transient t)
     ("C-M-p" "Backward sibling" combobulate-navigate-previous :transient t)
-    ("C-M-n" "Forward sibling" combobulate-navigate-next :transient t)
-    ("M-p" "Previous sequent" combobulate-navigate-sequence-previous :transient t)
-    ("M-n" "Next sequent" combobulate-navigate-sequence-next :transient t)]
+    ("C-M-n" "Forward sibling" combobulate-navigate-next :transient t)]
    ["Querying"
     ("B" "Query Builder …" combobulate-query)
     ("x" "Xref …" combobulate-xref)

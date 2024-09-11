@@ -57,33 +57,33 @@
          (should (equal (sort stub/combobulate--mc-place-cursor #'>)
                         (sort (mapcar #'overlay-start (combobulate--with-test-overlays)) #'>)))))))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-sequence-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-cursor-edit-sequence-dwim ()
   :tags '(multiple-cursors manipulation)
-  (with-stubbed-mc #'combobulate-edit-sequence-dwim
+  (with-stubbed-mc #'combobulate-cursor-edit-sequence-dwim
                    tsx
                    tsx-ts-mode
                    "./fixtures/mc-edit/sequence.tsx"))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-node-by-text-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-cursor-edit-node-by-text-dwim ()
   :tags '(multiple-cursors manipulation)
   (combobulate-with-stubbed-proffer-choices (:choices '(0))
-    (with-stubbed-mc #'combobulate-edit-node-by-text-dwim
+    (with-stubbed-mc #'combobulate-cursor-edit-node-by-text-dwim
                      tsx
                      tsx-ts-mode
                      "./fixtures/mc-edit/identifiers-named-c.tsx")))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-node-siblings-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-cursor-edit-node-siblings-dwim ()
   :tags '(multiple-cursors manipulation)
   (combobulate-with-stubbed-proffer-choices (:choices '(0))
-    (with-stubbed-mc #'combobulate-edit-node-siblings-dwim
+    (with-stubbed-mc #'combobulate-cursor-edit-node-siblings-dwim
                      css
                      css-ts-mode
                      "./fixtures/mc-edit/property.css")))
 
-(ert-deftest combobulate-test-mc-combobulate-edit-node-type-dwim ()
+(ert-deftest combobulate-test-mc-combobulate-cursor-edit-node-type-dwim ()
   :tags '(multiple-cursors manipulation)
   (combobulate-with-stubbed-proffer-choices (:choices '(1))
-    (with-stubbed-mc #'combobulate-edit-node-type-dwim
+    (with-stubbed-mc #'combobulate-cursor-edit-node-type-dwim
                      python
                      python-ts-mode
                      "./fixtures/mc-edit/python-dict-values.py")))

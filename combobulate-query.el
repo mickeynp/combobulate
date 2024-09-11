@@ -766,13 +766,14 @@ buffer."
                  query nil nil nil)))
     ;; Search the query string for `@before', `@after', and `@mark' capture
     ;; groups. Raise an error if neither are present.
-    (unless (or (string-match-p "@before" query)
-                (string-match-p "@after" query)
-                (string-match-p "@mark" query))
-      (error "Please mark nodes with `@before', `@after', and/or `@mark' to determine cursor placement"))
+    (unless (and (not (eq combobulate-cursor-tool 'multiple-cursors))
+                 (or (string-match-p "@before" query)
+                     (string-match-p "@after" query)
+                     (string-match-p "@mark" query)))
+      (error "You are editing with multiple cursors. Please mark nodes with `@before', `@after', and/or `@mark' to determine cursor placement"))
     (if (>= (length nodes) combobulate-query-builder-edit-max-nodes)
         (error "Too many nodes to edit (%d)" (length nodes))
-      (combobulate-edit-nodes nodes))))
+      (combobulate-cursor-edit-nodes nodes))))
 
 (defun combobulate-query-builder-get-query ()
   "Get the current query from the query builder buffer."
@@ -1182,7 +1183,7 @@ the query fails to compile."
   (interactive)
   (setq treesit-font-lock-settings
         (seq-remove (lambda (setting) (seq-let [_ _ feature _] setting
-                                   (eq feature combobulate-highlight-feature-symbol)))
+                                        (eq feature combobulate-highlight-feature-symbol)))
                     treesit-font-lock-settings))
   (treesit-font-lock-recompute-features)
   (font-lock-flush)

@@ -68,17 +68,19 @@
     (define-key map (kbd "b") #'combobulate-xref-find-query-buffer-references)
     map))
 
-(declare-function combobulate-edit-sequence-dwim "combobulate-manipulation")
-(declare-function combobulate-edit-node-type-dwim "combobulate-manipulation")
-(declare-function combobulate-edit-node-by-text-dwim "combobulate-manipulation")
-(declare-function combobulate-edit-node-siblings-dwim "combobulate-manipulation")
+(declare-function combobulate-cursor-edit-sequence-dwim "combobulate-cursor")
+(declare-function combobulate-cursor-edit-node-type-dwim "combobulate-cursor")
+(declare-function combobulate-cursor-edit-node-by-text-dwim "combobulate-cursor")
+(declare-function combobulate-cursor-edit-node-siblings-dwim "combobulate-cursor")
+(declare-function combobulate-cursor-edit-query "combobulate-cursor")
 
-(defvar combobulate-edit-key-map
+(defvar combobulate-cursor-edit-key-map
   (let ((map (make-sparse-keymap "Combobulate Edit")))
-    (define-key map (kbd "c") #'combobulate-edit-sequence-dwim)
-    (define-key map (kbd "t") #'combobulate-edit-node-type-dwim)
-    (define-key map (kbd "x") #'combobulate-edit-node-by-text-dwim)
-    (define-key map (kbd "s") #'combobulate-edit-node-siblings-dwim)
+    (define-key map (kbd "c") #'combobulate-cursor-edit-sequence-dwim)
+    (define-key map (kbd "t") #'combobulate-cursor-edit-node-type-dwim)
+    (define-key map (kbd "x") #'combobulate-cursor-edit-node-by-text-dwim)
+    (define-key map (kbd "s") #'combobulate-cursor-edit-node-siblings-dwim)
+    (define-key map (kbd "q") #'combobulate-cursor-edit-query)
     map))
 
 (declare-function combobulate-avy-jump "combobulate-contrib")
@@ -90,7 +92,7 @@
     (define-key map (kbd "j") #'combobulate-avy-jump)
     (define-key map (kbd "o") #'combobulate)
     (define-key map (kbd "c") #'combobulate-clone-node-dwim)
-    (define-key map (kbd "t") combobulate-edit-key-map)
+    (define-key map (kbd "t") combobulate-cursor-edit-key-map)
     (define-key map (kbd "x") combobulate-xref-key-map)
     (define-key map (kbd "h") combobulate-highlight-key-map)
     (define-key map (kbd "B") combobulate-query-key-map)

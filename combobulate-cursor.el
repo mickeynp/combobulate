@@ -64,12 +64,12 @@
   "Enable multiple cursors."
   ;; abysmal MC hack to prevent MC from triggering on the damned
   ;; command that started the whole thing.
-  (dolist (ignored-command '(combobulate-edit-sequence-dwim
-                             combobulate-edit-node-type-dwim
-                             combobulate-edit-node-siblings-dwim
-                             combobulate-edit-node-by-text-dwim
+  (dolist (ignored-command '(combobulate-cursor-edit-sequence-dwim
+                             combobulate-cursor-edit-node-type-dwim
+                             combobulate-cursor-edit-node-siblings-dwim
+                             combobulate-cursor-edit-node-by-text-dwim
                              combobulate-query-builder-edit-nodes
-                             combobulate-edit-query))
+                             combobulate-cursor-edit-query))
     (add-to-list 'mc--default-cmds-to-run-once ignored-command))
   (mc/maybe-multiple-cursors-mode))
 
@@ -157,9 +157,9 @@ Overlays must be valid `combobulate-refactor' field overlays."
           (mapc (lambda (ov)
                   (when (overlay-get ov 'combobulate-refactor-field-enabled)
                     ;; Essential. There's a million things in here
-                    ;; that throw errors left and right that'll
-                    ;; trigger `post-command-hook' to eject us from
-                    ;; it, preventing us from updating again.
+                    ;; that throw errors left and right that'll cause
+                    ;; `post-command-hook' to eject us from future
+                    ;; updates if it gets a signal.
                     (ignore-errors
                       (combobulate--refactor-update-field
                        ov tag
@@ -218,9 +218,9 @@ Overlays must be valid `combobulate-refactor' field overlays."
                             ;; is set to match backslash groups and
                             ;; they are syntactically simple: the
                             ;; first character is a backslash and the
-                            ;; rest is a number. We can just extract
-                            ;; the number and use it to index into the
-                            ;; overlays.
+                            ;; rest is a number. Extracting the number
+                            ;; is as simple as the substring without
+                            ;; the backslash.
                             (if-let (matched-ov
                                      (let ((num (string-to-number (substring sub 1))))
                                        ;; The number 0 is special. In
@@ -278,7 +278,10 @@ Overlays must be valid `combobulate-refactor' field overlays."
 
 (defun combobulate-cursor-toggle-field (&optional pt)
   "Enable or disable the current field in the cursor editing prompt."
-  (interactive "d")
+  ;; NOTE: do not use a letter here to capture the point as it must be
+  ;; in the context of the window's point and not the minibuffer where
+  ;; this is typically called from!
+  (interactive)
   (with-current-buffer combobulate-cursor--active-buffer
     (combobulate-refactor (:id combobulate-cursor--refactor-id)
       (toggle-field (or pt (window-point (get-buffer-window combobulate-cursor--active-buffer)))
@@ -338,61 +341,244 @@ General Key Bindings:
 
 
 
-(defun combobulate-cursor-edit-nodes (nodes &optional action ctx-node)
-  "Edit NODES with multiple cursors placed at ACTION.
+(defun combobulate-cursor-edit-nodes (nodes &optional default-action ctx-node)
+  "Interactively edit NODES optionally placed at DEFAULT-ACTION.
 
-NODES is a list of nodes to edit.
+NODES is a list of nodes to edit, or a list of cons cells where the car
+is the action to take and the cdr is the node to edit. Note that if
+`combobulate-cursor-tool' is set to `combobulate', the action is
+disregarded.
 
-ACTION is the action to take. Depending on the value of
-`combobulate-cursor-tool', this can be either `combobulate' or
-`multiple-cursors'. If it is `combobulate', the nodes are edited with
-Combobulate's refactoring system. If the value is `multiple-cursors',
-the nodes are edited with multiple cursors.
-
-For `multiple-cursors', ACTION must be `before', `after', or `mark'. For
-`combobulate', the value is disregarded.
+DEFAULT-ACTION is the action to take if NODES is a list of nodes. For
+`multiple-cursors', the placement action (or DEFAULT-ACTION if the list
+of NODES is not a list of cons cells) must be `before', `after', or
+`mark'. For `combobulate', the value is disregarded.
 
 CTX-NODE is the node that was used to generate NODES, such as a
 parent node. It is only used for messaging."
-  (cond
-   ((null nodes) (error "There are no editable nodes."))
-   ((eq combobulate-cursor-tool 'combobulate)
-    (let ((proxy-nodes (combobulate-proxy-node-make-from-nodes nodes))
+  ;; Determine if we are dealing with a list of nodes or list of cons
+  ;; cells.
+  (let ((action-nodes
+         (if (and (listp nodes)
+                  (not (consp (car nodes))))
+             (mapcar (lambda (node) (cons default-action node)) nodes)
+           ;; action-nodes is a list of cons cells. So NODES must then
+           ;; be turned into a flat list of nodes.
+           (prog1 nodes
+             (setq nodes (mapcar #'cdr nodes))))))
+    (cond ((= (length nodes) 0)
+           (combobulate-message "There are zero editable nodes."))
+          (t (combobulate-message
+              (concat "Editing " (combobulate-tally-nodes nodes t)
+                      (and ctx-node (format " in `%s'"
+                                            (propertize
+                                             (combobulate-pretty-print-node ctx-node)
+                                             'face 'combobulate-active-indicator-face)))))))
+    (cond
+     ((null nodes) (error "There are no editable nodes."))
+     ((eq combobulate-cursor-tool 'combobulate)
+      (let ((proxy-nodes (combobulate-proxy-node-make-from-nodes nodes))
+            (combobulate-cursor--refactor-id (combobulate-refactor-setup))
+            (combobulate-cursor--active-buffer (current-buffer)))
+        (combobulate-refactor (:id combobulate-cursor--refactor-id)
+          ;; Ditch the proxy nodes' text in the buffer and commit the
+          ;; deletions immediately. The fields we insert will be the new
+          ;; values.
+          (mapc #'mark-node-deleted proxy-nodes)
+          (commit)
+          ;; Create new fields with the new values in the same places
+          ;; as the old ones.
+          (mapc (lambda (node)
+                  (mark-field (combobulate-node-start node)
+                              combobulate-cursor--field-tag
+                              (combobulate-node-text node)))
+                proxy-nodes)
+          (save-match-data
+            (combobulate-envelope-prompt
+             (substitute-command-keys "Editing fields. Use \\`C-h' for help.")
+             nil
+             combobulate-cursor--active-buffer
+             (combobulate-cursor--update-function
+              combobulate-cursor--active-buffer
+              combobulate-cursor--field-tag)
+             combobulate-cursor-substitute-default
+             combobulate-cursor-key-map))
+          (commit))))
+     ((eq combobulate-cursor-tool 'multiple-cursors)
+      (combobulate--mc-place-nodes action-nodes))
+     (t (error "Unknown cursor tool: %s" combobulate-cursor-tool)))))
 
-          (combobulate-cursor--refactor-id (combobulate-refactor-setup))
-          (combobulate-cursor--active-buffer (current-buffer)))
-      (combobulate-refactor (:id combobulate-cursor--refactor-id)
-        ;; Ditch the proxy nodes' text in the buffer and commit the
-        ;; deletions immediately. The fields we insert will be the new
-        ;; values.
-        (mapc #'mark-node-deleted proxy-nodes)
-        (commit)
-        ;; Create new fields with the new values in the same places
-        ;; as the old ones.
-        (mapc (lambda (node)
-                (mark-field (combobulate-node-start node)
-                            combobulate-cursor--field-tag
-                            (combobulate-node-text node)))
-              proxy-nodes)
-        (save-match-data
-          (combobulate-envelope-prompt
-           (substitute-command-keys "Editing fields. Use \\`C-h' for help.")
-           nil
-           combobulate-cursor--active-buffer
-           (combobulate-cursor--update-function
-            combobulate-cursor--active-buffer
-            combobulate-cursor--field-tag)
-           combobulate-cursor-substitute-default
-           combobulate-cursor-key-map))
-        (commit))))
-   ((eq combobulate-cursor-tool 'multiple-cursors)
-    (combobulate--mc-place-nodes (mapcar (lambda (node) (cons action node)) nodes))
-    (combobulate-message (concat "Editing " (combobulate-tally-nodes nodes t)
-                                 (and ctx-node (format " in `%s'"
-                                                       (propertize
-                                                        (combobulate-pretty-print-node ctx-node)
-                                                        'face 'combobulate-active-indicator-face))))))
-   (t (error "Unknown cursor tool: %s" combobulate-cursor-tool))))
+
+
+(defun combobulate-cursor-edit-node-determine-action (arg)
+  "Determine which action ARG should map to."
+  (cond ((equal arg '(4)) 'after)
+        ((equal arg '(16)) 'mark)
+        (t 'before)))
+
+(defun combobulate-cursor-edit-query (arg)
+  "Edit clusters of nodes by query.
+
+Uses the head of the ring `combobulate-query-ring' as the
+query. If the ring is empty, then throw an error.
+
+By default, point is placed at the start of each match. When
+called with one prefix argument, place point at the end of the
+matches. With two prefix arguments, mark the node instead."
+  (interactive "P")
+  (combobulate-query-ring--execute
+   "Edit nodes matching this query?"
+   "Placed cursors"
+   (lambda (matches _query)
+     (combobulate-cursor-edit-nodes matches))))
+
+(defun combobulate-cursor-edit-node-siblings-dwim (arg)
+  "Edit all siblings of the current node.
+
+Combobulate will use its definition of siblings as per
+\\[combobulate-navigate-next] and
+\\[combobulate-navigate-previous]."
+  (interactive "P")
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
+    (let ((node (combobulate--get-nearest-navigable-node)))
+      (combobulate-cursor-edit-nodes (combobulate-nav-get-siblings node)
+                                     (combobulate-cursor-edit-node-determine-action arg)
+                                     (or (car-safe (combobulate-nav-get-parents node t))
+                                         node)))))
+
+(defun combobulate-cursor-edit-sequence-dwim (arg)
+  "Edit a sequence of nodes.
+
+This looks for clusters of nodes to edit in
+`procedures-sequence'.
+
+If you specify a prefix ARG, then the points are placed at the
+end of each edited node."
+  (interactive "P")
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sequence))
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-cursor-edit-sequence
+         node
+         (combobulate-cursor-edit-node-determine-action arg))
+      (error "There is no sequence of nodes here"))))
+
+
+(defun combobulate-cursor-edit-node-type-dwim (arg)
+  "Edit nodes of the same type by node locus."
+  (interactive "P")
+  (with-navigation-nodes (:procedures (combobulate-read procedures-default))
+    (if-let ((node (combobulate--get-nearest-navigable-node)))
+        (combobulate-cursor-edit-identical-nodes
+         node (combobulate-cursor-edit-node-determine-action arg)
+         (lambda (tree-node) (and (equal (combobulate-node-type node)
+                                    (combobulate-node-type tree-node))
+                             (equal (combobulate-node-field-name node)
+                                    (combobulate-node-field-name tree-node)))))
+      (error "Cannot find any editable nodes here"))))
+
+(defun combobulate-cursor-edit-node-by-text-dwim (arg)
+  "Edit nodes with the same text by node locus.
+
+This looks for nodes of of any type found in
+`combobulate-navigable-nodes' that have the same text as
+the node at point."
+  (interactive "P")
+  (if-let ((node (combobulate-node-at-point nil t)))
+      (combobulate-cursor-edit-identical-nodes
+       node (combobulate-cursor-edit-node-determine-action arg)
+       (lambda (tree-node) (equal (combobulate-node-text tree-node)
+                             (combobulate-node-text node))))
+    (error "Cannot find any editable nodes here")))
+
+(defun combobulate-cursor-edit-identical-nodes (node action &optional match-fn)
+  "Edit nodes identical to NODE if they match MATCH-FN.
+
+The locus of editable nodes is determined by NODE's parents and
+is selectable.
+
+MATCH-FN takes one argument, a node, and should return non-nil if it is
+a match."
+  (let ((matches)
+        ;; default to 1 "match" as there's no point in creating
+        ;; multiple cursors when there's just one match
+        (ct 1)
+        (grouped-matches))
+    (dolist (start-node (combobulate-get-parents node))
+      (let ((known-ranges (make-hash-table :test #'equal :size 1024)))
+        (setq matches (flatten-tree (combobulate-induce-sparse-tree
+                                     start-node
+                                     (lambda (tree-node)
+                                       (prog1
+                                           (and (funcall match-fn tree-node)
+                                                (not (gethash (combobulate-node-range tree-node) known-ranges nil)))
+                                         (puthash (combobulate-node-range tree-node) t known-ranges)))))))
+      ;; this catches parent nodes that do not add more, new, nodes to
+      ;; the editing locus by filtering them out.
+      (when (> (length matches) ct)
+        (setq ct (length matches))
+        (push (cons start-node matches) grouped-matches)))
+    (combobulate-refactor ()
+      (cl-flet ((current-matches (n) (cdr (assoc (combobulate-proxy-node-to-real-node n) grouped-matches))))
+        (let* ((chosen-node (combobulate-proxy-node-to-real-node
+                             (combobulate-proffer-choices
+                              (reverse (mapcar 'car grouped-matches))
+                              (lambda-slots (current-node proxy-nodes refactor-id)
+                                (combobulate-refactor (:id refactor-id)
+                                  (rollback)
+                                  (mark-node-highlighted current-node)
+                                  (princ (format "Editing %s in %s%s\n"
+                                                 (combobulate-pretty-print-node-type current-node)
+                                                 (combobulate-proxy-node-to-real-node current-node)
+                                                 (and (combobulate-node-field-name current-node)
+                                                      (format " (%s)"
+                                                              (combobulate-node-field-name current-node)))))
+                                  ;; rollback the outer
+                                  ;; `combobulate-refactor' call so
+                                  ;; the node cursors we place below
+                                  ;; are properly erased.
+                                  ;; place a fake cursor at every
+                                  ;; node to indicate where the
+                                  ;; matching nodes are.
+                                  (mapc #'mark-node-cursor (current-matches current-node))
+                                  ;; indicate the locus of editing
+                                  ;; by highlighting the entire node
+                                  ;; boundary.
+                                  (mark-node-highlighted current-node)))
+                              :flash-node t
+                              :unique-only nil
+                              :prompt-description
+                              (lambda-slots (current-node proxy-nodes)
+                                (concat
+                                 (propertize
+                                  (format "[%d/%d]" (length (current-matches current-node)) ct)
+                                  'face 'shadow)
+                                 " "
+                                 (format "Edit `%s' in"
+
+                                         (propertize (combobulate-pretty-print-node-type node)
+                                                     'face 'combobulate-tree-branch-face)))))))
+               (matches (cdr (assoc chosen-node grouped-matches))))
+          (rollback)
+          (combobulate-cursor-edit-nodes matches action chosen-node))))))
+
+(defun combobulate-cursor-edit-sequence (node action)
+  "Find the sequence, if there is one, NODE belongs to and ACTION them."
+  (pcase-let (((cl-struct combobulate-procedure-result
+                          (selected-nodes selected-nodes)
+                          (parent-node parent-node))
+               (or (car-safe (combobulate-procedure-start node))
+                   (error "No sequence to edit."))))
+    (combobulate-cursor-edit-nodes
+     ;; Remove `@discard' matches.
+     (mapcar 'cdr (seq-remove
+                   ;; remove `@discard' matches. Tree-sitter does not
+                   ;; return tags with `@', but Combobulate query
+                   ;; search does.
+                   (lambda (m) (or (equal (car m) '@discard)
+                              (equal (car m) 'discard)))
+                   selected-nodes))
+     action
+     parent-node)))
 
 (provide 'combobulate-cursor)
 ;;; combobulate-cursor.el ends here
