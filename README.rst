@@ -33,7 +33,7 @@ If you want a guided tour and a deeper understanding of why Combobulate is built
 - `Combobulate: Intuitive, Structured Navigation with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-intuitive-structured-navigation-treesitter>`__, which talks about the challenges around building sensible and intuitive navigation.
 - `Combobulate: Editing and Searching with the new Query Builder <https://www.masteringemacs.org/article/combobulate-editing-searching-new-query-builder>`__, demonstrating how Combobulate's query builder and search works.
 - `Combobulate: Interactive Node Editing with Tree-Sitter <https://www.masteringemacs.org/article/combobulate-interactive-node-editing-treesitter>`__, where I talk about the *carousel* interface and how it makes it possible to preview complex edits to your buffer before accepting them.
-
+- `Combobulate: Bulk Editing Tree-Sitter Nodes with Multiple Cursors <https://www.masteringemacs.org/article/combobulate-bulk-editing-treesitter-nodes-multiple-cursors>`__, where I explain how bulk editing with tools like Combobulate's *field editor* and *multiple cursors* work.
 
 What does Combobulate do exactly?
 ---------------------------------
