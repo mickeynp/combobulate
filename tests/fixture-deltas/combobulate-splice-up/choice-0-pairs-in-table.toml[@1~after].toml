@@ -1,0 +1,8 @@
+# -*- eval: (combobulate-test-fixture-mode t); combobulate-test-point-overlays: ((1 outline 139)); -*-
+
+blah = 1
+
+some.other = "bar"
+array_here = [1,2,3]
+[another]
+blah = 1.234

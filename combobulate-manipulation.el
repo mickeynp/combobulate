@@ -32,6 +32,7 @@
 (require 'combobulate-misc)
 (require 'combobulate-interface)
 (require 'combobulate-procedure)
+(require 'combobulate-setup)
 (require 'eieio)
 (require 'map)
 ;;; for python-specific indent stuff
@@ -39,8 +40,6 @@
 
 (defvar combobulate-query-ring)
 
-(declare-function combobulate--mc-place-nodes "combobulate-contrib")
-(declare-function combobulate--mc-edit-nodes "combobulate-contrib")
 (declare-function combobulate-envelope-expand-instructions "combobulate-envelope")
 (declare-function combobulate-display-draw-node-tree "combobulate-display")
 (declare-function combobulate-query-build-nested "combobulate-query")
@@ -48,6 +47,7 @@
 (declare-function combobulate-query-ring-current-query "combobulate-query")
 (declare-function combobulate-query-ring--execute "combobulate-query")
 (defvar combobulate-envelope--undo-on-quit)
+(defvar combobulate-procedure-apply-shared-discard-rules)
 (defvar combobulate-key-map)
 
 (defun combobulate--refactor-insert-copied-values (values)
@@ -72,7 +72,7 @@
           (goto-char pt))))
     (back-to-indentation)
     (setq after-marker (point-marker))
-    (when combobulate-manipulation-indent-after-edit
+    (when (combobulate-read indent-after-edit)
       (indent-region start-marker (save-excursion
                                     (goto-char after-marker)
                                     (end-of-line)
@@ -187,6 +187,8 @@
                     (add-marker (combobulate--refactor-mark-field
                                  pt tag (or text (symbol-name tag))
                                  transformer-fn)))
+                  (toggle-field (pt tag)
+                    (combobulate--refactor-toggle-field pt tag))
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
@@ -218,8 +220,6 @@
                              (format "Uncommitted changes in session `%s'" ,--session))
                    (combobulate-refactor-delete-session ,--session))))
            (t (rollback) (signal (car err) (cdr err))))))))
-
-
 (defun combobulate-tally-nodes (nodes &optional skip-label)
   "Groups NODES into labels (if any) and their types and tallies them.
 
@@ -242,196 +242,11 @@ first; followed by the node type of each grouped label."
                      "; "))
     "zero"))
 
-(defun combobulate--edit-node-determine-action (arg)
-  "Determine which action ARG should map to."
-  (cond ((equal arg '(4)) 'after)
-        ((equal arg '(16)) 'mark)
-        (t 'before)))
-
-(defun combobulate-edit-query (arg)
-  "Edit clusters of nodes by query.
-
-Uses the head of the ring `combobulate-query-ring' as the
-query. If the ring is empty, then throw an error.
-
-By default, point is placed at the start of each match. When
-called with one prefix argument, place point at the end of the
-matches. With two prefix arguments, mark the node instead."
-  (interactive "P")
-  (combobulate-query-ring--execute
-   "Edit nodes matching this query?"
-   "Placed cursors"
-   (lambda (matches _query)
-     (combobulate--mc-place-nodes matches (combobulate--edit-node-determine-action arg)))))
-
-(defun combobulate-edit-node-siblings-dwim (arg)
-  "Edit all siblings of the current node.
-
-Combobulate will use its definition of siblings as per
-\\[combobulate-navigate-next] and
-\\[combobulate-navigate-previous]."
-  (interactive "P")
-  (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-    (let ((node (combobulate--get-nearest-navigable-node)))
-      (combobulate--mc-edit-nodes (combobulate-nav-get-siblings node)
-                                  (combobulate--edit-node-determine-action arg)
-                                  (or (car-safe (combobulate-nav-get-parents node t))
-                                      node)))))
-
-(defun combobulate-edit-cluster-dwim (arg)
-  "Precisely edit targeted clusters of nodes.
-
-This looks for clusters of nodes to edit in
-`combobulate-manipulation-edit-procedures'.
-
-If you specify a prefix ARG, then the points are placed at the
-end of each edited node."
-  (interactive "P")
-  (with-navigation-nodes (:procedures combobulate-manipulation-edit-procedures)
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-cluster
-         node
-         (combobulate--edit-node-determine-action arg))
-      (error "Cannot find any editable clusters here"))))
-
-
-(defun combobulate-edit-node-type-dwim (arg)
-  "Edit nodes of the same type by node locus.
-
-This looks for nodes of any type found in
-`combobulate-navigation-default-nodes'."
-  (interactive "P")
-  (with-navigation-nodes (:procedures combobulate-navigation-default-procedures)
-    (if-let ((node (combobulate--get-nearest-navigable-node)))
-        (combobulate-edit-identical-nodes
-         node (combobulate--edit-node-determine-action arg)
-         (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                         (combobulate-node-type tree-node))
-                                  (equal (combobulate-node-field-name node)
-                                         (combobulate-node-field-name tree-node)))))
-      (error "Cannot find any editable nodes here"))))
-
-(defun combobulate-edit-node-by-text-dwim (arg)
-  "Edit nodes with the same text by node locus.
-
-This looks for nodes of of any type found in
-`combobulate-navigation-default-nodes' that have the same text as
-the node at point."
-  (interactive "P")
-  (if-let ((node (combobulate-node-at-point nil t)))
-      (combobulate-edit-identical-nodes
-       node (combobulate--edit-node-determine-action arg)
-       (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                                  (combobulate-node-text node))))
-    (error "Cannot find any editable nodes here")))
-
-(defun combobulate-edit-identical-nodes (node action &optional match-fn)
-  "Edit nodes identical to NODE if they match MATCH-FN.
-
-The locus of editable nodes is determined by NODE's parents and
-is selectable.
-
-MATCH-FN takes one argument, a node, and should return non-nil if it is
-a match."
-  (let ((matches)
-        ;; default to 1 "match" as there's no point in creating
-        ;; multiple cursors when there's just one match
-        (ct 1)
-        (grouped-matches))
-    (dolist (start-node (combobulate-get-parents node))
-      (let ((known-ranges (make-hash-table :test #'equal :size 1024)))
-        (setq matches (flatten-tree (combobulate-induce-sparse-tree
-                                     start-node
-                                     (lambda (tree-node)
-                                       (prog1
-                                           (and (funcall match-fn tree-node)
-                                                (not (gethash (combobulate-node-range tree-node) known-ranges nil)))
-                                         (puthash (combobulate-node-range tree-node) t known-ranges)))))))
-      ;; this catches parent nodes that do not add more, new, nodes to
-      ;; the editing locus by filtering them out.
-      (when (> (length matches) ct)
-        (setq ct (length matches))
-        (push (cons start-node matches) grouped-matches)))
-    (combobulate-refactor ()
-      (let* ((chosen-node (combobulate-proxy-node-to-real-node
-                           (combobulate-proffer-choices
-                            (reverse (mapcar 'car grouped-matches))
-                            (lambda-slots (current-node refactor-id)
-                              (combobulate-refactor (:id refactor-id)
-                                (rollback)
-                                (mark-node-highlighted current-node)
-                                (princ (format "Editing %s in %s%s\n"
-                                               (combobulate-pretty-print-node-type current-node)
-                                               (combobulate-proxy-node-to-real-node current-node)
-                                               (and (combobulate-node-field-name current-node)
-                                                    (format " (%s)"
-                                                            (combobulate-node-field-name current-node)))))
-                                ;; rollback the outer
-                                ;; `combobulate-refactor' call so
-                                ;; the node cursors we place below
-                                ;; are properly erased.
-                                ;; place a fake cursor at every
-                                ;; node to indicate where the
-                                ;; matching nodes are.
-                                (mapc #'mark-node-cursor
-                                      (cdr (assoc (combobulate-proxy-node-to-real-node node)
-                                                  grouped-matches)))
-                                ;; indicate the locus of editing
-                                ;; by highlighting the entire node
-                                ;; boundary.
-                                (mark-node-highlighted current-node)))
-                            :unique-only nil
-                            :prompt-description
-                            (format "Edit %s in"
-                                    (propertize (combobulate-pretty-print-node-type node)
-                                                'face 'combobulate-tree-branch-face)))))
-             (matches (cdr (assoc chosen-node grouped-matches))))
-        (rollback)
-        (combobulate--mc-edit-nodes matches action chosen-node)))))
-
-(defun combobulate-edit-nodes (placement-nodes)
-  "Edit PLACEMENT-NODES.
-
-PLACEMENT-NODES is a list of cons cells. The car of each cell is
-the action, or the place to put the point or fake cursor. The cdr
-is the node itself.
-
-The action can be one of the following:
-
-- `before': place the point before the node.
-- `after': place the point after the node.
-- `mark': mark the node."
-  (let ((matches (combobulate--mc-place-nodes placement-nodes)))
-    (cond ((= (length matches) 0)
-           (combobulate-message "There are zero nodes available to edit."))
-          (t (combobulate-message
-              (concat "Editing " (combobulate-tally-nodes matches t)))))))
-
-
-(defun combobulate-edit-cluster (node action)
-  "Edit CLUSTER of nodes at, or around, NODE."
-  (pcase-let (((cl-struct combobulate-procedure-result
-                          (selected-nodes selected-nodes)
-                          (parent-node parent-node))
-               (or (car-safe (combobulate-procedure-start node))
-                   (error "No cluster to edit."))))
-    (combobulate--mc-edit-nodes
-     ;; Remove `@discard' matches.
-     (mapcar 'cdr (seq-remove
-                   ;; remove `@discard' matches. Tree-sitter does not
-                   ;; return tags with `@', but Combobulate query
-                   ;; search does.
-                   (lambda (m) (or (equal (car m) '@discard)
-                                   (equal (car m) 'discard)))
-                   selected-nodes))
-     action
-     parent-node)))
-
 (defun combobulate-splice-parent (&optional arg)
   "Vanishes the node at point and attempts to preserve its children."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node)
                           '(before after around self)))))
 
@@ -443,7 +258,7 @@ The action can be one of the following:
   "Capture a transposable node, either forward or BACKWARD."
   ;; do not set `:nodes' here to allow this function to work with any
   ;; node type group set in the caller.
-  (with-navigation-nodes (:procedures combobulate-navigation-sexp-procedures
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sexp)
                                       :backward backward :skip-prefix t)
     (combobulate-forward-sexp-function-1 backward)))
 
@@ -498,12 +313,39 @@ If there are no legitimate sexp nodes around point, fall back to
 						 ".")))))
 		 (point)))))
 
+(defun combobulate--consume-node (node &optional balance)
+  "Consume NODE in the current buffer.
 
+If BALANCE is non-nil, more than the requested NODE may be consumeed
+also (and appended to the final string, including any whitespace
+between NODE and the balancing node whitespace) if consuming NODE
+results in one or more `ERROR' nodes appearing in the tree.
 
-(defun combobulate--kill-node (node)
-  "Kill NODE in the current buffer."
-  (and node (kill-region (combobulate-node-start node)
-                         (combobulate-node-end node))))
+If consuming the balancing node leaves the tree in an error state,
+then that consume is undone and only the first consume is kept."
+  (let ((num-errors (length (combobulate-get-error-nodes)))
+        (start) (end)
+        (node-texts))
+    (save-excursion
+      ;; use point as the start and not the node so we capture the
+      ;; whitespace also.
+      (setq start (point)
+            end (combobulate-node-end node))
+      (push (delete-and-extract-region start end) node-texts)
+      (when (and balance (combobulate-get-error-nodes))
+        (push (let ((text))
+                (combobulate-with-change-group
+                  (setq text (delete-and-extract-region
+                              (point)
+                              (save-excursion
+                                (combobulate-skip-whitespace-forward t)
+                                (combobulate-node-end (combobulate-node-at-point)))))
+                  (when (> (length (combobulate-get-error-nodes)) num-errors)
+                    (cancel-changes)
+                    (setq text nil)))
+                text)
+              node-texts)))
+    (string-join (nreverse node-texts) "")))
 
 (defun combobulate--kill-nodes (nodes)
   "Kill between the smallest and greatest range of NODES."
@@ -709,7 +551,7 @@ after NODE-OR-TEXT."
              ;; all, instances.
              (save-excursion
                (combobulate--goto-node node-or-text t)
-               (when-let ((node-after (condition-case err
+               (when-let ((node-after (condition-case nil
                                           (combobulate-node-on (point) (1+ (point)) nil nil)
                                         (error nil))))
                  (cond
@@ -717,7 +559,7 @@ after NODE-OR-TEXT."
                   ((combobulate-node-named-p node-after) "")
                   ((and (combobulate-node-anonymous-p node-after)
                         (member (combobulate-node-text node-after)
-                                combobulate-manipulation-plausible-separators))
+                                (combobulate-read plausible-separators)))
                    (combobulate-node-text node-after))
                   (t "")))))
             (node-col (save-excursion
@@ -815,13 +657,24 @@ the deleted node are removed."
 
 The exact node that is killed will depend on the location of
 point relative to the nodes in
-`combobulate-navigation-default-nodes'."
+`combobulate-navigable-nodes'."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
-      (when-let ((node (combobulate-nav-get-self-sibling (combobulate--get-nearest-navigable-node))))
-        (combobulate-message "Killed" node)
-        (combobulate--kill-node node)))))
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
+      (when-let* ((nearest (save-excursion
+                             (combobulate-skip-whitespace-forward t)
+                             (combobulate--get-nearest-navigable-node)))
+                  (node (combobulate-proxy-node-make-from-nodes
+                         (or (combobulate-nav-get-self-sibling nearest)
+                             nearest))))
+        ;; prevent killing nodes before point; that'd be weird.
+        (if (combobulate-node-on-or-after-point-p node)
+            (progn (let ((text (combobulate--consume-node node t)))
+                     (if (eq last-command 'combobulate-kill-node-dwim)
+                         (kill-append text nil)
+                       (kill-new text)))
+                   (combobulate-message "Killed node" node))
+          (error "No node to kill"))))))
 
 (defvar-keymap combobulate-proffer-map
   :parent nil
@@ -848,6 +701,9 @@ the current choice and exit."
     (combobulate-refactor (:id refactor-id)
       (mark-node-highlighted current-node))))
 
+
+(defvar combobulate-proffer-after-action-hook nil
+  "Hook to run after an action is taken in `combobulate-proffer-choices'.")
 
 (cl-defun combobulate-proffer-choices (nodes action-fn &key
                                              (first-choice nil)
@@ -1011,7 +867,10 @@ accepts or cancels the proffer. "
                             (substitute-command-keys
                              (format "%s %s`%s': `%s' or \\`S-TAB' to cycle%s; \\`C-g' quits; rest accepts.%s"
                                      display-indicator
-                                     (concat prompt-description " ")
+                                     (concat (cond ((stringp prompt-description) prompt-description)
+                                                   ((functionp prompt-description) (funcall prompt-description proffer-action))
+                                                   (t ""))
+                                             " ")
                                      ;; (propertize " → " 'face 'shadow)
                                      (propertize (combobulate-pretty-print-node current-node) 'face
                                                  'combobulate-tree-highlighted-node-face)
@@ -1041,6 +900,7 @@ accepts or cancels the proffer. "
                       (if (or (= (length proxy-nodes) 1) first-choice)
                           (progn (refactor-action accept-action)
                                  (setq state 'accept))
+                        (run-hooks 'combobulate-proffer-after-action-hook)
                         (setq result
                               (condition-case nil
                                   (lookup-key
@@ -1076,6 +936,7 @@ accepts or cancels the proffer. "
                                 ;; machine below.
                                 (quit 'cancel)
                                 (t (rollback) 'cancel)))
+                        (run-hooks 'combobulate-proffer-after-action-hook)
                         (and after-switch-fn (funcall after-switch-fn))
                         (pcase result
                           ('prev
@@ -1100,9 +961,10 @@ accepts or cancels the proffer. "
                            (refactor-action cancel-action)
                            (keyboard-quit))
                           ;; handle numeric selection `1' to `9'
-                          ((and (pred (numberp)) (pred (lambda (n) (and (>= n 1)
-                                                                        (<= n 9)
-                                                                        (<= n (length proxy-nodes)))))
+                          ((and (pred (numberp))
+                                (pred (lambda (n) (and (>= n 1)
+                                                  (<= n 9)
+                                                  (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1117,7 +979,8 @@ accepts or cancels the proffer. "
                            (when (length> raw-event 0)
                              (push (aref raw-event 0) unread-command-events))
                            (refactor-action accept-action)
-                           (setq state 'accept)))))))
+                           (setq state 'accept)))
+                        (run-hooks 'combobulate-proffer-after-action-hook)))))
                 (when change-group
                   (cancel-change-group change-group)))
               (activate-change-group change-group))))
@@ -1139,7 +1002,7 @@ accepts or cancels the proffer. "
   "Clone node at point ARG times."
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (when-let ((node (combobulate-proffer-choices
                         (seq-sort #'combobulate-node-larger-than-node-p
                                   (combobulate--get-all-navigable-nodes-at-point))
@@ -1163,7 +1026,7 @@ accepts or cancels the proffer. "
 
 The exact node that is marked will depend on the location of
 point relative to the nodes in
-`combobulate-navigation-default-nodes'."
+`combobulate-navigable-nodes'."
   (interactive "^p")
   (with-argument-repetition arg
     ;; if the mark's ahead of point then we're at the beginning of the
@@ -1182,7 +1045,7 @@ point relative to the nodes in
 
 The exact node that is marked will depend on the location of
 point relative to the nodes in
-`combobulate-navigation-default-nodes'.
+`combobulate-navigable-nodes'.
 
 If BEGINNING-OF-LINE is non-nil, then the marked node has its point and
 mark extended, if possible, to the whole line.
@@ -1191,86 +1054,87 @@ Setting FIRST-CHOICE to non-nil disables proffered choices if there is
 more than one."
   (interactive "^p")
   (with-argument-repetition arg
-    ;; if the mark's ahead of point then we're at the beginning of the
-    ;; region; if so, swap places.
-    (when (and mark-active (> (point) (mark)))
-      (exchange-point-and-mark))
-    (let ((nodes (cons (combobulate--get-nearest-navigable-node)
-                       (combobulate-nav-get-parents
-                        (combobulate-node-at-point)))))
-      ;; maybe mark the thing at point first even though it may (or may
-      ;; not) match the extents of a node.
-      ;;
-      ;; Because we shift point around all the time, we don't want the
-      ;; `thing-at-point' machinery to pick up stray "things" at the
-      ;; edges of our region; that would be confusing. So only apply
-      ;; it if we don't have a region (i.e., the first time we run
-      ;; this command)
-      (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
-        ;; NOTE: this may need refinement over time; for now we
-        ;; hardcode the `:type' to be the symbol name of the thing
-        ;; we're looking for, though obviously that is most likely a
-        ;; made-up node type.
-        (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
-                   (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
-          (setq nodes (cons (combobulate-proxy-node-create
-                             :start (car bounds)
-                             :end (cdr bounds)
-                             :type (symbol-name combobulate-mark-node-or-thing-at-point)
-                             :named nil
-                             :node nil
-                             :field nil
-                             :pp (capitalize (symbol-name combobulate-mark-node-or-thing-at-point))
-                             :text thing)
-                            nodes))))
-      (combobulate-proffer-choices
-       (seq-drop-while #'combobulate-node-in-region-p nodes)
-       (lambda-slots (index current-node proxy-nodes refactor-id)
-         (combobulate-refactor (:id refactor-id)
-           ;; highlight the current node so the user can see the
-           ;; extent of the region.
-           (combobulate--mark-node current-node t beginning-of-line)
-           ;; also, if it exists, mark the *next* node in the list
-           ;; with a highlight outline
-           (when-let (next-node (nth (1+ index) proxy-nodes))
-             (mark-node-highlighted next-node))
-           ;; if the user enabled numeric selection, then label the
-           ;; first ten nodes.
-           (when (and (display-graphic-p) combobulate-proffer-allow-numeric-selection)
-             (dotimes (i 9)
-               (when-let ((idx-node (nth i proxy-nodes)))
-                 (mark-range-label
-                  (combobulate-node-start idx-node)
-                  (1+ (combobulate-node-start idx-node))
-                  (int-to-string (1+ i)) nil t))))))
-       ;; this feature only works properly on displays that support
-       ;; ctrl-<number> keys.
-       :allow-numeric-selection (display-graphic-p)
-       :reset-point-on-abort t
-       :cancel-action 'rollback
-       :reset-point-on-accept nil
-       ;; This allows repetition of the command that
-       ;; `combobulate-mark-node-dwim' is bound to, but this should be
-       ;; built into `combobulate-proffer-choices'. Furthermore, is
-       ;; `where-is-internal' really the best way to do this?
-       :extra-map (append
-                   (mapcar (lambda (key) (cons key 'next))
-                           (where-is-internal #'combobulate-mark-node-dwim
-                                              combobulate-key-map))
-                   ;; `M-h' (default) will expand the region; `M-H'
-                   ;; contracts it.
-                   (list (cons (kbd "M-H") 'prev)))
-       :flash-node t
-       :first-choice first-choice))))
+    (with-navigation-nodes (:procedures (combobulate-read procedures-default) :skip-prefix t)
+      ;; if the mark's ahead of point then we're at the beginning of the
+      ;; region; if so, swap places.
+      (when (and mark-active (> (point) (mark)))
+        (exchange-point-and-mark))
+      (let ((nodes (cons (combobulate--get-nearest-navigable-node)
+                         (combobulate-nav-get-parents
+                          (combobulate-node-at-point)))))
+        ;; maybe mark the thing at point first even though it may (or may
+        ;; not) match the extents of a node.
+        ;;
+        ;; Because we shift point around all the time, we don't want the
+        ;; `thing-at-point' machinery to pick up stray "things" at the
+        ;; edges of our region; that would be confusing. So only apply
+        ;; it if we don't have a region (i.e., the first time we run
+        ;; this command)
+        (when (and combobulate-mark-node-or-thing-at-point (not (use-region-p)))
+          ;; NOTE: this may need refinement over time; for now we
+          ;; hardcode the `:type' to be the symbol name of the thing
+          ;; we're looking for, though obviously that is most likely a
+          ;; made-up node type.
+          (when-let ((bounds (bounds-of-thing-at-point combobulate-mark-node-or-thing-at-point))
+                     (thing (thing-at-point combobulate-mark-node-or-thing-at-point)))
+            (setq nodes (cons (combobulate-proxy-node-create
+                               :start (car bounds)
+                               :end (cdr bounds)
+                               :type (symbol-name combobulate-mark-node-or-thing-at-point)
+                               :named nil
+                               :node nil
+                               :field nil
+                               :pp (capitalize (symbol-name combobulate-mark-node-or-thing-at-point))
+                               :text thing)
+                              nodes))))
+        (combobulate-proffer-choices
+         (seq-drop-while #'combobulate-node-in-region-p nodes)
+         (lambda-slots (index current-node proxy-nodes refactor-id)
+           (combobulate-refactor (:id refactor-id)
+             ;; highlight the current node so the user can see the
+             ;; extent of the region.
+             (combobulate--mark-node current-node t beginning-of-line)
+             ;; also, if it exists, mark the *next* node in the list
+             ;; with a highlight outline
+             (when-let (next-node (nth (1+ index) proxy-nodes))
+               (mark-node-highlighted next-node))
+             ;; if the user enabled numeric selection, then label the
+             ;; first ten nodes.
+             (when (and (display-graphic-p) combobulate-proffer-allow-numeric-selection)
+               (dotimes (i 9)
+                 (when-let ((idx-node (nth i proxy-nodes)))
+                   (mark-range-label
+                    (combobulate-node-start idx-node)
+                    (1+ (combobulate-node-start idx-node))
+                    (int-to-string (1+ i)) nil t))))))
+         ;; this feature only works properly on displays that support
+         ;; ctrl-<number> keys.
+         :allow-numeric-selection (display-graphic-p)
+         :reset-point-on-abort t
+         :cancel-action 'rollback
+         :reset-point-on-accept nil
+         ;; This allows repetition of the command that
+         ;; `combobulate-mark-node-dwim' is bound to, but this should be
+         ;; built into `combobulate-proffer-choices'. Furthermore, is
+         ;; `where-is-internal' really the best way to do this?
+         :extra-map (append
+                     (mapcar (lambda (key) (cons key 'next))
+                             (where-is-internal #'combobulate-mark-node-dwim
+                                                combobulate-key-map))
+                     ;; `M-h' (default) will expand the region; `M-H'
+                     ;; contracts it.
+                     (list (cons (kbd "M-H") 'prev)))
+         :flash-node t
+         :first-choice first-choice)))))
 
 (defun combobulate-mark-defun (&optional arg)
   "Mark defun and place point at the end ARG times.
 
-Uses `combobulate-navigation-defun-procedures' to determine what a
+Uses `procedures-defun' to determine what a
 defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-defun-procedures :skip-prefix t)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-defun) :skip-prefix t)
       (unless (combobulate-mark-node-at-point nil t)
         (if (< arg 0)
             (combobulate-navigate-beginning-of-defun)
@@ -1297,19 +1161,19 @@ defun is.  Repeat calls expands the scope."
 (defun combobulate-splice-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self after around)))))
 
 (defun combobulate-splice-self (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self)))))
 
 (defun combobulate-splice-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (combobulate-splice (combobulate--get-nearest-navigable-node) '(self before around)))))
 
 (defvar combobulate-refactor--copied-values nil)
@@ -1331,7 +1195,10 @@ Each member of PARTITIONS must be one of:
          ;; Some nodes are discarded globally by default -- usually
          ;; `comment', as line comments mess up the TS tree -- but
          ;; here we'd want to keep them also.
-         (combobulate-procedure-discard-rules)
+         ;;
+         ;; FIXME: should use the shorthand version and shadow it, or
+         ;; have another override flag.
+         (combobulate-procedure-apply-shared-discard-rules nil)
          ;; Begin the search at the point node.
          (procedure)
          (legal-splices)
@@ -1358,7 +1225,13 @@ Each member of PARTITIONS must be one of:
       (setq procedure nil)
       (let ((largest-pt-node)
             (possible-nodes (reverse (save-excursion
-                                       (combobulate-move-to-node point-node)
+                                       ;; NOTE: Doing this seems to
+                                       ;; cut down on the number of
+                                       ;; useful choices we can splice
+                                       ;; from.
+                                       ;;
+                                       ;; (combobulate-move-to-node
+                                       ;; point-node)
                                        (combobulate-all-nodes-at-point)))))
         ;; Starting from the largest node that starts at point,
         ;; repeatedly try to generate a procedure that yields a valid
@@ -1433,7 +1306,7 @@ Each member of PARTITIONS must be one of:
                         (mark-node-deleted current-node)
                         (when (save-excursion
                                 (combobulate-move-to-node current-node t)
-                                (looking-back "\n"))
+                                (looking-back "\n" nil))
                           (setq trailing-newline t))
                         (commit)
                         ;; use an envelope to ensure indentation is handled
@@ -1462,7 +1335,7 @@ Each member of PARTITIONS must be one of:
                         (when trailing-newline
                           (save-excursion
                             (goto-char (overlay-end range-ov))
-                            (unless (or (looking-at "\n") (looking-back "\n"))
+                            (unless (or (looking-at "\n") (looking-back "\n" nil))
                               (insert "\n"))))
                         (unless (combobulate-before-point-blank-p (point))
                           (if (member
@@ -1478,8 +1351,8 @@ Each member of PARTITIONS must be one of:
                               (delete-horizontal-space)
                             (just-one-space)))
 
-                        (when combobulate-envelope-indent-region-function
-                          (apply combobulate-envelope-indent-region-function
+                        (when (combobulate-read envelope-indent-region-function)
+                          (apply (combobulate-read envelope-indent-region-function)
                                  (combobulate-extend-region-to-whole-lines (overlay-start range-ov)
                                                                            (overlay-end range-ov)))))))))
         (let ((proffer-action)
@@ -1526,7 +1399,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
+             (with-navigation-nodes (:procedures (combobulate-read procedures-hierarchy))
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1553,7 +1426,7 @@ Each member of PARTITIONS must be one of:
          (target-node
           (save-excursion
             (combobulate-move-to-node
-             (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
+             (with-navigation-nodes (:procedures (combobulate-read procedures-hierarchy))
                (combobulate-nav-get-parent point-node)))
             (or (combobulate-proxy-node-make-from-nodes (combobulate--get-sibling
                                                          (combobulate-node-at-point)
@@ -1576,35 +1449,6 @@ Each member of PARTITIONS must be one of:
                (indent-to pos-col))
              (point)))
           (commit))))))
-
-;;; not ready for prime time
-;; (defun combobulate-yoink-forward (arg)
-;;   (interactive "^p")
-;;   (with-argument-repetition arg
-;;     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-;;       (combobulate--yoink (combobulate--get-nearest-navigable-node)))))
-
-;; (defun combobulate-yeet-forward (arg)
-;;   (interactive "^p")
-;;   (with-argument-repetition arg
-;;     (with-navigation-nodes (:procedures combobulate-navigation-sibling-procedures)
-;;       (combobulate--yeet (combobulate--get-nearest-navigable-node)))))
-
-(defun combobulate-delete-whitespace ()
-  "Maybe deletes excess whitespace around point.
-
-Whether this function does anything or not depends on
-`combobulate-manipulation-trim-whitespace'."
-  (cond ((eq combobulate-manipulation-trim-whitespace 'backward)
-         (delete-horizontal-space t))
-        ((eq combobulate-manipulation-trim-whitespace 'all)
-         (delete-horizontal-space))))
-
-
-(defun combobulate-delete-empty-lines ()
-  "Delete empty lines around point"
-  (when combobulate-manipulation-trim-empty-lines
-    (delete-blank-lines)))
 
 (defun combobulate--drag (direction)
   "Perform a drag operation on the current navigation node in DIRECTION.
@@ -1629,7 +1473,7 @@ moved to the modified node."
 
 (defun combobulate-baseline-indentation (node-or-pos)
   "Determine the baseline column offset of NODE-OR-POS."
-  (funcall combobulate-calculate-indent-function
+  (funcall (combobulate-read indent-calculate-function)
            (cond ((combobulate-node-p node-or-pos) (combobulate-node-start node-or-pos))
                  ((or (markerp node-or-pos)
                       (integerp node-or-pos))
@@ -1752,23 +1596,34 @@ If BEFORE is non-nil, then the label is placed (using the special
       (overlay-put ov 'face 'diff-changed))
     ov))
 
+(defun combobulate--refactor--get-field (pt tag)
+  "Return the field overlay at PT, if any."
+  (seq-find (lambda (ov) (combobulate--refactor-field-has-tag-p ov tag 'field)) (overlays-at pt)))
+
 (defun combobulate--refactor-mark-field (pt tag text &optional transformer-fn)
   ;; check if there is already a field overlay at this position with `tag' at `pt':
-  (if-let (ov (seq-find (lambda (ov)
-                          (combobulate--refactor-field-has-tag-p ov tag 'field))
-                        (overlays-at pt)))
+  (if-let (ov (combobulate--refactor--get-field pt tag))
       ov
     (let ((ov (make-overlay pt pt nil t nil)))
       ;; args 2 and 3 refer to respectively `tag' and the default value.
       (overlay-put ov 'combobulate-refactor-actions `((field ,tag ,text)))
       (overlay-put ov 'face 'combobulate-refactor-field-face)
       (overlay-put ov 'combobulate-refactor-field-transformer-fn transformer-fn)
-      (combobulate--refactor-set-field ov text (symbol-name tag))
+      (overlay-put ov 'combobulate-refactor-field-original-text text)
+      (overlay-put ov 'combobulate-refactor-field-enabled t)
+      (combobulate--refactor-set-field ov text (or text (symbol-name tag)))
       ov)))
+
+(defun combobulate--refactor-toggle-field (pt tag)
+  (when-let ((ov (combobulate--refactor--get-field pt tag)))
+    (overlay-put ov 'combobulate-refactor-field-enabled
+                 (not (overlay-get ov 'combobulate-refactor-field-enabled)))
+    (overlay-put ov 'face (if (overlay-get ov 'combobulate-refactor-field-enabled)
+                              'combobulate-refactor-field-face
+                            'combobulate-refactor-disabled-field-face))))
 
 (defun combobulate--refactor-mark-cursor (pt)
   (let ((ov (make-overlay pt (1+ pt) nil t nil)))
-    ;; args 2 and 3 refer to respectively `tag' and the default value.
     (overlay-put ov 'combobulate-refactor-actions `((cursor)))
     (overlay-put ov 'face 'combobulate-refactor-cursor-face)
     ov))
@@ -1817,16 +1672,14 @@ If BEFORE is non-nil, then the label is placed (using the special
 (defun combobulate-drag-up (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:skip-prefix t :procedures (combobulate-read procedures-sibling))
       (combobulate-visual-move-to-node (combobulate--drag 'up)))))
 
 (defun combobulate-drag-down (&optional arg)
   (interactive "^p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:skip-prefix t :procedures combobulate-navigation-sibling-procedures)
+    (with-navigation-nodes (:skip-prefix t :procedures (combobulate-read procedures-sibling))
       (combobulate-visual-move-to-node (combobulate--drag 'down)))))
 
 (provide 'combobulate-manipulation)
 ;;; combobulate-manipulation.el ends here
-
-

@@ -30,6 +30,8 @@
 (require 'subr-x)
 (require 'combobulate-settings)
 (require 'combobulate-interface)
+(require 'combobulate-setup)
+
 (declare-function combobulate-node-start "combobulate-navigation")
 (declare-function combobulate-node-end "combobulate-navigation")
 (declare-function combobulate-pretty-print-node "combobulate-navigation")

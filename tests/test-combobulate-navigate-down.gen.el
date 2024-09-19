@@ -64,6 +64,52 @@
 	       (combobulate-test-assert-at-marker 4)))
 
 
+(ert-deftest combobulate-test-python-combobulate-navigate-down--decorator_class-7 ()
+ "Test `combobulate' with `fixtures/down/decorator_class.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/down/decorator_class.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 7)))
+
+
+(ert-deftest combobulate-test-python-combobulate-navigate-down--decorator_function-5 ()
+ "Test `combobulate' with `fixtures/down/decorator_function.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/down/decorator_function.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)))
+
+
 (ert-deftest combobulate-test-html-combobulate-navigate-down--down-attributes-3 ()
  "Test `combobulate' with `fixtures/down/down-attributes.html' in `html-ts-mode' mode."
 	     (combobulate-test

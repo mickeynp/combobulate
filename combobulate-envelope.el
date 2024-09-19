@@ -30,9 +30,9 @@
 (require 'generator)
 (require 'combobulate-settings)
 (require 'combobulate-manipulation)
+(require 'combobulate-setup)
 (require 'eieio)
 
-(defvar combobulate-envelope-indent-region-function)
 
 (defvar combobulate-envelope-prompt-history nil
   "History for `combobulate-envelope-prompt'.")
@@ -61,25 +61,41 @@ manually.")
   :doc "Keymap for envelope prompts."
   :parent minibuffer-local-map)
 
-(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn)
+(defun combobulate-envelope-prompt (prompt default-value &optional buffer update-fn initial-contents map)
   "Insert text into fields using the minibuffer with PROMPT and DEFAULT-VALUE.
 
-BUFFER if optionally the buffer (and its associated window) to
-use. If it is nil, then `current-buffer' is used."
+BUFFER if optionally the buffer (and its associated window) to use. If
+it is nil, then `current-buffer' is used.
+
+UPDATE-FN is a function that is called after `post-command-hook' is
+triggered in the minibuffer. It is passed the current minibuffer
+contents.
+
+INITIAL-CONTENTS is the initial contents of the minibuffer prompt.
+
+MAP is the keymap to use for the minibuffer. It defaults to
+`combobulate-envelope-prompt-map'."
   (let ((win (when (eq (window-buffer) (or buffer (current-buffer)))
                (selected-window))))
     (minibuffer-with-setup-hook
         (lambda ()
           (setq combobulate-envelope-prompt-window win)
+          ;; Required for things that set intangible properties on
+          ;; text.
+          (cursor-intangible-mode 1)
+          ;; If INITIAL-CONTENTS is not empty then the point is placed
+          ;; at the end of the text, which is probably not what people
+          ;; want?
+          (beginning-of-line)
           ;; not presently used.
           ;; (add-hook 'minibuffer-exit-hook #'combobulate-envelope-prompt-exit nil t)
           (add-hook 'post-command-hook update-fn nil t))
       (read-from-minibuffer
        (format-prompt
-        prompt
+        (concat combobulate-sigil " " prompt)
         (or default-value (car combobulate-envelope-prompt-history) ""))
-       nil
-       combobulate-envelope-prompt-map
+       initial-contents
+       (or map combobulate-envelope-prompt-map)
        nil
        'combobulate-envelope-prompt-history
        (car combobulate-envelope-prompt-history)
@@ -195,17 +211,17 @@ If the register does not exist, return DEFAULT or nil."
              (let ((prompt-point (point-marker)))
                (push (cons 'prompt
                            (lambda () (save-excursion
-                                        (goto-char prompt-point)
-                                        (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
-                                        (unless combobulate-envelope-static
-                                          (let ((new-text (or (combobulate-envelope-get-register tag)
-                                                              (combobulate-envelope-prompt
-                                                               prompt tag nil
-                                                               (lambda ()
-                                                                 (combobulate-envelope--update-prompts
-                                                                  buf tag (minibuffer-contents)))))))
-                                            (push (cons tag new-text) combobulate-envelope--registers)
-                                            (combobulate-envelope--update-prompts buf tag new-text))))))
+                                   (goto-char prompt-point)
+                                   (mark-field prompt-point tag (combobulate-envelope-get-register tag) transformer-fn)
+                                   (unless combobulate-envelope-static
+                                     (let ((new-text (or (combobulate-envelope-get-register tag)
+                                                         (combobulate-envelope-prompt
+                                                          prompt tag nil
+                                                          (lambda ()
+                                                            (combobulate-envelope--update-prompts
+                                                             buf tag (minibuffer-contents)))))))
+                                       (push (cons tag new-text) combobulate-envelope--registers)
+                                       (combobulate-envelope--update-prompts buf tag new-text))))))
                      user-actions)))
             ;; `(field TAG)' or `(f TAG)'
             ;;
@@ -250,8 +266,8 @@ If the register does not exist, return DEFAULT or nil."
             ;;
             ;; For whitespace-sensitive languages, this is a way to move
             ;; back one level of indentation.
-            ('< (let ((col (or (and combobulate-envelope-deindent-function
-                                    (funcall combobulate-envelope-deindent-function))
+            ('< (let ((col (or (and (combobulate-read envelope-deindent-function)
+                                    (funcall (combobulate-read envelope-deindent-function)))
                                0)))
                   (delete-horizontal-space)
                   (insert (make-string col ? ))))
@@ -261,7 +277,7 @@ If the register does not exist, return DEFAULT or nil."
             ;; `combobulate-envelope--registers') or, if there is no
             ;; register specified, default to the REGISTER `region' (or
             ;; `region-indented' if
-            ;; `combobulate-envelope-indent-region-function' is nil) which
+            ;; `envelope-indent-region-function' is nil) which
             ;; holds that captured region (if any).
             ;;
             ;; Forms ending with `>' are indented as per the major mode's
@@ -288,21 +304,36 @@ If the register does not exist, return DEFAULT or nil."
                    (let indent nil)))
              (setq default (combobulate-envelope-get-register
                             (or register
-                                (if (and (null combobulate-envelope-indent-region-function) indent)
+                                (if (and (null (combobulate-read envelope-indent-region-function)) indent)
                                     'region-indented
                                   'region))
                             default))
              (cond
-              ((and combobulate-envelope-indent-region-function indent)
-               (funcall combobulate-envelope-indent-region-function
+              ((and (combobulate-read envelope-indent-region-function) indent)
+               (funcall (combobulate-read envelope-indent-region-function)
                         (point) (progn (insert default) (point))))
-              ;; if `combobulate-envelope-indent-region-function' is nil
+              ;; if `envelope-indent-region-function' is nil
               ;; then we default to a simplistic indentation style that
               ;; works well with the likes of Python where crass,
               ;; region-based indentation will never work.
-              ((and (not combobulate-envelope-indent-region-function) indent)
+              ((and (not (combobulate-read envelope-indent-region-function)) indent)
                (let ((offset (current-indentation)))
-                 (delete-horizontal-space)
+                 ;; Check if point has nothing but whitespace before
+                 ;; it. Only if it does do we delete it. This is
+                 ;; perhaps the only reasonable way of checking if
+                 ;; we're dealing with something that a
+                 ;; whitespace-based language's indentation function
+                 ;; can reasonably indent again after the whitespace
+                 ;; has been deleted.
+                 ;;
+                 ;; Whitespace in any other place may in fact be
+                 ;; either syntactically mandatory or used for
+                 ;; formatting. We should avoid touching that.
+                 (when (save-excursion
+                         (skip-chars-backward combobulate-skip-prefix-regexp
+                                              (line-beginning-position))
+                         (bolp))
+                   (delete-horizontal-space))
                  (setf start (point))
                  ;; clear whitespace from the start of the line
                  (let ((before-pt (point)))
@@ -313,7 +344,7 @@ If the register does not exist, return DEFAULT or nil."
                             :rest-lines-operation 'relative))
                    (save-excursion
                      (goto-char before-pt)
-                     (back-to-indentation)
+                     (combobulate-skip-whitespace-forward)
                      (push `(point ,(point-marker)) user-actions)))))
               (t (insert default))))
             ;; "string"
@@ -670,7 +701,7 @@ expansion:
  `r>'
 
    Insert REGISTER at point. Where REGISTER defaults to
-   `region' (when `combobulate-envelope-indent-region-function'
+   `region' (when `envelope-indent-region-function'
    is non-nil) or `region-indented' when it is nil.
 
    Both register names hold the marked region (which is likely
@@ -686,7 +717,7 @@ expansion:
    `indent-region' for languages that are not
    whitespace-sensitive.
 
-   However, if `combobulate-envelope-indent-region-function' is
+   However, if `envelope-indent-region-function' is
    nil (as it is in the likes of `python-mode') then a
    specialized indentation system is used instead. The relative
    indentation at the point of envelope invocation is preserved
@@ -868,8 +899,8 @@ expansion:
     ;; Throw a courtesy region indent call if we support such a
     ;; thing. (We do not in the likes of Python, where indenting a
     ;; region is dangerous.
-    (when combobulate-envelope-indent-region-function
-      (apply combobulate-envelope-indent-region-function
+    (when (combobulate-read envelope-indent-region-function)
+      (apply (combobulate-read envelope-indent-region-function)
              (combobulate-extend-region-to-whole-lines start end)))
     (cons (cons start end) selected-point)))
 
@@ -885,14 +916,7 @@ expansion:
 (defun combobulate-get-envelope-by-name (name)
   "Find an envelope with `:name' equal to NAME."
   (seq-find (lambda (envelope) (equal (plist-get envelope :name) name))
-            (append combobulate-manipulation-envelopes
-                    (combobulate-get-envelopes-by-major-mode))))
-
-(defun combobulate-get-envelopes-by-major-mode ()
-  (mapcan
-   (lambda (parser) (alist-get (combobulate-parser-language parser)
-                          combobulate-manipulation-envelopes-custom))
-   (combobulate-parser-list)))
+            (combobulate-read envelope-list)))
 
 (defun combobulate-get-envelope-function-by-name (name)
   "Find an envelope with `:name' equal to NAME."
@@ -917,7 +941,7 @@ If REGION is non-nil, envelop the region instead of NODE."
                   (combobulate--mark-node node t)
                 (cond
                  ;; nothing to do if point is `stay'.
-                 ((member point-placement '(start end))
+                 ((or (null point-placement) (member point-placement '(start end)))
                   (combobulate--goto-node node (eq point-placement 'end)))))
               ;; triggering an envelope will invalidate `node'.
               (setq node (combobulate-proxy-node-make-from-nodes node))
@@ -930,7 +954,7 @@ these nodes: `%s'." name nodes))))))
   "Get the procedure given a SHORTHAND.
 
 Raise an error if the SHORTHAND is not valid."
-  (let ((procedure (alist-get shorthand combobulate-envelope-procedure-shorthand-alist)))
+  (let ((procedure (alist-get shorthand (combobulate-read envelope-procedure-shorthand-alist))))
     (unless procedure
       (error "Shorthand `%s' is not valid." shorthand))
     procedure))
@@ -951,11 +975,24 @@ Only one can be used." envelope))
            (procedure-elements
             (append (seq-filter #'listp nodes)
                     (and shorthand (combobulate-envelope-get-shorthand-procedure shorthand)))))
-      (mapcar #'combobulate-procedure-result-action-node
-              (append
-               (and procedure-elements (combobulate-procedure-start (point) procedure-elements t))
-               ;; As we have no selectors nor a parent discriminator, we just use the action node.
-               (combobulate-procedure-start (point) `((:activation-nodes ((:nodes ,string-elements)))) t))))))
+      (seq-sort #'combobulate-node-after-node-p
+                (mapcar #'combobulate-procedure-result-action-node
+                        (append
+                         (and procedure-elements (combobulate-procedure-start (point) procedure-elements t))
+                         ;; As we have no selectors nor a parent discriminator, we just use the action node.
+                         (combobulate-procedure-start (point) `((:activation-nodes ((:nodes ,string-elements)))) t)))))))
+
+(defun combobulate-envelope-smart-sort (a b)
+  "Sort A and B based on their distance from point."
+  ;; "Smart" sorting that orders by largest node first but
+  ;; *only* when the distance from `point' to the start of `a'
+  ;; is 0 (i.e., the node starts at point.)
+  ;;
+  ;; For all other instances, we measure distance from point.
+  (if (= (- (combobulate-node-start a) (point)) 0)
+      (combobulate-node-larger-than-node-p a b)
+    (> (- (combobulate-node-start a) (point))
+       (- (combobulate-node-start b) (point)))))
 
 (defun combobulate-execute-envelope (envelope-name &optional node force)
   "Executes any envelope with a `:name' equal to ENVELOPE-NAME.
@@ -974,30 +1011,40 @@ See `combobulate-apply-envelope' for more information."
       (if node
           (when-let (target-pt (cdr (combobulate-apply-envelope envelope node)))
             (goto-char target-pt))
-        (let ((combobulate-envelope-static t)
-              (envelope-nodes
-               (if (or (plist-member envelope :nodes) (plist-member envelope :shorthand))
-                   (combobulate-envelope-get-applicable-nodes envelope force)
-                 ;; if we don't have any assigned envelope nodes,
-                 ;; create a proxy node at point; that node (and
-                 ;; thus `point') will instead be where the
-                 ;; envelope is inserted.
-                 (list (combobulate-proxy-node-make-point-node)))))
-          (progn
+        (map-let (:nodes :shorthand :split-node) envelope
+          (let* ((combobulate-envelope-static t)
+                 (envelope-nodes (seq-sort #'combobulate-envelope-smart-sort
+                                           (if (or nodes shorthand)
+                                               (combobulate-envelope-get-applicable-nodes envelope force)
+                                             ;; if we don't have any assigned envelope nodes,
+                                             ;; create a proxy node at point; that node (and
+                                             ;; thus `point') will instead be where the
+                                             ;; envelope is inserted.
+                                             (list (combobulate-proxy-node-make-point-node))))))
+            ;; Walk through the collected envelope nodes and
+            ;; determine if point is at the beginning of any of
+            ;; them. If that is not the case, we'll create a
+            ;; pseudo-node at point that extends to the farthest of
+            ;; the envelope nodes.
+            (when (and envelope-nodes
+                       split-node
+                       (not (seq-find #'combobulate-point-at-node-p envelope-nodes)))
+              (let* ((source-node (or
+                                   (let ((point-node (combobulate-node-at-point)))
+                                     (seq-find (lambda (parent-node)
+                                                 (> (combobulate-node-end parent-node)
+                                                    (combobulate-node-end point-node)))
+                                               (combobulate-get-parents point-node)))
+                                   (car (seq-sort #'combobulate-node-larger-than-node-p
+                                                  envelope-nodes))))
+                     (split-node (combobulate-proxy-node-make-from-range
+                                  (point)
+                                  (combobulate-node-end source-node)
+                                  "split-node" (format "Split %s" (combobulate-pretty-print-node-type source-node)))))
+                (setq envelope-nodes (append (list split-node) envelope-nodes))))
             (setq chosen-node
                   (combobulate-proffer-choices
-                   (seq-sort
-                    (lambda (a b)
-                      ;; "Smart" sorting that orders by largest node first but
-                      ;; *only* when the distance from `point' to the start of `a'
-                      ;; is 0 (i.e., the node starts at point.)
-                      ;;
-                      ;; For all other instances, we measure distance from point.
-                      (if (= (- (combobulate-node-start a) (point)) 0)
-                          (combobulate-node-larger-than-node-p a b)
-                        (> (- (combobulate-node-start a) (point))
-                           (- (combobulate-node-start b) (point)))))
-                    (reverse envelope-nodes))
+                   envelope-nodes
                    (lambda-slots (current-node refactor-id)
                      (combobulate-refactor (:id refactor-id)
                        (let ((ov (mark-node-highlighted current-node))
@@ -1016,6 +1063,61 @@ See `combobulate-apply-envelope' for more information."
         ;; an explicit node skips the proffering process entirely.
         (when (and chosen-node accepted)
           (combobulate-execute-envelope envelope-name chosen-node))))))
+
+(defun combobulate--envelope-get-function-name (envelope)
+  (map-let (:name) envelope (combobulate-get (string-replace " " "-" (concat "envelope-" name)))))
+
+(defun combobulate-define-envelope (&rest args)
+  "Define an envelope using ARGS.
+
+ARGS is a list of keyword arguments. The following keywords are
+supported:
+
+`:name' (required) - The name of the envelope.
+
+`:description' (required) - A description of the envelope.
+
+`:template' (required) - The template to apply to the nodes.
+
+`:nodes' - A list of node types that the envelope can be applied
+to.
+
+`:procedures' - A list of procedures that the envelope can be
+applied to. If `:nodes' is defined, then this is ignored.
+
+`:shorthand' - A shorthand for the nodes that the envelope can be
+applied to. This shorthand is a string that is used to look up a
+procedure in the language-specific `procedure-shorthand-alist'.
+
+`:point-placement' - Where to place point after the envelope is
+applied. This can be either `start', `stay' or `end'. The default
+is `start'.
+
+`:key' (required) - A key to bind the envelope to. It will be
+bound to the language-specific key map
+`combobulate-LANGUAGE-envelope-map', which itself is bound to
+`combobulate-key-map' under the sub prefix `e'.
+
+`:extra-key' - An extra key to bind the envelope to. It will be
+bound to the language-specific map directly and so any key is
+valid."
+  (map-let (:description :key :extra-key :name) args
+    (let ((fn-name (combobulate--envelope-get-function-name args)))
+      ;; Do not redefine the function if it already exists. This can
+      ;; actually cause a serious performance cascade as each invocation.
+      (unless (fboundp fn-name)
+        ;; Store the function symbol for later recall in things like
+        ;; transient.
+        (defalias fn-name
+          `(lambda () ,(format "%s\n%s" description
+                          "This command triggers Combobulate's envelope system.")
+             (interactive)
+             (combobulate-execute-envelope ,name))))
+      (define-key (combobulate-read envelope-map) (kbd key) fn-name)
+      (when extra-key
+        (define-key (combobulate-read map) (kbd extra-key) fn-name)))))
+
+
 
 (provide 'combobulate-envelope)
 ;;; combobulate-envelope.el ends here

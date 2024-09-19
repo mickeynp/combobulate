@@ -31,20 +31,25 @@
 (declare-function combobulate-pretty-print-node "combobulate-navigation")
 (declare-function combobulate-node-at-point "combobulate-navigation")
 (declare-function combobulate--goto-node "combobulate-navigation")
+(declare-function combobulate-get-registered-language "combobulate-setup")
 
+(defsubst combobulate-language-available-p (language)
+  (treesit-language-available-p language))
 
+(defsubst combobulate-create-language (language &optional buffer no-reuse)
+  (treesit-parser-create language buffer no-reuse))
 
 (defsubst combobulate-node-p (node)
   (treesit-node-p node))
 
 (defsubst combobulate-buffer-root-node (&optional language)
-  (treesit-buffer-root-node language))
+  (treesit-buffer-root-node (or language (combobulate-primary-language))))
 
 (defsubst combobulate-node-on (beg end &optional parser-or-lang named)
-  (treesit-node-on beg end parser-or-lang named))
+  (treesit-node-on beg end (or parser-or-lang (combobulate-primary-language)) named))
 
 (defsubst combobulate-node-at (pos &optional parser-or-lang named)
-  (treesit-node-at pos parser-or-lang named))
+  (treesit-node-at pos (or parser-or-lang (combobulate-primary-language)) named))
 
 (defsubst combobulate-induce-sparse-tree (root predicate &optional process-fn limit)
   (treesit-induce-sparse-tree root predicate process-fn limit))
@@ -64,9 +69,14 @@
 (defsubst combobulate-parser-node (node)
   (treesit-node-parser node))
 
-(defun combobulate-primary-language ()
-  (combobulate-parser-language (or (car (combobulate-parser-list))
-                                   (error "No parsers available"))))
+(defun combobulate-primary-language (&optional quiet)
+  (or
+   (treesit-language-at (point))
+   (car (combobulate-get-registered-language major-mode))
+   (when-let ((first-language (car (combobulate-parser-list))))
+     (combobulate-parser-language first-language))
+   (unless quiet
+     (error "No parsers available"))))
 
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
@@ -135,7 +145,8 @@
     (eq node1 node2)))
 
 (defsubst combobulate-root-node ()
-  (treesit-buffer-root-node))
+  (treesit-buffer-root-node
+   (combobulate-primary-language)))
 
 (defsubst combobulate-node-descendant-for-range (node beg end &optional all)
   (treesit-node-descendant-for-range node beg end (not all)))
@@ -182,17 +193,17 @@ kept."
         proxies
       (car-safe proxies))))
 
-(defun combobulate-proxy-node-make-from-range (beg end)
+(defun combobulate-proxy-node-make-from-range (beg end &optional type pp)
   "Factory that creates a facsimile proxy node of the region BEG END."
   (combobulate-proxy-node-create
    :start (set-marker (make-marker) beg)
    :end (set-marker (make-marker) end)
    :text (buffer-substring-no-properties beg end)
-   :type "region"
+   :type (or type "region")
    :named t
    :field nil
    :node nil
-   :pp "Region"
+   :pp (or pp "Region")
    :extra nil))
 
 (defun combobulate-proxy-node-make-point-node (&optional pt)
@@ -235,6 +246,40 @@ kept."
                                  :keep-types (list (combobulate-node-type proxy-node))))))))))
 
 
+(defmacro combobulate-with-change-group (&rest body)
+  (declare (indent 0) (debug t))
+  (let ((handle (gensym "--change-group-handle--"))
+	(success (gensym "--change-group-success--"))
+        (explicitly-cancelled (gensym "--change-group-explicitly-cancelled--")))
+    `(let ((,handle (prepare-change-group))
+           (,explicitly-cancelled nil)
+	   ;; Don't truncate any undo data in the middle of this.
+	   (undo-outer-limit nil)
+	   (undo-limit most-positive-fixnum)
+	   (undo-strong-limit most-positive-fixnum)
+	   (,success nil))
+       (cl-flet
+           ((accept-changes () (accept-change-group ,handle))
+            (cancel-changes ()
+              (cancel-change-group ,handle)
+              (setq ,explicitly-cancelled t)))
+         (unwind-protect
+	     (progn
+	       ;; This is inside the unwind-protect because
+	       ;; it enables undo if that was disabled; we need
+	       ;; to make sure that it gets disabled again.
+	       (activate-change-group ,handle)
+	       (prog1 ,(macroexp-progn body)
+	         (setq ,success t)))
+	   ;; Either of these functions will disable undo
+	   ;; if it was disabled before.
+	   (cond
+            ;; If we explicitly cancelled, do not cancel or accept the
+            ;; changes.
+            (,explicitly-cancelled nil)
+            (,success (accept-changes))
+	    (t (cancel-changes))))))))
+
 (defmacro combobulate-atomic-change-group (&rest body)
   "Re-entrant change group, like `atomic-change-group'.
 This means that if BODY exits abnormally,
@@ -245,27 +290,8 @@ This mechanism is transparent to ordinary use of undo;
 if undo is enabled in the buffer and BODY succeeds, the
 user can undo the change normally."
   (declare (indent 0) (debug t))
-  (let ((handle (gensym "--change-group-handle--"))
-	(success (gensym "--change-group-success--")))
-    `(let ((,handle (prepare-change-group))
-	   ;; Don't truncate any undo data in the middle of this.
-	   (undo-outer-limit nil)
-	   (undo-limit most-positive-fixnum)
-	   (undo-strong-limit most-positive-fixnum)
-	   (,success nil))
-       (unwind-protect
-	   (progn
-	     ;; This is inside the unwind-protect because
-	     ;; it enables undo if that was disabled; we need
-	     ;; to make sure that it gets disabled again.
-	     (activate-change-group ,handle)
-	     (prog1 ,(macroexp-progn body)
-	       (setq ,success t)))
-	 ;; Either of these functions will disable undo
-	 ;; if it was disabled before.
-	 (if ,success
-	     (accept-change-group ,handle)
-	   (cancel-change-group ,handle))))))
+  `(combobulate-with-change-group
+     ,@body))
 
 (cl-defstruct (combobulate-proffer-action
                (:constructor combobulate-proffer-action-create)

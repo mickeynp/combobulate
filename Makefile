@@ -4,12 +4,19 @@ DOCKER_CMD ?= docker run --rm -w /opt/ $(DOCKER_ARGS) $(IMG):$(TAG)
 EMACS_BIN ?= emacs
 EMACS_CMD = $(EMACS_BIN)  --batch --no-init-file --chdir ./tests/  -L ..  -L .  -l .ts-test.el
 
+.PHONY:	clean-elc
+clean-elc:
+	find . -name "*.elc" -delete
+
 .PHONY:	byte-compile
-byte-compile:
-	@for file in *.el; do \
-		rm -f $$filec; \
-		emacs --no-init-file --eval '(setq load-prefer-newer t)' --directory $(PWD) --batch --funcall batch-byte-compile $$file; \
-	done
+byte-compile: clean-elc
+	$(EMACS_BIN) \
+	--no-init-file \
+	--batch \
+	--directory $(PWD) \
+	--funcall batch-byte-compile \
+	$(PWD) \
+	*.el
 
 .PHONY:	rebuild-relationships
 rebuild-relationships:
@@ -22,9 +29,8 @@ download-relationships:
 	python build-relationships.py --download
 
 .PHONY:	clean-tests
-clean-tests:
+clean-tests: clean-elc
 	find . -name "*.gen.el" -delete
-	find . -name "*.elc" -delete
 	find . -name "*~" -delete
 	find . -name "#*#" -delete
 	rm -rf ./tests/fixture-deltas/* || true
@@ -36,7 +42,7 @@ build-tests: clean-tests
 ELFILES := $(sort $(shell find ${srcdir} -name "test-*.el" ! -name ".*" -print))
 
 .PHONY:	run-tests
-run-tests:
+run-tests: byte-compile
 	$(EMACS_CMD) -l ert \
 	$(patsubst %,-l %,$(ELFILES:.el=)) \
 	--eval "(setq ert-summarize-tests-batch-and-exit nil)" \

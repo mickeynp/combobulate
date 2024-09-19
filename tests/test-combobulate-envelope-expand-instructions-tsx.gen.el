@@ -4,7 +4,7 @@
 
 (require 'combobulate-test-prelude)
 
-(ert-deftest combobulate-test-tsx-combobulate-envelope-expand-instructions-tsx-choice*-with-complex-missing-field-consequence-component-1 ()
+(ert-deftest combobulate-test-tsx-combobulate-envelope-expand-instructions-tsx-choicestar-with-complex-missing-field-consequence-component-1 ()
  "Test `combobulate' with `fixtures/envelope/component.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/envelope/component.tsx")
@@ -38,10 +38,10 @@
 			     (:choices combobulate-envelope-proffer-choices)
 			   (combobulate-test-go-to-marker 1)
 			   (combobulate-envelope-expand-instructions instructions)
-			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions-tsx/component.tsx[choice*-with-complex-missing-field-consequence@1~after].tsx")))))))
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions-tsx/component.tsx[choicestar-with-complex-missing-field-consequence@1~after].tsx")))))))
 
 
-(ert-deftest combobulate-test-tsx-combobulate-envelope-expand-instructions-tsx-choice*-with-complex-missing-field-alt-component-1 ()
+(ert-deftest combobulate-test-tsx-combobulate-envelope-expand-instructions-tsx-choicestar-with-complex-missing-field-alt-component-1 ()
  "Test `combobulate' with `fixtures/envelope/component.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
 		 (:language tsx :mode tsx-ts-mode :fixture "fixtures/envelope/component.tsx")
@@ -76,7 +76,7 @@
 			     (:choices combobulate-envelope-proffer-choices)
 			   (combobulate-test-go-to-marker 1)
 			   (combobulate-envelope-expand-instructions instructions)
-			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions-tsx/component.tsx[choice*-with-complex-missing-field-alt@1~after].tsx")))))))
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions-tsx/component.tsx[choicestar-with-complex-missing-field-alt@1~after].tsx")))))))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-envelope-expand-instructions-tsx-choice-simple-0-component-1 ()

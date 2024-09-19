@@ -5,6 +5,7 @@
          (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
          (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+         (go . ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
          (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
          (toml "https://github.com/tree-sitter/tree-sitter-toml")
          (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))

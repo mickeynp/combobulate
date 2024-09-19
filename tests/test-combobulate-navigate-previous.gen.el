@@ -18,6 +18,29 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--block-1 ()
+ "Test `combobulate' with `fixtures/sibling/block.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/block.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-navigate-previous--component-jsx-1 ()
  "Test `combobulate' with `fixtures/sibling/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -33,6 +56,17 @@
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--const-declaration-1 ()
+ "Test `combobulate' with `fixtures/sibling/const-declaration.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/const-declaration.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
@@ -252,6 +286,53 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--expr-switch-1 ()
+ "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/expr-switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--for-loop-1 ()
+ "Test `combobulate' with `fixtures/sibling/for-loop.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/for-loop.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--import-declaration-1 ()
+ "Test `combobulate' with `fixtures/sibling/import-declaration.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/import-declaration.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--inside-case-1 ()
+ "Test `combobulate' with `fixtures/sibling/inside-case.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/inside-case.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)))
+
+
 (ert-deftest combobulate-test-toml-combobulate-navigate-previous--inside-table-1 ()
  "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
 	     (combobulate-test
@@ -261,6 +342,40 @@
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--literal-1 ()
+ "Test `combobulate' with `fixtures/sibling/literal.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/literal.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--map-1 ()
+ "Test `combobulate' with `fixtures/sibling/map.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/map.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
@@ -315,12 +430,61 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--module-1 ()
+ "Test `combobulate' with `fixtures/sibling/module.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/module.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-python-combobulate-navigate-previous--nested-blocks-1 ()
  "Test `combobulate' with `fixtures/sibling/nested-blocks.py' in `python-ts-mode' mode."
 	     (combobulate-test
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/nested-blocks.py")
 	       :tags
 	       '(combobulate python python-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--program-1 ()
+ "Test `combobulate' with `fixtures/sibling/program.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/program.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
@@ -466,6 +630,31 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--switch-1 ()
+ "Test `combobulate' with `fixtures/sibling/switch.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/switch.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--type-declaration-1 ()
+ "Test `combobulate' with `fixtures/sibling/type-declaration.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/type-declaration.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-toml-combobulate-navigate-previous--value-array-1 ()
  "Test `combobulate' with `fixtures/sibling/value-array.toml' in `toml-ts-mode' mode."
 	     (combobulate-test
@@ -475,6 +664,17 @@
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-go-combobulate-navigate-previous--var-declaration-1 ()
+ "Test `combobulate' with `fixtures/sibling/var-declaration.go' in `go-ts-mode' mode."
+	     (combobulate-test
+		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/var-declaration.go")
+	       :tags
+	       '(combobulate go go-ts-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))

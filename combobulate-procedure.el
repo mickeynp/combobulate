@@ -170,7 +170,10 @@ exists, and nil if not."
 
 If PROCEDURES is not given, use `combobulate-default-procedures'.
 If EXHAUSTIVE is non-nil, then collect all possible procedures
-that may apply."
+that may apply.
+
+This function returns a list of `combobulate-procedure-result'
+objects."
   (let ((matches)
         (nodes
          (seq-uniq
@@ -187,7 +190,7 @@ that may apply."
                        pt-or-node
                      (combobulate-node-at-point))
                    (combobulate-all-nodes-at-point)))
-           ;; then, get all the nodes point is in.
+           ;; then, get all the nodes point is at.
            (combobulate-get-parents (combobulate-node-at-point))))))
     (catch 'done
       (dolist (procedure
@@ -228,6 +231,7 @@ that may apply."
                       (seq-find (pcase-lambda (`(,mark . ,_))
                                   (or (eq mark '@match) (eq mark 'match)))
                                 selected-nodes)))
+         (when combobulate-debug (combobulate-procedure-debug-print-result procedure-result))
          procedure-result))
       (_ (error "Unknown procedure result `%s'" procedure-result)))))
 
@@ -236,8 +240,8 @@ that may apply."
   ;; assert that there are no keys beyond these three
   (when-let (unknown-keys (seq-difference (map-keys procedure)
                                           '(:activation-nodes :selector)))
-    (error "Unknown key in procedure `%s'. Only `:activation-nodes',
-`:selector' or `:filter' are valid" unknown-keys))
+    (error "Unknown key in procedure `%s'. Only `:activation-nodes' or
+ `:selector' are valid" unknown-keys))
   (map-let (:activation-nodes :selector)
       procedure
     (unless (listp activation-nodes)
@@ -301,6 +305,18 @@ DEFAULT-MARK.
 
 If the NODES are already marked, and OVERWRITE is non-nil, then
 overwrite the existing marks."
+  ;; The shorthand variable, `procedure-discard-rules', contains rules
+  ;; we must add to the discard types check. This is usually just
+  ;; `comment' as line-comments trip up tree-sitter, but other
+  ;; languages may introduce their own rules.
+  ;;
+  ;; However, if the user specifically ASKS for a discard type, then
+  ;; we should respect that and not discard it.
+  (when combobulate-procedure-apply-shared-discard-rules
+    (setq discard-types (append discard-types
+                                (combobulate-procedure-expand-rules
+                                 (combobulate-read procedure-discard-rules))))
+    (when match-types (setq discard-types (seq-difference match-types discard-types))))
   (let ((marked-nodes))
     (pcase-dolist ((or `(,existing-mark . ,node) node) nodes)
       (let ((type (combobulate-node-type node)))
@@ -354,14 +370,19 @@ If keep-mark is non-nil, keep the mark in the result."
        :overwrite t
        :keep-anonymous t))))
 
+(defvar combobulate-procedure-apply-shared-discard-rules t
+  "Whether to apply the shared discard rules to the result of a procedure.
+
+This shared rules are set with the variable `procedure-discard-rules'")
+
 (defvar combobulate-procedure-include-anonymous-nodes nil
   "Whether to include anonymous nodes in the result of a procedure.")
 
 (defun combobulate-procedure--filter-nodes-by-relationship (selector node fn)
   "Filter NODES by the relationship defined by FN against NODE.
 
-FN should be a function that takes a node and whether to include
-anonymous nodes and return the nodes that match the relationship."
+  FN should be a function that takes a node and whether to include
+  anonymous nodes and return the nodes that match the relationship."
   (map-let (:match-rules :discard-rules :default-mark :anonymous)
       ;; we can have either a plist or `t', indicating that we want
       ;; all matches
@@ -373,7 +394,7 @@ anonymous nodes and return the nodes that match the relationship."
             (or default-mark
                 (and match-rules discard-rules
                      (error "Cannot have both `:match-rules' and `:discard-rules'
-without explicitly setting `:default-mark'"))
+  without explicitly setting `:default-mark'"))
                 (if match-rules '@discard '@match)))
            (anonymous (or anonymous combobulate-procedure-include-anonymous-nodes))
            (nodes (funcall fn node anonymous)))
@@ -406,10 +427,10 @@ without explicitly setting `:default-mark'"))
 (defun combobulate-procedure-apply (procedure node)
   "Apply PROCEDURE to NODE.
 
-PROCEDURE is a form matching the following pattern:
+  PROCEDURE is a form matching the following pattern:
 
-   (:activation-nodes (ACTIVATION-NODE-RULES ...))
-    :selector SELECTOR-RULES)
+  (:activation-nodes (ACTIVATION-NODE-RULES ...))
+  :selector SELECTOR-RULES)
 
 Where ACTIVATION-NODE-RULES is a list of activation nodes, each
 of which is a form matching the following pattern:
@@ -491,7 +512,8 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
  procedure result with a matched activation node")
       (if selector
           (map-let (:choose :match-query :match-children :match-siblings) selector
-            ;; use `:choose' to determine whether to operate on the action node or its parent
+            ;; use `:choose' to determine whether to operate on the
+            ;; action node or its parent
             (when-let ((chosen-node
                         (cond
                          ((equal choose 'node)
@@ -502,22 +524,18 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
               (setf
                ;; store the result of the selector filter in the procedure result
                (combobulate-procedure-result-selected-nodes procedure-result)
-               (combobulate-procedure--mark-nodes
-                (ensure-list
-                 (cond
-                  (match-query
-                   (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
-                  ((or match-siblings match-children)
-                   (combobulate-procedure--filter-nodes-by-relationship
-                    (or match-children match-siblings)
-                    chosen-node
-                    (if match-siblings
-                        #'combobulate-linear-siblings
-                      #'combobulate-node-children)))
-                  (t (error "Invalid selector: %s" selector))))
-                :discard-types (combobulate-procedure-expand-rules combobulate-procedure-discard-rules)
-                :overwrite t
-                :keep-anonymous t)
+               (ensure-list
+                (cond
+                 (match-query
+                  (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
+                 ((or match-siblings match-children)
+                  (combobulate-procedure--filter-nodes-by-relationship
+                   (or match-children match-siblings)
+                   chosen-node
+                   (if match-siblings
+                       #'combobulate-linear-siblings
+                     #'combobulate-node-children)))
+                 (t (error "Invalid selector: %s" selector))))
                ;; acknowledge that the selector filter was used
                (combobulate-procedure-result-matched-selection procedure-result) t)))
         ;; if there is no selector, then the action node is the selected node
@@ -574,9 +592,21 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
   "Get the production rules from VARIABLE."
   (cadr (assoc (or language (combobulate-primary-language)) variable)))
 
-(defun combobulate-production-rules-get-types (&optional language)
-  "Return a list of all node types in LANGUAGE."
-  (combobulate-production-rules--get combobulate-rules-types-alist language))
+(defun combobulate-production-rules-get-types (&optional language skip-discard-rules)
+  "Return a list of all node types in LANGUAGE.
+
+By default, node rules listed in the shorthand
+`combobulate-discard-rules' are removed from the list of all node types
+if `combobulate-procedure-apply-shared-discard-rules' is non-nil.
+
+If SKIP-DISCARD-RULES is non-nil, discard rules are not included."
+  (seq-difference
+   (combobulate-production-rules--get combobulate-rules-types-alist language)
+   (when (and (combobulate-primary-language t)
+              combobulate-procedure-apply-shared-discard-rules
+              (not skip-discard-rules))
+     (combobulate-procedure-expand-rules
+      (combobulate-read procedure-discard-rules)))))
 
 (defun combobulate-production-rules-get-rules (&optional language)
   "Return a list of the production rules in LANGUAGE."
@@ -611,7 +641,7 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
          (setq collected-node-types
                (append collected-node-types
                        (seq-filter (lambda (node-type)
-                                     (string-match-p regexp node-type))
+                                     (string-match-p (apply #'rx-to-string (ensure-list regexp)) node-type))
                                    (combobulate-production-rules-get-types)))))
         ;; A production rule with optional fields which defaults to
         ;; nil, because `production-rules-get' interprets that to mean

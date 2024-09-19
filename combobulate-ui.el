@@ -32,6 +32,9 @@
 (require 'transient)
 
 (require 'combobulate-settings)
+(require 'combobulate-setup)
+
+(declare-function combobulate--envelope-get-function-name "combobulate-envelope")
 
 (transient-define-prefix combobulate-highlight ()
   "Highlight nodes in the buffer"
@@ -56,63 +59,65 @@
   ["Query Builder"
    ("q" "Open query builder" combobulate-query-builder)
    ("p" "Build match query for node at point" combobulate-query-builder-match-node-at-point)
-   ("r" "Build query from root node to point" combobulate-query-builder-root-to-point)])
+   ("r" "Build query from root node to point" combobulate-query-builder-root-to-point)
+   ("M-n" "Next query ring entry" combobulate-query-ring-next-query :transient t)
+   ("M-p" "Previous query ring entry" combobulate-query-ring-previous-query :transient t)])
 
 (transient-define-prefix combobulate-edit ()
-  "Edit nodes with multiple cursors..."
-  ["Edit with multiple cursors"
+  "Cursor edit nodes..."
+  ["Bulk Edit"
    ["DWIM at Point"
-    ("c" "Cluster" combobulate-edit-cluster-dwim)
-    ("t" "Node Type" combobulate-edit-node-type-dwim)
-    ("x" "Node Text" combobulate-edit-node-by-text-dwim)
-    ("s" "Sibling" combobulate-edit-node-siblings-dwim)]
+    ("c" "Sequence" combobulate-cursor-edit-sequence-dwim)
+    ("t" "Node Type" combobulate-cursor-edit-node-type-dwim)
+    ("x" "Node Text" combobulate-cursor-edit-node-by-text-dwim)
+    ("s" "Sibling" combobulate-cursor-edit-node-siblings-dwim)]
    ["Query"
-    ("q" "By Query" combobulate-edit-query)]])
+    ("q" "By Query" combobulate-cursor-edit-query)]])
 
 (transient-define-prefix combobulate-envelop ()
   "Envelop node on or around point with a template"
   ["Envelopes"
+   :class transient-column
    :setup-children
    (lambda (_)
      ;; This is... not pretty.
      (transient-parse-suffixes
       transient--prefix
       `[,@(mapcar (lambda (envelope)
-                    (map-let (:key :description :function) envelope
-                      `(,key ,description ,function)))
-                  combobulate-manipulation-envelopes)]))])
+                    (map-let (:key :description) envelope
+                      `(,key ,description ,(combobulate--envelope-get-function-name envelope))))
+                  (combobulate-read envelope-list))]))])
 
 
 (transient-define-prefix combobulate ()
   "Structured Editing and Navigation with Combobulate"
-  ["Navigation"
+  ["Navigating and Searching"
    ["Linear / Explicit"
     ("M-a" "Logical prev" combobulate-navigate-logical-previous :transient t)
     ("M-e" "Logical next" combobulate-navigate-logical-next :transient t)
     ("C-M-f" "Forward sexp" forward-sexp :transient t)
     ("C-M-b" "Backward sexp" backward-sexp :transient t)
+    ("M-p" "Previous sequent" combobulate-navigate-sequence-previous :transient t)
+    ("M-n" "Next sequent" combobulate-navigate-sequence-next :transient t)
     ("a" "Avy …" combobulate-avy)]
    ["Hierarchical"
     ("C-M-u" "Up into list" combobulate-navigate-up :transient t)
     ("C-M-d" "Down into list" combobulate-navigate-down :transient t)
     ("C-M-p" "Backward sibling" combobulate-navigate-previous :transient t)
     ("C-M-n" "Forward sibling" combobulate-navigate-next :transient t)]
-   [:description (lambda () (concat
-                        (propertize "Defun " 'face 'transient-heading)
-                        (format "(to: %s)"
-                                (propertize
-                                 (symbol-name combobulate-beginning-of-defun-behavior)
-                                 'face
-                                 'font-lock-doc-face))))
-                 ("C-M-a" "Beginning of defun" combobulate-navigate-beginning-of-defun :transient t)
-                 ("C-M-e" "End of defun" combobulate-navigate-end-of-defun :transient t)]
-   ]
-  ["Querying"
-   [("B" "Query Builder …" combobulate-query)
+   ["Querying"
+    ("B" "Query Builder …" combobulate-query)
     ("x" "Xref …" combobulate-xref)
     ("h" "Highlight …" combobulate-highlight)]
-   [("M-n" "Next query ring entry" combobulate-query-ring-next-query :transient t)
-    ("M-p" "Previous query ring entry" combobulate-query-ring-previous-query :transient t)]]
+   [:description (lambda () (concat
+                             (propertize "Defun " 'face 'transient-heading)
+                             (format "(to: %s)"
+                                     (propertize
+                                      (symbol-name combobulate-beginning-of-defun-behavior)
+                                      'face
+                                      'font-lock-doc-face))))
+                 ("C-M-a" "Beginning of defun" combobulate-navigate-beginning-of-defun :transient t)
+                 ("C-M-e" "End of defun" combobulate-navigate-end-of-defun :transient t)]]
   ["Editing and Marking"
    ["Marking"
     ("C-M-h" "Mark defun" combobulate-mark-defun :transient t)

@@ -370,9 +370,9 @@ Returns nil if no match is found."
          (pos (ert--stats-test-pos stats test))
          (result (aref (ert--stats-test-results stats) pos)))
     (apply #'ediff-files
-           (plist-get (cdadr (cl-etypecase result
-                               (ert-test-failed-condition
-                                (ert-test-result-with-condition-condition result))))
+           (plist-get (cdadr (with-no-warnings (cl-etypecase result
+                                                 (ert-test-failed-condition
+                                                  (ert-test-result-with-condition-condition result)))))
                       :files))))
 
 (defun combobulate-test-compare-string-with-file (buf fn)
@@ -414,7 +414,7 @@ Returns nil if no match is found."
   "Compare the output from the current buffer to a fixture-delta file."
   (combobulate-test-compare-string-with-file (current-buffer) fixture-delta-fn))
 
-(defmacro combobulate-for-each-marker (action-fn &key (reverse nil))
+(cl-defmacro combobulate-for-each-marker (action-fn &key (reverse nil))
   "Execute ACTION-FN for each marker in the current buffer.
 
 The point is first moved to the start of the first marker. After
@@ -521,7 +521,7 @@ macros are available for use in the test body."
              ;; we'll use the root of the ./tests/ directory by
              ;; looking for the combobulate-test-prelude file
              ;; (setq default-directory (file-name-directory (locate-library "combobulate-test-prelude")))
-             (should combobulate-mode)
+             (should (combobulate-read minor-mode))
              (should (treesit-parser-list))
              (erase-buffer)
              (when ,fixture

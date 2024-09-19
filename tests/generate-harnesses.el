@@ -113,7 +113,7 @@
       ;;             :mock-prompt-actions ("blah")
       ;;             :mock-expansion-actions (yes yes no))
       ;; choice and choice*
-      (:test-name "choice*-with-complex-missing-field"
+      (:test-name "choicestar-with-complex-missing-field"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
@@ -138,7 +138,7 @@
     :reverse nil
     :harness-factory-matrix
     '(;; choice and choice*
-      (:test-name "choice*-with-complex-missing-field-consequence"
+      (:test-name "choicestar-with-complex-missing-field-consequence"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
@@ -147,7 +147,7 @@
                   :mock-proffer-choices (1 0)
                   :mock-registers ((region . "<div>Some jsx element</div>"))
                   :mock-prompt-actions nil)
-      (:test-name "choice*-with-complex-missing-field-alt"
+      (:test-name "choicestar-with-complex-missing-field-alt"
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
@@ -202,9 +202,18 @@
     :reverse nil)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-with-fixture-delta
-    :fixture-files "fixtures/splice/*"
+    :fixture-files "fixtures/splice/choice-0-*"
     :collection-name "combobulate-splice-self"
     :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0 0 0))
+                     (combobulate-splice-self)))
+    :per-marker t
+    :reverse nil)
+   ;; Splicing, but use the second choice instead of the first
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/splice/choice-1-*"
+    :collection-name "combobulate-splice-self-offset-1"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(1 1 1 1 1 1 1))
                      (combobulate-splice-self)))
     :per-marker t
     :reverse nil)
@@ -216,6 +225,37 @@
     :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0))
                      (combobulate-clone-node-dwim)))
     :per-marker t
+    :reverse nil)
+   ;; Kill node DWIM
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/kill-node/*"
+    :collection-name "combobulate-kill-dwim"
+    :action-body
+    ;; Unlike most tests, this one has `:per-marker' set to nil so we
+    ;; only create a test for the first marker in a fixture file. The
+    ;; action body instead loops over every test overlay and runs the
+    ;; kill node command for each overlay. No movement is made to each
+    ;; overlay, though.
+    '((combobulate--with-test-overlays
+       (lambda (ov)
+         (combobulate-kill-node-dwim))))
+    :per-marker nil
+    :reverse nil)
+   ;; Sequence navigation
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/sequence/*"
+    :collection-name "combobulate-navigate-sequence-previous"
+    :action-body '((combobulate-navigate-sequence-previous))
+    :per-marker nil
+    :reverse t)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/sequence/*"
+    :collection-name "combobulate-navigate-sequence-next"
+    :action-body '((combobulate-navigate-sequence-next))
+    :per-marker nil
     :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite

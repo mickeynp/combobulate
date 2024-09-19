@@ -52,7 +52,8 @@
 (eval-when-compile
   (require 'cl-lib))
 
-(defvar combobulate-mode)
+(declare-function combobulate-cursor-edit-nodes "combobulate-cursor.el")
+
 
 (defvar combobulate-query-ring-index 0
   "Index of the current query in `combobulate-query-ring'.")
@@ -188,6 +189,16 @@ If this value is set, it will be used as the default query when
   "Face for highlighting query matches."
   :group 'combobulate-faces)
 
+(defface combobulate-query-highlight-underline-red-face
+  '((t (:underline (:color "LightCoral" :style line))))
+  "Face for highlighting query matches."
+  :group 'combobulate-faces)
+
+(defface combobulate-query-highlight-underline-blue-face
+  '((t (:underline (:color "DodgerBlue" :style line))))
+  "Face for highlighting query matches."
+  :group 'combobulate-faces)
+
 (defcustom combobulate-query-node-match-faces
   '(combobulate-query-highlight-regal-ripples-face
     combobulate-query-highlight-gleaming-gold-face
@@ -214,6 +225,9 @@ If this value is set, it will be used as the default query when
     ("hl.mercury" . 'combobulate-query-highlight-majestic-mercury-face)
     ("hl.rind" . 'combobulate-query-highlight-radiant-rind-face)
     ("hl.comment" . 'font-lock-comment-face)
+    ;; less bashful colours
+    ("hl.red.underline" . 'combobulate-query-highlight-underline-red-face)
+    ("hl.blue.underline" . 'combobulate-query-highlight-underline-blue-face)
     ;; for combobulate's edit nodes facility
     ("before" . 'combobulate-query-highlight-silver-shadows-face)
     ("after" . 'combobulate-query-highlight-regal-ripples-face)
@@ -463,7 +477,10 @@ completion candidates for the current point."
   "Validate QUERY and return a cons cell if the query is invalid."
   (ignore-errors
     (condition-case err
-        (progn (combobulate-query-capture (combobulate-root-node) query) nil)
+        (progn (combobulate-query-capture
+                (combobulate-root-node)
+                query (point-min) (1+ (point-min)))
+               nil)
       ;; this can easily happen during startup.
       (treesit-query-error
        (pcase-let ((`(,_ ,message ,start . ,_) err))
@@ -752,13 +769,14 @@ buffer."
                  query nil nil nil)))
     ;; Search the query string for `@before', `@after', and `@mark' capture
     ;; groups. Raise an error if neither are present.
-    (unless (or (string-match-p "@before" query)
-                (string-match-p "@after" query)
-                (string-match-p "@mark" query))
-      (error "Please mark nodes with `@before', `@after', and/or `@mark' to determine cursor placement"))
+    (unless (and (not (eq combobulate-cursor-tool 'multiple-cursors))
+                 (or (string-match-p "@before" query)
+                     (string-match-p "@after" query)
+                     (string-match-p "@mark" query)))
+      (error "You are editing with multiple cursors. Please mark nodes with `@before', `@after', and/or `@mark' to determine cursor placement"))
     (if (>= (length nodes) combobulate-query-builder-edit-max-nodes)
         (error "Too many nodes to edit (%d)" (length nodes))
-      (combobulate-edit-nodes nodes))))
+      (combobulate-cursor-edit-nodes nodes))))
 
 (defun combobulate-query-builder-get-query ()
   "Get the current query from the query builder buffer."
@@ -848,7 +866,8 @@ buffer."
     ("p" "Change parser" combobulate-query-builder-change-parser)
     ("M-w" "Copy query as form to kill ring" combobulate-query-builder-copy-query-as-form)
     ("w" "Copy query to kill ring" combobulate-query-builder-copy-query)
-    ("+" "Fit window to buffer" fit-window-to-buffer)]
+    ("+" "Fit window to buffer" fit-window-to-buffer)
+    ("q" "Quit" combobulate-query-builder-save-and-quit)]
    ["History"
     ("C-s" "Save query to ring" combobulate-query-ring-save-query)
     ("M-n" "Next query in ring" combobulate-query-ring-next-query :transient t)
@@ -879,6 +898,7 @@ buffer."
     (define-key map (kbd "C-c M-n") #'combobulate-query-ring-next-query)
     (define-key map (kbd "C-c C-s") #'combobulate-query-ring-save-query)
     (define-key map (kbd "M-<up>") #'raise-sexp)
+    (define-key map (kbd "q") #'combobulate-query-builder-save-and-quit)
     map)
   "Keymap for `combobulate-query-mode'.")
 
@@ -1066,12 +1086,12 @@ If STRICT is non-nil, then the parent node of the node at point
 is used to constrain the search.  Otherwise, the parent node is
 marked `_' indicating a wildcard.
 
-Uses `combobulate-navigation-context-nodes' to determine the right
+Uses `context-nodes' to determine the right
 node at point to highlight."
   (interactive (list (combobulate-highlight-read-face-name "Face: ")
                      (y-or-n-p "Match similar types only? ")))
   ;; determine the right node at point to collect.
-  (let ((node (with-navigation-nodes (:nodes combobulate-navigation-context-nodes)
+  (let ((node (with-navigation-nodes (:procedures (combobulate-read context-nodes))
                 (car-safe
                  (seq-sort #'combobulate-node-larger-than-node-p
                            (seq-filter #'combobulate-navigable-node-p
@@ -1079,7 +1099,7 @@ node at point to highlight."
                                              (combobulate-get-parents (combobulate-node-at-point nil t))))))))
         (query))
     (unless node (error "Cannot find a valid context node at point"))
-    (with-navigation-nodes (:nodes combobulate-navigation-parent-child-procedures)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-hierarchy))
       (if-let ((node-parent (combobulate-node-parent node)))
           (progn
             (setq query (combobulate-query-builder-matcher-query
@@ -1145,7 +1165,7 @@ the query fails to compile."
 
 (defun combobulate-highlight-install (language)
   "Install the font lock rules for LANGUAGE in the current buffer."
-  (when combobulate-mode
+  (when (combobulate-read minor-mode)
     (combobulate-highlight-setup)
     ;; do the user-defined rules...
     (dolist (rule combobulate-highlight-queries-alist)
@@ -1155,7 +1175,7 @@ the query fails to compile."
           (combobulate-query-builder-to-string (plist-get rule :query)))
          language t)))
     ;; next, the system-supplied rules...
-    (dolist (rule combobulate-highlight-queries-default)
+    (dolist (rule (combobulate-read highlight-queries-default))
       (combobulate-highlight-install-query
        (combobulate-query-builder-expand-match-face
         (combobulate-query-builder-to-string rule))
