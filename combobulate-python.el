@@ -252,7 +252,7 @@ line when you press
                             ((rule "expression") (rule "primary_expression")))))))
          (statements . ((:activation-nodes
                          ((:nodes
-                           ((rule "_compound_statement") (rule "_simple_statement") (rule "block")))))))))
+                           ((rule "_compound_statement") (rule "_simple_statement") (rule "block") "block"))))))))
       (envelope-list
        `((:description
           "Decorate class or function"
@@ -353,45 +353,8 @@ line when you press
           :template
           ("while " @ ":" n>
            r>))))
-      (procedures-edit
-       '(;; edit comments in blocks
-         (:activation-nodes
-          ((:nodes ("comment") :has-parent ("block")))
-          :selector (:match-query (:query (block (comment)+ @match)
-                                          :engine combobulate)))
-         ;; edit pairs in dictionaries
-         (:activation-nodes
-          ((:nodes ("pair") :has-parent "dictionary")
-           (:nodes ("dictionary")))
-          :selector (:match-query (:query (dictionary (pair)+ @match)
-                                          :engine combobulate)))
-         ;; edit parameters in functions
-         (:activation-nodes
-          ((:nodes ("function_definition")))
-          :selector (:match-query (:query (function_definition (parameters (_)+ @match))
-                                          :engine combobulate)))
-         ;; edit elements in containers and blocks
-         (:activation-nodes
-          ((:nodes ("block" "tuple_pattern" "set" "list" "tuple")))
-          :selector (:choose
-                     node
-                     :match-query (:query ((_) (_)+ @match)
-                                          :engine combobulate))
-          :selector (:match-children t))
-         ;; edit arguments in calls
-         (:activation-nodes
-          ((:nodes ("argument_list")))
-          :selector (:match-query (:query ((argument_list) (_)+ @match)
-                                          :engine combobulate)))
-         ;; edit imports
-         (:activation-nodes
-          ((:nodes "import_from_statement" :find-parent "module"))
-          :selector (:match-query (:query (import_from_statement name: (dotted_name)+ @match)
-                                          :engine combobulate)))))
       (indent-calculate-function #'combobulate-python-calculate-indent)
       (envelope-deindent-function #'combobulate-python-envelope-deindent-level)
-      (procedures-sequence
-       '((:activation-nodes ((:nodes ("identifier"))))))
       (procedures-defun
        '((:activation-nodes ((:nodes ("class_definition" "function_definition" "decorated_definition" "lambda"))))))
       (procedures-sexp
@@ -459,12 +422,11 @@ line when you press
                    :position at))
           :selector (:choose node
                              :match-children (:match-rules (rule "lambda" :body))))
-         ;; Decorated definitions need special care. A
-         ;; `decorated_definition' has at least one `decorator' child
-         ;; element; the `decorator' elements themselves, if there is
-         ;; more than one, are siblings. So we must find either anything
-         ;; a `decorated_definition' can contain, a block inside the
-         ;; class/function to jump to.
+         ;; Decorated definitions need special care.  To properly move
+         ;; into or out of a decorated definition we must search for
+         ;; anything that belongs to a `decorated_definition' or look
+         ;; for a `block' which is what is 'inside' the actual
+         ;; function definition underpinning a decorator.
          (:activation-nodes
           ((:nodes ("decorator") :position at :has-parent ("decorated_definition")))
           :selector (:choose parent :match-children (:match-rules ((rule "decorated_definition") "block"))))

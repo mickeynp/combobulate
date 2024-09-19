@@ -127,6 +127,10 @@ match a placement action."
         (combobulate--mc-enable)
         matched))))
 
+
+(defvar combobulate-cursor--refactor-id nil
+  "The ID of the current refactoring operation in progress.")
+
 (defconst combobulate-cursor-substitute-default "\\0"
   "Substitute that represents the text for each individual node.
 
@@ -157,7 +161,7 @@ Overlays must be valid `combobulate-refactor' field overlays."
           ;; actually a minibuffer or not.
           (minibuffer-text (minibuffer-contents)))
       (with-current-buffer buf
-        (let ((ovs (combobulate--refactor-get-overlays)))
+        (let ((ovs (combobulate--refactor-get-overlays combobulate-cursor--refactor-id)))
           (mapc (lambda (ov)
                   (when (overlay-get ov 'combobulate-refactor-field-enabled)
                     ;; Essential. There's a million things in here
@@ -245,15 +249,14 @@ Overlays must be valid `combobulate-refactor' field overlays."
                        ;; set to a default value that won't cause issues
                        ;; down the road if the eval replacement call does
                        ;; not yield anything.
-                       "")))
-                  (cl-incf idx))
+                       ""))
+                    (cl-incf idx)))
                 ovs))))))
 
 (defvar combobulate-cursor--field-tag 'combobulate-cursor-field
   "Tag used to identify Combobulate cursor fields.")
 
-(defvar combobulate-cursor--refactor-id nil
-  "The ID of the current refactoring operation in progress.")
+
 
 (defvar combobulate-cursor--active-buffer nil
   "The buffer that is currently being refactored.")
@@ -397,16 +400,15 @@ parent node. It is only used for messaging."
                               combobulate-cursor--field-tag
                               (combobulate-node-text node)))
                 proxy-nodes)
-          (save-match-data
-            (combobulate-envelope-prompt
-             (substitute-command-keys "Editing fields. Use \\`C-h' for help.")
-             nil
-             combobulate-cursor--active-buffer
-             (combobulate-cursor--update-function
-              combobulate-cursor--active-buffer
-              combobulate-cursor--field-tag)
-             combobulate-cursor-substitute-default
-             combobulate-cursor-key-map))
+          (combobulate-envelope-prompt
+           (substitute-command-keys "Editing fields. Use \\`C-h' for help.")
+           nil
+           combobulate-cursor--active-buffer
+           (combobulate-cursor--update-function
+            combobulate-cursor--active-buffer
+            combobulate-cursor--field-tag)
+           combobulate-cursor-substitute-default
+           combobulate-cursor-key-map)
           (commit))))
      ((eq combobulate-cursor-tool 'multiple-cursors)
       (combobulate--mc-place-nodes action-nodes))

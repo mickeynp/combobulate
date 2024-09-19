@@ -64,8 +64,8 @@
    ("M-p" "Previous query ring entry" combobulate-query-ring-previous-query :transient t)])
 
 (transient-define-prefix combobulate-edit ()
-  "Edit nodes with multiple cursors..."
-  ["Edit with multiple cursors"
+  "Cursor edit nodes..."
+  ["Bulk Edit"
    ["DWIM at Point"
     ("c" "Sequence" combobulate-cursor-edit-sequence-dwim)
     ("t" "Node Type" combobulate-cursor-edit-node-type-dwim)
@@ -110,12 +110,12 @@
     ("x" "Xref …" combobulate-xref)
     ("h" "Highlight …" combobulate-highlight)]
    [:description (lambda () (concat
-                        (propertize "Defun " 'face 'transient-heading)
-                        (format "(to: %s)"
-                                (propertize
-                                 (symbol-name combobulate-beginning-of-defun-behavior)
-                                 'face
-                                 'font-lock-doc-face))))
+                             (propertize "Defun " 'face 'transient-heading)
+                             (format "(to: %s)"
+                                     (propertize
+                                      (symbol-name combobulate-beginning-of-defun-behavior)
+                                      'face
+                                      'font-lock-doc-face))))
                  ("C-M-a" "Beginning of defun" combobulate-navigate-beginning-of-defun :transient t)
                  ("C-M-e" "End of defun" combobulate-navigate-end-of-defun :transient t)]]
   ["Editing and Marking"

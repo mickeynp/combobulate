@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                           (combobulate-node-text (cdr node))))
+                      (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -214,13 +214,17 @@ If NODE-ONLY is non-nil then only the node texts are returned"
 
 Linear siblings are nodes that are at the same level in the
 syntax tree."
-  ;; rewind to the first node
-  (let ((siblings) (ref-node node) (start-node))
-    (while (setq ref-node (combobulate-node-prev-sibling ref-node anonymous))
-      (setq start-node ref-node))
-    (cl-do ((node start-node (combobulate-node-next-sibling node anonymous)))
-        ((null node) siblings)
-      (push node siblings))
+  (let ((siblings '()))
+    (cl-do ((prev (combobulate-node-prev-sibling node anonymous)
+                  (combobulate-node-prev-sibling prev anonymous)))
+        ((null prev))
+      (push prev siblings))
+    (setq siblings (nreverse siblings))
+    (push node siblings)
+    (cl-do ((next (combobulate-node-next-sibling node anonymous)
+                  (combobulate-node-next-sibling next anonymous)))
+        ((null next))
+      (push next siblings))
     (nreverse siblings)))
 
 (defun combobulate--get-nearest-navigable-node ()
@@ -729,10 +733,10 @@ that technically has another immediate parent."
 (defun combobulate-forward-sexp-function-1 (backward)
   (car (seq-filter
         (lambda (node) (and (combobulate-navigable-node-p node)
-                            (funcall (if backward
-                                         #'combobulate-point-at-end-of-node-p
-                                       #'combobulate-point-at-beginning-of-node-p)
-                                     node)))
+                       (funcall (if backward
+                                    #'combobulate-point-at-end-of-node-p
+                                  #'combobulate-point-at-beginning-of-node-p)
+                                node)))
         (combobulate-all-nodes-at-point backward))))
 
 (defun combobulate-forward-sexp-function (arg)
@@ -984,6 +988,7 @@ continue by scanning in DIRECTION for any other contextual node (as per
      ;; just proceed accordingly.)
      ((or (null seq-nodes)
           (eq last-command 'combobulate-navigation-sequence-scan))
+      (unless thing (error "No valid symbol at point"))
       (setq this-command 'combobulate-navigation-sequence-scan)
       (combobulate--navigate-scan
        ;; Use the last term if we have one, otherwise use the symbol
@@ -999,11 +1004,9 @@ continue by scanning in DIRECTION for any other contextual node (as per
                              combobulate-navigate-sequence-previous))
       ;; Find the following node in the direction we are told to look
       ;; and return it if there is such a node.
-      (if-let (following-node (car (seq-filter
-                                    (if (eq direction 'next)
-                                        #'combobulate-node-after-point-p
-                                      #'combobulate-node-before-point-p)
-                                    seq-nodes)))
+      (if-let (following-node (if (eq direction 'next)
+                                  (seq-find #'combobulate-node-after-point-p seq-nodes)
+                                (seq-find #'combobulate-node-before-point-p (reverse seq-nodes))))
           following-node
         ;; Hack this/last command so it thinks we're doing a sequence
         ;; scan. This is probably the simplest way of passing state

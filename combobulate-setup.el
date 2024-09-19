@@ -387,14 +387,13 @@ The primary use for these is through `define-combobulate-language'.")
 
 If CHECK is non-nil raise an assertion if the variable with that
 SHORTHAND for that LANGUAGE is unbound."
-  (let ((var (intern (format "combobulate-%s-%s"
-                             (or language (combobulate-primary-language))
-                             shorthand))))
-    (when (and (not (boundp var)) check)
-      (cl-assert (boundp var) nil
-                 "Variable `%s' does not exist in language `%s' with shorthand `%s'"
-                 var language shorthand))
-    var))
+  (when-let (lang (or language (combobulate-primary-language)))
+    (let ((var (intern (format "combobulate-%s-%s" lang shorthand))))
+      (when (and (not (boundp var)) check)
+        (cl-assert (boundp var) nil
+                   "Variable `%s' does not exist in language `%s' with shorthand `%s'"
+                   var lang shorthand))
+      var)))
 
 ;; Allow for `setf' to be used with `combobulate-get'.
 (gv-define-setter combobulate-get (value var) `(set (combobulate-get ,var) ,value))

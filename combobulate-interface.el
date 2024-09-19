@@ -73,7 +73,8 @@
   (or
    (treesit-language-at (point))
    (car (combobulate-get-registered-language major-mode))
-   (combobulate-parser-language (car (combobulate-parser-list)))
+   (when-let ((first-language (car (combobulate-parser-list))))
+     (combobulate-parser-language first-language))
    (unless quiet
      (error "No parsers available"))))
 

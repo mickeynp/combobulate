@@ -305,6 +305,18 @@ DEFAULT-MARK.
 
 If the NODES are already marked, and OVERWRITE is non-nil, then
 overwrite the existing marks."
+  ;; The shorthand variable, `procedure-discard-rules', contains rules
+  ;; we must add to the discard types check. This is usually just
+  ;; `comment' as line-comments trip up tree-sitter, but other
+  ;; languages may introduce their own rules.
+  ;;
+  ;; However, if the user specifically ASKS for a discard type, then
+  ;; we should respect that and not discard it.
+  (when combobulate-procedure-apply-shared-discard-rules
+    (setq discard-types (append discard-types
+                                (combobulate-procedure-expand-rules
+                                 (combobulate-read procedure-discard-rules))))
+    (when match-types (setq discard-types (seq-difference match-types discard-types))))
   (let ((marked-nodes))
     (pcase-dolist ((or `(,existing-mark . ,node) node) nodes)
       (let ((type (combobulate-node-type node)))
@@ -512,23 +524,18 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
               (setf
                ;; store the result of the selector filter in the procedure result
                (combobulate-procedure-result-selected-nodes procedure-result)
-               (combobulate-procedure--mark-nodes
-                (ensure-list
-                 (cond
-                  (match-query
-                   (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
-                  ((or match-siblings match-children)
-                   (combobulate-procedure--filter-nodes-by-relationship
-                    (or match-children match-siblings)
-                    chosen-node
-                    (if match-siblings
-                        #'combobulate-linear-siblings
-                      #'combobulate-node-children)))
-                  (t (error "Invalid selector: %s" selector))))
-                :discard-types (when combobulate-procedure-apply-shared-discard-rules
-                                 (combobulate-procedure-expand-rules (combobulate-read procedure-discard-rules)))
-                :overwrite t
-                :keep-anonymous t)
+               (ensure-list
+                (cond
+                 (match-query
+                  (combobulate-procedure--filter-nodes-by-query match-query chosen-node))
+                 ((or match-siblings match-children)
+                  (combobulate-procedure--filter-nodes-by-relationship
+                   (or match-children match-siblings)
+                   chosen-node
+                   (if match-siblings
+                       #'combobulate-linear-siblings
+                     #'combobulate-node-children)))
+                 (t (error "Invalid selector: %s" selector))))
                ;; acknowledge that the selector filter was used
                (combobulate-procedure-result-matched-selection procedure-result) t)))
         ;; if there is no selector, then the action node is the selected node
@@ -585,9 +592,21 @@ defaults to `combobulate'. `:discard-rules' is a list of rules
   "Get the production rules from VARIABLE."
   (cadr (assoc (or language (combobulate-primary-language)) variable)))
 
-(defun combobulate-production-rules-get-types (&optional language)
-  "Return a list of all node types in LANGUAGE."
-  (combobulate-production-rules--get combobulate-rules-types-alist language))
+(defun combobulate-production-rules-get-types (&optional language skip-discard-rules)
+  "Return a list of all node types in LANGUAGE.
+
+By default, node rules listed in the shorthand
+`combobulate-discard-rules' are removed from the list of all node types
+if `combobulate-procedure-apply-shared-discard-rules' is non-nil.
+
+If SKIP-DISCARD-RULES is non-nil, discard rules are not included."
+  (seq-difference
+   (combobulate-production-rules--get combobulate-rules-types-alist language)
+   (when (and (combobulate-primary-language t)
+              combobulate-procedure-apply-shared-discard-rules
+              (not skip-discard-rules))
+     (combobulate-procedure-expand-rules
+      (combobulate-read procedure-discard-rules)))))
 
 (defun combobulate-production-rules-get-rules (&optional language)
   "Return a list of the production rules in LANGUAGE."

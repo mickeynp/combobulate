@@ -73,14 +73,7 @@
          "id_name" "plain_value" "color_value" "string_value"))
       (pretty-print-node-name-function
        #'combobulate-css-pretty-print-node-name)
-      (procedures-edit
-       '((:activation-nodes
-          ((:nodes ("declaration") :position in :has-ancestor "block"))
-          :selector (:match-query (:query (block (declaration ":" (_) @match)+)
-                                          :engine combobulate)))
-         (:activation-nodes
-          ((:nodes ("block")))
-          :selector (:match-query ((block) (_)+ @match)))))
+      (procedures-edit nil)
       (procedures-sexp
        '((:activation-nodes ((:nodes ("comment" "property_name"
                                       (rule "selectors")

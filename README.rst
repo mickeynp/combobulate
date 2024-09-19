@@ -58,7 +58,7 @@ Much like the popular expand regions package, Combobulate can also expand the re
 
 .. image:: docs/mc-edit-1.gif
 
-Combobulate can also place cursors (using the optional *multiple cursors* package) at syntactically important points in your code, like: dictionary elements; function arguments; or attributes in JSX elements.
+Combobulate can also place cursors (using the optional *multiple cursors* package, or using the builtin *field editor*) at syntactically important points in your code, like: dictionary elements; function arguments; or attributes in JSX elements.
 
 .. image:: docs/clone-dwim.gif
 
@@ -132,6 +132,8 @@ Recent Changes / What's New
 
 Here's a quick summary of recently added and changed features:
 
+- Combobulate can now move between *sequences*, such as the start and end tags in HTML/JSX. The sequence keys are bound to ``M-n`` and ``M-p``.
+- Combobulate now has its own bulk editing system called the *field editor*. Multiple cursors is also still supported. Customize ``combobulate-cursor-tool`` to change the tool you want to use.
 - `The carousel interface <https://www.masteringemacs.org/article/combobulate-interactive-node-editing-treesitter>`__ is now used in most edit commands.
 - Splicing is now more advanced than ever, and works everywhere.
 
