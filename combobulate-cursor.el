@@ -198,11 +198,19 @@ Overlays must be valid `combobulate-refactor' field overlays."
                               (replacement-text
                                (cl-letf  (((symbol-function 'match-string)
                                            (lambda (n &optional _string)
-                                             ;; Subtract 1 because 0
-                                             ;; refers to the whole
-                                             ;; match
                                              (overlay-get
-                                              (nth (1- n) ovs)
+                                              (nth
+                                               ;; Asking for the 0th
+                                               ;; match means we want
+                                               ;; the current
+                                               ;; overlay's text.
+                                               (if (= n 0)
+                                                   idx
+                                                 ;; Subtract 1 because 0
+                                                 ;; refers to the whole
+                                                 ;; match
+                                                 (1- n))
+                                               ovs)
                                               'combobulate-refactor-field-original-text))))
                                  (or (replace-eval-replacement
                                       (cond
