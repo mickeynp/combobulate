@@ -46,7 +46,7 @@
 (require 'map)
 ;;; for directory local stuff
 (require 'files-x)
-;; for xref
+;;; for xref
 (require 'xref)
 
 (require 'transient)
