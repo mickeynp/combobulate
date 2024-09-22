@@ -49,6 +49,8 @@
 ;; for xref
 (require 'xref)
 
+(require 'transient)
+
 (eval-when-compile
   (require 'cl-lib))
 
