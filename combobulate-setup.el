@@ -433,11 +433,11 @@ A complete list of known shorthands are found in
   ;;         ;; `combobulate-navigable-nodes' draws its nodes from
   ;;         ;; `combobulate-procedures-default'.
   (setf (combobulate-get 'envelope-list)
-        (append (combobulate-read envelope-default-list)
-                (combobulate-read envelope-list)))
+        (seq-uniq (append (combobulate-read envelope-default-list)
+                          (combobulate-read envelope-list))))
   (setf (combobulate-get 'envelope-procedure-shorthand-alist)
-        (append (combobulate-read envelope-procedure-shorthand-default-alist)
-                (combobulate-read envelope-procedure-shorthand-alist)))
+        (seq-uniq (append (combobulate-read envelope-procedure-shorthand-default-alist)
+                          (combobulate-read envelope-procedure-shorthand-alist))))
   (setf (combobulate-get 'default-nodes)
         (combobulate-procedure-collect-activation-nodes
          (combobulate-read procedures-default)))

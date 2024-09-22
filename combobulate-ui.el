@@ -82,7 +82,7 @@
    (lambda (_)
      ;; This is... not pretty.
      (transient-parse-suffixes
-      transient--prefix
+      'something
       `[,@(mapcar (lambda (envelope)
                     (map-let (:key :description) envelope
                       `(,key ,description ,(combobulate--envelope-get-function-name envelope))))
