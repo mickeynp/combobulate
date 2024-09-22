@@ -1276,11 +1276,11 @@ Each member of PARTITIONS must be one of:
                      matches))))
     (unless (and matches valid-parents)
       (error "Cannot splice from `%s'" point-node))
-    (seq-let [start &rest end]
-        ;; Get the node range extent of the filtered, partitioned
-        ;; nodes. This does mean that we cannot pick things that are
-        ;; disjoint, however.
-        (combobulate-node-range-extent matches)
+    (pcase-let ((`(,start . ,end)
+                 ;; Get the node range extent of the filtered, partitioned
+                 ;; nodes. This does mean that we cannot pick things that are
+                 ;; disjoint, however.
+                 (combobulate-node-range-extent matches)))
       (setq source-node (combobulate-proxy-node-make-from-range start end))
       (setf (combobulate-proxy-node-text source-node)
             (combobulate-indent-string-first-line
@@ -1312,9 +1312,9 @@ Each member of PARTITIONS must be one of:
                         ;; use an envelope to ensure indentation is handled
                         ;; properly. quicker and easier than reinventing it
                         ;; again here.
-                        (seq-let [[start &rest end] &rest _]
-                            (combobulate-envelope-expand-instructions
-                             '((r> text)) `((text . ,(combobulate-proxy-node-text source-node))))
+                        (pcase-let ((`((,start . ,end) . ,_)
+                                     (combobulate-envelope-expand-instructions
+                                      '((r> text)) `((text . ,(combobulate-proxy-node-text source-node))))))
                           (goto-char start)
                           ;; Use the range overlay as a crude way to
                           ;; keep tabs on the text as it shifts around
