@@ -76,7 +76,7 @@ def match_rule(obj, rules):
             match child_type:
                 case {"named": True, "type": child_type}:
                     if child_type.startswith("_"):
-                        children |= rules[child_type][DEFAULT_FIELD_NAME]
+                        children |= rules[LispString(child_type)][DEFAULT_FIELD_NAME]
                     else:
                         children.add(LispString(child_type))
         return children
