@@ -136,13 +136,13 @@
          ;; statement but only the actual case clauses and not the
          ;; identifier alias clause itself.
          (:activation-nodes
-          ((:nodes (rule-rx ("switch_statement" eol))
+          ((:nodes (rule-rx "switch_statement" eol)
                    :position at
-                   :has-parent (rx ("switch_statement" eol))))
-          :selector (:choose parent :match-children (:match-rules (rx ("case" eol)))))
+                   :has-parent (rx "switch_statement" eol)))
+          :selector (:choose parent :match-children (:match-rules (rx "case" eol))))
          (:activation-nodes
           ((:nodes (rule "_statement")
-                   :has-parent (rx ("case" eol))))
+                   :has-parent (rx "case" eol)))
           :selector (:choose parent :match-children t))
          ;; -- End switch
          (:activation-nodes
@@ -152,11 +152,11 @@
           :selector (:choose parent :match-children t))
          ;; lists with declarations as immediate childre
          (:activation-nodes
-          ((:nodes ((rx ("declaration_list" eol)))))
+          ((:nodes ((rx "declaration_list" eol))))
           :selector (:choose
                      node
                      :match-children
-                     (:match-rules (rx ("_declaration" eol)))))
+                     (:match-rules (rx "_declaration" eol))))
          (:activation-nodes
           ((:nodes ((rule "argument_list"))
                    :has-parent ("argument_list"))
@@ -177,12 +177,12 @@
                      parent
                      :match-children t))
          (:activation-nodes
-          ((:nodes  (rx ("_declaration" eol))))
+          ((:nodes  (rx "_declaration" eol)))
           :selector (:choose
                      node
                      :match-children t))
          (:activation-nodes
-          ((:nodes ((rx ("statement" eol)))))
+          ((:nodes ((rx "statement" eol))))
           :selector (:choose
                      node
                      :match-children t))))

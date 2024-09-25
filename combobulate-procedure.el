@@ -627,21 +627,21 @@ If SKIP-DISCARD-RULES is non-nil, discard rules are not included."
       (pcase element
         ;; Match a regular expression against the node types and
         ;; expand each matching production rule with `(rule TYPE)'
-        (`(rule-rx ,regexp)
+        (`(rule-rx . ,regexp)
          (setq collected-node-types
                (append collected-node-types
                        (mapcan (lambda (n)
                                  (combobulate-procedure-expand-rules
                                   (list 'rule n)))
                                (combobulate-procedure-expand-rules
-                                (list 'rx regexp))))))
+                                `(rx ,@(ensure-list regexp)))))))
         ;; Match a regular expression against the node types and
         ;; collect the matching node types.
-        (`(rx ,regexp)
+        (`(rx . ,regexp)
          (setq collected-node-types
                (append collected-node-types
                        (seq-filter (lambda (node-type)
-                                     (string-match-p (apply #'rx-to-string (ensure-list regexp)) node-type))
+                                     (string-match-p (rx-to-string `(: ,@regexp)) node-type))
                                    (combobulate-production-rules-get-types)))))
         ;; A production rule with optional fields which defaults to
         ;; nil, because `production-rules-get' interprets that to mean
