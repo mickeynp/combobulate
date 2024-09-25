@@ -79,11 +79,8 @@
 
 (define-key edebug-mode-map (kbd "C-c f") #'combobulate--debug-flash-variable)
 
-;; (advice-remove #'combobulate--query-from-node #'combobulate--debug-highlight-queries)
-
-;; (advice-add #'combobulate--query-from-node :filter-return
-;;             #'combobulate--debug-highlight-queries)
 
 (provide 'combobulate-debug)
 ;;; combobulate-debug.el ends here
+
 

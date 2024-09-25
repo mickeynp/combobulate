@@ -78,6 +78,10 @@
    (unless quiet
      (error "No parsers available"))))
 
+(defsubst combobulate-node-buffer (node)
+  (cl-assert (combobulate-node-p node) t "Must be a real tree-sitter node")
+  (treesit-node-buffer node))
+
 (defsubst combobulate-query-validate (language query)
   (treesit-query-validate language query))
 

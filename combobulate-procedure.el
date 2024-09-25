@@ -173,7 +173,10 @@ If EXHAUSTIVE is non-nil, then collect all possible procedures
 that may apply.
 
 This function returns a list of `combobulate-procedure-result'
-objects."
+objects.
+
+See `combobulate-procedure-apply' for instructions on how to write
+PROCEDURES."
   (let ((matches)
         (nodes
          (seq-uniq
@@ -210,7 +213,10 @@ objects."
     matches))
 
 (defun combobulate-procedure-try (procedure node)
-  "Apply PROCEDURE to NODE and return the result, if any."
+  "Apply PROCEDURE to NODE and return the result, if any.
+
+See `combobulate-procedure-apply' for more information on how to write a
+PROCEDURE."
   (let ((procedure-result))
     (setq procedure-result (combobulate-procedure-apply procedure node))
     (pcase procedure-result
@@ -438,7 +444,7 @@ of which is a form matching the following pattern:
    (:nodes RULES
     [:position POSITION-RULE]
     [:has-parent HAS-PARENT-RULE]
-    [:has-field FIELDS]
+    [:has-fields FIELDS]
     [:has-ancestor HAS-ANCESTOR-RULE])
 
 Where RULES is one or more rules outlined in
