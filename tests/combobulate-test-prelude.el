@@ -37,6 +37,73 @@
 (require 'yaml-ts-mode)
 (require 'json-ts-mode)
 
+;;; Helpers for writing procedures
+
+(defun combobulate-test-display-procedure-result (procedure-results &optional buf)
+  "Pretty prints PROCEDURE-RESULTS to BUF.
+
+Use this as a development aid to see what the result of calling
+`combobulate-procedure-start' is."
+  (let ((idx 0) (inhibit-read-only t))
+    (with-current-buffer (or buf (get-buffer-create "*combobulate-test-procedure-results*"))
+      (erase-buffer)
+      (outline-mode)
+      (insert (format "* Procedure Results\n"))
+      ;; Create some quick highlighters to make certain things stand out
+      (highlight-regexp (rx (| "@match" "YES")) 'success)
+      (highlight-regexp (rx (| "@discard" "NO")) 'warning)
+      (dolist (result procedure-results)
+        (with-slots (activation-node
+                     action-node parent-node selected-nodes
+                     matched-nodes matched-activation matched-selection)
+            result
+          (insert (format "** Procedure %d of %d (Matched Activation: %s. Matched Selection: %s)\n"
+                          (cl-incf idx) (length procedure-results)
+                          (if matched-activation "YES" "NO")
+                          (if matched-selection "YES" "NO")))
+          (insert (format "*** Activation Node Rule\n"))
+          (insert (format "%s\n" activation-node))
+          (insert (format "*** Action Node\n%s\n" action-node))
+          (insert (format "*** Parent Node\n%s\n" parent-node))
+          (insert (format "*** Selected Nodes\n"))
+          (insert-button "Place Text Fixture Overlays"
+                         'action (lambda (_)
+                                   (let ((node-idx 0)
+                                         (node-buffer (combobulate-node-buffer (car matched-nodes))))
+                                     (with-current-buffer node-buffer
+                                       (combobulate-test-fixture-mode 1)
+                                       (combobulate--test-delete-overlay)
+                                       (setq combobulate-test-point-overlays nil)
+                                       (mapc
+                                        (lambda (node)
+                                          (combobulate-test-update-file-local-variable)
+                                          (combobulate--test-place-category-overlay
+                                           (cl-incf node-idx) 'outline (combobulate-node-start node)))
+                                        (progn
+                                          (princ matched-nodes)
+                                          (combobulate-proxy-node-make-from-nodes matched-nodes))))
+                                     (and node-buffer (with-current-buffer node-buffer
+                                                        (combobulate-test-update-file-local-variable)
+                                                        (pop-to-buffer node-buffer)
+                                                        (message "Created %d test overlays." node-idx))))))
+          (insert "\n")
+          (insert (pp-to-string selected-nodes))
+          (insert (format "*** Matched Nodes\n%s\n" (pp-to-string matched-nodes))))
+        (view-mode 1)
+        (pop-to-buffer (current-buffer))))))
+
+(defun combobulate-test-mark-according-to-procedure (buf procedures &optional pt)
+  (with-current-buffer buf
+    (combobulate-test-delete-all-overlays)
+    (let ((results (combobulate-procedure-start
+                    (progn
+                      (goto-char (or pt (point)))
+                      (combobulate-node-at-point))
+                    procedures)))
+      (cl-assert results nil "No nodes matched the procedure")
+      (combobulate-test-display-procedure-result results))))
+
+;;; General test helpers
 
 (defvar combobulate--test-point-categories '((outline . ("①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨" "⑩")))
   "Alist of categories and their overlay characters.
