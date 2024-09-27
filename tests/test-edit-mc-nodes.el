@@ -26,7 +26,7 @@
 
 (require 'combobulate-test-prelude)
 (require 'combobulate-manipulation)
-(require 'combobulate-contrib)
+(require 'combobulate-cursor)
 (when (fboundp 'multiple-cursors-mode)
   (require 'multiple-cursors))
 

@@ -40,7 +40,6 @@
 (require 'combobulate-navigation)
 (require 'combobulate-manipulation)
 (require 'combobulate-envelope)
-(require 'combobulate-contrib)
 (require 'combobulate-display)
 (require 'combobulate-ui)
 (require 'combobulate-misc)
