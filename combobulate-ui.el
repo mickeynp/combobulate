@@ -43,12 +43,6 @@
    ("q" "Highlight query" combobulate-highlight-query)
    ("c" "Clear all highlights" combobulate-highlight-clear)])
 
-(transient-define-prefix combobulate-avy ()
-  "Call avy on a collection of nodes around point"
-  ["Avy"
-   ("a" "Jump to a nearby node" combobulate-avy-jump)
-   ("d" "Jump to a nearby defun" combobulate-avy-jump-defun)])
-
 (transient-define-prefix combobulate-xref ()
   "Find and navigate query matches with Xref"
   ["Xref"
@@ -98,8 +92,7 @@
     ("C-M-f" "Forward sexp" forward-sexp :transient t)
     ("C-M-b" "Backward sexp" backward-sexp :transient t)
     ("M-p" "Previous sequent" combobulate-navigate-sequence-previous :transient t)
-    ("M-n" "Next sequent" combobulate-navigate-sequence-next :transient t)
-    ("a" "Avy …" combobulate-avy)]
+    ("M-n" "Next sequent" combobulate-navigate-sequence-next :transient t)]
    ["Hierarchical"
     ("C-M-u" "Up into list" combobulate-navigate-up :transient t)
     ("C-M-d" "Down into list" combobulate-navigate-down :transient t)
@@ -110,12 +103,12 @@
     ("x" "Xref …" combobulate-xref)
     ("h" "Highlight …" combobulate-highlight)]
    [:description (lambda () (concat
-                             (propertize "Defun " 'face 'transient-heading)
-                             (format "(to: %s)"
-                                     (propertize
-                                      (symbol-name combobulate-beginning-of-defun-behavior)
-                                      'face
-                                      'font-lock-doc-face))))
+                        (propertize "Defun " 'face 'transient-heading)
+                        (format "(to: %s)"
+                                (propertize
+                                 (symbol-name combobulate-beginning-of-defun-behavior)
+                                 'face
+                                 'font-lock-doc-face))))
                  ("C-M-a" "Beginning of defun" combobulate-navigate-beginning-of-defun :transient t)
                  ("C-M-e" "End of defun" combobulate-navigate-end-of-defun :transient t)]]
   ["Editing and Marking"

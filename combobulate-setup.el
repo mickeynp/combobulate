@@ -83,13 +83,11 @@
     (define-key map (kbd "q") #'combobulate-cursor-edit-query)
     map))
 
-(declare-function combobulate-avy-jump "combobulate-contrib")
 (declare-function combobulate "combobulate-ui")
 (declare-function combobulate-clone-node-dwim "combobulate-manipulation")
 
 (defvar combobulate-options-key-map
   (let ((map (make-sparse-keymap "Combobulate Options")))
-    (define-key map (kbd "j") #'combobulate-avy-jump)
     (define-key map (kbd "o") #'combobulate)
     (define-key map (kbd "c") #'combobulate-clone-node-dwim)
     (define-key map (kbd "t") combobulate-cursor-edit-key-map)
