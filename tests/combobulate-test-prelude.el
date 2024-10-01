@@ -67,30 +67,35 @@ Use this as a development aid to see what the result of calling
           (insert (format "*** Parent Node\n%s\n" parent-node))
           (insert (format "*** Selected Nodes\n"))
           (insert-button "Place Text Fixture Overlays"
-                         'action (lambda (_)
-                                   (let ((node-idx 0)
-                                         (node-buffer (combobulate-node-buffer (car matched-nodes))))
-                                     (with-current-buffer node-buffer
-                                       (combobulate-test-fixture-mode 1)
-                                       (combobulate--test-delete-overlay)
-                                       (setq combobulate-test-point-overlays nil)
-                                       (mapc
-                                        (lambda (node)
-                                          (combobulate-test-update-file-local-variable)
-                                          (combobulate--test-place-category-overlay
-                                           (cl-incf node-idx) 'outline (combobulate-node-start node)))
-                                        (progn
-                                          (princ matched-nodes)
-                                          (combobulate-proxy-node-make-from-nodes matched-nodes))))
-                                     (and node-buffer (with-current-buffer node-buffer
-                                                        (combobulate-test-update-file-local-variable)
-                                                        (pop-to-buffer node-buffer)
-                                                        (message "Created %d test overlays." node-idx))))))
+                         'action (combobulate-test-make-fixture-overlay-fn matched-nodes))
           (insert "\n")
           (insert (pp-to-string selected-nodes))
           (insert (format "*** Matched Nodes\n%s\n" (pp-to-string matched-nodes))))
         (view-mode 1)
         (pop-to-buffer (current-buffer))))))
+
+(defun combobulate-test-make-fixture-overlay-fn (matched-nodes)
+  (lambda (_)
+    (unless matched-nodes
+      (error "No nodes to place overlays for"))
+    (let ((node-idx 0)
+          (node-buffer (combobulate-node-buffer (car matched-nodes))))
+      (with-current-buffer node-buffer
+        (combobulate-test-fixture-mode 1)
+        (combobulate--test-delete-overlay)
+        (setq combobulate-test-point-overlays nil)
+        (mapc
+         (lambda (node)
+           (combobulate-test-update-file-local-variable)
+           (combobulate--test-place-category-overlay
+            (cl-incf node-idx) 'outline (combobulate-node-start node)))
+         (progn
+           (princ matched-nodes)
+           (combobulate-proxy-node-make-from-nodes matched-nodes))))
+      (and node-buffer (with-current-buffer node-buffer
+                         (combobulate-test-update-file-local-variable)
+                         (pop-to-buffer node-buffer)
+                         (message "Created %d test overlays." node-idx))))))
 
 (defun combobulate-test-mark-according-to-procedure (buf procedures &optional pt)
   (with-current-buffer buf
