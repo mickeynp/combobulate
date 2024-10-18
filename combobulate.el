@@ -35,28 +35,54 @@
 
 
 ;;; internal
+
+;;; NOTE: The autoload cookies are required so third-party package
+;;; managers like straight.el work correctly. I cannot verify that
+;;; this assertion is entirely correct, but I think straight.el does
+;;; something with autoloading that is substantially different from
+;;; what `use-package' does when you set a `:load-path'.
+
+
+;;;###autoload
 (require 'combobulate-rules)
+;;;###autoload
 (require 'combobulate-procedure)
+;;;###autoload
 (require 'combobulate-navigation)
+;;;###autoload
 (require 'combobulate-manipulation)
+;;;###autoload
 (require 'combobulate-envelope)
+;;;###autoload
 (require 'combobulate-display)
+;;;###autoload
 (require 'combobulate-ui)
+;;;###autoload
 (require 'combobulate-misc)
+;;;###autoload
 (require 'combobulate-query)
+;;;###autoload
 (require 'combobulate-cursor)
 ;;; end internal
 
 
 
 ;;; language support
+;;;###autoload
 (require 'combobulate-toml)
+;;;###autoload
 (require 'combobulate-html)
+;;;###autoload
 (require 'combobulate-python)
+;;;###autoload
 (require 'combobulate-js-ts)
+;;;###autoload
 (require 'combobulate-css)
+;;;###autoload
 (require 'combobulate-yaml)
+;;;###autoload
 (require 'combobulate-json)
+;;;###autoload
 (require 'combobulate-go)
 ;;; end language support
 
