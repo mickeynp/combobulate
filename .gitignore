@@ -2,3 +2,5 @@
 flycheck*
 *#*
 /.envrc
+/.emacs.d/
+/tests/.emacs.d/

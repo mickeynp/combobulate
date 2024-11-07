@@ -2,7 +2,15 @@ IMG ?= combobulate
 TAG ?= dev
 DOCKER_CMD ?= docker run --rm -w /opt/ $(DOCKER_ARGS) $(IMG):$(TAG)
 EMACS_BIN ?= emacs
-EMACS_CMD = $(EMACS_BIN)  --batch --no-init-file --chdir ./tests/  -L ..  -L .  -l .ts-test.el
+# Name of the directory where the Emacs setup is installed.
+INIT_NAME := .emacs.d/
+# Directory where the Emacs setup and TS installations take place.
+TMP_INIT_DIR := $(PWD)/$(INIT_NAME)
+# Baseline command for running tests.
+EMACS_CMD = $(EMACS_BIN) --batch  --no-init-file --chdir ./tests/  -L ..  -L .  -l tests/.ts-setup.el
+
+# Various installer scripts for testing installation
+TEST_INSTALLERS := tests/.ts-loadpath.el tests/.ts-straight.el tests/.ts-use-package-vc.el
 
 .PHONY:	clean-elc
 clean-elc:
@@ -39,7 +47,8 @@ clean-tests: clean-elc
 build-tests: clean-tests
 	$(EMACS_CMD) -l generate-harnesses.el
 
-ELFILES := $(sort $(shell find ${srcdir} -name "test-*.el" ! -name ".*" -print))
+
+ELFILES := $(sort $(shell find ./tests/ -name "test-*.el" ! -name ".*" -print))
 
 .PHONY:	run-tests
 run-tests: byte-compile
@@ -47,6 +56,13 @@ run-tests: byte-compile
 	$(patsubst %,-l %,$(ELFILES:.el=)) \
 	--eval "(setq ert-summarize-tests-batch-and-exit nil)" \
 	-f 'ert-run-tests-batch-and-exit'
+
+
+
+# Clean test installers
+.PHONY: clean-install-tests
+clean-install-tests:
+	rm -rf $(TMP_INIT_DIR)
 
 .PHONY:	docker-build
 docker-build:
@@ -59,3 +75,18 @@ docker-build-tests: docker-build
 .PHONY:	docker-run-tests
 docker-run-tests: docker-build
 	$(DOCKER_CMD) run-tests
+
+clean: clean-elc clean-tests
+	rm -rf $(TMP_INIT_DIR)
+
+
+.PHONY: run-install-tests
+run-install-tests: $(TEST_INSTALLERS)
+
+$(TEST_INSTALLERS): byte-compile
+	INIT_DIR=$(TMP_INIT_DIR)/$(basename $@); \
+	$(EMACS_CMD) \
+		--init-directory=$$INIT_DIR \
+		-l tests/.ts-setup.el \
+		-l $@ \
+		-l tests/.ts-test.el

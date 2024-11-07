@@ -13,5 +13,13 @@
          (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0")))))
   (message "* Installing tree-sitter grammars...")
   (pcase-dolist (`(,lang . ,rest) treesit-language-source-alist)
-    (message "** Installing %s..." lang)
-    (treesit-install-language-grammar lang)))
+    (if (treesit-language-available-p lang)
+        (message "** %s already installed" lang)
+      (message "** Installing %s..." lang)
+      (treesit-install-language-grammar lang))))
+
+;;; Helper for the batch emacs command
+(setq load-prefer-newer t)
+(princ (format "Default directory is `%s'\n" default-directory))
+(load-library "tests/html-ts-mode/html-ts-mode.el")
+
