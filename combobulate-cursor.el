@@ -1,4 +1,4 @@
-;;; combobulate-cursor.el --- third-party integrations for combobulate  -*- lexical-binding: t; -*-
+;;; combobulate-cursor.el --- multi-cursor editing for Combobulate  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021-23  Mickey Petersen
 
@@ -23,7 +23,8 @@
 
 ;;; Commentary:
 
-;;
+;; Multi-cursor editing support in Combobulate. There is also support
+;; for third-party providers, such as the multiple cursors package.
 
 ;;; Code:
 
@@ -485,9 +486,9 @@ end of each edited node."
         (combobulate-cursor-edit-identical-nodes
          node (combobulate-cursor-edit-node-determine-action arg)
          (lambda (tree-node) (and (equal (combobulate-node-type node)
-                                    (combobulate-node-type tree-node))
-                             (equal (combobulate-node-field-name node)
-                                    (combobulate-node-field-name tree-node)))))
+                                         (combobulate-node-type tree-node))
+                                  (equal (combobulate-node-field-name node)
+                                         (combobulate-node-field-name tree-node)))))
       (error "Cannot find any editable nodes here"))))
 
 (defun combobulate-cursor-edit-node-by-text-dwim (arg)
@@ -501,7 +502,7 @@ the node at point."
       (combobulate-cursor-edit-identical-nodes
        node (combobulate-cursor-edit-node-determine-action arg)
        (lambda (tree-node) (equal (combobulate-node-text tree-node)
-                             (combobulate-node-text node))))
+                                  (combobulate-node-text node))))
     (error "Cannot find any editable nodes here")))
 
 (defun combobulate-cursor-edit-identical-nodes (node action &optional match-fn)
@@ -589,7 +590,7 @@ a match."
                    ;; return tags with `@', but Combobulate query
                    ;; search does.
                    (lambda (m) (or (equal (car m) '@discard)
-                              (equal (car m) 'discard)))
+                                   (equal (car m) 'discard)))
                    selected-nodes))
      action
      parent-node)))
