@@ -1,0 +1,1094 @@
+[
+  {
+    "type": "add_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "heredoc_block",
+          "named": true
+        },
+        {
+          "type": "param",
+          "named": true
+        },
+        {
+          "type": "path",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "arg_instruction",
+    "named": true,
+    "fields": {
+      "default": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "double_quoted_string",
+            "named": true
+          },
+          {
+            "type": "single_quoted_string",
+            "named": true
+          },
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "cmd_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "json_string_array",
+          "named": true
+        },
+        {
+          "type": "shell_command",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "copy_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "heredoc_block",
+          "named": true
+        },
+        {
+          "type": "param",
+          "named": true
+        },
+        {
+          "type": "path",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cross_build_instruction",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "double_quoted_string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        },
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "entrypoint_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "json_string_array",
+          "named": true
+        },
+        {
+          "type": "shell_command",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "env_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "env_pair",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "env_pair",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "double_quoted_string",
+            "named": true
+          },
+          {
+            "type": "single_quoted_string",
+            "named": true
+          },
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "expansion",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "variable",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "expose_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        },
+        {
+          "type": "expose_port",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "expose_port",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "from_instruction",
+    "named": true,
+    "fields": {
+      "as": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "image_alias",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "image_spec",
+          "named": true
+        },
+        {
+          "type": "param",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "healthcheck_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "cmd_instruction",
+          "named": true
+        },
+        {
+          "type": "param",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "heredoc_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "heredoc_end",
+          "named": true
+        },
+        {
+          "type": "heredoc_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "image_alias",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "image_digest",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "image_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "image_spec",
+    "named": true,
+    "fields": {
+      "digest": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "image_digest",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "image_name",
+            "named": true
+          }
+        ]
+      },
+      "tag": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "image_tag",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "image_tag",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "json_string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "json_string_array",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "json_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "label_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "label_pair",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "label_pair",
+    "named": true,
+    "fields": {
+      "key": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "double_quoted_string",
+            "named": true
+          },
+          {
+            "type": "single_quoted_string",
+            "named": true
+          },
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "double_quoted_string",
+            "named": true
+          },
+          {
+            "type": "single_quoted_string",
+            "named": true
+          },
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "maintainer_instruction",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "mount_param",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "mount",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "mount_param_param",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "mount_param_param",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "onbuild_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "add_instruction",
+          "named": true
+        },
+        {
+          "type": "arg_instruction",
+          "named": true
+        },
+        {
+          "type": "cmd_instruction",
+          "named": true
+        },
+        {
+          "type": "copy_instruction",
+          "named": true
+        },
+        {
+          "type": "cross_build_instruction",
+          "named": true
+        },
+        {
+          "type": "entrypoint_instruction",
+          "named": true
+        },
+        {
+          "type": "env_instruction",
+          "named": true
+        },
+        {
+          "type": "expose_instruction",
+          "named": true
+        },
+        {
+          "type": "from_instruction",
+          "named": true
+        },
+        {
+          "type": "healthcheck_instruction",
+          "named": true
+        },
+        {
+          "type": "label_instruction",
+          "named": true
+        },
+        {
+          "type": "maintainer_instruction",
+          "named": true
+        },
+        {
+          "type": "onbuild_instruction",
+          "named": true
+        },
+        {
+          "type": "run_instruction",
+          "named": true
+        },
+        {
+          "type": "shell_instruction",
+          "named": true
+        },
+        {
+          "type": "stopsignal_instruction",
+          "named": true
+        },
+        {
+          "type": "user_instruction",
+          "named": true
+        },
+        {
+          "type": "volume_instruction",
+          "named": true
+        },
+        {
+          "type": "workdir_instruction",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "param",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "path",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        },
+        {
+          "type": "heredoc_marker",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "run_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "heredoc_block",
+          "named": true
+        },
+        {
+          "type": "json_string_array",
+          "named": true
+        },
+        {
+          "type": "mount_param",
+          "named": true
+        },
+        {
+          "type": "param",
+          "named": true
+        },
+        {
+          "type": "shell_command",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "shell_command",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "line_continuation",
+          "named": true
+        },
+        {
+          "type": "shell_fragment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "shell_fragment",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "heredoc_marker",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "shell_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "json_string_array",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "single_quoted_string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "add_instruction",
+          "named": true
+        },
+        {
+          "type": "arg_instruction",
+          "named": true
+        },
+        {
+          "type": "cmd_instruction",
+          "named": true
+        },
+        {
+          "type": "copy_instruction",
+          "named": true
+        },
+        {
+          "type": "cross_build_instruction",
+          "named": true
+        },
+        {
+          "type": "entrypoint_instruction",
+          "named": true
+        },
+        {
+          "type": "env_instruction",
+          "named": true
+        },
+        {
+          "type": "expose_instruction",
+          "named": true
+        },
+        {
+          "type": "from_instruction",
+          "named": true
+        },
+        {
+          "type": "healthcheck_instruction",
+          "named": true
+        },
+        {
+          "type": "label_instruction",
+          "named": true
+        },
+        {
+          "type": "maintainer_instruction",
+          "named": true
+        },
+        {
+          "type": "onbuild_instruction",
+          "named": true
+        },
+        {
+          "type": "run_instruction",
+          "named": true
+        },
+        {
+          "type": "shell_instruction",
+          "named": true
+        },
+        {
+          "type": "stopsignal_instruction",
+          "named": true
+        },
+        {
+          "type": "user_instruction",
+          "named": true
+        },
+        {
+          "type": "volume_instruction",
+          "named": true
+        },
+        {
+          "type": "workdir_instruction",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "stopsignal_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "unquoted_string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expansion",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "user_instruction",
+    "named": true,
+    "fields": {
+      "group": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      },
+      "user": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "unquoted_string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "volume_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "json_string_array",
+          "named": true
+        },
+        {
+          "type": "path",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "workdir_instruction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "path",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\n",
+    "named": false
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "$",
+    "named": false
+  },
+  {
+    "type": "'",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "--",
+    "named": false
+  },
+  {
+    "type": "/tcp",
+    "named": false
+  },
+  {
+    "type": "/udp",
+    "named": false
+  },
+  {
+    "type": ":",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": "@",
+    "named": false
+  },
+  {
+    "type": "ADD",
+    "named": false
+  },
+  {
+    "type": "ARG",
+    "named": false
+  },
+  {
+    "type": "AS",
+    "named": false
+  },
+  {
+    "type": "CMD",
+    "named": false
+  },
+  {
+    "type": "COPY",
+    "named": false
+  },
+  {
+    "type": "CROSS_BUILD",
+    "named": false
+  },
+  {
+    "type": "ENTRYPOINT",
+    "named": false
+  },
+  {
+    "type": "ENV",
+    "named": false
+  },
+  {
+    "type": "EXPOSE",
+    "named": false
+  },
+  {
+    "type": "FROM",
+    "named": false
+  },
+  {
+    "type": "HEALTHCHECK",
+    "named": false
+  },
+  {
+    "type": "LABEL",
+    "named": false
+  },
+  {
+    "type": "MAINTAINER",
+    "named": false
+  },
+  {
+    "type": "NONE",
+    "named": false
+  },
+  {
+    "type": "ONBUILD",
+    "named": false
+  },
+  {
+    "type": "RUN",
+    "named": false
+  },
+  {
+    "type": "SHELL",
+    "named": false
+  },
+  {
+    "type": "STOPSIGNAL",
+    "named": false
+  },
+  {
+    "type": "USER",
+    "named": false
+  },
+  {
+    "type": "VOLUME",
+    "named": false
+  },
+  {
+    "type": "WORKDIR",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "\\",
+    "named": false
+  },
+  {
+    "type": "\\ ",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "_heredoc_nl",
+    "named": false
+  },
+  {
+    "type": "comment",
+    "named": true
+  },
+  {
+    "type": "escape_sequence",
+    "named": true
+  },
+  {
+    "type": "heredoc_end",
+    "named": true
+  },
+  {
+    "type": "heredoc_line",
+    "named": true
+  },
+  {
+    "type": "heredoc_marker",
+    "named": true
+  },
+  {
+    "type": "line_continuation",
+    "named": true
+  },
+  {
+    "type": "mount",
+    "named": false
+  },
+  {
+    "type": "variable",
+    "named": true
+  },
+  {
+    "type": "{",
+    "named": false
+  },
+  {
+    "type": "}",
+    "named": false
+  }
+]

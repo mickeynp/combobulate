@@ -288,7 +288,8 @@ doesn't exist."
   (save-window-excursion
     (save-excursion
       (let* ((auto-mode-alist (append auto-mode-alist
-                                      '(("\\.go\\'" . go-ts-mode))))
+                                      '(("\\.go\\'" . go-ts-mode)
+                                        ("Dockerfile" . dockerfile-ts-mode))))
              ;; required to ensure the right major mode is chosen.
              (major-mode-remap-alist '((python-mode . python-ts-mode)
                                        (css-mode . css-ts-mode)

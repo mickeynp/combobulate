@@ -320,8 +320,9 @@ overwrite the existing marks."
   ;; we should respect that and not discard it.
   (when combobulate-procedure-apply-shared-discard-rules
     (setq discard-types (append discard-types
-                                (combobulate-procedure-expand-rules
-                                 (combobulate-read procedure-discard-rules))))
+                                (and (boundp (combobulate-get 'procedure-discard-rules))
+                                     (combobulate-procedure-expand-rules
+                                      (combobulate-read procedure-discard-rules)))))
     (when match-types (setq discard-types (seq-difference match-types discard-types))))
   (let ((marked-nodes))
     (pcase-dolist ((or `(,existing-mark . ,node) node) nodes)
@@ -612,7 +613,9 @@ If SKIP-DISCARD-RULES is non-nil, discard rules are not included."
               combobulate-procedure-apply-shared-discard-rules
               (not skip-discard-rules))
      (combobulate-procedure-expand-rules
-      (combobulate-read procedure-discard-rules)))))
+      (and (boundp (combobulate-get 'procedure-discard-rules))
+           (combobulate-procedure-expand-rules
+            (combobulate-read procedure-discard-rules)))))))
 
 (defun combobulate-production-rules-get-rules (&optional language)
   "Return a list of the production rules in LANGUAGE."

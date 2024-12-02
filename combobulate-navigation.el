@@ -206,7 +206,7 @@ Uses `point' and `mark' to infer the boundaries."
 
 If NODE-ONLY is non-nil then only the node texts are returned"
   (mapcar (lambda (node) (if node-only (combobulate-node-text node)
-                      (combobulate-node-text (cdr node))))
+                           (combobulate-node-text (cdr node))))
           (combobulate-query-search node query t t)))
 
 (defun combobulate-linear-siblings (node &optional anonymous)
@@ -652,9 +652,9 @@ of the node."
 (defun combobulate-nav-get-smallest-node-at-point (&optional end)
   "Returns the smallest navigable node at point, possibly from the END"
   (seq-filter (lambda (node) (and (combobulate-navigable-node-p node)
-                                  (funcall (if end #'combobulate-point-at-end-of-node-p
-                                             #'combobulate-point-at-beginning-of-node-p)
-                                           node)))
+                             (funcall (if end #'combobulate-point-at-end-of-node-p
+                                        #'combobulate-point-at-beginning-of-node-p)
+                                      node)))
               (combobulate-all-nodes-at-point)))
 
 (defun combobulate-nav-logical-next ()

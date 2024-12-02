@@ -1,0 +1,4 @@
+# -*- combobulate-test-point-overlays: ((1 outline 172) (2 outline 224) (3 outline 230) (4 outline 248) (5 outline 254)); eval: (combobulate-test-fixture-mode t); -*-
+RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get build-dep -y emacs

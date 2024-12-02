@@ -1,0 +1,5 @@
+# -*- combobulate-test-point-overlays: ((1 outline 151) (2 outline 170)); eval: (combobulate-test-fixture-mode t); -*-
+FROM ubuntu:24.04 as base
+
+ENV VERSION=29.1 \
+    FOO=1

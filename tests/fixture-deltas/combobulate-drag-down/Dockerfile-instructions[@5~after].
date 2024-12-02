@@ -1,0 +1,38 @@
+# -*- combobulate-test-point-overlays: ((1 outline 252) (2 outline 278) (3 outline 420) (4 outline 439) (5 outline 511) (6 outline 547) (7 outline 772) (8 outline 1043) (9 outline 1066) (10 outline 1079)); eval: (combobulate-test-fixture-mode t); -*-
+FROM ubuntu:24.04 as base
+ENV VERSION=29.1 \
+    FOO=1
+
+# We assume the git repo's cloned outside and copied in, instead of
+# cloning it in here. But that works, too.
+
+WORKDIR /opt/emacs
+LABEL MAINTAINER="Mickey Petersen at mastering emacs" \
+      FOO="bar"
+RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get build-dep -y emacs
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Needed for add-apt-repository, et al.
+#
+# If you're installing this outside Docker you may not need this.
+RUN apt-get update \
+    && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common \
+    wget \
+    git \
+    libtree-sitter-dev \
+    libtree-sitter0 \
+    tree-sitter-cli
+
+# Install the grammars
+COPY .ts-setup.el /opt
+RUN cd /opt/
+ENTRYPOINT ["make",  "foo"]
+

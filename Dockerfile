@@ -1,11 +1,12 @@
 FROM ubuntu:24.04 as base
 
-ENV VERSION=29.1
+ENV VERSION=29.1 \
+    FOO=1
 # We assume the git repo's cloned outside and copied in, instead of
 # cloning it in here. But that works, too.
 WORKDIR /opt/emacs
-LABEL MAINTAINER "Mickey Petersen at mastering emacs"
-
+LABEL MAINTAINER="Mickey Petersen at mastering emacs" \
+      FOO="bar"
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list \
@@ -40,11 +41,11 @@ RUN ./autogen.sh \
     && ./configure \
     --with-tree-sitter
 
-ENV JOBS=4
 RUN make -j ${JOBS} \
     && make install \
     && cd \
     && rm -rf /opt/emacs/emacs-$VERSION/
+ENV JOBS=4
 
 WORKDIR /opt
 
@@ -54,5 +55,5 @@ RUN emacs --batch -L $PWD -l .ts-setup.el
 
 COPY . /opt/
 RUN cd /opt/
-ENTRYPOINT ["make"]
+ENTRYPOINT ["make",  "foo"]
 

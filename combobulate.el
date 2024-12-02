@@ -61,6 +61,7 @@
 (require 'combobulate-toml)
 (require 'combobulate-html)
 (require 'combobulate-python)
+(require 'combobulate-dockerfile)
 (require 'combobulate-js-ts)
 (require 'combobulate-css)
 (require 'combobulate-yaml)

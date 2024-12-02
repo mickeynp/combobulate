@@ -3,4 +3,7 @@
 const test = () => (
   <something>
     <div>Foo</div>
+  </something>
+  <something>
+    <div>Foo</div>
   </something>)

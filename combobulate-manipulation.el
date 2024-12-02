@@ -192,7 +192,7 @@
                   (update-field (tag text)
                     (seq-filter
                      (lambda (ov) (let ((actions (overlay-get ov 'combobulate-refactor-action)))
-                               (combobulate--refactor-update-field ov tag text)))
+                                    (combobulate--refactor-update-field ov tag text)))
                      (alist-get ,--session combobulate-refactor--active-sessions)))
                   (mark-point (&optional pt)
                     (add-marker (combobulate--refactor-mark-position (or pt (point)))))
@@ -964,8 +964,8 @@ accepts or cancels the proffer. "
                           ;; handle numeric selection `1' to `9'
                           ((and (pred (numberp))
                                 (pred (lambda (n) (and (>= n 1)
-                                                  (<= n 9)
-                                                  (<= n (length proxy-nodes)))))
+                                                       (<= n 9)
+                                                       (<= n (length proxy-nodes)))))
                                 n)
                            (refactor-action switch-action)
                            (setq index (1- n))
@@ -1006,7 +1006,8 @@ accepts or cancels the proffer. "
     (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
       (when-let ((node (combobulate-proffer-choices
                         (seq-sort #'combobulate-node-larger-than-node-p
-                                  (combobulate--get-all-navigable-nodes-at-point))
+                                  (or (combobulate--get-all-navigable-nodes-at-point)
+                                      (cons (combobulate-node-at-point) nil)))
                         (lambda-slots (current-node refactor-id)
                           (combobulate-refactor (:id refactor-id)
                             (let* ((ov (mark-node-highlighted current-node))
@@ -1293,11 +1294,11 @@ Each member of PARTITIONS must be one of:
              ;; searching because no applicable sibling procedure was
              ;; found.
              (lambda (n) (or disable-check
-                        (and (combobulate-node-parent n)
-                             (or (member (combobulate-node-parent n) valid-parents)
-                                 (member n valid-parents))
-                             (not (equal (combobulate-node-parent n) (car valid-parents)))
-                             (combobulate-node-before-node-p n source-node))))
+                             (and (combobulate-node-parent n)
+                                  (or (member (combobulate-node-parent n) valid-parents)
+                                      (member n valid-parents))
+                                  (not (equal (combobulate-node-parent n) (car valid-parents)))
+                                  (combobulate-node-before-node-p n source-node))))
              all-parents))
       (cl-flet ((action-function (action)
                   (with-slots (current-node refactor-id index proxy-nodes) action
