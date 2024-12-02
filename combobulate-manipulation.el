@@ -665,7 +665,8 @@ point relative to the nodes in
                              (combobulate-skip-whitespace-forward t)
                              (combobulate--get-nearest-navigable-node)))
                   (node (combobulate-proxy-node-make-from-nodes
-                         (or (combobulate-nav-get-self-sibling nearest)
+                         (or (save-excursion (combobulate--goto-node nearest)
+                                             (combobulate-nav-get-self-sibling nearest))
                              nearest))))
         ;; prevent killing nodes before point; that'd be weird.
         (if (combobulate-node-on-or-after-point-p node)
@@ -1458,7 +1459,8 @@ an error is raised. If the operation is successful, the cursor is
 moved to the modified node."
   (let* ((up (eq direction 'up))
          (node (or (combobulate--get-nearest-navigable-node) (error "No navigable node")))
-         (sibling (combobulate--get-sibling node (if up 'backward 'forward)))
+         (sibling (progn (combobulate--goto-node node)
+                         (combobulate--get-sibling node (if up 'backward 'forward))))
          (self (combobulate--get-sibling node 'self)))
     (unless sibling
       (error "No sibling node to swap with in that direction"))
