@@ -151,6 +151,12 @@ what a \"pair\" is."
   :type 'boolean
   :group 'combobulate)
 
+(defcustom combobulate-navigate-down-into-lists t
+  "Whether to navigate into the first list-like structure ahead
+of point in the absence of other suitable nodes."
+  :type 'boolean
+  :group 'combobulate)
+
 ;;; Group for cursor editing
 (defgroup combobulate-cursor nil
   "Settings for Combobulate's cursor editing."
