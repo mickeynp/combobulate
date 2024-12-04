@@ -1189,7 +1189,7 @@ Each member of PARTITIONS must be one of:
  `after', to preserve things after the POINT-NODE;
  `around' to preserve nodes larger than POINT-NODE;
  `self' to preserve POINT-NODE."
-  ;; Most sibling procedures disallow anonymous modes as they are not
+  ;; Most sibling procedures disallow anonymous nodes as they are not
   ;; useful navigational targets. However, for splicing, it might be a
   ;; necessity to preserve them as they could prove integral to
   ;; maintaining the correct syntax.
@@ -1271,7 +1271,7 @@ Each member of PARTITIONS must be one of:
                     (seq-keep
                      ;; Only match nodes that are named are kept.
                      (pcase-lambda (`(,mark . ,node))
-                       (and (eq mark '@match)
+                       (and (member mark '(@match match))
                             (combobulate-node-named-p node)
                             ;; return node if it's a match and named
                             node))

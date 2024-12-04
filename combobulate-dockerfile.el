@@ -60,10 +60,11 @@
          ;; commands. Moving between these as siblings is therefore
          ;; useful.
          (:activation-nodes
+          ((:nodes ("shell_fragment") :has-ancestor (irule "shell_command")))
+          :selector (:choose parent :match-query (:query ((shell_fragment) @match) :engine treesitter)))
+         (:activation-nodes
           (;; This is for line-continued environment variables and labels
-           (:nodes (rx "pair" eol) :has-ancestor ("label_instruction" "env_instruction"))
-           ;; This is for shell commands
-           (:nodes ("shell_command") :has-ancestor (irule "shell_command")))
+           (:nodes (rx "pair" eol) :has-ancestor ("label_instruction" "env_instruction")))
           :selector (:choose parent :match-query (:query ([(shell_fragment) (env_pair) (label_pair)] @match) :engine treesitter)))
          ;; JSON navigation between array elements
          (:activation-nodes
