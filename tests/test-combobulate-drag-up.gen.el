@@ -170,11 +170,9 @@
 		 (:language dockerfile :mode dockerfile-ts-mode :fixture "fixtures/sibling/Dockerfile-shell_fragment")
 	       :tags
 	       '(combobulate dockerfile dockerfile-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 3)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/Dockerfile-shell_fragment[@3~after].")))))
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/Dockerfile-shell_fragment[@3~after].")))
 
 
 (ert-deftest combobulate-test-dockerfile-combobulate-drag-up--Dockerfile-shell_fragment-2 ()
@@ -183,11 +181,9 @@
 		 (:language dockerfile :mode dockerfile-ts-mode :fixture "fixtures/sibling/Dockerfile-shell_fragment")
 	       :tags
 	       '(combobulate dockerfile dockerfile-ts-mode combobulate-drag-up)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 2)
-		  (combobulate-drag-up)
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/Dockerfile-shell_fragment[@2~after].")))))
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/Dockerfile-shell_fragment[@2~after].")))
 
 
 (ert-deftest combobulate-test-dockerfile-combobulate-drag-up--Dockerfile-shell_fragment-1 ()

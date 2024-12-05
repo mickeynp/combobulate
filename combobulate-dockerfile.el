@@ -33,7 +33,7 @@
 (declare-function combobulate--mark-node "combobulate-manipulation")
 (declare-function combobulate-indent-region "combobulate-manipulation")
 
-(defun combobulate-dockerfile-pretty-print-node-name (node default-name)
+(defun combobulate-dockerfile-pretty-print-node-name (_node default-name)
   default-name)
 
 (eval-and-compile

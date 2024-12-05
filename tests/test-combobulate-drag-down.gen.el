@@ -192,9 +192,11 @@
 		 (:language dockerfile :mode dockerfile-ts-mode :fixture "fixtures/sibling/Dockerfile-shell_fragment")
 	       :tags
 	       '(combobulate dockerfile dockerfile-ts-mode combobulate-drag-down)
-	       (combobulate-test-go-to-marker 3)
-	       (combobulate-drag-down)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/Dockerfile-shell_fragment[@3~after].")))
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/Dockerfile-shell_fragment[@3~after].")))))
 
 
 (ert-deftest combobulate-test-html-combobulate-drag-down--attributes-1 ()
