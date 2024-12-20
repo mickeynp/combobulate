@@ -370,6 +370,9 @@ line when you press
                       ("string_start" "string_end")
                       :default-mark @match)))
          (:activation-nodes
+	  ((:nodes ("comment")))
+	  :selector (:choose node :match-siblings t))
+         (:activation-nodes
           ((:nodes
             ;; pattern is a special supertype. It is not a node in the CST.
             ((rule "pattern"))
@@ -398,7 +401,7 @@ line when you press
              (rule "primary_expression"))
             :has-parent ("parameters" "lambda_parameters" "argument_list" "expression_list")))
           :selector (:match-children t))
-         (:activation-nodes
+	 (:activation-nodes
           ((:nodes
             ((rule "_simple_statement")
              (rule "_compound_statement")
