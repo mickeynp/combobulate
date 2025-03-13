@@ -20,7 +20,8 @@
 
 ;;; Commentary:
 
-;;
+;; Remember that yaml-mode and yaml-ts-mode inherit from text-mode, not prog-mode
+;; Adding combobulate-mode to prog-mode-hook will not launch combobulate in YAML files
 
 ;;; Code:
 
