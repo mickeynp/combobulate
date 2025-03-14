@@ -262,7 +262,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
         ;; You can customize Combobulate's key prefix here.
         ;; Note that you may have to restart Emacs for this to take effect!
         (combobulate-key-prefix "C-c o")
-        :hook ((prog-mode yaml-mode) . combobulate-mode)
+        :hook ((prog-mode yaml-ts-mode) . combobulate-mode)
         ;; Amend this to the directory where you keep Combobulate's source
         ;; code.
         :load-path ("path-to-git-checkout-of-combobulate")))
@@ -279,7 +279,7 @@ This is the basic setup for Combobulate. It assumes you have installed/can insta
        ;; You can customize Combobulate's key prefix here.
        ;; Note that you may have to restart Emacs for this to take effect!
        (combobulate-key-prefix "C-c o")
-       :hook ((prog-mode yaml-mode) . combobulate-mode)
+       :hook ((prog-mode yaml-ts-mode) . combobulate-mode)
        ;; Amend this to the directory where you keep Combobulate's source
        ;; code.
        :load-path ("path-to-git-checkout-of-combobulate"))
