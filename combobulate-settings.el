@@ -280,25 +280,6 @@ use the name of the face to highlight with. See
 
 (put 'combobulate-highlight-queries-alist 'safe-local-variable #'listp)
 
-(defvar combobulate-setup-functions-alist
-  '((python . combobulate-python-setup)
-    (tsx . combobulate-js-ts-setup)
-    (javascript . combobulate-js-ts-setup)
-    (go . combobulate-go-setup)
-    (typescript . combobulate-js-ts-setup)
-    (jsx . combobulate-js-ts-setup)
-    (json . combobulate-json-setup)
-    (css . combobulate-css-setup)
-    (yaml . combobulate-yaml-setup)
-    (toml . combobulate-toml-setup)
-    (html . combobulate-html-setup))
-  "Alist of setup functions to call when \\[combobulate-mode] is enabled.
-
-Because tree-sitter-enabled modes are different from the ordinary
-ones, you may wish to customize `major-mode-remap-alist' to
-silently treat the older modes as their newer TS-enabled
-counterparts.")
-
 (defvar combobulate-debug nil
   "Enables additional debug information useful for Combobulate developers")
 
