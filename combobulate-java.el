@@ -38,10 +38,11 @@
 (require 'combobulate-display)
 
 (defun combobulate-java--get-function-name (node)
-  "Extract functio nane from NODE."
-  (concat "function "
+  "Extract function nane from NODE."
+  (setq method node)
+  (concat "Method "
 	  (car (combobulate-query-node-text
-		'((function_declaration) name: (_) @name)
+		'((method_declaration) (_) (_) (_) @name)
 		node t))))
 
 (defun combobulate-java-pretty-print (node default-name)
@@ -143,7 +144,7 @@ If node is not method, return DEFAULT-NAME"
 	;; Jump through the comments.
 	((:nodes ("line_comment"
 		  "block_comment")
-		 :has-parent ("class_body" "block")))
+		 :has-parent ("block")))
 	:selector (:match-children (:match-rules ("line_comment" "block_comment"))))
 
        (:activation-nodes
@@ -160,56 +161,28 @@ If node is not method, return DEFAULT-NAME"
 
     (display-ignored-node-types)
     (procedures-hierarchy
-     `(;; general navigation into and out of blocks
-
-       (:activation-nodes
-	;; Arrays:
-	((:nodes
-	  ("array_creation_expression")
-	  :position at))
-	:selector (:choose node :match-children (:match-rules ("array_initializer"))))
-
-       (:activation-nodes
-	;; Arrays:
-	((:nodes
-	  ("array_initializer")
-	  :position in))
-	:selector (:choose node :match-children (:match-rules ((rule "primary_expression")))))
-
-       (:activation-nodes
-	;; Parameters, arguments:
-	((:nodes
-	  ("inferred_parameters"
-	   "argument_list")
-	  :position in))
-	:selector (:choose node :match-children (:match-rules (;;"identifier"
-							       ;;"expression"
-							       (rule "_literal")
-							       (rule "primary_expression")))))
-
-       (:activation-nodes
-	;; Simple blocks:
-	((:nodes
-	  ("method_declaration")
-	  :position at))
-	:selector (:choose node :match-children (:match-rules ("identifier"))))
-
-       (:activation-nodes
-	;; Simple blocks:
-	((:nodes
-	  ("method_declaration")
-	  :position in))
-	:selector (:choose node :match-children (:match-rules ("formal_parameters" "block"))))
-
-       (:activation-nodes
-	((:nodes ("statement")
-		 :position at))
-	:selector (:choose node :match-children (:match-rules ("parenthesized_expression"))))
-
-       (:activation-nodes
-	((:nodes ((rule "statement"))
-		 :position in))
-	:selector (:choose node :match-children (:match-rules ("block"))))))
+     '(( :activation-nodes ((:nodes "class_declaration" :position at))
+         :selector (:choose node
+                            :match-query
+                            (:query (class_declaration (class_body (method_declaration @match))) :engine combobulate)))
+       ( :activation-nodes ((:nodes ("marker_annotation" "annotation") :position at))
+         :selector (:choose node
+                            :match-siblings
+                            (:match-rules ("marker_annotation" "annotation"))))
+       ( :activation-nodes ((:nodes ("lambda_expression") :position in))
+         :selector
+         (:choose node
+                  :match-query
+                  (:query (lambda_expression (block (_ @match))) :engine combobulate)))
+       ( :activation-nodes ((:nodes ("method_declaration")
+                                    :position in))
+         :selector (:choose node
+                            :match-query
+                            (:query (method_declaration (block (_ @match))) :engine combobulate)))
+       ( :activation-nodes ((:nodes ((all)) :has-parent ((all))))
+         :selector (:choose node
+                            :match-children (:discard-rules ("block" "parenthesized_expression"))))
+       ))
     (procedures-logical '((:activation-nodes ((:nodes (all))))))))
 
 
