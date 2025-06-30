@@ -169,6 +169,11 @@ If node is not method, return DEFAULT-NAME"
          :selector (:choose node
                             :match-siblings
                             (:match-rules ("marker_annotation" "annotation"))))
+       ( :activation-nodes ((:nodes ((rule "statement"))
+                                    :position at))
+         :selector (:choose node
+                            :match-query
+                            (:query (_ (block (_ @match))) :engine combobulate)))
        ( :activation-nodes ((:nodes ("lambda_expression") :position in))
          :selector
          (:choose node
