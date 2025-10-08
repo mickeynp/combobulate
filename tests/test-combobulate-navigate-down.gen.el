@@ -158,7 +158,7 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
-(ert-deftest combobulate-test-java-combobulate-navigate-down--if-statement-9 ()
+(ert-deftest combobulate-test-java-combobulate-navigate-down--if-statement-10 ()
  "Test `combobulate' with `fixtures/down/if-statement.java' in `java-ts-mode' mode."
 	     (combobulate-test
 		 (:language java :mode java-ts-mode :fixture "fixtures/down/if-statement.java")
@@ -187,7 +187,10 @@
 	       (combobulate-test-assert-at-marker 8)
 	       (combobulate-test-go-to-marker 8)
 	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 9)))
+	       (combobulate-test-assert-at-marker 9)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 10)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--if-statements-10 ()

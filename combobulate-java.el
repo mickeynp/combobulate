@@ -182,9 +182,8 @@ If node is not method, return DEFAULT-NAME"
           :selector (:choose node
                              :match-children (:discard-rules (rule "comment"))))
 
-         ( :activation-nodes ((:nodes ("marker_annotation" "annotation") :position at))
-           :selector (:choose node
-                              :match-siblings (:match-rules ("marker_annotation" "annotation"))))
+         ( :activation-nodes ((:nodes ("method_declaration") :position at))
+           :selector (:choose node :match-children (:match-rules ("identifier"))))
 
          ( :activation-nodes ((:nodes ("if_statement")
                                       :position at))
@@ -193,11 +192,18 @@ If node is not method, return DEFAULT-NAME"
                               (:query (if_statement consequence: (_ @match)) :engine combobulate)))
 
          ( :activation-nodes ((:nodes ("enhanced_for_statement"
-                                       "for_statement")
+                                       "for_statement"
+                                       "try_statement")
                                       :position at))
            :selector (:choose node
                               :match-query
                               (:query (_ body: (_ @match)) :engine combobulate)))
+
+         ( :activation-nodes ((:nodes ("finally_clause")
+                                      :position at))
+           :selector (:choose node
+                              :match-query
+                              (:query (_ (_ @match)) :engine combobulate)))
 
          ( :activation-nodes ((:nodes ("lambda_expression"
                                        "method_declaration")
