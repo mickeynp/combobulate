@@ -982,11 +982,18 @@ continue by scanning in DIRECTION for any other contextual node (as per
      ;; This is the 'fallback scan' in case there are no sequences
      ;; available at/near point. It can only trigger if:
      ;;
-     ;; 1. There are no sequences available at/near point.  2. The
-     ;; last command was a sequence scan, indicating continuity (i.e.,
-     ;; the user has requested multiple scans in a row and we should
-     ;; just proceed accordingly.)
+     ;; 1. There are no sequences available at/near point.
+     ;;
+     ;; 2. The last command was a sequence scan, indicating continuity
+     ;; (i.e., the user has requested multiple scans in a row and we
+     ;; should just proceed accordingly.)
+     ;;
+     ;; 3. There are sequences available at/near point, but none of
+     ;; them contain point. This ensures that if we happen to be near
+     ;; a valid sequent, but not actually inside it, we do not jump to
+     ;; it.
      ((or (null seq-nodes)
+          (and seq-nodes (not (seq-some #'combobulate-point-in-node-range-p seq-nodes)))
           (eq last-command 'combobulate-navigation-sequence-scan))
       (unless thing (error "No valid symbol at point"))
       (setq this-command 'combobulate-navigation-sequence-scan)
