@@ -275,10 +275,10 @@ This is the basic setup for Combobulate. It assumes you have installed/can insta
 .. code-block:: elisp
 
     (use-package combobulate
-       :custom
+       :init
        ;; You can customize Combobulate's key prefix here.
        ;; Note that you may have to restart Emacs for this to take effect!
-       (combobulate-key-prefix "C-c o")
+       (setq combobulate-key-prefix "C-c o"))
        :hook ((prog-mode . combobulate-mode))
        ;; Amend this to the directory where you keep Combobulate's source
        ;; code.

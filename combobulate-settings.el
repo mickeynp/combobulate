@@ -128,7 +128,7 @@ it finds, regardless of hierarchy."
   :type 'string
   :group 'combobulate)
 
-(defcustom combobulate-key-prefix "C-c o"
+(defcustom combobulate-key-prefix (if combobulate-key-prefix combobulate-key-prefix "C-c o")
   "Prefix key for Combobulate commands. Leave blank to disable.
 
 This is the prefix key for all Combobulate commands. It is
