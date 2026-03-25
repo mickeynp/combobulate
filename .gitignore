@@ -1,4 +1,8 @@
-*.elc
+elc
 flycheck*
 *#*
 /.envrc
+
+/pyvenv.cfg
+/lib/
+/bin/
