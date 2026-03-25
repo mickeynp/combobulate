@@ -3,7 +3,7 @@
 	url = https://github.com/mickeynp/html-ts-mode.git
 [submodule "test/tuareg"]
 	path = tests/tuareg
-	url = git@github.com:ocaml/tuareg.git
+	url = https://github.com/ocaml/tuareg.git
 [submodule "test/ocaml-ts-mode"]
 	path = tests/ocaml-ts-mode
-	url = git@github.com:terrateamio/ocaml-ts-mode.git
+	url = https://github.com/terrateamio/ocaml-ts-mode.git
