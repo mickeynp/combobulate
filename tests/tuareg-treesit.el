@@ -39,5 +39,5 @@
 
 (add-hook 'tuareg-mode-hook #'tuareg-treesit-bridge--maybe-create-parser)
 
-(provide 'tuareg-treesit-bridge)
-;;; tuareg-treesit-bridge.el ends here
+(provide 'tuareg-treesit)
+;;; tuareg-treesit.el ends here
