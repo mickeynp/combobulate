@@ -1151,19 +1151,21 @@ highlight Combobulate highlighters.")
 
 If QUIET is non-nil, then do not display any warning messages if
 the query fails to compile."
+  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
   (if-let (err (combobulate-query-builder-validate-query query))
       (progn (unless quiet (warn "Query %s failed to compile: %s." query err)) nil)
-    (setq treesit-font-lock-settings
-          (append treesit-font-lock-settings
-                  (treesit-font-lock-rules
-                   :language language
-                   :override t
-                   :feature combobulate-highlight-feature-symbol
-                   query)))
-    ;; required for the font lock machinery to take effect.
-    (treesit-font-lock-recompute-features)
-    (font-lock-flush)
-    query))
+    (let ((ts-lang (combobulate-get-treesit-language-from-name language)))
+      (setq treesit-font-lock-settings
+            (append treesit-font-lock-settings
+                    (treesit-font-lock-rules
+                     :language ts-lang
+                     :override t
+                     :feature combobulate-highlight-feature-symbol
+                     query)))
+      ;; required for the font lock machinery to take effect.
+      (treesit-font-lock-recompute-features)
+      (font-lock-flush)
+      query)))
 
 (defun combobulate-highlight-install (language)
   "Install the font lock rules for LANGUAGE in the current buffer."
