@@ -152,6 +152,124 @@
          "module_name" "module_type_name" "field_name" "false" "true"))
 
       (envelope-indent-region-function #'indent-region)
+      (envelope-list
+      '((:description "let ... = ... in ..."
+          :key "l"
+          :name "let-binding"
+          :template ("let " (p name "Name") " =" n> @ r> n> "in" n> @ n>))
+
+        (:description "match ... with | ... -> ..."
+          :key "m"
+          :name "match-statement"
+          :template ("match " (p expr "Expression") " with" n>
+                    "| " (p pat "Pattern") " ->" n> @ r> n>
+                    (choice* :missing nil
+                              :rest ("| " (p pat2 "Next Pattern") " ->" n> @ n>)
+                              :name "add-pattern")))
+
+        (:description "if ... then ... else ..."
+          :key "i"
+          :name "if-statement"
+          :template ("if " (p cond "Condition") " then" n> @ r> n>
+                    (choice* :missing nil
+                              :rest ("else" n> @ n>)
+                              :name "else-branch")))
+
+        (:description "try ... with | ... -> ..."
+          :key "t"
+          :name "try-with"
+          :template ("try" n> @ r> n>
+                    "with" n>
+                    "| " (p exc "Exception") " ->" n> @ n>))
+
+        (:description "module ... = struct ... end"
+          :key "M"
+          :name "module-struct"
+          :template ("module " (p name "Module Name") " = struct" n>
+                    @ r> n>
+                    "end" > n>))
+
+        (:description "begin ... end"
+          :key "b"
+          :name "begin-end"
+          :template ("begin" n> @ r> n> "end" > n>))
+
+        (:description "fun ... -> ..."
+          :key "f"
+          :name "fun-expression"
+          :template ("fun " (p args "Arguments") " ->" n> @ r> n>))
+
+        (:description "function | ... -> ..."
+          :key "F"
+          :name "function-expression"
+          :template ("function" n>
+                    "| " (p pat "Pattern") " ->" n> @ r> n>
+                    (choice* :missing nil
+                              :rest ("| " (p pat2 "Next Pattern") " ->" n> @ n>)
+                              :name "add-pattern")))
+
+        (:description "type ... = ..."
+          :key "T"
+          :name "type-definition"
+          :template ("type " (p name "Type Name") " =" n> @ r> n>))
+
+        (:description "module type ... = sig ... end"
+          :key "S"
+          :name "module-sig"
+          :template ("module type " (p name "Signature Name") " = sig" n>
+                    @ r> n>
+                    "end" > n>))
+
+        (:description "let open ... in ..."
+          :key "o"
+          :name "let-open"
+          :template ("let open " (p mod "Module") " in" n> @ r> n>))
+
+        (:description "for ... = ... to ... do ... done"
+          :key "4"
+          :name "for-loop"
+          :template ("for " (p var "Variable") " = " (p start "Start") " to " (p end "End") " do" n>
+                    @ r> n>
+                    "done" > n>))
+
+        (:description "while ... do ... done"
+          :key "w"
+          :name "while-loop"
+          :template ("while " (p cond "Condition") " do" n>
+                    @ r> n>
+                    "done" > n>))
+
+        (:description "class ... = object ... end"
+          :key "c"
+          :name "class-definition"
+          :template ("class " (p name "Class Name") " = object"
+                    (choice* :missing nil
+                              :rest (" (" (p self "self") ")")
+                              :name "self-binding")
+                    n> @ r> n>
+                    "end" > n>))
+
+        (:description "let rec ... = ... in ..."
+          :key "r"
+          :name "let-rec"
+          :template ("let rec " (p name "Function Name") " =" n>
+                    @ r> n>
+                    "in" n> @ n>))
+
+        (:description "struct ... end"
+          :key "st"
+          :name "anonymous-struct"
+          :template ("struct" n> @ r> n> "end" > n>))
+
+        (:description "type ... = | ... : ..."
+          :key "G"
+          :name "gadt-definition"
+          :template ("type " (p params "Parameters") " " (p name "Type Name") " =" n>
+                    "| " (p cons "Constructor") " : " (p ty "Constructor Type") n>
+                    @ r> n>
+                    (choice* :missing nil
+                              :rest ("| " (p cons2 "Next Constructor") " : " (p ty2 "Next Type") n> @ n>)
+                              :name "add-constructor")))))
       (pretty-print-node-name-function #'combobulate-ocaml-pretty-print-node-name)
       (plausible-separators '(";" "," "|" "struct" "sig" "end" "begin" "{" "}"))
 
