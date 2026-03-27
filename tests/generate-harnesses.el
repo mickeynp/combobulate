@@ -209,14 +209,14 @@
                                           :name "add-pattern"))
                   :mock-prompt-actions ("my_list" "[]")
                   :mock-registers ((region . "0"))
-                  :mock-proffer-choices (1 0)) 
+                  :mock-proffer-choices (1 0))
       (:test-name "ocaml-match-statement-multiple-cases"
                   :instructions ("match " (p expr "Expression") " with" n>
                                  "| " (p pat "Pattern") " ->" n> @ r> n>
                                  (choice* :missing nil
                                           :rest ("| " (p pat2 "Next Pattern") " ->" n> @ n>)
                                           :name "add-pattern"))
-                  :mock-prompt-actions ("my_list" "[]" "x :: xs") 
+                  :mock-prompt-actions ("my_list" "[]" "x :: xs")
                   :mock-registers ((region . "0"))
                   :mock-proffer-choices (0 1))))
    ;; Dragging
