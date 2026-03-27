@@ -111,6 +111,8 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+--------------------+
 |Go                  |go-mode, go-ts-mode                                           |v0.20.0             |
 +--------------------+--------------------------------------------------------------+--------------------+
+|OCaml                  |tuareg, ocaml-ts-mode                                           |v0.24.2          |
++--------------------+--------------------------------------------------------------+--------------------+
 
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
@@ -225,7 +227,9 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                    (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
                    (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
-                   (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))))
+                   (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
+                   (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/ocaml/src"))
+                   (ocaml_interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/interface/src"))))
           (add-to-list 'treesit-language-source-alist grammar)
           ;; Only install `grammar' if we don't already have it
           ;; installed. However, if you want to *update* a grammar then
