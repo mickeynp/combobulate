@@ -111,7 +111,7 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+--------------------+
 |Go                  |go-mode, go-ts-mode                                           |v0.20.0             |
 +--------------------+--------------------------------------------------------------+--------------------+
-|OCaml                  |caml-mode, tuareg-mode, neocaml-mode, neocaml-interface-mode                                           |v0.24.2          |
+|OCaml [2]           |caml-mode, tuareg-mode, neocaml-mode, neocaml-interface-mode  |v0.24.2             |
 +--------------------+--------------------------------------------------------------+--------------------+
 
 
@@ -128,6 +128,8 @@ At that point, Combobulate is now working. Combobulate rebinds a wide range of c
 Furthermore, Combobulate ships with a Magit-like transient UI that you can access by typing ``C-c o o``. It exists primarily to teach you about Combobulate's capabilities: every key binding in it is also available without the popup.
 
  [1] Either use the version built into *Emacs 30*, or you can download my ``html-ts-mode`` `here <https://github.com/mickeynp/html-ts-mode>`__, and read more about how to build your own tree-sitter major mode by reading `Let's Write a Tree-Sitter Major Mode <https://www.masteringemacs.org/article/lets-write-a-treesitter-major-mode>`__.
+
+ [2] OCaml support written by `Pixie Dust <https://github.com/PizieDust>`__, `Tim McGilchrist <https://github.com/tmcgilchrist>`__ & `Xavier Van de Woestyne <https://github.com/xvw>`__.
 
 Recent Changes / What's New
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
