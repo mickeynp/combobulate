@@ -368,7 +368,10 @@ For many languages it's usually something like `identifier' or
      #'combobulate--pretty-print-node)
     (pretty-print-node-name-function
      "Function that pretty prints a node name."
-     #'combobulate-pretty-print-node-name))
+     #'combobulate-pretty-print-node-name)
+    (navigate-down-into-lists
+     "Whether to navigate into the first list-like structure ahead of point."
+     t))
   "Default definitions that each language minor mode can set.
 
 This is a list of `defvar' forms that are used to define the
@@ -441,7 +444,6 @@ A complete list of known shorthands are found in
          (combobulate-read procedures-default)))
   (dolist (envelope (combobulate-read envelope-list))
     (apply #'combobulate-define-envelope envelope)))
-
 
 (defun combobulate-get-registered-language (mm)
   "Get the registered language for a major mode MM.
