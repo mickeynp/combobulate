@@ -1061,7 +1061,7 @@ continue by scanning in DIRECTION for any other contextual node (as per
      ;; NOTE: this is a slightly modified version of `down-list' with
      ;; the syntax-ppss table check removed as it seems run into parse
      ;; errors in JSX files.
-     (and combobulate-navigate-down-into-lists
+     (and (combobulate-read navigate-down-into-lists)
           (ignore-errors
             (let* ((arg 1)
                    (inc (if (> arg 0) 1 -1)))
@@ -1072,7 +1072,7 @@ continue by scanning in DIRECTION for any other contextual node (as per
 (defun combobulate-navigate-down (&optional arg)
   "Move down into the nearest navigable node ARG times
 
-If `combobulate-navigate-down-into-lists' is enabled (the
+If `navigate-down-into-lists' is enabled for the language (the
 default) and no suitable node is found, jump instead into the
 first list-like structure ahead of point."
   (interactive "^p")
