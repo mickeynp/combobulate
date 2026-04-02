@@ -455,7 +455,7 @@ determine the attribute and the corresponding envelope to insert."
  :language javascript
  ;; Oh, Javascript 🙄. And i'm sure this isn't even 20% of the
  ;; available modes.
- :major-modes (js-mode js2-mode rjsx-mode js3-mode
+ :major-modes (js-mode js2-mode rjsx-mode js3-mode javascript-mode
                        js-ts-mode js-jsx-mode js2-jsx-mode)
  :custom combobulate-jsx-definitions
  :extra-defcustoms combobulate-jsx-extra-defcustoms
