@@ -290,7 +290,9 @@ doesn't exist."
       (let* ((auto-mode-alist (append auto-mode-alist
                                       '(("\\.go\\'" . go-ts-mode)
                                         ("\\.ml[i]?\\'" . tuareg-mode))))
+                                        ("\\.ml[i]?\\'" . tuareg-mode)
                                         ("\\.dune\\'" . dune-ts-mode)
+                                        ("\\.opam\\'" . opam-ts-mode)
              ;; required to ensure the right major mode is chosen.
              (major-mode-remap-alist '((python-mode . python-ts-mode)
                                        (css-mode . css-ts-mode)
