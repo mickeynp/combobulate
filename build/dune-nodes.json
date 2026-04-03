@@ -1,0 +1,1101 @@
+[
+  {
+    "type": "action",
+    "named": true,
+    "fields": {
+      "arguments": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "action",
+            "named": true
+          },
+          {
+            "type": "file_name",
+            "named": true
+          },
+          {
+            "type": "file_name_dep",
+            "named": true
+          },
+          {
+            "type": "file_name_target",
+            "named": true
+          },
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          },
+          {
+            "type": "shell_command",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "action_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "alias_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "blang",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "blang",
+          "named": true
+        },
+        {
+          "type": "blang_op",
+          "named": true
+        },
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "blang_op",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "file_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "file_name_dep",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "file_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "file_name_target",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "file_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "library_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "lock_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "module_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ocaml_syntax",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "package_dep",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "package_name",
+          "named": true
+        },
+        {
+          "type": "version_constraint",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "package_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "public_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "quoted_string",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "sexp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        },
+        {
+          "type": "sexp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sexps1",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "sexp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "shell_command",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "ocaml_syntax",
+          "named": true
+        },
+        {
+          "type": "stanza",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "stanza",
+    "named": true,
+    "fields": {
+      "author": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "context_name": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "directory": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "file_name",
+            "named": true
+          }
+        ]
+      },
+      "enabled": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "false",
+            "named": false
+          },
+          {
+            "type": "true",
+            "named": false
+          }
+        ]
+      },
+      "extension": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "host_context": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "language": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "license": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "lock_dir": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "maintainer": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "new_name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "library_name",
+            "named": true
+          }
+        ]
+      },
+      "old_name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "library_name",
+            "named": true
+          }
+        ]
+      },
+      "opam_root": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "path": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "profile": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "profile_name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "project_name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "repo": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "stanzas": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "stanza",
+            "named": true
+          }
+        ]
+      },
+      "switch": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "target_exe": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "target_triple": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "toolchain": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "url": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "action",
+            "named": true
+          },
+          {
+            "type": "alias",
+            "named": false
+          },
+          {
+            "type": "alias_name",
+            "named": true
+          },
+          {
+            "type": "alias_rec",
+            "named": false
+          },
+          {
+            "type": "blang",
+            "named": true
+          },
+          {
+            "type": "dir",
+            "named": false
+          },
+          {
+            "type": "env_var",
+            "named": false
+          },
+          {
+            "type": "fallback",
+            "named": false
+          },
+          {
+            "type": "false",
+            "named": false
+          },
+          {
+            "type": "field_name",
+            "named": true
+          },
+          {
+            "type": "file_name",
+            "named": true
+          },
+          {
+            "type": "file_name_target",
+            "named": true
+          },
+          {
+            "type": "glob_files",
+            "named": false
+          },
+          {
+            "type": "library_name",
+            "named": true
+          },
+          {
+            "type": "lock_name",
+            "named": true
+          },
+          {
+            "type": "module_name",
+            "named": true
+          },
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "named_variable",
+            "named": true
+          },
+          {
+            "type": "package",
+            "named": false
+          },
+          {
+            "type": "package_dep",
+            "named": true
+          },
+          {
+            "type": "package_name",
+            "named": true
+          },
+          {
+            "type": "promote",
+            "named": false
+          },
+          {
+            "type": "public_name",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          },
+          {
+            "type": "sandbox",
+            "named": false
+          },
+          {
+            "type": "sexp",
+            "named": true
+          },
+          {
+            "type": "sexps1",
+            "named": true
+          },
+          {
+            "type": "source_tree",
+            "named": false
+          },
+          {
+            "type": "true",
+            "named": false
+          },
+          {
+            "type": "universe",
+            "named": false
+          }
+        ]
+      },
+      "version": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "multiline_string",
+            "named": true
+          },
+          {
+            "type": "quoted_string",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "action",
+          "named": true
+        },
+        {
+          "type": "field_name",
+          "named": true
+        },
+        {
+          "type": "file_name",
+          "named": true
+        },
+        {
+          "type": "module_name",
+          "named": true
+        },
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "package_name",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        },
+        {
+          "type": "sexp",
+          "named": true
+        },
+        {
+          "type": "stanza_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "version_constraint",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "multiline_string",
+          "named": true
+        },
+        {
+          "type": "quoted_string",
+          "named": true
+        },
+        {
+          "type": "version_constraint",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": "(* -*- tuareg -*- *)",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<=",
+    "named": false
+  },
+  {
+    "type": "<>",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": ">=",
+    "named": false
+  },
+  {
+    "type": "action_name",
+    "named": true
+  },
+  {
+    "type": "alias",
+    "named": false
+  },
+  {
+    "type": "alias_rec",
+    "named": false
+  },
+  {
+    "type": "and",
+    "named": false
+  },
+  {
+    "type": "comment",
+    "named": true,
+    "extra": true
+  },
+  {
+    "type": "default",
+    "named": false
+  },
+  {
+    "type": "dir",
+    "named": false
+  },
+  {
+    "type": "disable_dynamically_linked_foreign_archives",
+    "named": false
+  },
+  {
+    "type": "enabled_for",
+    "named": false
+  },
+  {
+    "type": "env",
+    "named": false
+  },
+  {
+    "type": "env_var",
+    "named": false
+  },
+  {
+    "type": "fallback",
+    "named": false
+  },
+  {
+    "type": "false",
+    "named": false
+  },
+  {
+    "type": "fdo",
+    "named": false
+  },
+  {
+    "type": "field_name",
+    "named": true
+  },
+  {
+    "type": "generate_merlin_rules",
+    "named": false
+  },
+  {
+    "type": "git",
+    "named": false
+  },
+  {
+    "type": "github",
+    "named": false
+  },
+  {
+    "type": "glob_files",
+    "named": false
+  },
+  {
+    "type": "host",
+    "named": false
+  },
+  {
+    "type": "lock_dir",
+    "named": false
+  },
+  {
+    "type": "merlin",
+    "named": false
+  },
+  {
+    "type": "multiline_string",
+    "named": true
+  },
+  {
+    "type": "name",
+    "named": false
+  },
+  {
+    "type": "named_variable",
+    "named": true
+  },
+  {
+    "type": "opam",
+    "named": false
+  },
+  {
+    "type": "or",
+    "named": false
+  },
+  {
+    "type": "package",
+    "named": false
+  },
+  {
+    "type": "paths",
+    "named": false
+  },
+  {
+    "type": "profile",
+    "named": false
+  },
+  {
+    "type": "promote",
+    "named": false
+  },
+  {
+    "type": "root",
+    "named": false
+  },
+  {
+    "type": "sandbox",
+    "named": false
+  },
+  {
+    "type": "source_tree",
+    "named": false
+  },
+  {
+    "type": "stanza_name",
+    "named": true
+  },
+  {
+    "type": "switch",
+    "named": false
+  },
+  {
+    "type": "target",
+    "named": false
+  },
+  {
+    "type": "targets",
+    "named": false
+  },
+  {
+    "type": "toolchain",
+    "named": false
+  },
+  {
+    "type": "true",
+    "named": false
+  },
+  {
+    "type": "universe",
+    "named": false
+  },
+  {
+    "type": "uri",
+    "named": false
+  }
+]
