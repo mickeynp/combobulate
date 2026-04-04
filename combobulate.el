@@ -90,6 +90,8 @@
 (require 'combobulate-dune)
 ;;;###autoload
 (require 'combobulate-opam)
+;;;###autoload
+(require 'combobulate-odoc)
 ;;; end language support
 
 (provide 'combobulate)
