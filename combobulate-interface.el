@@ -42,36 +42,14 @@
 (defsubst combobulate-node-p (node)
   (treesit-node-p node))
 
-(defun combobulate-buffer-root-node (&optional language)
-  "Get the root node for LANGUAGE in the current buffer.
-LANGUAGE can be either a Combobulate language name or tree-sitter language symbol."
-  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
-  (let ((ts-lang (if language
-                     (combobulate-get-treesit-language-from-name language)
-                   (combobulate-get-treesit-language-from-name (combobulate-primary-language)))))
-    (treesit-buffer-root-node ts-lang)))
+(defsubst combobulate-buffer-root-node (&optional language)
+  (treesit-buffer-root-node (or language (combobulate-primary-language))))
 
-(defun combobulate-node-on (beg end &optional parser-or-lang named)
-  "Get the smallest node covering BEG to END for PARSER-OR-LANG.
-PARSER-OR-LANG can be a parser, Combobulate language name, or tree-sitter language."
-  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
-  (let ((ts-lang (if parser-or-lang
-                     (if (treesit-parser-p parser-or-lang)
-                         parser-or-lang
-                       (combobulate-get-treesit-language-from-name parser-or-lang))
-                   (combobulate-get-treesit-language-from-name (combobulate-primary-language)))))
-    (treesit-node-on beg end ts-lang named)))
+(defsubst combobulate-node-on (beg end &optional parser-or-lang named)
+  (treesit-node-on beg end (or parser-or-lang (combobulate-primary-language)) named))
 
-(defun combobulate-node-at (pos &optional parser-or-lang named)
-  "Get the smallest node at POS for PARSER-OR-LANG.
-PARSER-OR-LANG can be a parser, Combobulate language name, or tree-sitter language."
-  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
-  (let ((ts-lang (if parser-or-lang
-                     (if (treesit-parser-p parser-or-lang)
-                         parser-or-lang
-                       (combobulate-get-treesit-language-from-name parser-or-lang))
-                   (combobulate-get-treesit-language-from-name (combobulate-primary-language)))))
-    (treesit-node-at pos ts-lang named)))
+(defsubst combobulate-node-at (pos &optional parser-or-lang named)
+  (treesit-node-at pos (or parser-or-lang (combobulate-primary-language)) named))
 
 (defsubst combobulate-induce-sparse-tree (root predicate &optional process-fn limit)
   (treesit-induce-sparse-tree root predicate process-fn limit))
@@ -92,22 +70,11 @@ PARSER-OR-LANG can be a parser, Combobulate language name, or tree-sitter langua
   (treesit-node-parser node))
 
 (defun combobulate-primary-language (&optional quiet)
-  "Get the Combobulate language name for the current buffer.
-
-Returns the Combobulate language NAME (e.g., 'ocaml-interface'), not the
-tree-sitter language (e.g., 'ocaml_interface'). This ensures symbol names
-are valid Emacs Lisp identifiers."
-  (declare-function combobulate-get-language-name-from-treesit "combobulate-setup")
-  (declare-function combobulate-get-registered-language "combobulate-setup")
   (or
-   ;; First try to get language from parser at point and map to Combobulate name
-   (when-let ((ts-lang (treesit-language-at (point))))
-     (combobulate-get-language-name-from-treesit ts-lang))
-   ;; Fallback to registered language for this major mode
+   (treesit-language-at (point))
    (car (combobulate-get-registered-language major-mode))
-   ;; Last resort: get first parser and map to Combobulate name
-   (when-let ((first-parser (car (combobulate-parser-list))))
-     (combobulate-get-language-name-from-treesit (combobulate-parser-language first-parser)))
+   (when-let ((first-language (car (combobulate-parser-list))))
+     (combobulate-parser-language first-language))
    (unless quiet
      (error "No parsers available"))))
 
@@ -115,11 +82,8 @@ are valid Emacs Lisp identifiers."
   (cl-assert (combobulate-node-p node) t "Must be a real tree-sitter node")
   (treesit-node-buffer node))
 
-(defun combobulate-query-validate (language query)
-  "Validate QUERY for LANGUAGE.
-LANGUAGE can be a Combobulate name or tree-sitter language."
-  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
-  (treesit-query-validate (combobulate-get-treesit-language-from-name language) query))
+(defsubst combobulate-query-validate (language query)
+  (treesit-query-validate language query))
 
 (defsubst combobulate-query-capture (node query &optional beg end node-only)
   (treesit-query-capture node query beg end node-only))
@@ -184,11 +148,9 @@ LANGUAGE can be a Combobulate name or tree-sitter language."
       (treesit-node-eq node1 node2)
     (eq node1 node2)))
 
-(defun combobulate-root-node ()
-  "Get the root node for the primary language in the current buffer."
-  (declare-function combobulate-get-treesit-language-from-name "combobulate-setup")
+(defsubst combobulate-root-node ()
   (treesit-buffer-root-node
-   (combobulate-get-treesit-language-from-name (combobulate-primary-language))))
+   (combobulate-primary-language)))
 
 (defsubst combobulate-node-descendant-for-range (node beg end &optional all)
   (treesit-node-descendant-for-range node beg end (not all)))
