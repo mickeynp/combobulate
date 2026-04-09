@@ -274,6 +274,7 @@
                                   "module_type_definition"
                                   "package_expression"))
            (:nodes ("attribute"
+                    "comment"
                     "field_declaration"
                     "function_expression"
                     (rule "function_type")
@@ -443,6 +444,7 @@
 
                     ;; Regular nodes
                     "attribute"
+                    "comment"
                     "field_declaration"
                     (rule "attribute_payload")
                     (rule "object_expression")
