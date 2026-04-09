@@ -4,6 +4,6 @@
 [submodule "test/tuareg"]
 	path = tests/tuareg
 	url = https://github.com/ocaml/tuareg.git
-[submodule "test/ocaml-ts-mode"]
-	path = tests/ocaml-ts-mode
-	url = https://github.com/terrateamio/ocaml-ts-mode.git
+[submodule "tests/neocaml"]
+	path = tests/neocaml
+	url = https://github.com/bbatsov/neocaml.git
