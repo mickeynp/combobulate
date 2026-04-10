@@ -84,6 +84,8 @@
 (require 'combobulate-json)
 ;;;###autoload
 (require 'combobulate-go)
+;;;###autoload
+(require 'combobulate-ocaml)
 ;;; end language support
 
 (provide 'combobulate)

@@ -297,6 +297,7 @@ use the name of the face to highlight with. See
     (css . combobulate-css-setup)
     (yaml . combobulate-yaml-setup)
     (toml . combobulate-toml-setup)
+    (ocaml . combobulate-ocaml-setup)
     (html . combobulate-html-setup))
   "Alist of setup functions to call when \\[combobulate-mode] is enabled.
 

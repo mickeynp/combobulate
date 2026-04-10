@@ -176,6 +176,49 @@
       (:test-name "choice-has-choice-3"
                   :instructions ("{a + " (choice "1" (choice "1.1") (choice "1.2")) (choice "2") "}")
                   :mock-proffer-choices (1 1))))
+  (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-envelope
+    :fixture-files '("fixtures/envelope/blank.ml")
+    :collection-name "combobulate-envelope-expand-ocaml"
+    :action-body '((combobulate-envelope-expand-instructions instructions))
+    :per-marker nil
+    :reverse nil
+    :harness-factory-matrix
+    '(
+      (:test-name "ocaml-begin-end-with-region"
+                  :instructions ("begin" n> @ r> n> "end" > n>)
+                  :mock-registers ((region . "print_endline \"Hello, World!\""))
+                  :mock-proffer-choices (0))
+      (:test-name "ocaml-let-binding"
+                  :instructions ("let " (p name "Name") " =" n> @ r> n> "in" n> @ n>)
+                  :mock-prompt-actions ("my_var")
+                  :mock-registers ((region . "42 + 1"))
+                  :mock-proffer-choices (0))
+      (:test-name "ocaml-for-loop"
+                  :instructions ("for " (p var "Variable") " = " (p start "Start") " to " (p end "End") " do" n>
+                                 @ r> n>
+                                 "done" > n>)
+                  :mock-prompt-actions ("i" "0" "10")
+                  :mock-registers ((region . "print_int i"))
+                  :mock-proffer-choices (0))
+      (:test-name "ocaml-match-statement-single-case"
+                  :instructions ("match " (p expr "Expression") " with" n>
+                                 "| " (p pat "Pattern") " ->" n> @ r> n>
+                                 (choice* :missing nil
+                                          :rest ("| " (p pat2 "Next Pattern") " ->" n> @ n>)
+                                          :name "add-pattern"))
+                  :mock-prompt-actions ("my_list" "[]")
+                  :mock-registers ((region . "0"))
+                  :mock-proffer-choices (1 0))
+      (:test-name "ocaml-match-statement-multiple-cases"
+                  :instructions ("match " (p expr "Expression") " with" n>
+                                 "| " (p pat "Pattern") " ->" n> @ r> n>
+                                 (choice* :missing nil
+                                          :rest ("| " (p pat2 "Next Pattern") " ->" n> @ n>)
+                                          :name "add-pattern"))
+                  :mock-prompt-actions ("my_list" "[]" "x :: xs")
+                  :mock-registers ((region . "0"))
+                  :mock-proffer-choices (0 1))))
    ;; Dragging
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-with-fixture-delta

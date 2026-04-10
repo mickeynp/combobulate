@@ -146,16 +146,18 @@
 
 
 (defvar combobulate-registered-languages-alist nil
-  "Alist of tree-sitter languages and major modes supported by Combobulate.
+  "Alist of Combobulate languages and major modes supported by Combobulate.
 
 Each entry must be of the form
 
-   (LANGUAGE MAJOR-MODES MINOR-MODE-FN)
+   (NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)
 
-Where LANGUAGE is the tree-sitter language symbol; MAJOR-MODES is
-a list of supported major modes; and MINOR-MODE-FN is a minor
-mode function that Combobulate must use for that language and
-those major modes.")
+Where NAME is the Combobulate language name (used for Emacs Lisp symbols);
+MAJOR-MODES is a list of supported major modes; MINOR-MODE-FN is a minor
+mode function that Combobulate must use for that language and those major
+modes; and TREESIT-LANGUAGE is the tree-sitter grammar name (which may
+differ from NAME if it contains characters invalid in Emacs Lisp symbols,
+such as underscores).")
 
 (defvar-local combobulate-mode nil
   "Non-nil if the language-specific minor mode is enabled in this buffer.
@@ -448,10 +450,25 @@ A complete list of known shorthands are found in
 (defun combobulate-get-registered-language (mm)
   "Get the registered language for a major mode MM.
 
-Returns a list of the form `(LANGUAGE MAJOR-MODES MINOR-MODE-FN)'."
-  (seq-find (pcase-lambda (`(_ ,major-modes _))
+Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)'."
+  (seq-find (pcase-lambda (`(_ ,major-modes _ _))
               (member mm major-modes))
             combobulate-registered-languages-alist))
+
+(defcustom combobulate-treesit-language-aliases
+  '((ocaml-interface . ocaml_interface))
+  "Alist mapping Combobulate names to tree-sitter language names.
+This is used if the tree-sitter grammar you are using has a different
+name from the canonical language name known to Combobulate
+(e.g. `(ocaml-interface . ocaml_interface)')."
+  :type '(alist :key-type symbol :value-type symbol)
+  :group 'combobulate)
+
+(defun combobulate-resolve-treesit-language (lang)
+  "Resolve the canonical Combobulate LANG to its actual tree-sitter symbol name.
+Checks `combobulate-treesit-language-aliases` first."
+  (or (alist-get lang combobulate-treesit-language-aliases)
+      lang))
 
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.
@@ -463,39 +480,45 @@ enable Combobulate."
   ;; Combobulate can activate in any major mode provided it's listed
   ;; in `combobulate-registered-languages-alist'.
   ;;
-  (when-let (match (combobulate-get-registered-language major-mode))
-    (pcase-let ((`(,language _ ,minor-mode-fn) match))
-      ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
-      ;; behaviour is that Combobulate may get activated in major
-      ;; modes for which no grammar exists. Raising an error
-      ;; unconditionally in that case would be annoying to users.
-      (if (and raise-if-missing (not (combobulate-language-available-p language)))
-          (error "Cannot activate Combobulate in buffer `%s' because tree-sitter is missing a language library.
+  (when-let (match (or (when-let ((existing-parsers (combobulate-parser-list)))
+                         (let ((ts-lang (combobulate-parser-language (car existing-parsers))))
+                           (seq-find (pcase-lambda (`(,name _ _))
+                                       (eq (combobulate-resolve-treesit-language name) ts-lang))
+                                     combobulate-registered-languages-alist)))
+                       (combobulate-get-registered-language major-mode)))
+    (pcase-let ((`(,name _ ,minor-mode-fn) match))
+      (let ((language (combobulate-resolve-treesit-language name)))
+        ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
+        ;; behaviour is that Combobulate may get activated in major
+        ;; modes for which no grammar exists. Raising an error
+        ;; unconditionally in that case would be annoying to users.
+        (if (and raise-if-missing (not (combobulate-language-available-p language)))
+            (error "Cannot activate Combobulate in buffer `%s' because tree-sitter is missing a language library.
 
 The major mode `%s' is registered as supporting the tree-sitter
 language `%s' but that language is not known to tree-sitter.
 
 Try reinstalling the grammar for that language and try again."
-                 (current-buffer) major-mode language)
-        ;; Language parser exists. Make sure that, if we already have
-        ;; an initialised language in the buffer that it is not
-        ;; different from the one we think it should be.
-        (when-let ((existing-parsers (mapcar #'combobulate-parser-language (combobulate-parser-list))))
-          (unless (member language existing-parsers)
-            (error "Cannot activate Combobulate in buffer `%s' because of a parser mismatch.
+                   (current-buffer) major-mode language)
+          ;; Language parser exists. Make sure that, if we already have
+          ;; an initialised language in the buffer that it is not
+          ;; different from the one we think it should be.
+          (when-let ((existing-parsers (mapcar #'combobulate-parser-language (combobulate-parser-list))))
+            (unless (member language existing-parsers)
+              (error "Cannot activate Combobulate in buffer `%s' because of a parser mismatch.
 
 The buffer's language is `%s' and does not match Combobulate's
 expected language of `%s'. This can happen if you have major
 modes with conflicting ideas of what type of language to use."
-                   (current-buffer) (car-safe existing-parsers) language)))
-        ;; Okay. All good, then... Create the language parser.
-        (combobulate-create-language language (current-buffer) nil)
-        (let ((toggle (if (combobulate-read minor-mode language) -1 1)))
-          (prog1
-              (funcall minor-mode-fn toggle)
-            (when (and (> toggle 0) called-interactively)
-              (combobulate-message
-               (substitute-command-keys "Activating Combobulate. Type \\[combobulate] to start.")))))))))
+                     (current-buffer) (car-safe existing-parsers) language)))
+          ;; Okay. All good, then... Create the language parser.
+          (combobulate-create-language language (current-buffer) nil)
+          (let ((toggle (if (combobulate-read minor-mode name) -1 1)))
+            (prog1
+                (funcall minor-mode-fn toggle)
+              (when (and (> toggle 0) called-interactively)
+                (combobulate-message
+                 (substitute-command-keys "Activating Combobulate. Type \\[combobulate] to start."))))))))))
 
 ;;;###autoload
 (defun combobulate-mode (&optional arg &rest _)
@@ -508,9 +531,12 @@ Combobulate minor mode suitable for the current buffer."
   (combobulate-maybe-activate nil (not (null arg))))
 
 (defun combobulate-register-language (language major-modes minor-mode-fn)
+  "Register a Combobulate language.
+
+LANGUAGE is the Combobulate language name.
+MAJOR-MODES is a list of major modes that use this language.
+MINOR-MODE-FN is the minor mode function for this language."
   (if-let ((def (cdr (assoc language combobulate-registered-languages-alist))))
-      ;; Check if the definition's identical to what we want to
-      ;; add. If it is, do nothing; if it is not, raise an error.
       (unless (equal def (list major-modes minor-mode-fn))
         (error "Language `%s' is already registered with a different definition." language))
     (push (list language major-modes minor-mode-fn)
@@ -528,7 +554,7 @@ NAME is the name of the language as it'll be known to
 Combobulate; LANGUAGE is the tree sitter language symbol, and
 MAJOR-MODES is a list of major modes that should be set up for
 this language."
-  (cl-assert (symbolp language) t "LANGUAGE must be a list")
+  (cl-assert (symbolp language) t "LANGUAGE must be a symbol")
   (cl-assert (symbolp name) t "NAME must be a symbol")
   (let ((group-name (intern (format "combobulate-language-%s" name))))
     ;; Create a customize group for the language
@@ -647,7 +673,7 @@ support where you still want to use Combobulate's features."
                    ,(when setup-fn
                       `(,setup-fn ',language)))
                 decls)
-          (push `(combobulate-register-language ',language ',major-modes #',minor-mode-fn)
+          (push `(combobulate-register-language ',name ',major-modes #',minor-mode-fn)
                 decls)
           (push `(defconst ,(intern-lang-var "defined-variables")
                    ',known-variable-shorthands
