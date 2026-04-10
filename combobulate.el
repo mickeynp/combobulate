@@ -87,6 +87,8 @@
 ;;;###autoload
 (require 'combobulate-c)
 ;;;###autoload
+(require 'combobulate-haskell)
+;;;###autoload
 (require 'combobulate-ocaml)
 ;;;###autoload
 (require 'combobulate-dune)
