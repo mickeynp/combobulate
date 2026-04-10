@@ -1,6 +1,6 @@
 ;;; combobulate-ocaml.el --- ocaml support for combobulate -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025 Tim McGilchrsit
+;; Copyright (C) 2025 Tim McGilchrist
 
 ;; Author: Tim McGilchrist <timmcgil@gmail.com>
 ;;         Pixie Dust <pizie@tarides.com>
