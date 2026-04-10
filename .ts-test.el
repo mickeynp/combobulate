@@ -5,7 +5,6 @@
 (load-library "tests/tuareg/tuareg-opam.el")
 (load-library "tests/tuareg/tuareg-compat.el")
 (load-library "tests/tuareg/tuareg.el")
-(load-library "tests/neocaml/neocaml.el")
 (load-library "tests/tuareg-treesit.el")
 
 (setq auto-mode-alist
