@@ -452,7 +452,6 @@ determine the attribute and the corresponding envelope to insert."
 
 (define-combobulate-language
  :name javascript
- :language javascript
  ;; Oh, Javascript 🙄. And i'm sure this isn't even 20% of the
  ;; available modes.
  :major-modes (js-mode js2-mode rjsx-mode js3-mode
@@ -463,7 +462,6 @@ determine the attribute and the corresponding envelope to insert."
 
 (define-combobulate-language
  :name typescript
- :language typescript
  :major-modes (typescript-mode typescript-ts-mode)
  :custom combobulate-jsx-definitions
  :extra-defcustoms combobulate-jsx-extra-defcustoms
@@ -471,7 +469,6 @@ determine the attribute and the corresponding envelope to insert."
 
 (define-combobulate-language
  :name tsx
- :language tsx
  :major-modes (tsx-ts-mode)
  :custom combobulate-jsx-definitions
  :extra-defcustoms combobulate-jsx-extra-defcustoms

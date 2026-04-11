@@ -111,7 +111,6 @@
 
 (define-combobulate-language
  :name toml
- :language toml
  :major-modes (toml-ts-mode toml-mode)
  :custom combobulate-toml-definitions
  :setup-fn combobulate-toml-setup)

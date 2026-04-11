@@ -527,7 +527,7 @@ MINOR-MODE-FN is the minor mode function for this language."
     (push (list language major-modes minor-mode-fn)
           combobulate-registered-languages-alist)))
 
-(cl-defmacro define-combobulate-language (&key name language
+(cl-defmacro define-combobulate-language (&key name
                                                major-modes (custom nil)
                                                setup-fn
                                                (keymap-var nil)
@@ -536,10 +536,8 @@ MINOR-MODE-FN is the minor mode function for this language."
   "Define a new language for Combobulate.
 
 NAME is the name of the language as it'll be known to
-Combobulate; LANGUAGE is the tree sitter language symbol, and
-MAJOR-MODES is a list of major modes that should be set up for
-this language."
-  (cl-assert (symbolp language) t "LANGUAGE must be a symbol")
+Combobulate and tree-sitter, and MAJOR-MODES is a list of major
+modes that should be set up for this language."
   (cl-assert (symbolp name) t "NAME must be a symbol")
   (let ((group-name (intern (format "combobulate-language-%s" name))))
     ;; Create a customize group for the language
@@ -607,14 +605,14 @@ support where you still want to use Combobulate's features."
           ;; General key map for this language
           (push `(makunbound ',language-keymap) decls)
           (push `(defvar-keymap ,language-keymap
-                   :doc ,(format "Keymap for Combobulate language for `%s'." language)
+                   :doc ,(format "Keymap for Combobulate language for `%s'." name)
                    :full nil
                    :parent combobulate-key-map)
                 decls)
 
           ;; This is the envelope-specific keymap
           (push `(defvar-keymap ,envelope-keymap
-                   :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
+                   :doc ,(format "Keymap for Combobulate envelopes for `%s'." name)
                    :full nil)
                 decls)
           ;; This maps the `e' key to the envelope keymap.
@@ -623,10 +621,10 @@ support where you still want to use Combobulate's features."
                 decls)
           ;; Create a minor mode for this language.
           (push `(defvar-local ,minor-mode-fn nil
-                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language))
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." name))
                 decls)
           (push `(define-minor-mode ,minor-mode-fn
-                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language)
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." name)
                    :init-value nil
                    :lighter "©"
                    :keymap ,language-keymap
@@ -656,7 +654,7 @@ support where you still want to use Combobulate's features."
                    ;; run it with the language we are being
                    ;; triggered in.
                    ,(when setup-fn
-                      `(,setup-fn ',language)))
+                      `(,setup-fn ',name)))
                 decls)
           (push `(combobulate-register-language ',name ',major-modes #',minor-mode-fn)
                 decls)
@@ -667,7 +665,7 @@ support where you still want to use Combobulate's features."
 Each shorthand is a symbol referencing a variable belonging to
 that language. They are best accessed with the `combobulate-read'
 macro which optionally takes a language argument to retrieve that
-language's setting." language))
+language's setting." name))
                 decls)))
       `(progn ,@(nreverse decls)))))
 

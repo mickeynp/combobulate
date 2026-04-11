@@ -118,7 +118,6 @@
 
 (define-combobulate-language
  :name css
- :language css
  :major-modes (css-mode css-ts-mode)
  :custom combobulate-css-definitions
  :setup-fn combobulate-css-setup)

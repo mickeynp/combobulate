@@ -124,7 +124,6 @@
 
 (define-combobulate-language
  :name json
- :language json
  :major-modes (json-mode json-ts-mode js-json-mode)
  :custom combobulate-json-definitions
  :setup-fn combobulate-json-setup)
