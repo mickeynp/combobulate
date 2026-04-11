@@ -455,20 +455,6 @@ Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)'."
               (member mm major-modes))
             combobulate-registered-languages-alist))
 
-(defcustom combobulate-treesit-language-aliases
-  '()
-  "Alist mapping Combobulate names to tree-sitter language names.
-This is used if the tree-sitter grammar you are using has a different
-name from the canonical language name known to Combobulate."
-  :type '(alist :key-type symbol :value-type symbol)
-  :group 'combobulate)
-
-(defun combobulate-resolve-treesit-language (lang)
-  "Resolve the canonical Combobulate LANG to its actual tree-sitter symbol name.
-Checks `combobulate-treesit-language-aliases` first."
-  (or (alist-get lang combobulate-treesit-language-aliases)
-      lang))
-
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.
 
@@ -482,11 +468,11 @@ enable Combobulate."
   (when-let (match (or (when-let ((existing-parsers (combobulate-parser-list)))
                          (let ((ts-lang (combobulate-parser-language (car existing-parsers))))
                            (seq-find (pcase-lambda (`(,name _ _))
-                                       (eq (combobulate-resolve-treesit-language name) ts-lang))
+                                       (eq name ts-lang))
                                      combobulate-registered-languages-alist)))
                        (combobulate-get-registered-language major-mode)))
     (pcase-let ((`(,name _ ,minor-mode-fn) match))
-      (let ((language (combobulate-resolve-treesit-language name)))
+      (let ((language name))
         ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
         ;; behaviour is that Combobulate may get activated in major
         ;; modes for which no grammar exists. Raising an error
