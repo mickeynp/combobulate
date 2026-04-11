@@ -456,11 +456,10 @@ Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)'."
             combobulate-registered-languages-alist))
 
 (defcustom combobulate-treesit-language-aliases
-  '((ocaml-interface . ocaml_interface))
+  '()
   "Alist mapping Combobulate names to tree-sitter language names.
 This is used if the tree-sitter grammar you are using has a different
-name from the canonical language name known to Combobulate
-(e.g. `(ocaml-interface . ocaml_interface)')."
+name from the canonical language name known to Combobulate."
   :type '(alist :key-type symbol :value-type symbol)
   :group 'combobulate)
 
