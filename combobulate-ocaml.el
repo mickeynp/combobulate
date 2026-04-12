@@ -235,10 +235,40 @@
 
          (:activation-nodes
           ((:nodes ("value_definition"
-                    "value_pattern"
-                    "let_expression")
-                   :has-parent ("let_expression")))
+                    "value_pattern")
+                   :has-parent ("let_expression"
+                                "let_open_expression")))
           :selector  (:choose parent :match-children t))
+
+         ;; Navigate between record fields. Must come before the let
+         ;; chain rule, otherwise let_open_expression (an ancestor)
+         ;; matches first and intercepts navigation.
+         (:activation-nodes
+          ((:nodes ("field_expression")
+                   :has-parent ("record_expression")))
+          :selector  (:choose node :match-siblings t))
+
+         ;; Navigate forward through let chains. From any
+         ;; let_expression or let_open_expression, go to the body
+         ;; child if it is another let or application.
+         (:activation-nodes
+          ((:nodes ("let_expression"
+                    "let_open_expression")))
+          :selector  (:choose node :match-children
+                              (:match-rules ("let_expression"
+                                             "let_open_expression"
+                                             "application_expression"))))
+
+         ;; Navigate forward through if/else if/else chains.
+         ;; Like let chains, these are nested (else_clause contains
+         ;; another if_expression), not flat siblings.
+         ;; From if_expression or else_clause, navigate to the next
+         ;; branch (else_clause or nested if_expression).
+         (:activation-nodes
+          ((:nodes ("if_expression" "else_clause")))
+          :selector  (:choose node :match-children
+                              (:match-rules ("else_clause"
+                                             "if_expression"))))
 
          (:activation-nodes
           ((:nodes ("type_variable"
@@ -333,7 +363,25 @@
        ;; the object expression does not appear in these rules which is probably
        ;; part of the problem.
 
-       '((:activation-nodes
+       '(;; Navigate down into let_binding body, skipping the function
+         ;; name/pattern and parameters. Like Go skips to the block.
+         (:activation-nodes
+          ((:nodes ("let_binding")))
+          :selector (:choose node :match-children
+                             (:match-rules (rule "let_binding" :body))))
+
+         ;; Navigate down through chains of let ... in / let open ... in
+         ;; expressions. Since these are nested (parent-child) rather than
+         ;; flat siblings, hierarchy navigation is the natural fit.
+         (:activation-nodes
+          ((:nodes ("let_expression"
+                    "let_open_expression")))
+          :selector (:choose node :match-children
+                             (:match-rules ("let_expression"
+                                            "let_open_expression"
+                                            "application_expression"))))
+
+         (:activation-nodes
           ((:nodes ("field_get_expression"
                     "value_path"
                     "paranthesized_operator"
