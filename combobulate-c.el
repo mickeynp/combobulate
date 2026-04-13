@@ -212,7 +212,6 @@
 
 (define-combobulate-language
  :name c
- :language c
  :major-modes (c-mode c-ts-mode)
  :custom combobulate-c-definitions
  :setup-fn combobulate-c-setup)
