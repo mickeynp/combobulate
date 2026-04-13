@@ -179,7 +179,6 @@
 
 (define-combobulate-language
  :name odoc
- :language odoc
  :major-modes (odoc-ts-mode)
  :custom combobulate-odoc-definitions
  :setup-fn combobulate-odoc-setup)
