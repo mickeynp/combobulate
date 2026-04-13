@@ -57,7 +57,87 @@
          "file_name" "alias_name" "lock_name" "quoted_string"
          "multiline_string" "shell_command" "named_variable"
          "stanza_name" "field_name" "action_name"))
-      (envelope-list nil)
+      (envelope-list
+       '((:description
+          "(library (name ...) ...)"
+          :key "l"
+          :name "library-stanza"
+          :template ("(library" n>
+                     "(name " (p name "Name") ")"
+                     (choice* :missing nil
+                              :rest (n> "(libraries " @ ")")
+                              :name "libraries")
+                     n> r> ")" n>))
+
+         (:description
+          "(executable (name ...) ...)"
+          :key "e"
+          :name "executable-stanza"
+          :template
+          ((choice*
+            :name "executable"
+            :rest ("(executable"))
+           (choice*
+            :name "executables"
+            :rest ("(executables"))
+           n> "(name " (p name "Name") ")"
+           (choice* :missing nil
+                    :rest (n> "(libraries " @ ")")
+                    :name "libraries")
+           n> r> ")" n>))
+
+         (:description
+          "(test (name ...) (libraries ...))"
+          :key "t"
+          :name "test-stanza"
+          :template ("(test" n>
+                     "(name " (p name "Name") ")"
+                     n> "(libraries " (p libs "Libraries") ")"
+                     n> @ r> ")" n>))
+
+         (:description
+          "(rule (action ...))"
+          :key "r"
+          :name "rule-stanza"
+          :template ("(rule" n>
+                     (choice* :missing nil
+                              :rest ("(targets " (p targets "Targets") ")" n>)
+                              :name "targets")
+                     (choice* :missing nil
+                              :rest ("(deps " (p deps "Deps") ")" n>)
+                              :name "deps")
+                     "(action " @ r> ")" ")" n>))
+
+         (:description
+          "(alias (name ...) (action ...))"
+          :key "a"
+          :name "alias-stanza"
+          :template ("(alias" n>
+                     "(name " (p name "Alias Name") ")"
+                     n> "(action " @ r> ")" ")" n>))
+
+         (:description
+          "(package (name ...) ...)"
+          :key "p"
+          :name "package-stanza"
+          :template ("(package" n>
+                     "(name " (p name "Name") ")"
+                     (choice* :missing nil
+                              :rest (n> "(synopsis \"" (p syn "Synopsis") "\")")
+                              :name "synopsis")
+                     (choice* :missing nil
+                              :rest (n> "(depends " @ ")")
+                              :name "depends")
+                     n> r> ")" n>))
+
+         (:description
+          "(depends ...)"
+          :key "d"
+          :name "depends-field"
+          :mark-node t
+          :nodes ("sexp" "package_name" "library_name" "module_name")
+          :template ("(depends" n> @ r> ")" >))))
+
       (pretty-print-node-name-function #'combobulate-dune-pretty-print-node-name)
       (highlight-queries-default nil)
       (procedures-sexp
