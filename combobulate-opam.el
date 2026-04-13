@@ -121,7 +121,6 @@
 
 (define-combobulate-language
  :name opam
- :language opam
  :major-modes (opam-ts-mode)
  :custom combobulate-opam-definitions
  :setup-fn combobulate-opam-setup)
