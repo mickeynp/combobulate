@@ -207,7 +207,6 @@
 
 (define-combobulate-language
  :name dune
- :language dune
  :major-modes (neocaml-dune-mode)
  :custom combobulate-dune-definitions
  :setup-fn combobulate-dune-setup)
