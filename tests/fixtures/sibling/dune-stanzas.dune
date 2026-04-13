@@ -1,0 +1,13 @@
+; -*- combobulate-test-point-overlays: ((1 outline 135) (2 outline 204) (3 outline 250)); eval: (combobulate-test-fixture-mode t); -*-
+(library
+ (name mylib)
+ (public_name mylib)
+ (libraries base core))
+
+(executable
+ (name main)
+ (libraries mylib))
+
+(test
+ (name test_main)
+ (libraries mylib alcotest))
