@@ -1,0 +1,16 @@
+; -*- combobulate-test-point-overlays: ((1 outline 151) (2 outline 208) (3 outline 253) (4 outline 271)); eval: (combobulate-test-fixture-mode t); -*-
+{1 Introduction}
+
+This is a paragraph about the module.
+
+{2 Usage}
+
+Here is how you use this module.
+
+{[
+let x = 42
+]}
+
+{ul {- First item}
+    {- Second item}
+    {- Third item}}
