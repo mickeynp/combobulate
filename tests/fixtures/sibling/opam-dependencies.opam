@@ -1,0 +1,8 @@
+# -*- combobulate-test-point-overlays: ((1 outline 182) (2 outline 206) (3 outline 226) (4 outline 251)); eval: (combobulate-test-fixture-mode t); -*-
+opam-version: "2.0"
+depends: [
+  "ocaml" {>= "4.14.0"}
+  "dune" {>= "3.0"}
+  "alcotest" {with-test}
+  "odoc" {with-doc}
+]

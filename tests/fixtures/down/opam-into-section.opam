@@ -1,0 +1,5 @@
+# -*- combobulate-test-point-overlays: ((1 outline 119) (2 outline 125)); eval: (combobulate-test-fixture-mode t); -*-
+url {
+  src: "https://example.com/pkg-0.1.0.tar.gz"
+  checksum: "md5=abc123"
+}

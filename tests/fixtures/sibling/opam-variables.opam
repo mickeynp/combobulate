@@ -1,0 +1,7 @@
+# -*- combobulate-test-point-overlays: ((1 outline 183) (2 outline 203) (3 outline 221) (4 outline 238) (5 outline 273) (6 outline 303)); eval: (combobulate-test-fixture-mode t); -*-
+opam-version: "2.0"
+name: "mypackage"
+version: "0.1.0"
+synopsis: "A sample OCaml package"
+maintainer: "dev@example.com"
+license: "MIT"
