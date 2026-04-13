@@ -264,7 +264,6 @@
 
 (define-combobulate-language
  :name haskell
- :language haskell
  :major-modes (curry-mode)
  :custom combobulate-haskell-definitions
  :setup-fn combobulate-haskell-setup)
