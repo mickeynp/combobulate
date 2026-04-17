@@ -53,6 +53,7 @@
        '("false" "true" "number" "class_name" "value_name"
          "module_name" "module_type_name" "field_name" "false" "true"))
 
+      (navigate-down-into-lists nil)
       (envelope-indent-region-function #'indent-region)
       (envelope-list
        '((:description
@@ -411,7 +412,8 @@
 
       (envelope-indent-region-function #'indent-region)
       (pretty-print-node-name-function #'combobulate-ocaml-pretty-print-node-name)
-      (plausible-separators '(";" ",", "|"))
+      (plausible-separators '(";" "," "|"))
+      (navigate-down-into-lists nil)
 
       ;; Interface files only have specifications, not definitions
       ;; This is why declaration and type_specs are discared.
@@ -523,8 +525,7 @@
  :setup-fn combobulate-ocaml-setup)
 
 (defun combobulate-ocaml-setup (_)
-  "Setup function for OCaml mode with Combobulate."
-  (setq-local combobulate-navigate-down-into-lists nil))
+  "Setup function for OCaml mode with Combobulate.")
 
 (provide 'combobulate-ocaml)
 ;;; combobulate-ocaml.el ends here
