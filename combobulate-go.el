@@ -206,7 +206,6 @@
 
 (define-combobulate-language
  :name go
- :language go
  :major-modes (go-mode go-ts-mode)
  :custom combobulate-go-definitions
  :setup-fn combobulate-go-setup)

@@ -2396,8 +2396,8 @@
 )
 ;; END All supertypes in ocaml
 
-;; START Production rules for ocaml_interface
-(defconst combobulate-rules-ocaml_interface 
+;; START Production rules for ocaml-interface
+(defconst combobulate-rules-ocaml-interface 
  '(("_binding_pattern" (:*unnamed* ("or_pattern" "lazy_pattern" "alias_pattern" "constructor_pattern" "tuple_pattern" "range_pattern" "tag_pattern" "cons_pattern"))) 
  ("_class_expression" (:*unnamed* ("class_function" "let_class_expression" "let_open_class_expression" "class_application"))) 
  ("_class_field" (:*unnamed* ("method_definition" "class_initializer" "inheritance_definition" "instance_variable_definition" "item_extension" "type_parameter_constraint" "quoted_item_extension"))) 
@@ -2639,9 +2639,9 @@
  ("variant_declaration" (:*unnamed* ("constructor_declaration"))) 
  ("while_expression" (:*unnamed* ("do_clause" "attribute_id") :condition ("cons_expression" "try_expression" "while_expression" "assert_expression" "infix_expression" "tuple_expression" "for_expression" "application_expression" "let_expression" "set_expression" "function_expression" "if_expression" "let_open_expression" "fun_expression" "let_exception_expression" "let_module_expression" "lazy_expression" "sign_expression" "match_expression" "sequence_expression"))) 
 ))
-;; END Production rules for ocaml_interface
-;; START Inverse production rules for ocaml_interface
-(defconst combobulate-rules-ocaml_interface-inverse 
+;; END Production rules for ocaml-interface
+;; START Inverse production rules for ocaml-interface
+(defconst combobulate-rules-ocaml-interface-inverse 
  '(("abstract_type" ("class_function" "_parameter" "fun_expression" "let_binding" "constructor_pattern" "class_binding" "method_definition" "polymorphic_type"))
    ("add_operator" ("_infix_operator" "infix_expression" "parenthesized_operator"))
    ("alias_pattern" ("array_pattern" "let_binding" "_pattern" "constructor_pattern" "tag_pattern" "match_case" "_binding_pattern" "typed_pattern" "tuple_pattern" "cons_pattern" "alias_pattern" "parenthesized_pattern" "parameter" "lazy_pattern" "list_binding_pattern" "attribute_payload" "local_open_pattern" "list_pattern" "exception_pattern" "or_pattern" "field_pattern" "object_expression" "array_binding_pattern"))
@@ -2854,21 +2854,21 @@
    ("while_expression" ("bigarray_get_expression" "try_expression" "while_expression" "infix_expression" "let_binding" "tuple_expression" "instance_variable_definition" "for_expression" "coercion_expression" "expression_item" "let_expression" "set_expression" "if_expression" "fun_expression" "match_case" "do_clause" "field_expression" "sign_expression" "match_expression" "guard" "sequence_expression" "local_open_expression" "parameter" "cons_expression" "then_clause" "array_get_expression" "class_initializer" "packed_module" "list_expression" "array_expression" "_sequence_expression" "method_definition" "string_get_expression" "parenthesized_expression" "_expression" "let_open_expression" "let_exception_expression" "let_module_expression" "typed_expression" "else_clause" "instance_variable_expression"))
   ) 
 )
-;; END Inverse production rules for ocaml_interface
-;; START All node types in ocaml_interface
-(defconst combobulate-rules-ocaml_interface-types 
+;; END Inverse production rules for ocaml-interface
+;; START All node types in ocaml-interface
+(defconst combobulate-rules-ocaml-interface-types 
  '("_binding_pattern" "_class_expression" "_class_field" "_class_field_specification" "_class_type" "_constant" "_effect_pattern" "_expression" "_infix_operator" "_module_expression" "_module_type" "_parameter" "_pattern" "_polymorphic_type" "_sequence_expression" "_signature_item" "_signed_constant" "_simple_binding_pattern" "_simple_class_expression" "_simple_class_type" "_simple_expression" "_simple_module_expression" "_simple_pattern" "_simple_type" "_structure_item" "_type" "abstract_type" "add_operator" "alias_pattern" "aliased_type" "and_operator" "application_expression" "array_binding_pattern" "array_expression" "array_get_expression" "array_pattern" "assert_expression" "assign_operator" "attribute" "attribute_id" "attribute_payload" "bigarray_get_expression" "boolean" "character" "character_content" "class_application" "class_binding" "class_body_type" "class_definition" "class_function" "class_function_type" "class_initializer" "class_name" "class_path" "class_type_binding" "class_type_definition" "class_type_name" "class_type_path" "coercion_expression" "comment" "compilation_unit" "concat_operator" "cons_expression" "cons_pattern" "constrain_module" "constrain_module_type" "constrain_type" "constructed_type" "constructor_declaration" "constructor_name" "constructor_path" "constructor_pattern" "conversion_specification" "directive" "do_clause" "effect_pattern" "else_clause" "escape_sequence" "exception_definition" "exception_pattern" "expression_item" "extended_module_path" "extension" "external" "field_declaration" "field_expression" "field_get_expression" "field_name" "field_path" "field_pattern" "floating_attribute" "for_expression" "fun_expression" "function_expression" "function_type" "functor" "functor_type" "guard" "hash_expression" "hash_operator" "hash_type" "if_expression" "include_module" "include_module_type" "indexing_operator" "indexing_operator_path" "infix_expression" "inheritance_definition" "inheritance_specification" "instance_variable_definition" "instance_variable_expression" "instance_variable_name" "instance_variable_specification" "instantiated_class" "instantiated_class_type" "item_attribute" "item_extension" "label_name" "labeled_argument" "labeled_argument_type" "labeled_tuple_element" "labeled_tuple_element_binding_pattern" "labeled_tuple_element_pattern" "labeled_tuple_element_type" "lazy_expression" "lazy_pattern" "let_and_operator" "let_binding" "let_class_expression" "let_exception_expression" "let_expression" "let_module_expression" "let_open_class_expression" "let_open_class_type" "let_open_expression" "let_operator" "line_number_directive" "list_binding_pattern" "list_expression" "list_pattern" "local_open_expression" "local_open_pattern" "local_open_type" "match_case" "match_expression" "match_operator" "method_definition" "method_invocation" "method_name" "method_specification" "method_type" "module_application" "module_binding" "module_definition" "module_name" "module_parameter" "module_path" "module_type_constraint" "module_type_definition" "module_type_name" "module_type_of" "module_type_path" "mult_operator" "new_expression" "number" "object_copy_expression" "object_expression" "object_type" "ocamlyacc_value" "open_module" "or_operator" "or_pattern" "package_expression" "package_pattern" "package_type" "packed_module" "parameter" "parenthesized_class_expression" "parenthesized_expression" "parenthesized_module_expression" "parenthesized_module_type" "parenthesized_operator" "parenthesized_pattern" "parenthesized_type" "polymorphic_type" "polymorphic_variant_pattern" "polymorphic_variant_type" "pow_operator" "prefix_expression" "prefix_operator" "pretty_printing_indication" "quoted_extension" "quoted_item_extension" "quoted_string" "quoted_string_content" "range_pattern" "record_binding_pattern" "record_declaration" "record_expression" "record_pattern" "refutation_case" "rel_operator" "sequence_expression" "set_expression" "sign_expression" "sign_operator" "signature" "signed_number" "string" "string_content" "string_get_expression" "structure" "tag" "tag_pattern" "tag_specification" "then_clause" "toplevel_directive" "try_expression" "tuple_expression" "tuple_pattern" "tuple_type" "type_binding" "type_constraint" "type_constructor" "type_constructor_path" "type_definition" "type_parameter_constraint" "type_variable" "typed_class_expression" "typed_expression" "typed_module_expression" "typed_pattern" "unit" "value_definition" "value_name" "value_path" "value_pattern" "value_specification" "variant_declaration" "while_expression") 
 )
-;; END All node types in ocaml_interface
-;; START All supertypes in ocaml_interface
-(defconst combobulate-rules-ocaml_interface-supertypes 
+;; END All node types in ocaml-interface
+;; START All supertypes in ocaml-interface
+(defconst combobulate-rules-ocaml-interface-supertypes 
  '("_binding_pattern" "_class_expression" "_class_field" "_class_field_specification" "_class_type" "_constant" "_effect_pattern" "_expression" "_infix_operator" "_module_expression" "_module_type" "_parameter" "_pattern" "_polymorphic_type" "_sequence_expression" "_signature_item" "_signed_constant" "_simple_binding_pattern" "_simple_class_expression" "_simple_class_type" "_simple_expression" "_simple_module_expression" "_simple_pattern" "_simple_type" "_structure_item" "_type") 
 )
-;; END All supertypes in ocaml_interface
+;; END All supertypes in ocaml-interface
 
 ;; START Auto-generated list of all languages
 (defconst combobulate-rules-languages 
- '(css go html javascript json ocaml ocaml_interface python toml tsx typescript yaml) 
+ '(css go html javascript json ocaml ocaml-interface python toml tsx typescript yaml) 
  "A list of all the languages that have production rules.")
 ;; END Auto-generated list of all languages
 (defconst combobulate-rules-alist 
@@ -2878,7 +2878,7 @@
  (javascript ,combobulate-rules-javascript)
  (json ,combobulate-rules-json)
  (ocaml ,combobulate-rules-ocaml)
- (ocaml_interface ,combobulate-rules-ocaml_interface)
+ (ocaml-interface ,combobulate-rules-ocaml-interface)
  (python ,combobulate-rules-python)
  (toml ,combobulate-rules-toml)
  (tsx ,combobulate-rules-tsx)
@@ -2893,7 +2893,7 @@
  (javascript ,combobulate-rules-javascript-inverse)
  (json ,combobulate-rules-json-inverse)
  (ocaml ,combobulate-rules-ocaml-inverse)
- (ocaml_interface ,combobulate-rules-ocaml_interface-inverse)
+ (ocaml-interface ,combobulate-rules-ocaml-interface-inverse)
  (python ,combobulate-rules-python-inverse)
  (toml ,combobulate-rules-toml-inverse)
  (tsx ,combobulate-rules-tsx-inverse)
@@ -2908,7 +2908,7 @@
  (javascript ,combobulate-rules-javascript-types)
  (json ,combobulate-rules-json-types)
  (ocaml ,combobulate-rules-ocaml-types)
- (ocaml_interface ,combobulate-rules-ocaml_interface-types)
+ (ocaml-interface ,combobulate-rules-ocaml-interface-types)
  (python ,combobulate-rules-python-types)
  (toml ,combobulate-rules-toml-types)
  (tsx ,combobulate-rules-tsx-types)
@@ -2923,7 +2923,7 @@
  (javascript ,combobulate-rules-javascript-supertypes)
  (json ,combobulate-rules-json-supertypes)
  (ocaml ,combobulate-rules-ocaml-supertypes)
- (ocaml_interface ,combobulate-rules-ocaml_interface-supertypes)
+ (ocaml-interface ,combobulate-rules-ocaml-interface-supertypes)
  (python ,combobulate-rules-python-supertypes)
  (toml ,combobulate-rules-toml-supertypes)
  (tsx ,combobulate-rules-tsx-supertypes)

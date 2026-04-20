@@ -221,7 +221,6 @@
 
 (define-combobulate-language
  :name html
- :language html
  :major-modes (html-mode html-ts-mode mhtml-mode sgml-mode)
  :custom combobulate-html-definitions
  :setup-fn combobulate-html-setup)

@@ -1,6 +1,6 @@
 {
   "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
-  "name": "ocaml_interface",
+  "name": "ocaml-interface",
   "inherits": "ocaml",
   "word": "_lowercase_identifier",
   "rules": {

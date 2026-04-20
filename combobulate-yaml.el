@@ -79,7 +79,6 @@
 
 (define-combobulate-language
  :name yaml
- :language yaml
  :major-modes (yaml-ts-mode yaml-mode)
  :custom combobulate-yaml-definitions
  :setup-fn combobulate-yaml-setup)

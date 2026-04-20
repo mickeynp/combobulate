@@ -455,21 +455,6 @@ Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)'."
               (member mm major-modes))
             combobulate-registered-languages-alist))
 
-(defcustom combobulate-treesit-language-aliases
-  '((ocaml-interface . ocaml_interface))
-  "Alist mapping Combobulate names to tree-sitter language names.
-This is used if the tree-sitter grammar you are using has a different
-name from the canonical language name known to Combobulate
-(e.g. `(ocaml-interface . ocaml_interface)')."
-  :type '(alist :key-type symbol :value-type symbol)
-  :group 'combobulate)
-
-(defun combobulate-resolve-treesit-language (lang)
-  "Resolve the canonical Combobulate LANG to its actual tree-sitter symbol name.
-Checks `combobulate-treesit-language-aliases` first."
-  (or (alist-get lang combobulate-treesit-language-aliases)
-      lang))
-
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.
 
@@ -483,11 +468,11 @@ enable Combobulate."
   (when-let (match (or (when-let ((existing-parsers (combobulate-parser-list)))
                          (let ((ts-lang (combobulate-parser-language (car existing-parsers))))
                            (seq-find (pcase-lambda (`(,name _ _))
-                                       (eq (combobulate-resolve-treesit-language name) ts-lang))
+                                       (eq name ts-lang))
                                      combobulate-registered-languages-alist)))
                        (combobulate-get-registered-language major-mode)))
     (pcase-let ((`(,name _ ,minor-mode-fn) match))
-      (let ((language (combobulate-resolve-treesit-language name)))
+      (let ((language name))
         ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
         ;; behaviour is that Combobulate may get activated in major
         ;; modes for which no grammar exists. Raising an error
@@ -542,7 +527,7 @@ MINOR-MODE-FN is the minor mode function for this language."
     (push (list language major-modes minor-mode-fn)
           combobulate-registered-languages-alist)))
 
-(cl-defmacro define-combobulate-language (&key name language
+(cl-defmacro define-combobulate-language (&key name
                                                major-modes (custom nil)
                                                setup-fn
                                                (keymap-var nil)
@@ -551,10 +536,8 @@ MINOR-MODE-FN is the minor mode function for this language."
   "Define a new language for Combobulate.
 
 NAME is the name of the language as it'll be known to
-Combobulate; LANGUAGE is the tree sitter language symbol, and
-MAJOR-MODES is a list of major modes that should be set up for
-this language."
-  (cl-assert (symbolp language) t "LANGUAGE must be a symbol")
+Combobulate and tree-sitter, and MAJOR-MODES is a list of major
+modes that should be set up for this language."
   (cl-assert (symbolp name) t "NAME must be a symbol")
   (let ((group-name (intern (format "combobulate-language-%s" name))))
     ;; Create a customize group for the language
@@ -622,14 +605,14 @@ support where you still want to use Combobulate's features."
           ;; General key map for this language
           (push `(makunbound ',language-keymap) decls)
           (push `(defvar-keymap ,language-keymap
-                   :doc ,(format "Keymap for Combobulate language for `%s'." language)
+                   :doc ,(format "Keymap for Combobulate language for `%s'." name)
                    :full nil
                    :parent combobulate-key-map)
                 decls)
 
           ;; This is the envelope-specific keymap
           (push `(defvar-keymap ,envelope-keymap
-                   :doc ,(format "Keymap for Combobulate envelopes for `%s'." language)
+                   :doc ,(format "Keymap for Combobulate envelopes for `%s'." name)
                    :full nil)
                 decls)
           ;; This maps the `e' key to the envelope keymap.
@@ -638,10 +621,10 @@ support where you still want to use Combobulate's features."
                 decls)
           ;; Create a minor mode for this language.
           (push `(defvar-local ,minor-mode-fn nil
-                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language))
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." name))
                 decls)
           (push `(define-minor-mode ,minor-mode-fn
-                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." language)
+                   ,(format "Combobulate minor mode for the `%s' tree-sitter language." name)
                    :init-value nil
                    :lighter "©"
                    :keymap ,language-keymap
@@ -671,7 +654,7 @@ support where you still want to use Combobulate's features."
                    ;; run it with the language we are being
                    ;; triggered in.
                    ,(when setup-fn
-                      `(,setup-fn ',language)))
+                      `(,setup-fn ',name)))
                 decls)
           (push `(combobulate-register-language ',name ',major-modes #',minor-mode-fn)
                 decls)
@@ -682,7 +665,7 @@ support where you still want to use Combobulate's features."
 Each shorthand is a symbol referencing a variable belonging to
 that language. They are best accessed with the `combobulate-read'
 macro which optionally takes a language argument to retrieve that
-language's setting." language))
+language's setting." name))
                 decls)))
       `(progn ,@(nreverse decls)))))
 

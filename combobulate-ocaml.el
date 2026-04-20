@@ -1,6 +1,6 @@
 ;;; combobulate-ocaml.el --- ocaml support for combobulate -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025 Tim McGilchrsit
+;; Copyright (C) 2025 Tim McGilchrist
 
 ;; Author: Tim McGilchrist <timmcgil@gmail.com>
 ;;         Pixie Dust <pizie@tarides.com>
@@ -503,24 +503,20 @@
           :selector (:choose node :match-children t)))))))
 
 ;; NOTE: OCaml has two tree-sitter grammars: 'ocaml' for .ml files and
-;; 'ocaml_interface' for .mli files.
+;; 'ocaml-interface' for .mli files.
 ;; We register both as separate "languages" in Combobulate terms with their own
 ;; rule sets. Interface files (.mli) have a more restricted set of top-level
 ;; constructs (specifications rather than implementations).
-;; The `:language' parameter matches what tree-sitter uses,
-;; while the :name is used for Emacs Lisp symbol names.
 
 (define-combobulate-language
  :name ocaml
- :language ocaml
- :major-modes (caml-mode tuareg-mode)
+ :major-modes (caml-mode tuareg-mode neocaml-mode)
  :custom combobulate-ocaml-definitions
  :setup-fn combobulate-ocaml-setup)
 
 (define-combobulate-language
  :name ocaml-interface
- :language ocaml_interface
- :major-modes (caml-mode tuareg-mode)
+ :major-modes (caml-mode tuareg-mode neocaml-interface-mode)
  :custom combobulate-ocaml-interface-definitions
  :setup-fn combobulate-ocaml-setup)
 

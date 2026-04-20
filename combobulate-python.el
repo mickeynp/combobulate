@@ -437,7 +437,6 @@ line when you press
 
 (define-combobulate-language
  :name python
- :language python
  :major-modes (python-mode python-ts-mode)
  :custom combobulate-python-definitions
  :setup-fn combobulate-python-setup)

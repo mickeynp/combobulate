@@ -22,11 +22,11 @@
                  '(ocaml "https://github.com/tree-sitter/tree-sitter-ocaml"
                          "v0.24.2" "grammars/ocaml/src"))
     (add-to-list 'treesit-language-source-alist
-                 '(ocaml_interface "https://github.com/tree-sitter/tree-sitter-ocaml"
+                 '(ocaml-interface "https://github.com/tree-sitter/tree-sitter-ocaml"
                          "v0.24.2" "grammars/interface/src"))
     (ignore-errors
       (treesit-install-language-grammar 'ocaml)
-      (treesit-install-language-grammar 'ocaml_interface))))
+      (treesit-install-language-grammar 'ocaml-interface))))
 
 (defun tuareg-treesit-bridge--maybe-create-parser ()
   "Create a Tree-sitter parser in the current Tuareg buffer if absent."
@@ -38,7 +38,7 @@
       (unless (treesit-parser-list)
         (treesit-parser-create
          (if (and buffer-file-name (string-match-p "\\.mli\\'" buffer-file-name))
-             'ocaml_interface
+             'ocaml-interface
            'ocaml))))))
 
 (add-hook 'tuareg-mode-hook #'tuareg-treesit-bridge--maybe-create-parser)
