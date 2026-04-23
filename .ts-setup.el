@@ -6,7 +6,7 @@
          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
          (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
          (go . ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
-         (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/ocaml/src"))
+         (ocaml . ("https://github.com/PizieDust/oxcaml-test-grammar" "main" "src))
          (ocaml-interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/interface/src"))
          (ocaml_type . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/type/src"))
          (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
