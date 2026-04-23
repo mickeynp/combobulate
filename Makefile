@@ -21,12 +21,12 @@ byte-compile: clean-elc
 .PHONY:	rebuild-relationships
 rebuild-relationships:
 	cd build ; \
-	python build-relationships.py
+	python3 build-relationships.py
 
 .PHONY:	download-relationships
 download-relationships:
 	cd build ; \
-	python build-relationships.py --download
+	python3 build-relationships.py --download
 
 .PHONY:	clean-tests
 clean-tests: clean-elc
@@ -59,3 +59,7 @@ docker-build-tests: docker-build
 .PHONY:	docker-run-tests
 docker-run-tests: docker-build
 	$(DOCKER_CMD) run-tests
+
+.PHONY: run-oxcaml-tests
+run-oxcaml-tests:
+	$(EMACS_CMD) -l ert -l test-oxcaml-implementation-navigation.el --eval "(let ((backtrace-on-error-noninteractive nil)) (ert-run-tests-batch-and-exit))"

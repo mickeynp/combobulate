@@ -1,0 +1,666 @@
+;;; test-ocaml-implementation-navigation.el --- Tests for OCaml implementation (.ml) navigation  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026  Pixie Dust
+
+;; Author: Pixie Dust <playersrebirth@gmail.com>
+;; Keywords:
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Tests for navigation in OxCaml implementation (.ml) files
+
+;;; Code:
+
+(require 'combobulate)
+
+(require 'combobulate-test-prelude)
+(require 'ert)
+
+;;; Helpers
+
+(defmacro combobulate-step (description &rest body)
+  "Execute BODY, logging DESCRIPTION."
+  (declare (indent 1) (debug t))
+  `(progn
+     ,@body))
+
+(defun with-tuareg-buffer (callback &optional file)
+  "Perform CALLBACK in a temp-buffer (with FILE as a content)."
+  (let* ((file (or file "fixtures/imenu/oxcaml.ml"))
+         (fixture (expand-file-name file default-directory)))
+    (with-temp-buffer (progn
+                        (insert-file-contents fixture)
+                        (setq buffer-file-name fixture)
+                        (tuareg-mode)
+                        (combobulate-mode)
+                        (sit-for 0.1)
+                        (funcall callback)))))
+
+(defun expected-node-type (expected &optional msg node)
+  "Expect that NODE has EXPECTED type (and display MSG if given)."
+  (let* ((node (or node (combobulate-node-at-point)))
+         (actual (combobulate-node-type node))
+         (msg (if msg (format "%s - " msg) "")))
+    (when (not (equal expected actual))
+      (message "%sExpected node: %s, Got: %s" msg expected actual))
+    (should (equal expected actual))))
+
+(defun expected-thing-at-point (expected &optional msg kind)
+  "Expect that things at point is EXPECTED using MSG for a given KIND."
+  (let* ((kind (or kind 'word))
+         (actual (thing-at-point kind 'no-properties))
+         (msg (if msg (format "%s - " msg) "")))
+    (when (not (string-equal expected actual))
+      (message "%s - Expected things: %s, Got: %s" msg expected actual))
+    (should (string-equal expected actual))))
+
+(defun expected-sexp-at-point (expected &optional msg)
+  "Expect that sexp at point is EXPECTED using MSG."
+  (let ((actual (sexp-at-point))
+        (msg (if msg (format "%s - " msg) "")))
+    (when (not (equal expected actual))
+      (message "%s - Expected things: %s, Got: %s" msg expected actual))
+    (should (equal expected actual))))
+
+(defun expected-symbol-at-point (expected &optional msg)
+  "Expect that symbol at point is EXPECTED using MSG."
+  (let ((actual (symbol-name (symbol-at-point)))
+        (msg (if msg (format "%s - " msg) "")))
+    (when (not (equal expected actual))
+      (message "%s - Expected things: %s, Got: %s" msg expected actual))
+    (should (equal expected actual))))
+
+;;; Tests
+
+(ert-deftest oxcaml-1 ()
+  "Test sibling navigation involving unboxed constants."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let fast_square"
+      (goto-char (point-min))
+      (re-search-forward "let fast_square")
+      (beginning-of-line))
+
+     (combobulate-step
+      "C-M-p: goto type t"
+      (combobulate-navigate-previous)
+      (expected-node-type "type" "1"))
+
+     (combobulate-step
+      "C-M-n: goto let pi"
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (expected-node-type "let" "2")
+      (forward-word 2)
+      (expected-thing-at-point "pi" "2.1" 'symbol
+      )))))
+
+
+(ert-deftest oxcaml-2 ()
+  "Test hierarchy navigation in an unboxed float."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to type t"
+      (goto-char (point-min))
+      (re-search-forward "type t")
+      (beginning-of-line))
+
+     (combobulate-step
+      "C-M-d: goto t"
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "1"))
+
+     (combobulate-step
+      "C-M-n: goto float32"
+      (combobulate-navigate-next)
+      (expected-node-type "jkind_abbreviation" "2")
+      )
+      
+      (combobulate-step
+      "C-M-n: goto float32#"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "3")
+      ))))
+
+(ert-deftest oxcaml-3 ()
+  "Test sibling navigation in an unboxed float."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to type t"
+      (goto-char (point-min))
+      (re-search-forward "type t")
+      (beginning-of-line)
+       (combobulate-navigate-down)
+       (combobulate-navigate-next))
+
+      (combobulate-step
+      "C-M-n: goto float32#"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "1")
+      )
+      ;; Bug: navigating back from float32# should go to float32, but cursor doesn't move
+      (combobulate-step
+      "C-M-p: goto float32"
+      (combobulate-navigate-previous)
+      (expected-node-type "jkind_abbreviation" "2")
+      ))))
+
+  (ert-deftest oxcaml-4 ()
+  "Test sibling navigation in a mixed record with unboxed float."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to type point"
+      (goto-char (point-min))
+      (re-search-forward "type point")
+      (beginning-of-line)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down))
+
+      (combobulate-step
+      "C-M-n: goto count"
+      (combobulate-navigate-next)
+      (expected-node-type "field_name" "1")
+      (expected-thing-at-point "count" "1.1" 'symbol)
+      )
+      
+      (combobulate-step
+      "C-M-n: goto x"
+      (combobulate-navigate-next)
+      (expected-node-type "field_name" "2")
+      (expected-thing-at-point "x" "2.1" 'symbol)
+      )
+      
+      (combobulate-step
+      "C-M-n: goto y"
+      (combobulate-navigate-next)
+      (expected-node-type "field_name" "3")
+      (expected-thing-at-point "y" "3.1" 'symbol)
+      )
+      
+      (combobulate-step
+      "C-M-p: go back to x"
+      (combobulate-navigate-previous)
+      (expected-node-type "field_name" "4")
+      (expected-thing-at-point "x" "4.1" 'symbol)
+      )
+      
+      (combobulate-step
+      "C-M-p: go back to count"
+      (combobulate-navigate-previous)
+      (expected-node-type "field_name" "5")
+      (expected-thing-at-point "count" "5.1" 'symbol)
+      ))))
+
+(ert-deftest oxcaml-5 ()
+  "Test navigation in a local returning function."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let make_pair"
+      (goto-char (point-min))
+      (re-search-forward "let make_pair")
+      (beginning-of-line))
+
+      (combobulate-step
+      "goto enclave_"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (expected-node-type "exclave_legacy" "1")
+      )
+
+      (combobulate-step
+      "C-M-d: goto stack_"
+      (combobulate-navigate-down)
+      (expected-node-type "stack_" "2")
+      )
+      
+      (combobulate-step
+      "C-M-d: goto ("
+      (combobulate-navigate-down)
+      (expected-node-type "(" "3")
+      )
+      
+      (combobulate-step
+      "C-M-d: goto a"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "4")
+      (expected-thing-at-point "a" "4.1" 'symbol)
+      )
+      
+      (combobulate-step
+      "C-M-d: goto b"
+      (combobulate-navigate-next)
+      (expected-node-type "value_name" "5")
+      (expected-thing-at-point "b" "5.1" 'symbol)
+      ))))
+
+(ert-deftest oxcaml-6 ()
+  "Test navigation with global_ field."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let type 'a wrapper"
+      (goto-char (point-min))
+      (re-search-forward "type 'a wrapper")
+      (beginning-of-line))
+
+      (combobulate-step
+      "goto global_"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "modality_legacy" "1")
+      (expected-thing-at-point "global_" "1.1" 'symbol)
+      )
+
+      (combobulate-step
+      "C-M-n: goto tag"
+      (combobulate-navigate-next)
+      (expected-node-type "field_name" "2")
+      (expected-thing-at-point "tag" "2.1" 'symbol)
+      )
+
+      (combobulate-step
+      "C-M-p: go back to global"
+      (combobulate-navigate-previous)
+      (expected-node-type "modality_legacy" "3")
+      (expected-thing-at-point "global_" "3.1" 'symbol)
+      )
+
+      (combobulate-step
+      "C-M-d: go to the child of global_ which is value"
+      (combobulate-navigate-down)
+      (expected-node-type "field_name" "4")
+      (expected-thing-at-point "value" "4.1" 'symbol)
+      ))))
+
+
+(ert-deftest oxcaml-7 ()
+  "Test navigation in an array of unboxed elements"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let zeros"
+      (goto-char (point-min))
+      (re-search-forward "let zeros")
+      (beginning-of-line))
+
+     (combobulate-step
+      "C-M-d: goto float#"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "1")
+      (expected-thing-at-point "float" "1.1" 'symbol)
+      )
+
+     (combobulate-step
+      "C-M-n: goto array"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "2")
+      (expected-thing-at-point "array" "2.1" 'symbol)
+      ))))
+
+(ert-deftest oxcaml-8 ()
+  "Test sibling navigation in an array of unboxed elements"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let zeros"
+      (goto-char (point-min))
+      (re-search-forward "let zeros")
+      (beginning-of-line))
+
+     (combobulate-step
+      "C-M-d: goto float#"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "1")
+      (expected-thing-at-point "float" "1.1" 'symbol)
+      )
+
+     (combobulate-step
+      "Move to ["
+      (re-search-forward "\\[")
+      (expected-node-type "[|" "2")
+      )
+
+      (combobulate-step
+      "Move to the first element of the array"
+      (combobulate-navigate-down)
+      (expected-node-type "unboxed_constant" "3")
+      )
+
+      (combobulate-step
+      "Move to the second element of the array"
+      (combobulate-navigate-next)
+      (expected-node-type "unboxed_constant" "4")
+      )
+
+      (combobulate-step
+      "Move to the third element of the array"
+      (combobulate-navigate-next)
+      (expected-node-type "unboxed_constant" "5")
+      )
+
+      (combobulate-step
+      "Move to the second element of the array"
+      (combobulate-navigate-previous)
+      (expected-node-type "unboxed_constant" "6")
+      )
+      
+    )))
+
+(ert-deftest oxcaml-9 ()
+  "Test navigation in immutable arrays"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let primes"
+      (goto-char (point-min))
+      (re-search-forward "let primes")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to iarray"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "1")
+      )
+
+      (combobulate-step
+      "Move to the immutable array [|..|]"
+      (combobulate-navigate-logical-next)
+      (expected-node-type "module_name" "2")
+      )
+
+      (combobulate-step
+      "Move to the array"
+      (combobulate-navigate-next)
+      (expected-node-type "[" "3")
+      )
+      
+    )))
+
+(ert-deftest oxcaml-10 ()
+  "Test navigation in stack allocation"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let use_temp"
+      (goto-char (point-min))
+      (re-search-forward "let use_temp")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to parameter"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "value_pattern" "1")
+      )
+
+      (combobulate-step
+      "Move to the function type"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "2")
+      )
+
+      (combobulate-step
+      "Move to int ref"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "3")
+      (expected-thing-at-point "int" "3.1" 'symbol)
+      )
+      
+    )))
+
+(ert-deftest oxcaml-11 ()
+  "Test navigation in unboxed floats"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let fast_square"
+      (goto-char (point-min))
+      (re-search-forward "let fast_square")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to parameter"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (expected-node-type "module_name" "1")
+      )
+
+      (combobulate-step
+      "Move to mul"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      )
+
+      (combobulate-step
+      "Move to x"
+      (combobulate-navigate-next)
+      (expected-node-type "value_name" "3")
+      (expected-thing-at-point "x" "3.1" 'symbol)
+      )
+      
+    )))
+
+(ert-deftest oxcaml-12 ()
+  "Test navigation in unboxed constants"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let pi"
+      (goto-char (point-min))
+      (re-search-forward "let pi")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to float#"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "1")
+      )
+;; Bug: add a rule to navigate unboxed constants
+      (combobulate-step
+      "Move to #3.14.."
+      (combobulate-navigate-next)
+      (expected-node-type "unboxed_constant" "2")
+      )
+      
+    )))
+
+(ert-deftest oxcaml-13 ()
+  "Test navigation for unboxed float#"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let distance"
+      (goto-char (point-min))
+      (re-search-forward "let distance")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to float#"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "1")
+      )
+      ;; Bug: add rule for navigating unboxed_type_constructors
+      (combobulate-step
+      "Move to let dx"
+      (combobulate-navigate-next)
+      (expected-node-type "let" "2")
+      )
+      
+    )))
+
+(ert-deftest oxcaml-14 ()
+  "Test navigation for unboxed float#"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let distance"
+      (goto-char (point-min))
+      (re-search-forward "let distance")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to float#"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "1")
+      )
+      ;; Bug: add rule for navigating unboxed_type_constructors
+      (combobulate-step
+      "Move to let dx"
+      (combobulate-navigate-next)
+      (expected-node-type "let" "2")
+      )
+      
+    )))
+
+(ert-deftest oxcaml-15 ()
+  "Test navigation for unboxed float#-b"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+     (combobulate-step
+      "Move to let dx"
+      (goto-char (point-min))
+      (re-search-forward "let dx")
+      (beginning-of-line))
+
+      (combobulate-step
+      "Move to Float_u sub"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "1")
+      )
+
+      (combobulate-step
+      "Move to a.x"
+      (combobulate-navigate-next)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "a" "2.1" 'symbol)
+      )
+      
+    )))
+
+(ert-deftest oxcaml-16 ()
+  "Test navigation for unboxed tuple"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let sincos"
+      (goto-char (point-min))
+      (re-search-forward "let sincos")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to (theta: float#)"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "(" "1")
+      )
+
+    (combobulate-step
+      "Move to the unboxed tuple (float#, float#)"
+      (combobulate-navigate-next)
+      (expected-node-type "#(" "2")
+      )
+
+    (combobulate-step
+      "Navigate the first sibling float#in the unboxed tuple"
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "3")
+      )
+
+     (combobulate-step
+      "Navigate to the second sibling float# in the unboxed tuple"
+      (combobulate-navigate-next)
+      (expected-node-type "type_constructor" "4")
+      )
+      
+    )))
+
+
+(provide 'test-oxcaml-implementation-navigation)
+;;; test-oxcaml-implementation-navigation.el ends here
