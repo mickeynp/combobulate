@@ -661,6 +661,270 @@
       
     )))
 
+(ert-deftest oxcaml-17 ()
+  "Test navigation for modes"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to module Arena"
+      (goto-char (point-min))
+      (re-search-forward "module Arena")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to val create"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (expected-node-type "val" "1")
+      )
+
+    (combobulate-step
+      "Move to unit"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "2")
+     )
+
+    (combobulate-step
+      "Move to unique"
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (combobulate-navigate-down)
+      (expected-node-type "mode" "3")
+      )
+    
+    )))
+
+
+(ert-deftest oxcaml-18 ()
+  "Test navigation for comprehensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let triples"
+      (goto-char (point-min))
+      (re-search-forward "let triples")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to a"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "1")
+      (expected-thing-at-point "a" "1.1" 'symbol)
+      )
+
+    (combobulate-step
+      "Move to b"
+      (combobulate-navigate-next)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "b" "2.1" 'symbol)
+     )
+
+    (combobulate-step
+      "Move to c"
+      (combobulate-navigate-next)
+      (expected-node-type "value_name" "3")
+      (expected-thing-at-point "c" "3.1" 'symbol)
+     )
+    
+    )))
+
+(ert-deftest oxcaml-19 ()
+  "Test navigation for comprehensions b"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let triples"
+      (goto-char (point-min))
+      (re-search-forward "let triples")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to for"
+      (goto-char (point-min))
+      (re-search-forward "for a")
+      (back-to-indentation)
+      (expected-node-type "for" "1"))
+
+    (combobulate-step
+      "Move to a"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "a" "2.1" 'symbol)
+     )
+
+    (combobulate-step
+      "Move to 1"
+      (combobulate-navigate-down)
+      (expected-node-type "number" "3")
+      (expected-thing-at-point "1" "3.1" 'symbol)
+     )
+
+     (combobulate-step
+      "Move to n"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "4")
+      (expected-thing-at-point "n" "4.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-20 ()
+  "Test navigation for comprehensions c"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let triples"
+      (goto-char (point-min))
+      (re-search-forward "let triples")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to for"
+      (goto-char (point-min))
+      (re-search-forward "for a")
+      (back-to-indentation)
+      (expected-node-type "for" "1"))
+
+    (combobulate-step
+      "Move to the next for"
+      (combobulate-navigate-next)
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "b" "2.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-21 ()
+  "Test navigation for immutable array comprehensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let even_irray"
+      (goto-char (point-min))
+      (re-search-forward "let even_iarray")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to the comprehension"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (expected-node-type "[:" "1")
+     )
+
+    )))
+
+(ert-deftest oxcaml-22 ()
+  "Test navigation for immutable array comprehensions b"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let even_irray"
+      (goto-char (point-min))
+      (re-search-forward "let even_iarray")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to the comprehension"
+      (re-search-forward "\\[:")
+      (back-to-indentation)
+      (expected-node-type "[:" "1")
+     )
+
+     (combobulate-step
+      "Move to the x"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "x" "2.1" 'symbol)
+     )
+
+     (combobulate-step
+      "Move to the first comprehension clause: for"
+      (combobulate-navigate-next)
+      (expected-node-type "for" "3")
+      (expected-thing-at-point "for" "3.1" 'symbol)
+     )
+
+
+     (combobulate-step
+      "Move to the second comprehension clause: when"
+      (combobulate-navigate-next)
+      (expected-node-type "when" "4")
+      (expected-thing-at-point "when" "4.1" 'symbol)
+     )
+
+    )))
+
+
+    (ert-deftest oxcaml-23 ()
+  "Test navigation for immutable array comprehensions c"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let even_irray"
+      (goto-char (point-min))
+      (re-search-forward "let even_iarray")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to the comprehension"
+      (re-search-forward "\\[:")
+      (back-to-indentation)
+      (expected-node-type "[:" "1")
+     )
+
+     (combobulate-step
+      "Move to the x"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "x" "2.1" 'symbol)
+     )
+
+     (combobulate-step
+      "Move to the first comprehension clause: for"
+      (combobulate-navigate-next)
+      (expected-node-type "for" "3")
+      (expected-thing-at-point "for" "3.1" 'symbol)
+     )
+
+
+     (combobulate-step
+      "Move to the child of the comprehension clause for"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "4")
+      (expected-thing-at-point "x" "4.1" 'symbol)
+     )
+
+    )))
 
 (provide 'test-oxcaml-implementation-navigation)
 ;;; test-oxcaml-implementation-navigation.el ends here
