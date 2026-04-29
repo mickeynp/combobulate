@@ -882,7 +882,7 @@
     )))
 
 
-    (ert-deftest oxcaml-23 ()
+(ert-deftest oxcaml-23 ()
   "Test navigation for immutable array comprehensions c"
   :tags '(oxcaml implementation navigation combobulate)
   (skip-unless (treesit-language-available-p 'ocaml))
@@ -922,6 +922,161 @@
       (combobulate-navigate-down)
       (expected-node-type "value_name" "4")
       (expected-thing-at-point "x" "4.1" 'symbol)
+     )
+
+    )))
+
+
+(ert-deftest oxcaml-24 ()
+  "Test navigation for comprehensions d"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let combos"
+      (goto-char (point-min))
+      (re-search-forward "let combos")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to Printf inside the comprehension"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "module_name" "1")
+     )
+;; BUG: navigating next enters a cyclic loop between comprehension clauses and the Printf string
+     (combobulate-step
+      "Move to the first comprehension clause"
+      (combobulate-navigate-next)
+      (expected-node-type "for" "2")
+      (expected-thing-at-point "for" "2.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-25 ()
+  "Test navigation for identity polymorphic over locality mode"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let%template"
+      (goto-char (point-min))
+      (re-search-forward "let%template")
+      (beginning-of-line))
+
+    (combobulate-step
+      "Move to the attribute"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "[@" "2")
+     )
+ ;; BUG: mode is not recongnized
+    (combobulate-step
+      "Move to the attribute payload"
+      (combobulate-navigate-down)
+      (expected-node-type "attribute_id" "2")
+      (expected-thing-at-point "mode" "2.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-26 ()
+  "Test navigation for identity polymorphic over locality kind"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let%template"
+      (goto-char (point-min))
+      (re-search-forward "let%template")
+      (beginning-of-line)
+      (combobulate-navigate-next)
+      )
+
+    (combobulate-step
+      "Move to the attribute"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "[@" "2")
+     )
+ ;; BUG: mode is not recongnized
+    (combobulate-step
+      "Move to the attribute payload"
+      (combobulate-navigate-down)
+      (expected-node-type "attribute_id" "2")
+      (expected-thing-at-point "kind" "2.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-27 ()
+  "Test navigation for portable functors"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to module%template"
+      (goto-char (point-min))
+      (re-search-forward "module%template")
+      (beginning-of-line)
+      )
+    
+    ;; The entire attribute_id is template.portable which is not ideal as we don't have any node seperating template from portable and hence we can't navigate to portable.
+    (combobulate-step
+      "Move to template"
+      (combobulate-navigate-down)
+      (expected-node-type "attribute_id" "2")
+     )
+
+    (combobulate-step
+      "Move to the body"
+      (combobulate-navigate-down)
+      (combobulate-navigate-next)
+      (combobulate-navigate-next)
+      (combobulate-navigate-down)
+      (expected-node-type "let" "3")
+      (expected-thing-at-point "let" "3.1" 'symbol)
+     )
+
+    )))
+
+(ert-deftest oxcaml-28 ()
+  "Test navigation in item extensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to module type List_ops"
+      (goto-char (point-min))
+      (re-search-forward "module type List")
+      (beginning-of-line)
+      )
+
+    (combobulate-step
+      "Move to the body"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "[%%" "2")
+     )
+
+    
+    (combobulate-step
+      "Move to the payload which is a floating attribute"
+      (combobulate-navigate-down)
+      (expected-node-type "[@@@" "3")
      )
 
     )))
