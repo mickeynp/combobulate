@@ -414,6 +414,7 @@
            (:nodes ("comment"
                     "field_declaration"
                     "function_expression"
+                    (rule "comprehension")
                     (rule "function_type")
                     (rule "attribute_payload")
                     (rule "record_expression")
