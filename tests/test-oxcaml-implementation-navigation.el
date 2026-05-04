@@ -39,7 +39,7 @@
 
 (defun with-tuareg-buffer (callback &optional file)
   "Perform CALLBACK in a temp-buffer (with FILE as a content)."
-  (let* ((file (or file "fixtures/imenu/oxcaml.ml"))
+  (let* ((file (or file "fixtures/oxcaml/oxcaml.ml"))
          (fixture (expand-file-name file default-directory)))
     (with-temp-buffer (progn
                         (insert-file-contents fixture)
@@ -1080,6 +1080,406 @@
      )
 
     )))
+
+(ert-deftest oxcaml-29 ()
+  "Test sibling navigation for small number extensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let a"
+      (goto-char (point-min))
+      (re-search-forward "let a : float32 = 1.0")
+      (beginning-of-line)
+      (expected-node-type "let" "1")
+      )
+
+    (combobulate-step
+      "Move to let a_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "2")
+       (forward-word 2)
+       (expected-thing-at-point "a_unboxed" "2.1" 'symbol
+       ))
+
+    (combobulate-step
+      "Move to let b"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "3")
+       (forward-word 2)
+       (expected-thing-at-point "b" "3.1" 'symbol
+       ))
+
+    (combobulate-step
+      "Move to let b_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "4")
+       (forward-word 2)
+       (expected-thing-at-point "b_unboxed" "4.1" 'symbol
+       ))
+
+    (combobulate-step
+      "Move to let c"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "5")
+       (forward-word 2)
+       (expected-thing-at-point "c" "5.1" 'symbol
+       ))
+
+    (combobulate-step
+      "Move to let c_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "6")
+       (forward-word 2)
+       (expected-thing-at-point "c_unboxed" "6.1" 'symbol
+       ))
+
+     (combobulate-step
+      "Move to let d_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "7")
+       (forward-word 2)
+       (expected-thing-at-point "d_unboxed" "7.1" 'symbol
+       ))
+
+     (combobulate-step
+      "Move to let e_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "8")
+       (forward-word 2)
+       (expected-thing-at-point "e_unboxed" "8.1" 'symbol
+       ))
+
+     (combobulate-step
+      "Move to let f_unboxed"
+       (combobulate-navigate-next)
+       (expected-node-type "let" "9")
+       (forward-word 2)
+       (expected-thing-at-point "f_unboxed" "9.1" 'symbol
+       ))
+
+     (combobulate-step
+      "Move back to let e_unboxed"
+       (combobulate-navigate-previous)
+       (expected-node-type "let" "10")
+       (forward-word 2)
+       (expected-thing-at-point "e_unboxed" "10.1" 'symbol
+       ))
+
+    )))
+
+(ert-deftest oxcaml-30 ()
+  "Test hierarchical navigation for small number extensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let a_unboxed"
+      (goto-char (point-min))
+      (re-search-forward "let a_unboxed")
+      (beginning-of-line)
+      (expected-node-type "let" "1")
+      )
+
+    (combobulate-step
+      "Move to a_unboxed"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      )
+      
+    (combobulate-step
+      "Move to float32#"
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "3")
+      )
+
+    (combobulate-step
+      "Move to #1.0"
+      (combobulate-navigate-next)
+      (expected-node-type "unboxed_constant" "4")
+      )
+
+    )))
+
+(ert-deftest oxcaml-31 ()
+  "Test hierarchical navigation for small number extensions b"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to let e_unboxed"
+      (goto-char (point-min))
+      (re-search-forward "let e_unboxed")
+      (beginning-of-line)
+      (expected-node-type "let" "1")
+      )
+
+    (combobulate-step
+      "Move to e_unboxed"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      )
+      
+    (combobulate-step
+      "Move to char#"
+      (combobulate-navigate-down)
+      (expected-node-type "type_constructor" "3")
+      )
+    
+    ;; BUG: node types are not recognized and treesitter shows errors
+    (combobulate-step
+      "Move to #'\123'"
+      (combobulate-navigate-next)
+      (expected-node-type "unboxed_constant" "4")
+      )
+
+    )))
+
+(ert-deftest oxcaml-32 ()
+  "Test hierarchical navigation for module type strenghtening extensions"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+
+    (combobulate-step
+      "Move to module type SS"
+      (goto-char (point-min))
+      (re-search-forward "module type SS")
+      (back-to-indentation)
+      (expected-node-type "module" "1")
+      )
+
+    (combobulate-step
+      "Move to SS"
+      (combobulate-navigate-down)
+      (expected-node-type "module_type_name" "2")
+      )
+
+    (combobulate-step
+      "Move to S"
+      (combobulate-navigate-down)
+      (expected-node-type "module_type_name" "2")
+      )
+
+    (combobulate-step
+      "Move to M"
+      (combobulate-navigate-down)
+      (expected-node-type "module_name" "2")
+      )
+
+    )))
+
+(ert-deftest oxcaml-33 ()
+  "Test hierarchical navigation for stack allocation (tmp @ local and stack_)."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to tmp @ local"
+       (goto-char (point-min))
+       (re-search-forward "let tmp @ local")
+       (goto-char (match-beginning 0))
+       (expected-node-type "value_name" "1"))
+
+      (combobulate-step
+      "Move to tmp"
+      (combobulate-navigate-down)
+      (expected-node-type "value_name" "2")
+      (expected-thing-at-point "tmp" "2.1" 'symbol))
+
+      (combobulate-step
+      "Move to local"
+      (combobulate-navigate-down)
+      (combobulate-navigate-down)
+      (expected-node-type "mode" "3")
+      (expected-thing-at-point "mode" "3.1" 'symbol))
+
+      (combobulate-step
+      "Move to stack_"
+      (combobulate-navigate-next)
+      (expected-node-type "stack_" "4")
+      (expected-thing-at-point "stack_" "4.1" 'symbol))
+      
+    )))
+
+(ert-deftest oxcaml-34 ()
+  "Test sibling navigation for Unboxed Types (let big : int64#)."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to let big"
+       (goto-char (point-min))
+       (re-search-forward "let big")
+       (beginning-of-line)
+       )
+     (combobulate-step "Navigate to big"
+       (combobulate-navigate-down)
+       (expected-node-type "value_name" "1"))
+     (combobulate-step "Navigate to type int64#"
+       (combobulate-navigate-down)
+       (expected-node-type "type_constructor" "2"))
+    (combobulate-step "Navigate to #9_000_000_000L"
+       (combobulate-navigate-next)
+       (expected-node-type "unboxed_constant" "3"))
+  )))
+
+(ert-deftest oxcaml-35 ()
+  "Test hierarchical navigation for Modes (let arena @ unique)."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to let arena @ unique"
+       (goto-char (point-min))
+       (re-search-forward "let arena @ unique")
+       (goto-char (match-beginning 0))
+       )
+
+    (combobulate-step "Navigate to unique"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (expected-node-type "mode" "1")
+       (expected-thing-at-point "unique" "1.1" 'symbol))
+
+    (combobulate-step "Navigate to Arena.create ()"
+       (combobulate-navigate-next)
+       (expected-node-type "module_name" "2")
+       (expected-thing-at-point "Arena" "2.1" 'symbol))
+       
+  )))
+
+(ert-deftest oxcaml-36 ()
+  "Test Kinds (value mod contended portable, as _ immediate)."
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to module T"
+       (goto-char (point-min))
+       (re-search-forward "module T")
+       (goto-char (match-beginning 0))
+       (expected-node-type "module_name" "1"))
+
+    (combobulate-step "Navigate to the first type"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-next)
+       (expected-node-type "type" "2")
+       (expected-thing-at-point "type" "2.1" 'symbol))
+
+    (combobulate-step "Navigate to value"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-next)
+       (expected-node-type "jkind_abbreviation" "3")
+       (expected-thing-at-point "value" "3.1" 'symbol))
+
+    (combobulate-step "Navigate to the second value"
+       (combobulate-navigate-next)
+       (combobulate-navigate-next)
+       (expected-node-type "jkind_abbreviation" "3")
+       (expected-thing-at-point "value" "3.1" 'symbol))
+
+    )))
+
+
+(ert-deftest oxcaml-37 ()
+  "Test Kinds (value mod contended portable, as _ immediate). b"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to module T"
+       (goto-char (point-min))
+       (re-search-forward "module T")
+       (goto-char (match-beginning 0))
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-next)
+       (expected-node-type "type" "1")
+       (expected-thing-at-point "type" "1.1" 'symbol))
+
+    (combobulate-step "Navigate to value"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-next)
+       (expected-node-type "jkind_abbreviation" "2")
+       (expected-thing-at-point "value" "2.1" 'symbol))
+
+    (combobulate-step "Navigate to contended"
+       (combobulate-navigate-down)
+       (expected-node-type "mode" "3")
+       (expected-thing-at-point "contended" "3.1" 'symbol))
+   
+     (combobulate-step "Navigate to portable"
+       (combobulate-navigate-down)
+       (expected-node-type "mode" "4")
+       (expected-thing-at-point "portable" "4.1" 'symbol))
+
+    )))
+
+(ert-deftest oxcaml-38 ()
+  "Test for flattened nested arrays"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to let flatten"
+       (goto-char (point-min))
+       (re-search-forward "let flatten")
+       (beginning-of-line)
+       (expected-node-type "let" "1"))
+     (combobulate-step "Navigate to xss"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (expected-node-type "value_name" "2")
+       (expected-thing-at-point "xss" "2.1" 'symbol))
+      
+      (combobulate-step "Navigate to 'a array"
+       (combobulate-navigate-next)
+       (expected-node-type "type_variable" "3")
+       (expected-sexp-at-point "'a" "3.1" 'symbol)
+       )
+
+     )))
+
+(ert-deftest oxcaml-38 ()
+  "Test for flattened nested arrays"
+  :tags '(oxcaml implementation navigation combobulate)
+  (skip-unless (treesit-language-available-p 'ocaml))
+  (with-tuareg-buffer
+   (lambda ()
+     (combobulate-step "Move to let flatten"
+       (goto-char (point-min))
+       (re-search-forward "let flatten")
+       (beginning-of-line)
+       (expected-node-type "let" "1"))
+     (combobulate-step "Navigate to xss"
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (combobulate-navigate-down)
+       (expected-node-type "value_name" "2")
+       (expected-thing-at-point "xss" "2.1" 'symbol))
+      
+      (combobulate-step "Navigate to 'a array"
+       (combobulate-navigate-next)
+       (expected-node-type "type_variable" "3")
+       (expected-sexp-at-point "'a" "3.1" 'symbol)
+       )
+
+     )))
 
 (provide 'test-oxcaml-implementation-navigation)
 ;;; test-oxcaml-implementation-navigation.el ends here
