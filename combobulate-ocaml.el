@@ -547,7 +547,7 @@
                     "tuple_pattern"
                     "application_expression"
                     "constructor_declaration"
-                    "parameter") :position at)
+                    "parameter" "at_mode_expr") :position at)
            (:nodes ((rule "polymorphic_variant_type"))))
           :selector (:choose node :match-children (:discard-rules ("|"))))
 

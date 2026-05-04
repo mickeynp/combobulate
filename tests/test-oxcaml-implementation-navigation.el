@@ -453,12 +453,12 @@
 
       (combobulate-step
       "Move to the function type"
-      (combobulate-navigate-next)
+      (combobulate-navigate-down)
       (expected-node-type "type_constructor" "2")
       )
 
       (combobulate-step
-      "Move to int ref"
+      "Move to @ local"
       (combobulate-navigate-next)
       (expected-node-type "type_constructor" "3")
       (expected-thing-at-point "int" "3.1" 'symbol)
@@ -522,7 +522,6 @@
       (combobulate-navigate-down)
       (expected-node-type "type_constructor" "1")
       )
-;; Bug: add a rule to navigate unboxed constants
       (combobulate-step
       "Move to #3.14.."
       (combobulate-navigate-next)
@@ -603,7 +602,8 @@
       (goto-char (point-min))
       (re-search-forward "let dx")
       (beginning-of-line))
-
+     
+     ;; bug: this should work
       (combobulate-step
       "Move to Float_u sub"
       (combobulate-navigate-down)
@@ -826,7 +826,7 @@
       (goto-char (point-min))
       (re-search-forward "let even_iarray")
       (beginning-of-line))
-
+    ;; known limitation: navigating to the comprehension wont work currently because when we go to the constructed type i.e int iarray, we are already in its children and we can't go to the sibling of their parent using same next navigation that should work for the direct siblings.
     (combobulate-step
       "Move to the comprehension"
       (combobulate-navigate-down)
@@ -1418,12 +1418,12 @@
        (expected-thing-at-point "value" "2.1" 'symbol))
 
     (combobulate-step "Navigate to contended"
-       (combobulate-navigate-down)
+       (combobulate-navigate-next)
        (expected-node-type "mode" "3")
        (expected-thing-at-point "contended" "3.1" 'symbol))
    
      (combobulate-step "Navigate to portable"
-       (combobulate-navigate-down)
+       (combobulate-navigate-next)
        (expected-node-type "mode" "4")
        (expected-thing-at-point "portable" "4.1" 'symbol))
 
