@@ -1455,28 +1455,34 @@
 
      )))
 
-(ert-deftest oxcaml-38 ()
+(ert-deftest oxcaml-39 ()
   "Test for flattened nested arrays"
   :tags '(oxcaml implementation navigation combobulate)
   (skip-unless (treesit-language-available-p 'ocaml))
   (with-tuareg-buffer
    (lambda ()
-     (combobulate-step "Move to let flatten"
+     (combobulate-step "Move to let squares of evens"
        (goto-char (point-min))
-       (re-search-forward "let flatten")
+       (re-search-forward "let squares_of_evens")
        (beginning-of-line)
        (expected-node-type "let" "1"))
-     (combobulate-step "Navigate to xss"
-       (combobulate-navigate-down)
+     (combobulate-step "Navigate to n"
        (combobulate-navigate-down)
        (combobulate-navigate-down)
        (expected-node-type "value_name" "2")
-       (expected-thing-at-point "xss" "2.1" 'symbol))
+       (expected-thing-at-point "n" "2.1" 'symbol))
       
-      (combobulate-step "Navigate to 'a array"
+      (combobulate-step "Navigate to x"
        (combobulate-navigate-next)
-       (expected-node-type "type_variable" "3")
-       (expected-sexp-at-point "'a" "3.1" 'symbol)
+       (combobulate-navigate-down)
+       (expected-node-type "value_name" "3")
+       (expected-thing-at-point "x" "3.1" 'symbol)
+       )
+
+      (combobulate-step "Navigate to for"
+       (combobulate-navigate-next)
+       (expected-node-type "for" "4")
+       (expected-thing-at-point "for" "4.1" 'symbol)
        )
 
      )))
