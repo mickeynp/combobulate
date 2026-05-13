@@ -266,6 +266,10 @@
           :selector (:choose parent :match-children t))
 
         (:activation-nodes
+          ((:nodes ("labeled_tuple_element_type" "labeled_tuple_element" "labeled_tuple_element_pattern") :position at))
+          :selector (:choose parent :match-children t))
+
+        (:activation-nodes
           ((:nodes ("external") :has-parent ((irule "external")) :position at))
           :selector (:choose node :match-siblings t))
 
