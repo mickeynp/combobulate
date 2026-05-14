@@ -132,10 +132,34 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
  [2] OCaml support written by `Pixie Dust <https://github.com/PizieDust>`__, `Tim McGilchrist <https://github.com/tmcgilchrist>`__ & `Xavier Van de Woestyne <https://github.com/xvw>`__.
 
  [3] Combobulate works best with major-modes which are based on tree-sitter. To use combobulate with `tuareg-mode`, you need to load the `tuareg-treesit-bridge` which creates the tree-sitter parser for the tuareg buffer.
+
  Add this to your config:
 
- `(load "<path-to-your-combobulate-clone>/docs/ocaml/tuareg-treesit.el")`
+```elisp
+(require 'tuareg)
+(require 'treesit)
 
+(defun tuareg-treesit-bridge-create-parser ()
+  "Create a Tree-sitter parser in the current Tuareg buffer if absent.
+Assumes the OCaml Tree-sitter grammars are already installed by the user."
+  (when (and (derived-mode-p 'tuareg-mode)
+             (fboundp 'treesit-available-p) 
+             (treesit-available-p)
+             (treesit-language-available-p 'ocaml))
+    (unless (treesit-parser-list)
+      (treesit-parser-create
+       (if (and buffer-file-name (string-match-p "\\.mli\\'" buffer-file-name))
+           'ocaml-interface
+         'ocaml)))))
+
+(add-hook 'tuareg-mode-hook #'tuareg-treesit-bridge-create-parser)
+
+(provide 'tuareg-treesit)
+;;; tuareg-treesit.el ends here
+```
+You may as well save it to a file, e.g, ``tuareg-treesit.el``, and load it in your config.
+
+`(load "path-to-tuareg-treesit.el")`
 
 Recent Changes / What's New
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
