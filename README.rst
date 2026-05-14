@@ -134,7 +134,7 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
  [3] Combobulate works best with major-modes which are based on tree-sitter. To use combobulate with `tuareg-mode`, you need to load the `tuareg-treesit-bridge` which creates the tree-sitter parser for the tuareg buffer.
  Add this to your config:
 
- `(load "<path-to-your-combobulate-clone>/tests/tuareg-treesit.el")`
+ `(load "<path-to-your-combobulate-clone>/docs/ocaml/tuareg-treesit.el")`
 
 
 Recent Changes / What's New
