@@ -135,7 +135,7 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
 
  Add this to your config:
 
-```elisp
+.. code-block:: elisp
 (require 'tuareg)
 (require 'treesit)
 
@@ -156,7 +156,7 @@ Assumes the OCaml Tree-sitter grammars are already installed by the user."
 
 (provide 'tuareg-treesit)
 ;;; tuareg-treesit.el ends here
-```
+
 You may as well save it to a file, e.g, ``tuareg-treesit.el``, and load it in your config.
 
 `(load "path-to-tuareg-treesit.el")`
