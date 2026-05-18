@@ -19,7 +19,7 @@ let use_temp ~(f : int ref @ local -> 'a) : 'a =
   f tmp [@nontail]
 
 (* local-returning function — result lives in the caller's region *)
-let make_pair a b = exclave_ stack_ (a, b)
+let make_pair a b = enclave_ stack_ (a, b)
 
 (* global_ field — always heap-allocated even if the record is on the stack *)
 type 'a wrapper = { global_ value : 'a; tag : int }
@@ -32,7 +32,7 @@ type 'a wrapper = { global_ value : 'a; tag : int }
 
 (* unboxed float — no allocation, passed in FP register *)
 
-type t : float32 = float32#
+type t : int32 = int32#
 
 let fast_square (x : t) : t = Float32_u.mul x x
 
@@ -274,3 +274,8 @@ let c_unboxed : int8# = #42s
 let d_unboxed : char# = #'a'
 let e_unboxed : char# = #'\123'
 let f_unboxed : char# = #'\o123'
+
+let f x = match x with
+| Ace -> "A"
+| Two -> "B"
+| Three -> "N"
