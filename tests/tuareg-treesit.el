@@ -1,47 +1,20 @@
 (require 'tuareg)
 (require 'treesit)
 
-(defgroup tuareg-treesit-bridge nil
-  "Create Tree-sitter parsers in Tuareg buffers for tools like Combobulate."
-  :group 'tuareg)
+(defun tuareg-treesit-bridge-create-parser ()
+  "Create a Tree-sitter parser in the current Tuareg buffer if absent.
+Assumes the OCaml Tree-sitter grammars are already installed by the user."
+  (when (and (derived-mode-p 'tuareg-mode)
+             (fboundp 'treesit-available-p) 
+             (treesit-available-p)
+             (treesit-language-available-p 'ocaml))
+    (unless (treesit-parser-list)
+      (treesit-parser-create
+       (if (and buffer-file-name (string-match-p "\\.mli\\'" buffer-file-name))
+           'ocaml-interface
+         'ocaml)))))
 
-(defcustom tuareg-treesit-bridge-enable t
-  "Whether to auto-create a Tree-sitter parser in Tuareg buffers."
-  :type 'boolean
-  :group 'tuareg-treesit-bridge)
-
-(defcustom tuareg-treesit-bridge-install-missing-grammars nil
-  "If non-nil, attempt to install OCaml grammars when missing."
-  :type 'boolean
-  :group 'tuareg-treesit-bridge)
-
-(defun tuareg-treesit-bridge--ensure-grammars ()
-  (when (and tuareg-treesit-bridge-install-missing-grammars
-             (not (treesit-language-available-p 'ocaml)))
-    (add-to-list 'treesit-language-source-alist
-                 '(ocaml "https://github.com/tree-sitter/tree-sitter-ocaml"
-                         "v0.24.2" "grammars/ocaml/src"))
-    (add-to-list 'treesit-language-source-alist
-                 '(ocaml-interface "https://github.com/tree-sitter/tree-sitter-ocaml"
-                         "v0.24.2" "grammars/interface/src"))
-    (ignore-errors
-      (treesit-install-language-grammar 'ocaml)
-      (treesit-install-language-grammar 'ocaml-interface))))
-
-(defun tuareg-treesit-bridge--maybe-create-parser ()
-  "Create a Tree-sitter parser in the current Tuareg buffer if absent."
-  (when (and tuareg-treesit-bridge-enable
-             (derived-mode-p 'tuareg-mode)
-             (fboundp 'treesit-available-p) (treesit-available-p))
-    (tuareg-treesit-bridge--ensure-grammars)
-    (when (treesit-language-available-p 'ocaml)
-      (unless (treesit-parser-list)
-        (treesit-parser-create
-         (if (and buffer-file-name (string-match-p "\\.mli\\'" buffer-file-name))
-             'ocaml-interface
-           'ocaml))))))
-
-(add-hook 'tuareg-mode-hook #'tuareg-treesit-bridge--maybe-create-parser)
+(add-hook 'tuareg-mode-hook #'tuareg-treesit-bridge-create-parser)
 
 (provide 'tuareg-treesit)
 ;;; tuareg-treesit.el ends here
