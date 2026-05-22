@@ -350,8 +350,11 @@
                    :has-ancestor ("module_definition"
                                   "module_type_definition"
                                   "package_expression"))
-           (:nodes ("attribute"
-                    "comment"
+           ;; Navigation moves between top-level definitions and treats
+           ;; a plain `attribute' (e.g. the `[@inline]' in
+           ;; `let[@inline] f = ...') as a decoration: it is never a
+           ;; navigation target and is skipped over between definitions.
+           (:nodes ("comment"
                     "field_declaration"
                     "function_expression"
                     (rule "function_type")
@@ -371,7 +374,7 @@
                     (rule "_sequence_expression")
                     (rule "_signature_item")
                     (rule "_structure_item")) :position at))
-          :selector (:choose node :match-siblings t))
+          :selector (:choose node :match-siblings (:discard-rules ("attribute"))))
 
          (:activation-nodes
           ((:nodes ((rule "compilation_unit"))))
@@ -615,7 +618,6 @@
                     (rule "_signature_item")
 
                     ;; Regular nodes
-                    "attribute"
                     "comment"
                     "field_declaration"
                     (rule "attribute_payload")
@@ -626,7 +628,7 @@
                     (rule "signature")
                     (irule "signature")
                     (rule "_class_field_specification"))))
-          :selector (:choose node :match-siblings t))
+          :selector (:choose node :match-siblings (:discard-rules ("attribute"))))
 
          (:activation-nodes
           ((:nodes ((rule "compilation_unit"))))
