@@ -309,8 +309,62 @@
            ((:nodes ("value_definition"
                      "value_pattern"
                      "let_expression") :position at
-                    :has-parent ("let_expression")))
+                    :has-parent ("let_expression"
+                                 "let_open_expression")))
            :selector  (:choose parent :match-children t))
+
+         ;; Navigate between record fields. Must come before the let
+         ;; chain rule, otherwise let_open_expression (an ancestor)
+         ;; matches first and intercepts navigation.
+         (:activation-nodes
+          ((:nodes ("field_expression")
+                   :has-parent ("record_expression")))
+          :selector  (:choose node :match-siblings t))
+
+
+         ;; Navigate between the bindings of a `type ... and ...' or
+         ;; `let ... and ...' group (sibling type_binding / let_binding
+         ;; nodes).  `:has-sibling' limits this to multi-binding groups;
+         ;; a lone binding has no sibling and falls through to the
+         ;; structure rules so top-level navigation still works.
+         (:activation-nodes
+          ((:nodes ("type_binding")
+                   :has-sibling ("type_binding"))
+           (:nodes ("let_binding")
+                   :has-sibling ("let_binding")))
+          :selector  (:choose node :match-siblings t))
+
+         ;; Navigate between the members of a class object
+         ;; (`val'/`method') and the method specifications of a class
+         ;; type, e.g. the methods of `class c = object ... end' or
+         ;; `class type c = object ... end'.
+         (:activation-nodes
+          ((:nodes ("instance_variable_definition"
+                    "method_definition"
+                    "method_specification")))
+          :selector  (:choose node :match-siblings t))
+
+         ;; Navigate forward through let chains. From any
+         ;; let_expression or let_open_expression, go to the body
+         ;; child if it is another let or application.
+         (:activation-nodes
+          ((:nodes ("let_expression"
+                    "let_open_expression")))
+          :selector  (:choose node :match-children
+                              (:match-rules ("let_expression"
+                                             "let_open_expression"
+                                             "application_expression"))))
+
+         ;; Navigate forward through if/else if/else chains.
+         ;; Like let chains, these are nested (else_clause contains
+         ;; another if_expression), not flat siblings.
+         ;; From if_expression or else_clause, navigate to the next
+         ;; branch (else_clause or nested if_expression).
+         (:activation-nodes
+          ((:nodes ("if_expression" "else_clause")))
+          :selector  (:choose node :match-children
+                              (:match-rules ("else_clause"
+                                             "if_expression"))))
 
          (:activation-nodes
           ((:nodes ("type_variable"
@@ -365,7 +419,6 @@
                     (rule "class_binding")
                     (rule "class_application")
                     (rule "type_binding")
-                    (rule "method_definition")
                     (rule "structure")
                     (rule "signature")
                     (rule "_class_field_specification")
@@ -380,36 +433,10 @@
 
       (procedures-hierarchy
 
-       ;; NOTE: Known limitation regarding navigation within class
-       ;; hierarchies.
-       ;; Navigation will go through:
-       ;;   class
-       ;;    → class_definition
-       ;;    → class_binding
-       ;;    → class_name
-       ;;    → parameter
-       ;;    → parameter
-       ;;    → object_expression
-       ;; But we want:
-       ;;   class
-       ;;    → class_name
-       ;;    → object
-       ;;    → instance_variable_definition
-       ;; This appears to be either:
-       ;;   1. A limitation in how combobulate processes selector
-       ;;      rules for certain grammars
-       ;;   2. An issue specific to the OCaml tree-sitter grammar structure
-       ;;   3. A bug in the combobulate procedure matching logic
-
-       ;; Pretty printing rules for `class_binding' gives us:
-       ;; - :*unnamed*: ("abstract_type" "item_attribute"
-       ;;                "parameter" "class_function_type" "type_variable")
-       ;; - :body: ("class_function" "let_open_class_expression"
-       ;;            "let_class_expression" "class_application")
-       ;; - :name ("class_name")
-
-       ;; the object expression does not appear in these rules which is probably
-       ;; part of the problem.
+       ;; Class navigation: the class rules below navigate down
+       ;; class -> name -> object body -> members.  navigate-up only
+       ;; walks ancestors, so it does not revisit the name; this
+       ;; down/up asymmetry is intentional.
 
        '(
 
@@ -507,13 +534,43 @@
            (:nodes ((rule "polymorphic_variant_type"))))
           :selector (:choose node :match-children (:discard-rules ("|"))))
 
+         ;; From the class name, step to the object body.  Must come
+         ;; before the object rule below, which would otherwise match
+         ;; the enclosing `class_binding' and step to a value parameter.
+         (:activation-nodes ((:nodes ("class_name")
+                                     :has-parent ("class_binding")))
+          :selector (:choose parent :match-children
+                             (:match-rules ("object_expression"))))
+
+         ;; Descend into an object body and its members.  `class_body_type'
+         ;; (the body of a `class type') is included so down also reaches
+         ;; its method_specification members.
          (:activation-nodes
           ((:nodes ("object_expression"
+                    "class_body_type"
                     (rule "class_definition")
                     (rule "object_expression")
                     (rule "class_binding")) :position at))
           :selector (:choose node :match-children
                              (:discard-rules ("tag_specification"))))
+
+         ;; Descend from a class / class type to its name then object
+         ;; body, skipping type parameters, `virtual' and value
+         ;; parameters.  The name and body are grandchildren of
+         ;; class_definition / class_type_definition, so a recursive
+         ;; query reaches them.  Must come after the object rule above so
+         ;; that descending from inside the object (a `val'/`method')
+         ;; stays local rather than jumping back to the name.
+         (:activation-nodes ((:nodes ("class_definition")))
+          :selector (:choose node :match-query
+                             (:query ((class_binding
+                                       [(class_name) (object_expression)] @match))
+                              :engine treesitter)))
+         (:activation-nodes ((:nodes ("class_type_definition")))
+          :selector (:choose node :match-query
+                             (:query ((class_type_binding
+                                       [(class_type_name) (class_body_type)] @match))
+                              :engine treesitter)))
 
          ;; Specific rules for converting from a constructor
          ;; (of a Sum type) to its type
