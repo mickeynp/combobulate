@@ -412,7 +412,7 @@
 
        '(
 
-        ;; DECISION: move to the body of a mtach directly
+        ;; DECISION: move to the body of a match directly
         ;; (:activation-nodes ((:nodes ("match_expression") :position at))
         ;; :selector (:choose node :match-children
         ;;           (:discard-rules ("value_name" "value_path" "tuple_expression"))))
