@@ -509,15 +509,15 @@
 ;; constructs (specifications rather than implementations).
 
 (define-combobulate-language
- :name ocaml
- :major-modes (caml-mode tuareg-mode neocaml-mode)
- :custom combobulate-ocaml-definitions
- :setup-fn combobulate-ocaml-setup)
-
-(define-combobulate-language
  :name ocaml-interface
  :major-modes (caml-mode tuareg-mode neocaml-interface-mode)
  :custom combobulate-ocaml-interface-definitions
+ :setup-fn combobulate-ocaml-setup)
+ 
+(define-combobulate-language
+ :name ocaml
+ :major-modes (caml-mode tuareg-mode neocaml-mode)
+ :custom combobulate-ocaml-definitions
  :setup-fn combobulate-ocaml-setup)
 
 (defun combobulate-ocaml-setup (_)
