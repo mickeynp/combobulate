@@ -305,6 +305,22 @@
                      "application_expression") :position in))
            :selector (:choose node :match-children t))
 
+         ;; Navigate between the bindings of a `type ... and ...' or
+         ;; `let ... and ...' group (sibling type_binding / let_binding
+         ;; nodes).  `:has-sibling' limits this to multi-binding groups;
+         ;; a lone binding has no sibling and falls through to the
+         ;; structure rules so top-level navigation still works.
+         ;; Must come before the value_definition / let_expression rule
+         ;; below, which would otherwise match the enclosing
+         ;; value_definition first and step to the let_expression body
+         ;; (skipping the `and' sibling).
+         (:activation-nodes
+          ((:nodes ("type_binding")
+                   :has-sibling ("type_binding"))
+           (:nodes ("let_binding")
+                   :has-sibling ("let_binding")))
+          :selector  (:choose node :match-siblings t))
+
           (:activation-nodes
            ((:nodes ("value_definition"
                      "value_pattern"
@@ -319,19 +335,6 @@
          (:activation-nodes
           ((:nodes ("field_expression")
                    :has-parent ("record_expression")))
-          :selector  (:choose node :match-siblings t))
-
-
-         ;; Navigate between the bindings of a `type ... and ...' or
-         ;; `let ... and ...' group (sibling type_binding / let_binding
-         ;; nodes).  `:has-sibling' limits this to multi-binding groups;
-         ;; a lone binding has no sibling and falls through to the
-         ;; structure rules so top-level navigation still works.
-         (:activation-nodes
-          ((:nodes ("type_binding")
-                   :has-sibling ("type_binding"))
-           (:nodes ("let_binding")
-                   :has-sibling ("let_binding")))
           :selector  (:choose node :match-siblings t))
 
          ;; Navigate between the members of a class object
@@ -751,7 +754,13 @@
  :setup-fn combobulate-ocaml-setup)
 
 (defun combobulate-ocaml-setup (_)
-  "Setup function for OCaml mode with Combobulate.")
+  "Setup function for OCaml mode with Combobulate."
+  (setq-local combobulate-navigate-down-into-lists nil
+              ;; Make the opening keyword of a `signature' / `structure'
+              ;; resolve to that container, so `C-M-n' on `sig' steps to
+              ;; `struct' (siblings of module_binding) instead of
+              ;; descending into the first signature item.
+              combobulate-prefer-container-types '("signature" "structure")))
 
 (provide 'combobulate-ocaml)
 ;;; combobulate-ocaml.el ends here
