@@ -443,10 +443,27 @@
 
        '(
 
-        ;; DECISION: move to the body of a match directly
-        ;; (:activation-nodes ((:nodes ("match_expression") :position at))
-        ;; :selector (:choose node :match-children
-        ;;           (:discard-rules ("value_name" "value_path" "tuple_expression"))))
+         ;; From the top of a definition (point on the `let' keyword)
+         ;; descend straight to the binding body, skipping the name and
+         ;; parameters.  The body is a grandchild of value_definition
+         ;; (value_definition -> let_binding -> body), so a recursive
+         ;; query reaches it; without this the first C-M-d lands on the
+         ;; let_binding (the name) and a second is needed for the body.
+         (:activation-nodes ((:nodes ("value_definition")))
+          :selector (:choose node :match-query
+                             (:query ((let_binding body: (_) @match))
+                              :engine treesitter)))
+
+         ;; Navigate down through chains of let ... in / let open ... in
+         ;; expressions. Since these are nested (parent-child) rather than
+         ;; flat siblings, hierarchy navigation is the natural fit.
+         (:activation-nodes
+          ((:nodes ("let_expression"
+                    "let_open_expression")))
+          :selector (:choose node :match-children
+                             (:match-rules ("let_expression"
+                                            "let_open_expression"
+                                            "application_expression"))))
 
         ;; DECISION: move down from an if directly to the else
         ;; (:activation-nodes ((:nodes ("if_expression") :position at))
