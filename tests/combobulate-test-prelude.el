@@ -37,7 +37,6 @@
 (require 'yaml-ts-mode)
 (require 'json-ts-mode)
 (require 'tuareg)
-(require 'tuareg-treesit)
 
 ;;; Helpers for writing procedures
 
