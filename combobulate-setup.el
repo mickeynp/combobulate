@@ -450,10 +450,22 @@ A complete list of known shorthands are found in
 (defun combobulate-get-registered-language (mm)
   "Get the registered language for a major mode MM.
 
-Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN TREESIT-LANGUAGE)'."
-  (seq-find (pcase-lambda (`(_ ,major-modes _ _))
-              (member mm major-modes))
-            combobulate-registered-languages-alist))
+Returns a list of the form `(NAME MAJOR-MODES MINOR-MODE-FN &optional FILE-EXTENSIONS)'."
+  (let ((matches (seq-filter (pcase-lambda (`(_ ,major-modes _ . ,_))
+                               (member mm major-modes))
+                             combobulate-registered-languages-alist)))
+    (if (null (cdr matches))
+        (car matches)
+      (or (and buffer-file-name
+               (let ((ext (file-name-extension buffer-file-name)))
+                 (seq-find (pcase-lambda (`(_ _ _ . ,rest))
+                             (let ((file-exts (car rest)))
+                               (and ext file-exts (member ext file-exts))))
+                           matches)))
+          (seq-find (pcase-lambda (`(_ _ _ . ,rest))
+                      (null (car rest)))
+                    matches)
+          (car matches)))))
 
 (defun combobulate-maybe-activate (&optional raise-if-missing called-interactively)
   "Maybe activate Combobulate in the current buffer.
@@ -467,11 +479,11 @@ enable Combobulate."
   ;;
   (when-let (match (or (when-let ((existing-parsers (combobulate-parser-list)))
                          (let ((ts-lang (combobulate-parser-language (car existing-parsers))))
-                           (seq-find (pcase-lambda (`(,name _ _))
+                           (seq-find (pcase-lambda (`(,name _ _ . ,_))
                                        (eq name ts-lang))
                                      combobulate-registered-languages-alist)))
                        (combobulate-get-registered-language major-mode)))
-    (pcase-let ((`(,name _ ,minor-mode-fn) match))
+    (pcase-let ((`(,name _ ,minor-mode-fn . ,_) match))
       (let ((language name))
         ;; Only error out if RAISE-IF-MISSING is non-nil. The expected
         ;; behaviour is that Combobulate may get activated in major
@@ -515,16 +527,16 @@ Combobulate minor mode suitable for the current buffer."
   ;; This is no longer an actual minor mode, but instead a function.
   (combobulate-maybe-activate nil (not (null arg))))
 
-(defun combobulate-register-language (language major-modes minor-mode-fn)
+(defun combobulate-register-language (language major-modes minor-mode-fn &optional file-extensions)
   "Register a Combobulate language.
 
 LANGUAGE is the Combobulate language name.
 MAJOR-MODES is a list of major modes that use this language.
-MINOR-MODE-FN is the minor mode function for this language."
-  (if-let ((def (cdr (assoc language combobulate-registered-languages-alist))))
-      (unless (equal def (list major-modes minor-mode-fn))
-        (error "Language `%s' is already registered with a different definition." language))
-    (push (list language major-modes minor-mode-fn)
+MINOR-MODE-FN is the minor mode function for this language.
+FILE-EXTENSIONS is a list of file extensions (strings) where this language applies."
+  (if-let ((def (assoc language combobulate-registered-languages-alist)))
+      (setcdr def (list major-modes minor-mode-fn file-extensions))
+    (push (list language major-modes minor-mode-fn file-extensions)
           combobulate-registered-languages-alist)))
 
 (cl-defmacro define-combobulate-language (&key name
@@ -532,7 +544,8 @@ MINOR-MODE-FN is the minor mode function for this language."
                                                setup-fn
                                                (keymap-var nil)
                                                (extra-defcustoms nil)
-                                               (extra-defvars nil))
+                                               (extra-defvars nil)
+                                               (file-extensions nil))
   "Define a new language for Combobulate.
 
 NAME is the name of the language as it'll be known to
@@ -656,7 +669,7 @@ support where you still want to use Combobulate's features."
                    ,(when setup-fn
                       `(,setup-fn ',name)))
                 decls)
-          (push `(combobulate-register-language ',name ',major-modes #',minor-mode-fn)
+          (push `(combobulate-register-language ',name ',major-modes #',minor-mode-fn ,file-extensions)
                 decls)
           (push `(defconst ,(intern-lang-var "defined-variables")
                    ',known-variable-shorthands
