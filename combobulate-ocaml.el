@@ -210,36 +210,107 @@
                     "module_type_definition" "class_definition"))))))
 
       (procedures-sibling
-       '((:activation-nodes
-          ((:nodes ( "constructor_pattern" )))
+       '(
+
+         (:activation-nodes
+          ((:nodes ("tuple_expression" "tuple_pattern") :position in))
+          :selector (:choose node :match-siblings t))
+
+         (:activation-nodes
+          ((:nodes ("tuple_expression" "tuple_pattern") :position at))
+          :selector (:choose node :match-children t))
+
+          ;; although the value_paths are siblings, here desired functionality will be to go to the sibling of their parent.
+
+          (:activation-nodes
+           ((:nodes ("let_binding") :position at :has-parent         ("value_definition"))
+             (:nodes ("value_definition") :position at :has-parent ("let_expression"))
+            (:nodes ("application_expression") :position at :has-parent ("sequence_expression"))
+            (:nodes ("item_attribute") :position at))
+           :selector (:choose parent :match-children t))
+
+          (:activation-nodes
+           ((:nodes ("application_expression" "fun_expression") :position in))
+           :selector (:choose node :match-children t))
+
+         (:activation-nodes
+          ((:nodes ((rule "_type") (rule "_simple_type")) :position at
+            :has-parent ("function_type")))
+          :selector (:choose parent :match-children
+                      (:match-rules ((rule "_type")
+                                    (rule "_simple_type")))))
+
+         (:activation-nodes
+          ((:nodes ("type_variable") :position at
+            :has-parent ("constructed_type")))
+          :selector (:choose parent :match-children t))
+
+         (:activation-nodes
+          ((:nodes ("type_constructor_path") :position at
+            :has-parent ("constructed_type")))
+          :selector (:choose parent :match-siblings t))
+
+        (:activation-nodes
+          ((:nodes ("then_clause" "else_clause"
+                    "value_path" "value_name" "constructor_path"
+                    (rule "_simple_expression")) :position at
+            :has-parent ("if_expression")))
+          :selector (:choose parent :match-children
+                      (:match-rules ((rule "_sequence_expression")
+                                    (rule "_simple_expression")
+                                    "then_clause"
+                                    "else_clause"))))
+
+        (:activation-nodes
+          ((:nodes ("labeled_tuple_element_type" "labeled_tuple_element" "labeled_tuple_element_pattern" "match_expression") :position at))
+          :selector (:choose parent :match-children t))
+
+        (:activation-nodes
+          ((:nodes ("external") :has-parent ((irule "external")) :position at))
+          :selector (:choose node :match-siblings t))
+
+        (:activation-nodes
+          ((:nodes ("type_binding") :has-parent ("type_definition") :position at))
+          :selector (:choose parent :match-children t))
+
+         (:activation-nodes
+          ((:nodes ("constructor_pattern")))
           :selector (:choose parent :match-siblings t))
 
          (:activation-nodes
-          ((:nodes ( "match_case" )))
+          ((:nodes ("match_case") :position at))
+          :selector (:choose node :match-siblings
+                      (:match-rules ("match_case"))))
+
+          (:activation-nodes
+          ((:nodes ("field_get_expression")))
           :selector (:choose node :match-siblings t))
 
          (:activation-nodes
-          ((:nodes ("parameter")
+          ((:nodes ("parameter") :position at
                    :has-parent ("let_binding")))
           :selector (:choose node :match-siblings t))
 
-         (:activation-nodes
-          ((:nodes ("variant_declaration"
-                    "record_declaration"
-                    "list_expression"
-                    "cons_expression"
-                    "field_get_expression"
-                    "function_type"
-                    "tuple_pattern"
-                    "value_pattern")))
-          :selector (:choose node :match-children t))
+          (:activation-nodes
+           ((:nodes ("variant_declaration"
+                     "record_declaration"
+                     "list_expression"
+                     "cons_expression"
+                     "field_get_expression"
+                     "function_type"
+                     "tuple_pattern"
+                     "value_pattern"
+                     "tuple_expression"
+                     "infix_expression"
+                     "application_expression") :position in))
+           :selector (:choose node :match-children t))
 
-         (:activation-nodes
-          ((:nodes ("value_definition"
-                    "value_pattern"
-                    "let_expression")
-                   :has-parent ("let_expression")))
-          :selector  (:choose parent :match-children t))
+          (:activation-nodes
+           ((:nodes ("value_definition"
+                     "value_pattern"
+                     "let_expression") :position at
+                    :has-parent ("let_expression")))
+           :selector  (:choose parent :match-children t))
 
          (:activation-nodes
           ((:nodes ("type_variable"
@@ -259,18 +330,23 @@
                     "tag_specification"
                     "match_case"
                     "field_expression"
-                    "application_expression"))
+                    "application_expression") :position at)
            (:nodes ((rule "signature")
                     (rule "structure"))
                    :has-ancestor ("module_definition")))
           :selector (:choose node :match-siblings t))
+
+
+        (:activation-nodes
+          ((:nodes (("type_binding")) :has-parent ("type_definition") :position in))
+          :selector (:choose node :match-children t))
 
          (:activation-nodes
           ((:nodes ("signature"
                     "structure"
                     "module_name"
                     "module_path"
-                    "module_type_constraint")
+                    "module_type_constraint") :position at
                    :has-ancestor ("module_definition"
                                   "module_type_definition"
                                   "package_expression"))
@@ -294,7 +370,7 @@
                     (rule "_class_field_specification")
                     (rule "_sequence_expression")
                     (rule "_signature_item")
-                    (rule "_structure_item"))))
+                    (rule "_structure_item")) :position at))
           :selector (:choose node :match-siblings t))
 
          (:activation-nodes
@@ -334,21 +410,107 @@
        ;; the object expression does not appear in these rules which is probably
        ;; part of the problem.
 
-       '((:activation-nodes
-          ((:nodes ("field_get_expression"
+       '(
+
+        ;; DECISION: move to the body of a match directly
+        ;; (:activation-nodes ((:nodes ("match_expression") :position at))
+        ;; :selector (:choose node :match-children
+        ;;           (:discard-rules ("value_name" "value_path" "tuple_expression"))))
+
+        ;; DECISION: move down from an if directly to the else
+        ;; (:activation-nodes ((:nodes ("if_expression") :position at))
+        ;; :selector (:choose node :match-children
+        ;;             (:match-rules ("then_clause" "else_clause"))))
+
+        (:activation-nodes ((:nodes ("value_definition") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ("let_binding" "attribute"))))
+
+        (:activation-nodes ((:nodes ("let_binding" 
+                                     "fun_expression") 
+                             :position at))
+          :selector (:choose node :match-children t))
+
+        (:activation-nodes ((:nodes ("let_expression") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ("value_definition"
+                                    (rule "_sequence_expression")
+                                    (rule "_simple_expression")))))
+
+        (:activation-nodes ((:nodes ("application_expression") :position at))
+          :selector (:choose node :match-children t))
+
+        ;;  (:activation-nodes ((:nodes ("while_expression" "for_expression") :position at))
+        ;;   :selector (:choose node :match-children
+        ;;             t))
+
+        ;; (:activation-nodes ((:nodes ("do_clause") :position at))
+        ;;   :selector (:choose node :match-children
+        ;;             t))
+
+        ;; (:activation-nodes ((:nodes ("if_expression") :position at))
+        ;;   :selector (:choose node :match-children
+        ;;             t))
+
+        ;; (:activation-nodes ((:nodes ("then_clause" "else_clause") :position at))
+        ;;   :selector (:choose node :match-children
+        ;;             t))
+
+        (:activation-nodes
+          ((:nodes ("match_expression" "try_expression" "function_expression") :position at))
+          :selector (:choose node :match-children (:match-rules ("match_case"))))
+
+        (:activation-nodes ((:nodes ("match_case") :position at))
+          :selector (:choose node :match-children
+                    t))
+        
+        (:activation-nodes ((:nodes ("constructor_declaration") :has-parent ("variant_declaration") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ("constructed_type"))))
+
+        (:activation-nodes
+          ((:nodes ((rule "_pattern")
+                    "constructor_path"
                     "value_path"
-                    "paranthesized_operator"
+                    "value_pattern") :has-parent ("match_case") :position at))
+          :selector (:choose parent :match-children
+                    (:match-rules ((rule "_sequence_expression")
+                                    (rule "_simple_expression")
+                                    "refutation_case"
+                                    "guard"))))
+
+        (:activation-nodes ((:nodes ("function_type") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ((rule "_type")
+                                    (rule "_simple_type")))))
+
+        (:activation-nodes ((:nodes ("include_module") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ((rule "_module_expression")
+                                    (rule "_simple_module_expression")))))
+
+        (:activation-nodes ((:nodes ("attribute") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ("attribute_payload"))))                  
+        
+        (:activation-nodes
+          ((:nodes ("field_get_expression"
+                    "value_path" "typed_pattern"
+                    "parenthesized_operator"
+                    "parenthesized_expression"
+                    "parenthesized_pattern"
+                    "tuple_pattern"
                     "application_expression"
                     "constructor_declaration"
-                    "parameter"))
+                    "parameter") :position at)
            (:nodes ((rule "polymorphic_variant_type"))))
-          :selector (:choose node :match-children t))
+          :selector (:choose node :match-children (:discard-rules ("|"))))
 
          (:activation-nodes
           ((:nodes ("object_expression"
                     (rule "class_definition")
                     (rule "object_expression")
-                    (rule "class_binding"))))
+                    (rule "class_binding")) :position at))
           :selector (:choose node :match-children
                              (:discard-rules ("tag_specification"))))
 
@@ -366,6 +528,14 @@
           ((:nodes ("type_constructor_path")))
           :selector (:choose node :match-children
                              (:nodes ("type_constructor"))))
+
+        (:activation-nodes ((:nodes ("signature") :position at))
+        :selector (:choose node :match-children
+                    (:match-rules ((rule "signature")))))
+
+        (:activation-nodes ((:nodes ("structure") :position at))
+        :selector (:choose node :match-children
+                    (:match-rules ((rule "structure")))))
 
          (:activation-nodes
           ((:nodes ("signature"
@@ -509,15 +679,15 @@
 ;; constructs (specifications rather than implementations).
 
 (define-combobulate-language
- :name ocaml
- :major-modes (caml-mode tuareg-mode neocaml-mode)
- :custom combobulate-ocaml-definitions
- :setup-fn combobulate-ocaml-setup)
-
-(define-combobulate-language
  :name ocaml-interface
  :major-modes (caml-mode tuareg-mode neocaml-interface-mode)
  :custom combobulate-ocaml-interface-definitions
+ :setup-fn combobulate-ocaml-setup)
+ 
+(define-combobulate-language
+ :name ocaml
+ :major-modes (caml-mode tuareg-mode neocaml-mode)
+ :custom combobulate-ocaml-definitions
  :setup-fn combobulate-ocaml-setup)
 
 (defun combobulate-ocaml-setup (_)
