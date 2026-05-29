@@ -518,7 +518,15 @@
  :name ocaml-interface
  :major-modes (caml-mode tuareg-mode neocaml-interface-mode)
  :custom combobulate-ocaml-interface-definitions
- :setup-fn combobulate-ocaml-setup)
+ :setup-fn combobulate-ocaml-setup
+ :file-extensions '("mli"))
+ 
+(define-combobulate-language
+ :name ocaml
+ :major-modes (caml-mode tuareg-mode neocaml-mode)
+ :custom combobulate-ocaml-definitions
+ :setup-fn combobulate-ocaml-setup
+ :file-extensions '("ml"))
 
 (defun combobulate-ocaml-setup (_)
   "Setup function for OCaml mode with Combobulate.")
