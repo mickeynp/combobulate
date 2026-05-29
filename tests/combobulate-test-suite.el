@@ -427,6 +427,7 @@ doesn't exist."
            (fixture-buf (find-file-noselect fixture-file-name))
            (fixture-language) (fixture-major-mode) (lang))
       (with-current-buffer fixture-buf
+        (combobulate-mode)
         (setq lang (car (combobulate-parser-list)))
         (cl-assert (not (null lang)) nil "No language found in `%s' (major mode: `%s')" fixture-file-name major-mode)
         (setq fixture-language (combobulate-parser-language lang))
