@@ -67,8 +67,25 @@
 (add-to-list 'savehist-additional-variables 'combobulate-query-ring)
 
 
-(defconst combobulate-query-builder-predicate-names '("#match" "#equal" "#pred")
-  "Known Emacs-supported predicate names.")
+(defconst combobulate-query-builder-legacy-predicate-names
+  '("#match" "#equal" "#pred")
+  "Tree-sitter query predicate names used by Emacs 29 and 30.")
+
+(defconst combobulate-query-builder-modern-predicate-names
+  '("#match?" "#eq?" "#pred?")
+  "Tree-sitter query predicate names used by Emacs 31 and later.")
+
+(defun combobulate-query-builder-modern-predicate-syntax-p ()
+  "Return non-nil when the current Emacs expects `?' suffixed predicates."
+  ;; Emacs switched from #match/#equal/#pred to #match?/#eq?/#pred?
+  ;; on the Emacs 31 development line.
+  (>= emacs-major-version 31))
+
+(defun combobulate-query-builder-predicate-names ()
+  "Return the tree-sitter predicate names supported by the current Emacs."
+  (if (combobulate-query-builder-modern-predicate-syntax-p)
+      combobulate-query-builder-modern-predicate-names
+    combobulate-query-builder-legacy-predicate-names))
 
 (defvar combobulate-query-builder-parser nil
   "Tree sitter parser to query against.")
@@ -391,7 +408,7 @@ completion candidates for the current point."
                                      (map-values (cadr rule)))
                                    nil))
                           combobulate-query-builder-rule-names)
-                        (copy-tree combobulate-query-builder-predicate-names)))
+                        (copy-tree (combobulate-query-builder-predicate-names))))
                ;; it's a field name
                ((and (not at-form-start) (not at-form-end))
                 (when-let (rule (assoc current-rule-name combobulate-query-builder-rules))
@@ -519,6 +536,18 @@ completion candidates for the current point."
         (concat (substring text 0 (or max-length 50)))
       text)))
 
+(defun combobulate-query-builder-predicate-replacements ()
+  "Return the predicate replacements needed for the current Emacs."
+  (if (combobulate-query-builder-modern-predicate-syntax-p)
+      '((":equal" . "#eq?")
+        (":match" . "#match?")
+        (":pred" . "#pred?")
+        (":eq" . "#eq?"))
+    '((":equal" . "#equal")
+      (":match" . "#match")
+      (":pred" . "#pred")
+      (":eq" . "#equal"))))
+
 (defun combobulate-query-builder-to-string (form-query)
   "Convert FORM-QUERY to a string query.
 
@@ -528,9 +557,8 @@ Rewrites `:match' to `#match', etc. along the way."
     (pcase-dolist (`(,before . ,after)
                    ;; `.' is the anchor in the real query language,
                    ;; but `:anchor' in elisp forms.
-                   `((":anchor" . ".")
-                     ;; Fix up `:match' to `#match', etc.
-                     (,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1")))
+                   (cons '(":anchor" . ".")
+                         (combobulate-query-builder-predicate-replacements)))
       (setq tgt-query (replace-regexp-in-string before after tgt-query)))
     (string-trim tgt-query)))
 
