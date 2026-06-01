@@ -443,6 +443,14 @@
 
        '(
 
+         (:activation-nodes
+          ((:nodes ("match_expression" "try_expression" "function_expression") :position at))
+          :selector (:choose node :match-children (:match-rules ("match_case"))))
+
+         (:activation-nodes ((:nodes ("match_case") :position at))
+            :selector (:choose node :match-children
+                      t))
+
          ;; From the top of a definition (point on the `let' keyword)
          ;; descend straight to the binding body, skipping the name and
          ;; parameters.  The body is a grandchild of value_definition
@@ -464,11 +472,6 @@
                              (:match-rules ("let_expression"
                                             "let_open_expression"
                                             "application_expression"))))
-
-        ;; DECISION: move down from an if directly to the else
-        ;; (:activation-nodes ((:nodes ("if_expression") :position at))
-        ;; :selector (:choose node :match-children
-        ;;             (:match-rules ("then_clause" "else_clause"))))
 
         (:activation-nodes ((:nodes ("value_definition") :position at))
           :selector (:choose node :match-children
@@ -504,13 +507,6 @@
         ;;   :selector (:choose node :match-children
         ;;             t))
 
-        (:activation-nodes
-          ((:nodes ("match_expression" "try_expression" "function_expression") :position at))
-          :selector (:choose node :match-children (:match-rules ("match_case"))))
-
-        (:activation-nodes ((:nodes ("match_case") :position at))
-          :selector (:choose node :match-children
-                    t))
         
         (:activation-nodes ((:nodes ("constructor_declaration") :has-parent ("variant_declaration") :position at))
           :selector (:choose node :match-children
