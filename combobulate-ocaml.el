@@ -635,6 +635,10 @@
       (procedures-hierarchy
        '(
 
+        (:activation-nodes
+          ((:nodes ("instance_variable_specification") :position at))
+          :selector (:choose node :match-children t))
+
          ;; From module_name, navigate up to parent then to signature
          (:activation-nodes
           ((:nodes ("module_name")))
