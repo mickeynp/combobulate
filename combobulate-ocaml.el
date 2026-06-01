@@ -702,7 +702,7 @@
                     (rule "type_binding")
                     (rule "signature")
                     (rule "_class_field_specification"))))
-          :selector (:choose node :match-siblings (:discard-rules ("attribute"))))
+          :selector (:choose node :match-siblings (:discard-rules ("attribute" "ERROR"))))
 
          (:activation-nodes
           ((:nodes ((rule "compilation_unit"))))
