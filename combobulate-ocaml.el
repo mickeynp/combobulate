@@ -656,7 +656,12 @@
 
       (envelope-indent-region-function #'indent-region)
       (pretty-print-node-name-function #'combobulate-ocaml-pretty-print-node-name)
-      (plausible-separators '(";" "," "|"))
+      (plausible-separators '(";" ",", "|"))
+      ;; Match the implementation side: don't let `combobulate-navigate-down'
+      ;; fall back to `scan-lists' when no procedure matches.  The fallback
+      ;; jumps into the first parenthesised expression it finds (e.g. into
+      ;; `(string path * string)' of a val_specification's type), which is
+      ;; never useful for a signature body.
       (navigate-down-into-lists nil)
 
       ;; Interface files only have specifications, not definitions
@@ -717,11 +722,20 @@
           :selector (:choose parent :match-children
                              (:match-rules ("signature"))))
 
-         ;; From sig keyword, navigate to sibling signature items
-         ;; (type_definition, value_specification, etc.)
+         ;; From the `sig ... end' body of a module signature, descend
+         ;; into its first item (value_specification, type_definition,
+         ;; etc.).  `signature' is added to `combobulate-prefer-container-types'
+         ;; so the `sig' keyword resolves to the signature container,
+         ;; letting this rule fire at the keyword.  Without it the
+         ;; cursor walks past the keyword to the first val_specification
+         ;; (or wherever the anonymous-sibling logic lands), no rule
+         ;; matches, and `combobulate-navigate-down' falls through to
+         ;; the parenthesis-jump fallback -- landing inside the type
+         ;; of the *last* val_specification rather than on the first
+         ;; signature item.
          (:activation-nodes
-          ((:nodes ("sig")))
-          :selector (:choose node :match-siblings
+          ((:nodes ("signature") :position at))
+          :selector (:choose node :match-children
                              (:match-rules ((rule "_signature_item")))))
 
          ;; From method keyword, navigate to parent then to method_name
