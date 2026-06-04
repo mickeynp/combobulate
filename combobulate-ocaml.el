@@ -738,6 +738,37 @@
           :selector (:choose node :match-children
                              (:match-rules ((rule "_signature_item")))))
 
+         ;; Descend from a constructor declaration into its payload
+         ;; type (the `of T' part of `| Foo of T').  Mirrors the
+         ;; equivalent .ml hierarchy rule; without it, cursor on a
+         ;; constructor name in an .mli falls back to the
+         ;; variant_declaration sibling rule and jumps to the *next*
+         ;; constructor rather than descending into the payload of
+         ;; the current one.  Must come before the type_binding rule
+         ;; below so it matches first when cursor is on a
+         ;; constructor_name inside a variant.
+         (:activation-nodes
+          ((:nodes ("constructor_declaration")))
+          :selector (:choose node :match-children
+                             (:discard-rules ("|"))))
+
+         ;; Descend from a type binding into its variant declaration
+         ;; (or record) so cursor on the type name (e.g. `path_item' in
+         ;; `type 'cu path_item = | A | B') steps to the first
+         ;; constructor.  The .ml side handles this via a separate
+         ;; type_binding rule; in the interface we add an explicit
+         ;; type_binding match because the catch-all rule below uses
+         ;; `(rule "type_binding")' which expands to the type
+         ;; binding's *contents*, not the binding itself, and so
+         ;; never picks variant_declaration as a match target.
+         (:activation-nodes
+          ((:nodes ("type_binding")))
+          :selector (:choose node :match-children
+                             (:match-rules ("variant_declaration"
+                                            "record_declaration"
+                                            "constructed_type"
+                                            "type_constructor_path"))))
+
          ;; From method keyword, navigate to parent then to method_name
          (:activation-nodes
           ((:nodes ("method")))
