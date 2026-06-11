@@ -682,7 +682,18 @@
       (procedures-logical '((:activation-nodes ((:nodes (all))))))
 
       (procedures-sibling
-       '((:activation-nodes
+       '(
+         ;; Step between the bindings of a `type ... and ... and ...'
+         ;; group inside a signature.  Mirror of the .ml side -- without
+         ;; this rule, the catch-all below treats every type_binding's
+         ;; contents as the activation and lands on the surrounding
+         ;; type_definition instead of stepping between bindings.
+         (:activation-nodes
+          ((:nodes ("type_binding")
+                   :has-sibling ("type_binding")))
+          :selector  (:choose node :match-siblings t))
+
+         (:activation-nodes
           ((:nodes ("variant_declaration"
                     "record_declaration")))
           :selector (:choose node :match-children t))
@@ -762,12 +773,26 @@
          ;; binding's *contents*, not the binding itself, and so
          ;; never picks variant_declaration as a match target.
          (:activation-nodes
-          ((:nodes ("type_binding")))
+          ((:nodes ("type_binding") :position at))
           :selector (:choose node :match-children
                              (:match-rules ("variant_declaration"
                                             "record_declaration"
                                             "constructed_type"
                                             "type_constructor_path"))))
+
+         ;; Descend from `class type c = object ... end' through its
+         ;; class_type_binding to the class_type_name and then the
+         ;; class_body_type.  In the interface grammar the recursive
+         ;; query used on the .ml side returns the class_type_binding
+         ;; parent rather than its inner children, so step-by-step
+         ;; rules are used instead.  `:position at' keeps each rule
+         ;; from competing with the class_body_type descent below.
+         (:activation-nodes ((:nodes ("class_type_definition") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("class_type_binding"))))
+         (:activation-nodes ((:nodes ("class_type_binding") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("class_type_name" "class_body_type"))))
 
          ;; From method keyword, navigate to parent then to method_name
          (:activation-nodes
