@@ -756,7 +756,7 @@
 
 (define-combobulate-language
  :name ocaml-interface
- :major-modes (caml-mode tuareg-mode neocaml-interface-mode)
+ :major-modes (caml-mode tuareg-interface-mode neocaml-interface-mode)
  :custom combobulate-ocaml-interface-definitions
  :setup-fn combobulate-ocaml-setup)
  

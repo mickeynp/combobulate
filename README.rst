@@ -77,42 +77,42 @@ Combobulate has to support your programming language for it to work properly. Mo
 
 Here is a list of the languages currently supported.
 
-+--------------------+--------------------------------------------------------------+--------------------+
-|**Language**        |**Major Modes**                                               |**Grammar Version** |
-+--------------------+--------------------------------------------------------------+--------------------+
-|CSS                 |css-mode, css-ts-mode                                         |v0.20.0             |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|HTML [1]            |html-mode, html-ts-mode, mhtml-mode, sgml-mode                |v0.20.1             |
-|                    |                                                              |                    |
-|                    |                                                              |                    |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|JSON                |json-mode, json-ts-mode                                       |v0.20.2             |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|Javascript+JSX      |js-mode, jsN-mode, js-ts-mode, js-jsx-mode, js2-jsx-mode      |v0.20.1             |
-|                    |                                                              |                    |
-|                    |                                                              |                    |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|Typescript+TSX      |typescript-mode, typescript-ts-mode, tsx-ts-mode              |v0.20.3             |
-|                    |                                                              |                    |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|Python              |python-mode, python-ts-mode                                   |v0.20.4             |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|YAML                |yaml-mode, yaml-ts-mode                                       |v0.5.0              |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|TOML                |toml-ts-mode, conf-toml-mode                                  |v0.5.1              |
-|                    |                                                              |                    |
-+--------------------+--------------------------------------------------------------+--------------------+
-|Go                  |go-mode, go-ts-mode                                           |v0.20.0             |
-+--------------------+--------------------------------------------------------------+--------------------+
-|OCaml [2]           |tuareg-mode [3], neocaml-mode, neocaml-interface-mode         |v0.24.2             |
-+--------------------+--------------------------------------------------------------+--------------------+
++--------------------+--------------------------------------------------------------+------------------------------+
+|**Language**        |**Major Modes**                                               |**Grammar Version**           |
++--------------------+--------------------------------------------------------------+------------------------------+
+|CSS                 |css-mode, css-ts-mode                                         |v0.20.0                       |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|HTML [1]            |html-mode, html-ts-mode, mhtml-mode, sgml-mode                |v0.20.1                       |
+|                    |                                                              |                              |
+|                    |                                                              |                              |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|JSON                |json-mode, json-ts-mode                                       |v0.20.2                       |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|Javascript+JSX      |js-mode, jsN-mode, js-ts-mode, js-jsx-mode, js2-jsx-mode      |v0.20.1                       |
+|                    |                                                              |                              |
+|                    |                                                              |                              |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|Typescript+TSX      |typescript-mode, typescript-ts-mode, tsx-ts-mode              |v0.20.3                       |
+|                    |                                                              |                              |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|Python              |python-mode, python-ts-mode                                   |v0.20.4                       |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|YAML                |yaml-mode, yaml-ts-mode                                       |v0.5.0                        |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|TOML                |toml-ts-mode, conf-toml-mode                                  |v0.5.1                        |
+|                    |                                                              |                              |
++--------------------+--------------------------------------------------------------+------------------------------+
+|Go                  |go-mode, go-ts-mode                                           |v0.20.0                       |
++--------------------+--------------------------------------------------------------+------------------------------+
+|OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.24.2 |
++--------------------+--------------------------------------------------------------+------------------------------+
 
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
@@ -131,38 +131,7 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
 
  [2] OCaml support written by `Pixie Dust <https://github.com/PizieDust>`__, `Tim McGilchrist <https://github.com/tmcgilchrist>`__ & `Xavier Van de Woestyne <https://github.com/xvw>`__.
 
- [3] Combobulate works best with major-modes which are based on tree-sitter. To use combobulate with `tuareg-mode`, you need to load the `tuareg-treesit-bridge` which creates the tree-sitter parser for the tuareg buffer.
-
- Add this to your config:
-
-.. code-block:: elisp
-
-    (require 'tuareg)
-    (require 'treesit)
-    (defun tuareg-treesit-setup ()
-      "Use the correct tree-sitter parser based on file extension."
-      (let ((correct-lang
-            (if (and buffer-file-name
-                      (string-match-p "\\.mli\\'" buffer-file-name))
-                'ocaml-interface
-              'ocaml)))
-        (when (treesit-language-available-p correct-lang)
-          (mapc #'treesit-parser-delete (treesit-parser-list))
-          (treesit-parser-create correct-lang)
-          (when (bound-and-true-p combobulate-mode)
-            (combobulate-mode -1)
-            (combobulate-mode 1))
-          (font-lock-ensure)
-          (message "tuareg-treesit: using %s" correct-lang))))
-
-    (add-hook 'tuareg-mode-hook #'tuareg-treesit-setup)
-
-    (provide 'tuareg-treesit)
-    ;;; tuareg-treesit.el ends here
-
-You may as well save it to a file, e.g, ``tuareg-treesit.el``, and load it in your config.
-
-``(load "path-to-tuareg-treesit.el")``
+ [3] To use combobulate with tuareg, you need to use the latest [main](https://github.com/ocaml/tuareg) branch which has `tuareg-mode` and `tuareg-interface-mode`.
 
 Recent Changes / What's New
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
