@@ -67,25 +67,16 @@
 (add-to-list 'savehist-additional-variables 'combobulate-query-ring)
 
 
-(defconst combobulate-query-builder-legacy-predicate-names
-  '("#match" "#equal" "#pred")
-  "Tree-sitter query predicate names used by Emacs 29 and 30.")
+(defconst combobulate-query-builder-predicate-mapping
+  '(("#match" . "#match?")
+    ("#equal" . "#eq?")
+    ("#pred" . "#pred?"))
+  "Mapping from Emacs 29/30 tree-sitter query predicates to Emacs 31 predicates.")
 
-(defconst combobulate-query-builder-modern-predicate-names
-  '("#match?" "#eq?" "#pred?")
-  "Tree-sitter query predicate names used by Emacs 31 and later.")
-
-(defun combobulate-query-builder-modern-predicate-syntax-p ()
-  "Return non-nil when the current Emacs expects `?' suffixed predicates."
-  ;; Emacs switched from #match/#equal/#pred to #match?/#eq?/#pred?
-  ;; on the Emacs 31 development line.
-  (>= emacs-major-version 31))
-
-(defun combobulate-query-builder-predicate-names ()
-  "Return the tree-sitter predicate names supported by the current Emacs."
-  (if (combobulate-query-builder-modern-predicate-syntax-p)
-      combobulate-query-builder-modern-predicate-names
-    combobulate-query-builder-legacy-predicate-names))
+(defconst combobulate-query-builder-predicate-names
+  (mapcar (if (>= emacs-major-version 31) #'cdr #'car)
+          combobulate-query-builder-predicate-mapping)
+  "Tree-sitter query predicate names supported by the current Emacs.")
 
 (defvar combobulate-query-builder-parser nil
   "Tree sitter parser to query against.")
@@ -408,7 +399,7 @@ completion candidates for the current point."
                                      (map-values (cadr rule)))
                                    nil))
                           combobulate-query-builder-rule-names)
-                        (copy-tree (combobulate-query-builder-predicate-names))))
+                        (copy-tree combobulate-query-builder-predicate-names)))
                ;; it's a field name
                ((and (not at-form-start) (not at-form-end))
                 (when-let (rule (assoc current-rule-name combobulate-query-builder-rules))
@@ -538,15 +529,13 @@ completion candidates for the current point."
 
 (defun combobulate-query-builder-predicate-replacements ()
   "Return the predicate replacements needed for the current Emacs."
-  (if (combobulate-query-builder-modern-predicate-syntax-p)
-      '((":equal" . "#eq?")
-        (":match" . "#match?")
-        (":pred" . "#pred?")
-        (":eq" . "#eq?"))
-    '((":equal" . "#equal")
-      (":match" . "#match")
-      (":pred" . "#pred")
-      (":eq" . "#equal"))))
+  (let ((match (nth 0 combobulate-query-builder-predicate-names))
+        (equal (nth 1 combobulate-query-builder-predicate-names))
+        (pred (nth 2 combobulate-query-builder-predicate-names)))
+    `((":equal" . ,equal)
+      (":match" . ,match)
+      (":pred" . ,pred)
+      (":eq" . ,equal))))
 
 (defun combobulate-query-builder-to-string (form-query)
   "Convert FORM-QUERY to a string query.
