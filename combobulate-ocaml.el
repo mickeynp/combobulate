@@ -689,14 +689,14 @@
          ;; contents as the activation and lands on the surrounding
          ;; type_definition instead of stepping between bindings.
          (:activation-nodes
-          ((:nodes ("type_binding")
-                   :has-sibling ("type_binding")))
-          :selector  (:choose node :match-siblings t))
-
-         (:activation-nodes
           ((:nodes ("variant_declaration"
                     "record_declaration")))
           :selector (:choose node :match-children t))
+
+         (:activation-nodes
+          ((:nodes ("type_binding")
+                   :has-sibling ("type_binding")))
+          :selector  (:choose node :match-siblings t))
 
          (:activation-nodes
           ((:nodes (
