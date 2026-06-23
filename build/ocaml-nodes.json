@@ -382,6 +382,10 @@
         "named": true
       },
       {
+        "type": "exclave_expression",
+        "named": true
+      },
+      {
         "type": "for_expression",
         "named": true
       },
@@ -2344,6 +2348,22 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "exclave_expression",
+    "named": true,
+    "fields": {
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_sequence_expression",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -6344,6 +6364,10 @@
     "named": false
   },
   {
+    "type": "exclave_",
+    "named": false
+  },
+  {
     "type": "external",
     "named": false
   },
@@ -6369,6 +6393,10 @@
   },
   {
     "type": "functor",
+    "named": false
+  },
+  {
+    "type": "global_",
     "named": false
   },
   {
