@@ -111,6 +111,8 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+------------------------------+
 |Go                  |go-mode, go-ts-mode                                           |v0.20.0                       |
 +--------------------+--------------------------------------------------------------+------------------------------+
+|Rust                |rust-ts-mode                                                  |v0.24.2                       |
++--------------------+--------------------------------------------------------------+------------------------------+
 |OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.24.2 |
 +--------------------+--------------------------------------------------------------+------------------------------+
 
@@ -227,7 +229,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                    (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
                    (markdown . ("https://github.com/ikatyang/tree-sitter-markdown" "v0.7.1"))
                    (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-                   (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "v0.21.2"))
+                   (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "v0.24.2"))
                    (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
                    (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
@@ -255,6 +257,7 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                  (bash-mode . bash-ts-mode)
                  (conf-toml-mode . toml-ts-mode)
                  (go-mode . go-ts-mode)
+                 (rust-mode . rust-ts-mode)
                  (css-mode . css-ts-mode)
                  (json-mode . json-ts-mode)
                  (js-json-mode . json-ts-mode)))
