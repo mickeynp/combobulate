@@ -131,7 +131,7 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
 
  [2] OCaml support written by `Pixie Dust <https://github.com/PizieDust>`__, `Tim McGilchrist <https://github.com/tmcgilchrist>`__ & `Xavier Van de Woestyne <https://github.com/xvw>`__.
 
- [3] To use combobulate with tuareg, you need to use the latest [main](https://github.com/ocaml/tuareg) branch which has `tuareg-mode` and `tuareg-interface-mode`.
+ [3] To use combobulate with tuareg, you need to use the release version as from [3.1.0](https://github.com/ocaml/tuareg/releases/tag/3.1.0) which has support for `tuareg-mode` and `tuareg-interface-mode`.
 
 Recent Changes / What's New
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
