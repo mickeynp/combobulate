@@ -656,7 +656,7 @@
 
       (envelope-indent-region-function #'indent-region)
       (pretty-print-node-name-function #'combobulate-ocaml-pretty-print-node-name)
-      (plausible-separators '(";" ",", "|"))
+      (plausible-separators '(";" "," "|"))
       ;; Match the implementation side: don't let `combobulate-navigate-down'
       ;; fall back to `scan-lists' when no procedure matches.  The fallback
       ;; jumps into the first parenthesised expression it finds (e.g. into
