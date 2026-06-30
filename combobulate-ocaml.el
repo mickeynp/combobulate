@@ -657,6 +657,11 @@
       (envelope-indent-region-function #'indent-region)
       (pretty-print-node-name-function #'combobulate-ocaml-pretty-print-node-name)
       (plausible-separators '(";" "," "|"))
+      ;; Match the implementation side: don't let `combobulate-navigate-down'
+      ;; fall back to `scan-lists' when no procedure matches.  The fallback
+      ;; jumps into the first parenthesised expression it finds (e.g. into
+      ;; `(string path * string)' of a val_specification's type), which is
+      ;; never useful for a signature body.
       (navigate-down-into-lists nil)
 
       ;; Interface files only have specifications, not definitions
@@ -677,10 +682,21 @@
       (procedures-logical '((:activation-nodes ((:nodes (all))))))
 
       (procedures-sibling
-       '((:activation-nodes
+       '(
+         ;; Step between the bindings of a `type ... and ... and ...'
+         ;; group inside a signature.  Mirror of the .ml side -- without
+         ;; this rule, the catch-all below treats every type_binding's
+         ;; contents as the activation and lands on the surrounding
+         ;; type_definition instead of stepping between bindings.
+         (:activation-nodes
           ((:nodes ("variant_declaration"
                     "record_declaration")))
           :selector (:choose node :match-children t))
+
+         (:activation-nodes
+          ((:nodes ("type_binding")
+                   :has-sibling ("type_binding")))
+          :selector  (:choose node :match-siblings t))
 
          (:activation-nodes
           ((:nodes (
@@ -717,12 +733,66 @@
           :selector (:choose parent :match-children
                              (:match-rules ("signature"))))
 
-         ;; From sig keyword, navigate to sibling signature items
-         ;; (type_definition, value_specification, etc.)
+         ;; From the `sig ... end' body of a module signature, descend
+         ;; into its first item (value_specification, type_definition,
+         ;; etc.).  `signature' is added to `combobulate-prefer-container-types'
+         ;; so the `sig' keyword resolves to the signature container,
+         ;; letting this rule fire at the keyword.  Without it the
+         ;; cursor walks past the keyword to the first val_specification
+         ;; (or wherever the anonymous-sibling logic lands), no rule
+         ;; matches, and `combobulate-navigate-down' falls through to
+         ;; the parenthesis-jump fallback -- landing inside the type
+         ;; of the *last* val_specification rather than on the first
+         ;; signature item.
          (:activation-nodes
-          ((:nodes ("sig")))
-          :selector (:choose node :match-siblings
+          ((:nodes ("signature") :position at))
+          :selector (:choose node :match-children
                              (:match-rules ((rule "_signature_item")))))
+
+         ;; Descend from a constructor declaration into its payload
+         ;; type (the `of T' part of `| Foo of T').  Mirrors the
+         ;; equivalent .ml hierarchy rule; without it, cursor on a
+         ;; constructor name in an .mli falls back to the
+         ;; variant_declaration sibling rule and jumps to the *next*
+         ;; constructor rather than descending into the payload of
+         ;; the current one.  Must come before the type_binding rule
+         ;; below so it matches first when cursor is on a
+         ;; constructor_name inside a variant.
+         (:activation-nodes
+          ((:nodes ("constructor_declaration")))
+          :selector (:choose node :match-children
+                             (:discard-rules ("|"))))
+
+         ;; Descend from a type binding into its variant declaration
+         ;; (or record) so cursor on the type name (e.g. `path_item' in
+         ;; `type 'cu path_item = | A | B') steps to the first
+         ;; constructor.  The .ml side handles this via a separate
+         ;; type_binding rule; in the interface we add an explicit
+         ;; type_binding match because the catch-all rule below uses
+         ;; `(rule "type_binding")' which expands to the type
+         ;; binding's *contents*, not the binding itself, and so
+         ;; never picks variant_declaration as a match target.
+         (:activation-nodes
+          ((:nodes ("type_binding") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("variant_declaration"
+                                            "record_declaration"
+                                            "constructed_type"
+                                            "type_constructor_path"))))
+
+         ;; Descend from `class type c = object ... end' through its
+         ;; class_type_binding to the class_type_name and then the
+         ;; class_body_type.  In the interface grammar the recursive
+         ;; query used on the .ml side returns the class_type_binding
+         ;; parent rather than its inner children, so step-by-step
+         ;; rules are used instead.  `:position at' keeps each rule
+         ;; from competing with the class_body_type descent below.
+         (:activation-nodes ((:nodes ("class_type_definition") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("class_type_binding"))))
+         (:activation-nodes ((:nodes ("class_type_binding") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("class_type_name" "class_body_type"))))
 
          ;; From method keyword, navigate to parent then to method_name
          (:activation-nodes
