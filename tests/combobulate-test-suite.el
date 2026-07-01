@@ -272,14 +272,12 @@ doesn't exist."
         ;; nil.
         "'EMPTY"
         "()\n"
-        (prin1-to-string
-         (pp
-          `(ert-deftest ,test-name 'EMPTY
-             ,docstring
-             (combobulate-test (:language ,fixture-language :mode ,fixture-major-mode :fixture ,fixture-file-name)
-               :tags ',(list 'combobulate fixture-language fixture-major-mode collection)
-               ,@extended-action-body)))
-         t))
+        (pp-to-string
+         `(ert-deftest ,test-name 'EMPTY
+            ,docstring
+            (combobulate-test (:language ,fixture-language :mode ,fixture-major-mode :fixture ,fixture-file-name)
+              :tags ',(list 'combobulate fixture-language fixture-major-mode collection)
+              ,@extended-action-body))))
        "\n\n"))))
 
 ;;; method that generates a test harness for every fixture-files entry
@@ -287,9 +285,10 @@ doesn't exist."
   "Generate a test harness for every fixture-files entry."
   (save-window-excursion
     (save-excursion
-      (let* ((auto-mode-alist (append auto-mode-alist
-                                      '(("\\.go\\'" . go-ts-mode)
-                                        ("\\.ml[i]?\\'" . tuareg-mode))))
+      (let* ((auto-mode-alist (append '(("\\.go\\'" . go-ts-mode)
+                                        ("\\.mli\\'" . tuareg-interface-mode)
+                                        ("\\.ml\\'" . tuareg-mode))
+                                      auto-mode-alist))
              ;; required to ensure the right major mode is chosen.
              (major-mode-remap-alist '((python-mode . python-ts-mode)
                                        (css-mode . css-ts-mode)
@@ -336,7 +335,7 @@ doesn't exist."
       (progn
         (combobulate-test-go-to-overlay number)
         (combobulate-test-execute-action action))
-    (signal 'missing-overlay (format "No overlay found for number %s" number))))
+    (signal 'missing-overlay (list (format "No overlay found for number %s" number)))))
 
 (cl-defmethod combobulate-test-harness-run-and-write-test ((obj combobulate-test-harness))
   (with-slots (collection-name fixture-buffer fixture-file-name marker-number output-buffer action-body command-error)
