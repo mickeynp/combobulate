@@ -4,7 +4,7 @@
 
 ;; Author: Mickey Petersen <mickey at masteringemacs.org>
 ;; Package-Requires: ((emacs "29"))
-;; Version: 0.2
+;; Version: 0.0.0-git
 ;; Homepage: https://www.github.com/mickeynp/combobulate
 ;; Keywords: convenience, tools, languages
 
