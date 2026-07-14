@@ -1,0 +1,2 @@
+# Generated golden fixtures preserve exact whitespace from their source cases.
+tests/fixture-deltas/** -whitespace
