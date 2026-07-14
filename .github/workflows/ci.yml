@@ -169,7 +169,9 @@ jobs:
   # Never execute pull-request code in this job. It alone can create Checks and
   # consumes only the exact JUnit artifact emitted by the unprivileged test job.
   report:
-    name: Publish ERT / Emacs ${{ matrix.emacs-version }}
+    # GitHub evaluates this job's trust gate before expanding its matrix. Keep
+    # the job name static so skipped fork-PR runs never expose a raw expression.
+    name: Publish ERT checks
     needs: test
     if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ubuntu-24.04
