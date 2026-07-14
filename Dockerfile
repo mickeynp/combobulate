@@ -30,10 +30,10 @@ ENV EMACS_VERSION=${EMACS_VERSION}
 
 WORKDIR /opt/emacs
 
-# Release lanes use GNU tarballs. Prerelease lanes use the established
-# read-only Emacs mirror and supply both a named ref and its separately resolved
-# full commit SHA; consuming the SHA here also makes it part of the Docker layer
-# cache identity.
+# Release lanes use GNU tarballs. Prerelease lanes use the official Savannah
+# repository and supply both a named ref and its separately resolved full commit
+# SHA; consuming the SHA here also makes it part of the Docker layer cache
+# identity.
 RUN set -eu; \
     mkdir emacs-source; \
     if [ -n "${EMACS_SOURCE_REF}" ] || [ -n "${EMACS_SOURCE_SHA}" ]; then \
@@ -46,7 +46,7 @@ RUN set -eu; \
         printf '%s\n' "${EMACS_SOURCE_SHA}" | grep -Eq '^[0-9a-f]{40}$'; \
         git -C emacs-source init --quiet; \
         git -C emacs-source remote add origin \
-            https://github.com/emacs-mirror/emacs.git; \
+            https://git.savannah.gnu.org/git/emacs.git; \
         git -C emacs-source -c protocol.version=2 fetch \
             --depth 1 --no-tags origin "${EMACS_SOURCE_REF}"; \
         fetched_sha="$(git -C emacs-source rev-parse 'FETCH_HEAD^{commit}')"; \

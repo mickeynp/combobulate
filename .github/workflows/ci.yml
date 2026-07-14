@@ -52,8 +52,8 @@ jobs:
         id: emacs-source
         env:
           EMACS_SOURCE_REF: ${{ matrix.emacs-source-ref }}
-          # Established read-only mirror of the canonical Savannah repository.
-          EMACS_SOURCE_REPOSITORY: https://github.com/emacs-mirror/emacs.git
+          # Official GNU Emacs repository hosted by Savannah.
+          EMACS_SOURCE_REPOSITORY: https://git.savannah.gnu.org/git/emacs.git
         run: |
           set -euo pipefail
           cache_key="emacs-${{ matrix.emacs-version }}"
