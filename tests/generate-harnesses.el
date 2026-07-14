@@ -117,7 +117,7 @@
                   :instructions
                   ("{" @ "null" >
                    n > " ? " @ (choice* :name "consequence" :missing ("null") :rest (r>))
-                   n > " : " (choice* :name "alternative" :missing ("<" (p other "SOME TAG") "/>") :rest (r>))
+                   n "  : " (choice* :name "alternative" :missing ("<" (p other "SOME TAG") "/>") :rest (r>))
                    n > "}" >)
                   :mock-proffer-choices (0 0)
                   :mock-registers ((region . "<div>Some jsx element</div>"))

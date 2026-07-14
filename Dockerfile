@@ -1,59 +1,63 @@
-FROM ubuntu:24.04 as base
+# syntax=docker/dockerfile:1
+FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 
-ENV VERSION=29.1 \
-    FOO=1
-# We assume the git repo's cloned outside and copied in, instead of
-# cloning it in here. But that works, too.
-WORKDIR /opt/emacs
-LABEL MAINTAINER="Mickey Petersen at mastering emacs" \
-      FOO="bar"
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN sed -i 's/# deb-src/deb-src/' /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get build-dep -y emacs
-
-# Needed for add-apt-repository, et al.
-#
-# If you're installing this outside Docker you may not need this.
 RUN apt-get update \
-    && apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common \
-    wget \
-    git \
-    libtree-sitter-dev \
-    libtree-sitter0 \
-    tree-sitter-cli
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        libgnutls28-dev \
+        libjansson-dev \
+        libncurses-dev \
+        libtree-sitter-dev \
+        libxml2-dev \
+        pkg-config \
+        texinfo \
+        xz-utils \
+        zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Download and extract Emacs
-RUN wget https://ftp.gnu.org/gnu/emacs/emacs-$VERSION.tar.gz \
-    && tar -xf emacs-$VERSION.tar.gz \
-    && rm emacs-$VERSION.tar.gz
+ARG EMACS_VERSION=29.4
+ARG JOBS=4
 
-WORKDIR /opt/emacs/emacs-$VERSION/
+ENV EMACS_VERSION=${EMACS_VERSION}
 
-# Configure and run
-RUN ./autogen.sh \
-    && ./configure \
-    --with-tree-sitter
+WORKDIR /opt/emacs
 
-RUN make -j ${JOBS} \
+RUN curl --fail --location --remote-name \
+        "https://ftp.gnu.org/gnu/emacs/emacs-${EMACS_VERSION}.tar.xz" \
+    && tar --extract --file "emacs-${EMACS_VERSION}.tar.xz" \
+    && rm "emacs-${EMACS_VERSION}.tar.xz"
+
+WORKDIR /opt/emacs/emacs-${EMACS_VERSION}
+
+RUN ./configure \
+        --without-native-compilation \
+        --without-x \
+        --with-gnutls \
+        --with-tree-sitter \
+        --with-xml2 \
+    && make -j "${JOBS}" \
     && make install \
-    && cd \
-    && rm -rf /opt/emacs/emacs-$VERSION/
-ENV JOBS=4
+    && rm -rf "/opt/emacs/emacs-${EMACS_VERSION}"
 
 WORKDIR /opt
 
-# Install the grammars
-COPY .ts-setup.el /opt
-RUN emacs --batch -L $PWD -l .ts-setup.el
+# Keep prebuilt grammars readable when CI maps the container to its unprivileged
+# runner UID. A fixed HOME also works when that UID has no passwd entry.
+ENV HOME=/opt/combobulate-home
+RUN mkdir -p "${HOME}"
+
+# Keep grammar compilation cached independently from ordinary source changes.
+COPY tests/.ts-setup.el /opt/tests/.ts-setup.el
+COPY tests/html-ts-mode/html-ts-mode.el /opt/tests/html-ts-mode/html-ts-mode.el
+RUN emacs --batch --no-init-file -L /opt -l /opt/tests/.ts-setup.el \
+    && chmod -R a+rX "${HOME}"
 
 COPY . /opt/
-RUN cd /opt/
-ENTRYPOINT ["make",  "foo"]
 
+ENTRYPOINT ["make"]
+CMD ["run-tests"]
