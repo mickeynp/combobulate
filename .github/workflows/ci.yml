@@ -26,14 +26,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        emacs-version:
-          - "29.4"
-          - "30.2"
+        include:
+          - emacs-version: "29.4"
+            emacs-source-ref: ""
+          - emacs-version: "30.2"
+            emacs-source-ref: ""
+          # Track the prerelease branch honestly as 31.x until GNU publishes
+          # refs/tags/emacs-31.1, then switch this row to 31.1 and that tag.
+          # A future emacs-32 lane needs only another source-backed matrix row.
+          - emacs-version: "31.x"
+            emacs-source-ref: refs/heads/emacs-31
 
     env:
       IMAGE_NAME: combobulate-test:${{ matrix.emacs-version }}
       ERT_REPORT: test-results/emacs-${{ matrix.emacs-version }}/ert
-      CACHE_SCOPE: emacs-${{ matrix.emacs-version }}-${{ github.base_ref || github.ref_name }}
 
     steps:
       - name: Check out the repository
@@ -41,6 +47,43 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: false
+
+      - name: Resolve Emacs source revision
+        id: emacs-source
+        env:
+          EMACS_SOURCE_REF: ${{ matrix.emacs-source-ref }}
+          # Established read-only mirror of the canonical Savannah repository.
+          EMACS_SOURCE_REPOSITORY: https://github.com/emacs-mirror/emacs.git
+        run: |
+          set -euo pipefail
+          cache_key="emacs-${{ matrix.emacs-version }}"
+          source_sha=""
+
+          if [[ -n "$EMACS_SOURCE_REF" ]]; then
+            case "$EMACS_SOURCE_REF" in
+              refs/heads/*|refs/tags/*) ;;
+              *) echo "Unsupported Emacs source ref: $EMACS_SOURCE_REF" >&2; exit 1 ;;
+            esac
+
+            resolution="$(git ls-remote --exit-code \
+              "$EMACS_SOURCE_REPOSITORY" \
+              "$EMACS_SOURCE_REF" "${EMACS_SOURCE_REF}^{}")"
+            source_sha="$(awk -v ref="$EMACS_SOURCE_REF" '
+              $2 == ref { direct = $1 }
+              $2 == ref "^{}" { peeled = $1 }
+              END { if (peeled) print peeled; else if (direct) print direct }
+            ' <<< "$resolution")"
+
+            if [[ ! "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Could not resolve $EMACS_SOURCE_REF to a full commit SHA" >&2
+              exit 1
+            fi
+            cache_key="${cache_key}-${source_sha}"
+            echo "Resolved $EMACS_SOURCE_REF to $source_sha"
+          fi
+
+          printf 'sha=%s\n' "$source_sha" >> "$GITHUB_OUTPUT"
+          printf 'cache-key=%s\n' "$cache_key" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -53,8 +96,10 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}
           build-args: |
             EMACS_VERSION=${{ matrix.emacs-version }}
-          cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
-          cache-to: ${{ github.event_name == 'push' && format('type=gha,mode=max,scope={0}', env.CACHE_SCOPE) || '' }}
+            EMACS_SOURCE_REF=${{ matrix.emacs-source-ref }}
+            EMACS_SOURCE_SHA=${{ steps.emacs-source.outputs.sha }}
+          cache-from: type=gha,scope=${{ steps.emacs-source.outputs.cache-key }}-${{ github.base_ref || github.ref_name }}
+          cache-to: ${{ github.event_name == 'push' && format('type=gha,mode=max,scope={0}-{1}', steps.emacs-source.outputs.cache-key, github.ref_name) || '' }}
 
       - name: Verify Emacs and tree-sitter grammars
         run: |
@@ -79,6 +124,24 @@ jobs:
                                         tsx typescript yaml)))
                 (unless (treesit-language-available-p language)
                   (error "Missing %s grammar" language))))'
+
+      - name: Run load-path smoke test
+        run: |
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 512 \
+            --memory 2g \
+            --cpus 2 \
+            --user "$(id -u):$(id -g)" \
+            --entrypoint emacs \
+            "$IMAGE_NAME" \
+            --batch --no-init-file --directory /opt \
+            --eval '(progn
+              (require (quote combobulate))
+              (unless (featurep (quote combobulate))
+                (error "Combobulate did not load from /opt")))'
 
       - name: Run ERT suite
         run: |
@@ -145,6 +208,7 @@ jobs:
         emacs-version:
           - "29.4"
           - "30.2"
+          - "31.x"
 
     steps:
       - name: Download ERT results

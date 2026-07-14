@@ -1,6 +1,8 @@
 IMG ?= combobulate
 TAG ?= dev
 EMACS_VERSION ?= 29.4
+EMACS_SOURCE_REF ?=
+EMACS_SOURCE_SHA ?=
 JOBS ?= 4
 DOCKER_CMD ?= docker run --rm -w /opt/ $(DOCKER_ARGS) $(IMG):$(TAG)
 EMACS_BIN ?= emacs
@@ -62,9 +64,11 @@ run-tests-junit: byte-compile
 .PHONY:	docker-build
 docker-build:
 	docker build \
-		--build-arg EMACS_VERSION=$(EMACS_VERSION) \
-		--build-arg JOBS=$(JOBS) \
-		-t $(IMG):$(TAG) .
+		--build-arg EMACS_VERSION="$(EMACS_VERSION)" \
+		--build-arg EMACS_SOURCE_REF="$(EMACS_SOURCE_REF)" \
+		--build-arg EMACS_SOURCE_SHA="$(EMACS_SOURCE_SHA)" \
+		--build-arg JOBS="$(JOBS)" \
+		-t "$(IMG):$(TAG)" .
 
 .PHONY:	docker-build-tests
 docker-build-tests: docker-build

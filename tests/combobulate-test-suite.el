@@ -336,7 +336,8 @@ doesn't exist."
       (progn
         (combobulate-test-go-to-overlay number)
         (combobulate-test-execute-action action))
-    (signal 'missing-overlay (format "No overlay found for number %s" number))))
+    (signal 'missing-overlay
+            (list (format "No overlay found for number %s" number)))))
 
 (cl-defmethod combobulate-test-harness-run-and-write-test ((obj combobulate-test-harness))
   (with-slots (collection-name fixture-buffer fixture-file-name marker-number output-buffer action-body command-error)
