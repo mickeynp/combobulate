@@ -1,40 +1,62 @@
-FROM ubuntu:24.04 AS base
-
-# We assume the git repo's cloned outside and copied in, instead of
-# cloning it in here. But that works, too.
-WORKDIR /opt/emacs
-LABEL MAINTAINER="Mickey Petersen at mastering emacs"
+# syntax=docker/dockerfile:1
+FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources \
-    && apt-get update \
-    && apt-get build-dep -y emacs
-
-# Needed for add-apt-repository, et al.
-#
-# If you're installing this outside Docker you may not need this.
 RUN apt-get update \
-    && apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common \
-    wget \
-    git \
-    libtree-sitter-dev \
-    libtree-sitter0 \
-    tree-sitter-cli \
-    emacs
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        libgnutls28-dev \
+        libjansson-dev \
+        libncurses-dev \
+        libtree-sitter-dev \
+        libxml2-dev \
+        pkg-config \
+        texinfo \
+        xz-utils \
+        zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG EMACS_VERSION=29.4
+ARG JOBS=4
+
+ENV EMACS_VERSION=${EMACS_VERSION}
+
+WORKDIR /opt/emacs
+
+RUN curl --fail --location --remote-name \
+        "https://ftp.gnu.org/gnu/emacs/emacs-${EMACS_VERSION}.tar.xz" \
+    && tar --extract --file "emacs-${EMACS_VERSION}.tar.xz" \
+    && rm "emacs-${EMACS_VERSION}.tar.xz"
+
+WORKDIR /opt/emacs/emacs-${EMACS_VERSION}
+
+RUN ./configure \
+        --without-native-compilation \
+        --without-x \
+        --with-gnutls \
+        --with-tree-sitter \
+        --with-xml2 \
+    && make -j "${JOBS}" \
+    && make install \
+    && rm -rf "/opt/emacs/emacs-${EMACS_VERSION}"
 
 WORKDIR /opt
 
-# Install the grammars
-COPY .ts-setup.el /opt
-RUN emacs --batch -L $PWD -l .ts-setup.el
+# Keep prebuilt grammars readable when CI maps the container to its unprivileged
+# runner UID. A fixed HOME also works when that UID has no passwd entry.
+ENV HOME=/opt/combobulate-home
+RUN mkdir -p "${HOME}"
+
+# Keep grammar compilation cached independently from ordinary source changes.
+COPY .ts-setup.el /opt/.ts-setup.el
+RUN emacs --batch --no-init-file -L /opt -l /opt/.ts-setup.el \
+    && chmod -R a+rX "${HOME}"
 
 COPY . /opt/
-RUN cd /opt/
-ENTRYPOINT ["make"]
 
+ENTRYPOINT ["make"]
+CMD ["run-tests"]

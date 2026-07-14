@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - development
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Emacs ${{ matrix.emacs-version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs-version:
+          - "29.4"
+          - "30.2"
+
+    env:
+      IMAGE_NAME: combobulate-test:${{ matrix.emacs-version }}
+      ERT_REPORT: test-results/emacs-${{ matrix.emacs-version }}/ert
+      CACHE_SCOPE: emacs-${{ matrix.emacs-version }}-${{ github.base_ref || github.ref_name }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Build the test image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}
+          build-args: |
+            EMACS_VERSION=${{ matrix.emacs-version }}
+          cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
+          cache-to: ${{ github.event_name == 'push' && format('type=gha,mode=max,scope={0}', env.CACHE_SCOPE) || '' }}
+
+      - name: Verify Emacs and tree-sitter grammars
+        run: |
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 512 \
+            --memory 2g \
+            --cpus 2 \
+            --user "$(id -u):$(id -g)" \
+            --entrypoint emacs \
+            "$IMAGE_NAME" \
+            --batch --no-init-file \
+            --eval '(progn
+              (princ (format "Emacs %s; tree-sitter=%S\n"
+                             emacs-version (treesit-available-p)))
+              (unless (treesit-available-p)
+                (error "Emacs was built without tree-sitter support"))
+              (dolist (language (quote (css go html javascript json ocaml
+                                        ocaml-interface ocaml_type python toml
+                                        tsx typescript yaml)))
+                (unless (treesit-language-available-p language)
+                  (error "Missing %s grammar" language))))'
+
+      - name: Run ERT suite
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-results"
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 512 \
+            --memory 4g \
+            --cpus 2 \
+            --user "$(id -u):$(id -g)" \
+            --env "ERT_JUNIT_FILE=/workspace/$ERT_REPORT" \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            "$IMAGE_NAME" run-tests-junit
+
+      - name: Upload ERT results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ert-results-${{ matrix.emacs-version }}
+          path: ${{ env.ERT_REPORT }}.xml
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Regenerate test harnesses
+        if: matrix.emacs-version == '29.4'
+        run: |
+          docker run --rm \
+            --network none \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 512 \
+            --memory 4g \
+            --cpus 2 \
+            --user "$(id -u):$(id -g)" \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            "$IMAGE_NAME" build-tests
+
+      - name: Check generated test harnesses
+        if: matrix.emacs-version == '29.4'
+        run: git diff --exit-code -- tests
+
+  # Never execute pull-request code in this job. It alone can create Checks and
+  # consumes only the exact JUnit artifact emitted by the unprivileged test job.
+  report:
+    name: Publish ERT / Emacs ${{ matrix.emacs-version }}
+    needs: test
+    if: ${{ always() && !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      checks: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs-version:
+          - "29.4"
+          - "30.2"
+
+    steps:
+      - name: Download ERT results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ert-results-${{ matrix.emacs-version }}
+          path: test-results/emacs-${{ matrix.emacs-version }}
+
+      - name: Publish ERT results
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: ERT / Emacs ${{ matrix.emacs-version }}
+          path: test-results/emacs-${{ matrix.emacs-version }}/ert.xml
+          reporter: java-junit
+          use-actions-summary: false
+          list-suites: all
+          list-tests: failed
+          # ERT does not include source paths, so annotations would require a
+          # privileged checkout without improving the report.
+          max-annotations: 0
+          fail-on-empty: true
+          fail-on-error: true

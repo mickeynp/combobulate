@@ -1,0 +1,8 @@
+# Changes to CI trust boundaries require explicit owner review.
+/.github/ @mickeynp
+/.gitmodules @mickeynp
+/Dockerfile @mickeynp
+/Makefile @mickeynp
+/.ts-*.el @mickeynp
+/tests/.ts-*.el @mickeynp
+/tests/generate-harnesses.el @mickeynp

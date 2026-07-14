@@ -6,3 +6,4 @@ flycheck*
 /pyvenv.cfg
 /lib/
 /bin/
+/test-results/
