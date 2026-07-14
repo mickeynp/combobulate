@@ -1,6 +1,10 @@
 Dockerfile
 *.elc
 .git/
+.github/
+.emacs.d/
+test-results/
 .pytest_cache/
 *.pyc
+*~
 \#*

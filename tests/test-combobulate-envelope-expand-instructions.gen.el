@@ -469,7 +469,7 @@
 				("null")
 				:rest
 				(r>))
-		       n > " : "
+		       n "  : "
 		       (choice* :name "alternative" :missing
 				("<"
 				 (p other "SOME TAG")
