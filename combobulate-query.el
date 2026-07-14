@@ -67,8 +67,16 @@
 (add-to-list 'savehist-additional-variables 'combobulate-query-ring)
 
 
-(defconst combobulate-query-builder-predicate-names '("#match" "#equal" "#pred")
-  "Known Emacs-supported predicate names.")
+(defconst combobulate-query-builder-predicate-mapping
+  '(("#match" . "#match?")
+    ("#equal" . "#eq?")
+    ("#pred" . "#pred?"))
+  "Mapping from Emacs 29/30 tree-sitter query predicates to Emacs 31 predicates.")
+
+(defconst combobulate-query-builder-predicate-names
+  (mapcar (if (>= emacs-major-version 31) #'cdr #'car)
+          combobulate-query-builder-predicate-mapping)
+  "Tree-sitter query predicate names supported by the current Emacs.")
 
 (defvar combobulate-query-builder-parser nil
   "Tree sitter parser to query against.")
@@ -519,6 +527,16 @@ completion candidates for the current point."
         (concat (substring text 0 (or max-length 50)))
       text)))
 
+(defun combobulate-query-builder-predicate-replacements ()
+  "Return the predicate replacements needed for the current Emacs."
+  (let ((match (nth 0 combobulate-query-builder-predicate-names))
+        (equal (nth 1 combobulate-query-builder-predicate-names))
+        (pred (nth 2 combobulate-query-builder-predicate-names)))
+    `((":equal" . ,equal)
+      (":match" . ,match)
+      (":pred" . ,pred)
+      (":eq" . ,equal))))
+
 (defun combobulate-query-builder-to-string (form-query)
   "Convert FORM-QUERY to a string query.
 
@@ -528,9 +546,8 @@ Rewrites `:match' to `#match', etc. along the way."
     (pcase-dolist (`(,before . ,after)
                    ;; `.' is the anchor in the real query language,
                    ;; but `:anchor' in elisp forms.
-                   `((":anchor" . ".")
-                     ;; Fix up `:match' to `#match', etc.
-                     (,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1")))
+                   (cons '(":anchor" . ".")
+                         (combobulate-query-builder-predicate-replacements)))
       (setq tgt-query (replace-regexp-in-string before after tgt-query)))
     (string-trim tgt-query)))
 
