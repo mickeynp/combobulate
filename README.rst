@@ -111,7 +111,7 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+------------------------------+
 |Go                  |go-mode, go-ts-mode                                           |v0.20.0                       |
 +--------------------+--------------------------------------------------------------+------------------------------+
-|OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.24.2 |
+|OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.25.0 |
 +--------------------+--------------------------------------------------------------+------------------------------+
 
 
@@ -232,8 +232,8 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                    (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
                    (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-                   (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/ocaml/src"))
-                   (ocaml-interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/interface/src"))))
+                   (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.25.0" "grammars/ocaml/src"))
+                   (ocaml-interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.25.0" "grammars/interface/src"))))
           (add-to-list 'treesit-language-source-alist grammar)
           ;; Only install `grammar' if we don't already have it
           ;; installed. However, if you want to *update* a grammar then
