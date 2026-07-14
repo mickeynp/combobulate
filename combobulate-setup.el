@@ -505,16 +505,6 @@ modes with conflicting ideas of what type of language to use."
                 (combobulate-message
                  (substitute-command-keys "Activating Combobulate. Type \\[combobulate] to start."))))))))))
 
-;;;###autoload
-(defun combobulate-mode (&optional arg &rest _)
-  "Navigate and edit by syntactic constructs.
-
-This is a helper command that tries to activate the right
-Combobulate minor mode suitable for the current buffer."
-  (interactive "p")
-  ;; This is no longer an actual minor mode, but instead a function.
-  (combobulate-maybe-activate nil (not (null arg))))
-
 (defun combobulate-register-language (language major-modes minor-mode-fn)
   "Register a Combobulate language.
 
