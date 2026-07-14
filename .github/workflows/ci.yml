@@ -94,6 +94,7 @@ jobs:
           name: ERT / Emacs ${{ matrix.emacs-version }}
           path: ${{ env.ERT_REPORT }}.xml
           reporter: java-junit
+          use-actions-summary: false
           list-suites: all
           list-tests: failed
           max-annotations: 20
