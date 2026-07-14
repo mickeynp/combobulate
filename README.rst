@@ -111,7 +111,7 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+------------------------------+
 |Go                  |go-mode, go-ts-mode                                           |v0.20.0                       |
 +--------------------+--------------------------------------------------------------+------------------------------+
-|OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.24.2 |
+|OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.25.0 |
 +--------------------+--------------------------------------------------------------+------------------------------+
 
 
@@ -131,7 +131,7 @@ Furthermore, Combobulate ships with a Magit-like transient UI that you can acces
 
  [2] OCaml support written by `Pixie Dust <https://github.com/PizieDust>`__, `Tim McGilchrist <https://github.com/tmcgilchrist>`__ & `Xavier Van de Woestyne <https://github.com/xvw>`__.
 
- [3] To use combobulate with tuareg, you need to use the latest [main](https://github.com/ocaml/tuareg) branch which has `tuareg-mode` and `tuareg-interface-mode`.
+ [3] To use combobulate with tuareg, you need to use the release version as from [3.1.0](https://github.com/ocaml/tuareg/releases/tag/3.1.0) which has support for `tuareg-mode` and `tuareg-interface-mode`.
 
 Recent Changes / What's New
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,8 +232,8 @@ Note that this example uses ``major-mode-remap-alist`` to turn your regular majo
                    (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
                    (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-                   (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/ocaml/src"))
-                   (ocaml-interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.24.2" "grammars/interface/src"))))
+                   (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.25.0" "grammars/ocaml/src"))
+                   (ocaml-interface . ("https://github.com/tree-sitter/tree-sitter-ocaml" "v0.25.0" "grammars/interface/src"))))
           (add-to-list 'treesit-language-source-alist grammar)
           ;; Only install `grammar' if we don't already have it
           ;; installed. However, if you want to *update* a grammar then
