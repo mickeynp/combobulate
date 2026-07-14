@@ -65,6 +65,7 @@ jobs:
             --pids-limit 512 \
             --memory 2g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --entrypoint emacs \
             "$IMAGE_NAME" \
             --batch --no-init-file \
@@ -88,6 +89,7 @@ jobs:
             --pids-limit 512 \
             --memory 4g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --env "ERT_JUNIT_FILE=/workspace/$ERT_REPORT" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
@@ -110,6 +112,7 @@ jobs:
             --pids-limit 512 \
             --memory 4g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
             "$IMAGE_NAME" tests/.ts-loadpath.el
@@ -125,6 +128,7 @@ jobs:
             --pids-limit 512 \
             --memory 4g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
             "$IMAGE_NAME" tests/.ts-straight.el
@@ -138,6 +142,7 @@ jobs:
             --pids-limit 512 \
             --memory 4g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
             "$IMAGE_NAME" tests/.ts-use-package-vc.el
@@ -152,6 +157,7 @@ jobs:
             --pids-limit 512 \
             --memory 4g \
             --cpus 2 \
+            --user "$(id -u):$(id -g)" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
             "$IMAGE_NAME" build-tests

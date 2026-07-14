@@ -46,10 +46,16 @@ RUN ./configure \
 
 WORKDIR /opt
 
+# Keep prebuilt grammars readable when CI maps the container to its unprivileged
+# runner UID. A fixed HOME also works when that UID has no passwd entry.
+ENV HOME=/opt/combobulate-home
+RUN mkdir -p "${HOME}"
+
 # Keep grammar compilation cached independently from ordinary source changes.
 COPY tests/.ts-setup.el /opt/tests/.ts-setup.el
 COPY tests/html-ts-mode/html-ts-mode.el /opt/tests/html-ts-mode/html-ts-mode.el
-RUN emacs --batch --no-init-file -L /opt -l /opt/tests/.ts-setup.el
+RUN emacs --batch --no-init-file -L /opt -l /opt/tests/.ts-setup.el \
+    && chmod -R a+rX "${HOME}"
 
 COPY . /opt/
 
