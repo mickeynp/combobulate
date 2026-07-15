@@ -196,6 +196,10 @@ doesn't exist."
                  :initform nil
                  :custom list
                  :documentation "The instructions to use for the envelope mock.")
+   (expected-point-offset :initarg :expected-point-offset
+                          :initform nil
+                          :custom (or null integer)
+                          :documentation "The expected point offset from the fixture marker after expansion, or nil to skip the assertion.")
    (mock-registers :initarg :mock-registers
                    :initform nil
                    :custom (list ((or symbol string) (or symbol string)))
@@ -205,7 +209,7 @@ doesn't exist."
 (cl-defmethod combobulate-test-harness-extend-action-body ((obj combobulate-test-harness-envelope))
   (with-slots (command-error action-body fixture-delta-file-name marker-number
                              mock-proffer-choices mock-prompt-actions mock-expansion-actions mock-registers
-                             instructions)
+                             expected-point-offset instructions)
       obj
     (combobulate-test-harness-marker-and-error-handler
      marker-number command-error
@@ -220,7 +224,12 @@ doesn't exist."
                      (:choices combobulate-envelope-proffer-choices)
                    ,@(combobulate-test-harness-marker-and-error-handler
                       marker-number command-error
-                      action-body)))))))))
+                      (if expected-point-offset
+                          `((let ((envelope-start (point-marker)))
+                              ,@action-body
+                              (should (= (point)
+                                         (+ envelope-start ,expected-point-offset)))))
+                        action-body))))))))))
 
 (cl-defmethod combobulate-test-harness-test-name ((obj combobulate-test-harness))
   "Return the name of the test harness."

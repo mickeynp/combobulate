@@ -448,6 +448,149 @@
 			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[field-before-prompt@1~after].py")))))))
 
 
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-prompt-and-field-transformers-blank-1 ()
+ "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-envelope-expand-instructions)
+	       (combobulate-test-go-to-marker 1)
+	       (let
+		   ((combobulate-envelope-proffer-choices 'nil)
+		    (combobulate-envelope-prompt-actions
+		     '("MiXeD"))
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
+		    (combobulate-envelope-registers 'nil)
+		    (instructions
+		     '("prompt="
+		       (p value "Value" upcase)
+		       n "plain="
+		       (f value)
+		       n "field="
+		       (f value downcase))))
+		 (combobulate-with-stubbed-prompt-expansion
+		     (combobulate-with-stubbed-envelope-prompt
+			 (combobulate-with-stubbed-proffer-choices
+			     (:choices combobulate-envelope-proffer-choices)
+			   (combobulate-test-go-to-marker 1)
+			   (combobulate-envelope-expand-instructions instructions)
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[prompt-and-field-transformers@1~after].py")))))))
+
+
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-block-explicit-blank-1 ()
+ "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-envelope-expand-instructions)
+	       (combobulate-test-go-to-marker 1)
+	       (let
+		   ((combobulate-envelope-proffer-choices 'nil)
+		    (combobulate-envelope-prompt-actions
+		     '("value"))
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
+		    (combobulate-envelope-registers 'nil)
+		    (instructions
+		     '("outer["
+		       (b "inner="
+			  (p nested "Nested")
+			  ",field="
+			  (f nested))
+		       "]")))
+		 (combobulate-with-stubbed-prompt-expansion
+		     (combobulate-with-stubbed-envelope-prompt
+			 (combobulate-with-stubbed-proffer-choices
+			     (:choices combobulate-envelope-proffer-choices)
+			   (combobulate-test-go-to-marker 1)
+			   (combobulate-envelope-expand-instructions instructions)
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[block-explicit@1~after].py")))))))
+
+
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-point-marker-advances-blank-1 ()
+ "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-envelope-expand-instructions)
+	       (combobulate-test-go-to-marker 1)
+	       (let
+		   ((combobulate-envelope-proffer-choices
+		     '(0))
+		    (combobulate-envelope-prompt-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
+		    (combobulate-envelope-registers 'nil)
+		    (instructions
+		     '("left" @> "right")))
+		 (combobulate-with-stubbed-prompt-expansion
+		     (combobulate-with-stubbed-envelope-prompt
+			 (combobulate-with-stubbed-proffer-choices
+			     (:choices combobulate-envelope-proffer-choices)
+			   (combobulate-test-go-to-marker 1)
+			   (let
+			       ((envelope-start
+				 (point-marker)))
+			     (combobulate-envelope-expand-instructions instructions)
+			     (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[point-marker-advances@1~after].py")
+			     (should
+			      (=
+			       (point)
+			       (+ envelope-start 9))))))))))
+
+
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-point-integer-stays-blank-1 ()
+ "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-envelope-expand-instructions)
+	       (combobulate-test-go-to-marker 1)
+	       (let
+		   ((combobulate-envelope-proffer-choices
+		     '(0))
+		    (combobulate-envelope-prompt-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
+		    (combobulate-envelope-registers 'nil)
+		    (instructions
+		     '("left" @@ "right")))
+		 (combobulate-with-stubbed-prompt-expansion
+		     (combobulate-with-stubbed-envelope-prompt
+			 (combobulate-with-stubbed-proffer-choices
+			     (:choices combobulate-envelope-proffer-choices)
+			   (combobulate-test-go-to-marker 1)
+			   (let
+			       ((envelope-start
+				 (point-marker)))
+			     (combobulate-envelope-expand-instructions instructions)
+			     (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[point-integer-stays@1~after].py")
+			     (should
+			      (=
+			       (point)
+			       (+ envelope-start 4))))))))))
+
+
+(ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-deindent-one-level-blank-1 ()
+ "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
+	     (combobulate-test
+		 (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
+	       :tags
+	       '(combobulate python python-ts-mode combobulate-envelope-expand-instructions)
+	       (combobulate-test-go-to-marker 1)
+	       (let
+		   ((combobulate-envelope-proffer-choices 'nil)
+		    (combobulate-envelope-prompt-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
+		    (combobulate-envelope-registers 'nil)
+		    (instructions
+		     '("if True:" n> "if False:" n> "nested = 1" n> < "outer = 2")))
+		 (combobulate-with-stubbed-prompt-expansion
+		     (combobulate-with-stubbed-envelope-prompt
+			 (combobulate-with-stubbed-proffer-choices
+			     (:choices combobulate-envelope-proffer-choices)
+			   (combobulate-test-go-to-marker 1)
+			   (combobulate-envelope-expand-instructions instructions)
+			   (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-envelope-expand-instructions/blank.py[deindent-one-level@1~after].py")))))))
+
+
 (ert-deftest combobulate-test-python-combobulate-envelope-expand-instructions-repeat-reject-immediately-blank-1 ()
  "Test `combobulate' with `fixtures/envelope/blank.py' in `python-ts-mode' mode."
 	     (combobulate-test

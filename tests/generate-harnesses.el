@@ -105,6 +105,31 @@
                   :instructions ("a = " (f some-prompt) n>
                                  "b = " (p some-prompt "Pick a value"))
                   :mock-prompt-actions ("blah"))
+      (:test-name "prompt-and-field-transformers"
+                  :instructions ("prompt=" (p value "Value" upcase) n
+                                 "plain=" (f value) n
+                                 "field=" (f value downcase))
+                  :mock-prompt-actions ("MiXeD"))
+      ;; blocks and point placement
+      (:test-name "block-explicit"
+                  :instructions ("outer["
+                                 (b "inner=" (p nested "Nested")
+                                    ",field=" (f nested))
+                                 "]")
+                  :mock-prompt-actions ("value"))
+      (:test-name "point-marker-advances"
+                  :instructions ("left" @> "right")
+                  :mock-proffer-choices (0)
+                  :expected-point-offset 9)
+      (:test-name "point-integer-stays"
+                  :instructions ("left" @@ "right")
+                  :mock-proffer-choices (0)
+                  :expected-point-offset 4)
+      ;; deindent
+      (:test-name "deindent-one-level"
+                  :instructions ("if True:" n>
+                                 "if False:" n>
+                                 "nested = 1" n> < "outer = 2"))
       ;; repeat
       (:test-name "repeat-reject-immediately"
                   :instructions ("before" n
