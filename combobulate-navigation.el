@@ -1579,10 +1579,13 @@ removed."
             (cons 'no-match (cons nil nil))))))))
 
 (iter-defun combobulate-query--iter-query (q)
-  (let ((org-value q) (v))
+  (let ((org-value q))
     (while q
-      (setq v (iter-yield (list (pop q) (car-safe q) (1+ (length q)))))
-      (if v
+      ;; Do not bind the result of `iter-yield' to a variable named `v'.
+      ;; In Emacs 30.2, `generator.el' rewrites that binding with
+      ;; `cl-symbol-macrolet', which collides with the `v' argument in
+      ;; source-loaded `gv-get' and causes a `void-variable v' error.
+      (if (iter-yield (list (pop q) (car-safe q) (1+ (length q))))
           (setq q (cons 'reset org-value))
         (when (not q)
           (setq q org-value))))))
