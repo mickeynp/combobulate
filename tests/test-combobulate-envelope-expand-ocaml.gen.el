@@ -15,7 +15,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(0))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "print_endline \"Hello, World!\"")))
 		    (instructions
@@ -41,7 +41,7 @@
 		     '(0))
 		    (combobulate-envelope-prompt-actions
 		     '("my_var"))
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "42 + 1")))
 		    (instructions
@@ -69,7 +69,7 @@
 		     '(0))
 		    (combobulate-envelope-prompt-actions
 		     '("i" "0" "10"))
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "print_int i")))
 		    (instructions
@@ -101,7 +101,7 @@
 		     '(1 0))
 		    (combobulate-envelope-prompt-actions
 		     '("my_list" "[]"))
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "0")))
 		    (instructions
@@ -136,7 +136,7 @@
 		     '(0 1))
 		    (combobulate-envelope-prompt-actions
 		     '("my_list" "[]" "x :: xs"))
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "0")))
 		    (instructions

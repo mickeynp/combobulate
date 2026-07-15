@@ -106,12 +106,23 @@
                                  "b = " (p some-prompt "Pick a value"))
                   :mock-prompt-actions ("blah"))
       ;; repeat
-      ;; (:test-name "repeat-simple"
-      ;;             :instructions (repeat "if 1:" n>
-      ;;                                   "a = " (p repeating-prompt "Pick a value") n>
-      ;;                                   "b = 1" n>)
-      ;;             :mock-prompt-actions ("blah")
-      ;;             :mock-expansion-actions (yes yes no))
+      (:test-name "repeat-reject-immediately"
+                  :instructions ("before" n
+                                 (repeat "item = " (p item "Item") n)
+                                 "after")
+                  :mock-expansion-actions (no))
+      (:test-name "repeat-accept-once-then-reject"
+                  :instructions ("before" n
+                                 (repeat "item = " (p item "Item") n)
+                                 "after")
+                  :mock-prompt-actions ("one")
+                  :mock-expansion-actions (yes no))
+      (:test-name "repeat-1-accept-once"
+                  :instructions ("before" n
+                                 (repeat-1 "item = " (p item "Item") n)
+                                 "after")
+                  :mock-prompt-actions ("only")
+                  :mock-expansion-actions (yes))
       ;; choice and choice*
       (:test-name "choicestar-with-complex-missing-field"
                   :instructions

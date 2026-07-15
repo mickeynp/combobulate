@@ -15,7 +15,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(1 0))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "<div>Some jsx element</div>")))
 		    (instructions
@@ -53,7 +53,7 @@
 		     '(0 0))
 		    (combobulate-envelope-prompt-actions
 		     '("mytag"))
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers
 		     '((region . "<div>Some jsx element</div>")))
 		    (instructions
@@ -90,7 +90,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(0))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "
@@ -117,7 +117,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(1))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "
@@ -144,7 +144,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(0 0))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "
@@ -173,7 +173,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(0 1))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "
@@ -202,7 +202,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(1 0))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "
@@ -231,7 +231,7 @@
 		   ((combobulate-envelope-proffer-choices
 		     '(1 1))
 		    (combobulate-envelope-prompt-actions 'nil)
-		    (combobulate-envelope-expansion-actions 'nil)
+		    (combobulate-envelope-prompt-expansion-actions 'nil)
 		    (combobulate-envelope-registers 'nil)
 		    (instructions
 		     '("{a + "

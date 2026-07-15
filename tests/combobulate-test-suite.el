@@ -211,7 +211,7 @@ doesn't exist."
      marker-number command-error
      `((let ((combobulate-envelope-proffer-choices ',mock-proffer-choices)
              (combobulate-envelope-prompt-actions ',mock-prompt-actions)
-             (combobulate-envelope-expansion-actions ',mock-expansion-actions)
+             (combobulate-envelope-prompt-expansion-actions ',mock-expansion-actions)
              (combobulate-envelope-registers ',mock-registers)
              (instructions ',instructions))
          (combobulate-with-stubbed-prompt-expansion
