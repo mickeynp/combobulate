@@ -151,7 +151,8 @@ If the register does not exist, return DEFAULT or nil."
                         (nconc user-actions
                                (combobulate-envelope-context-user-actions
                                 expanded-ctx)))
-                  (setq end (combobulate-envelope-context-end expanded-ctx)))))
+                  (setq end (combobulate-envelope-context-end expanded-ctx))
+                  (goto-char end))))
       (combobulate-refactor (:id combobulate-envelope-refactor-id)
         (dolist (sub-instruction instructions)
           (pcase sub-instruction
@@ -492,7 +493,11 @@ they are given in CATEGORIES."
     ;; is also important.
     (let ((selected-point) (grouped-instructions (seq-group-by #'car user-actions))
           (remaining-user-actions)
-          (end (point-marker)))
+          (end (let ((marker (point-marker)))
+                 ;; Prompt expansion may insert at the context boundary;
+                 ;; keep that boundary at the end of the inserted text.
+                 (set-marker-insertion-type marker t)
+                 marker)))
       ;; The set of categories we're asked to process is possibly a
       ;; subset of the user actions we've been given. All
       ;; instructions that we have not been told to process are passed
