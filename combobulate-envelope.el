@@ -374,24 +374,23 @@ If the register does not exist, return DEFAULT or nil."
                        ;;
                        ;; That way we can safely insert the template
                        ;; knowing that it won't block for user input.
-                       (seq-let [[inst-start &rest inst-end] &rest _]
-                           (let ((combobulate-envelope-static t))
-                             (combobulate-envelope-expand-instructions-1 repeat-instructions))
-                         ;; mark the range as highlighted, so it's
+                       (let* ((preview-ctx
+                               (let ((combobulate-envelope-static t))
+                                 (combobulate-envelope-expand-instructions-1
+                                  `((b ,@repeat-instructions)))))
+                              (inst-start
+                               (combobulate-envelope-context-start preview-ctx))
+                              (inst-end
+                               (combobulate-envelope-context-end preview-ctx)))
+                         ;; Mark the range as highlighted, so it's
                          ;; easier to see its extent; and as deleted,
                          ;; so that -- due to how we're using
                          ;; `combobulate-refactor' -- we can delete
                          ;; the expansion immediately after the
                          ;; prompt.
-                         ;; BUG: if
-                         ;; `combobulate-envelope-expand-instructions-1'
-                         ;; ends up calling `save-column' as its last form
-                         ;; before exiting, then the call to set the column
-                         ;; will corrupt the `inst-end' value resulting in
-                         ;; text being left behind.
                          (mark-range-deleted inst-start inst-end)
                          (mark-range-highlighted inst-start inst-end)
-                         ;; note that regardless of whether we accept
+                         ;; Note that regardless of whether we accept
                          ;; or decline the expansion, we `commit'
                          ;; (i.e., delete!) the expansion we created
                          ;; above. The reason this is done is so that
@@ -403,8 +402,14 @@ If the register does not exist, return DEFAULT or nil."
                                    (or combobulate-envelope-static
                                        (combobulate-envelope-prompt-expansion "Apply this expansion? ")))
                              (progn (commit)
-                                    (let ((sub-inst (combobulate-envelope-expand-instructions-1 repeat-instructions)))
-                                      (setq user-actions (append user-actions (cdr sub-inst))))
+                                    (let ((sub-ctx
+                                           (combobulate-envelope-expand-instructions-1
+                                            `((b ,@repeat-instructions)))))
+                                      (setq user-actions
+                                            (append
+                                             user-actions
+                                             (combobulate-envelope-context-user-actions
+                                              sub-ctx))))
                                     (cl-decf max-repeat)
                                     (commit))
                            (commit))))))
