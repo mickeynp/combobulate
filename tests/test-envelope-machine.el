@@ -32,7 +32,7 @@
 (require 'combobulate-envelope-machine)
 
 (defun combobulate-test-envelope-machine--step-kinds (plan)
-  "Return the kinds of all top-level steps in PLAN."
+  "Return each top-level step kind in PLAN."
   (mapcar #'combobulate-envelope-machine-step-kind
           (append (combobulate-envelope-machine-plan-steps plan) nil)))
 

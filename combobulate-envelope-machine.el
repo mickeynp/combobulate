@@ -169,7 +169,7 @@ objects, not bare closures, so every operation retains its executing frame."
     task))
 
 (defun combobulate-envelope-machine-ready-steps (runtime)
-  "Return the inspectable steps currently ready on RUNTIME."
+  "Return each inspectable step currently ready on RUNTIME."
   (mapcar (lambda (task)
             (combobulate-envelope-machine-task-step task))
           (combobulate-envelope-machine-runtime-queue-head runtime)))
@@ -208,7 +208,8 @@ instruction that produced it."
    runtime 'push-plan :name (combobulate-envelope-machine-plan-name plan)))
 
 (defun combobulate-envelope-machine--enter-plan-step (plan source)
-  "Return a step that pushes PLAN when the step produced by SOURCE runs."
+  "Create a step that will push PLAN when executed.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'enter-plan
    (format "enter %s" (combobulate-envelope-machine-plan-name plan))
@@ -217,7 +218,8 @@ instruction that produced it."
    source))
 
 (defun combobulate-envelope-machine--insert-step (text source)
-  "Return a step that inserts TEXT when the step produced by SOURCE runs."
+  "Create a step that will insert TEXT when executed.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'insert
    (format "insert %S" text)
@@ -246,7 +248,8 @@ newline has been inserted."
    source))
 
 (defun combobulate-envelope-machine--capture-column-step (slot source)
-  "Return a step that captures the live column in frame-local SLOT."
+  "Create a step that captures a live column in SLOT.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'capture-column
    (format "capture live column in %S" slot)
@@ -259,7 +262,8 @@ newline has been inserted."
    source))
 
 (defun combobulate-envelope-machine--restore-column-step (slot source)
-  "Return a step that inserts the column saved in frame-local SLOT.
+  "Create a step that will restore the column saved in SLOT.
+SOURCE is the instruction that produced the step.
 
 This intentionally mirrors the small but important behavior of the production
 `save-column' instruction: after its nested sequence ends, it inserts enough
@@ -279,14 +283,15 @@ spaces to return the surrounding template to the captured column."
    source))
 
 (defun combobulate-envelope-machine--register-value (runtime tag)
-  "Return TAG's runtime register value or a readable default."
+  "Return RUNTIME's register value for TAG or a readable default."
   (or (alist-get tag
                   (combobulate-envelope-machine-runtime-registers runtime)
                   nil nil #'equal)
       (if (symbolp tag) (symbol-name tag) (format "%s" tag))))
 
 (defun combobulate-envelope-machine--materialize-prompt-step (tag label source)
-  "Return a step that inserts a disabled field for TAG and LABEL."
+  "Create a step that materializes TAG with LABEL.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'materialize-prompt
    (format "materialize disabled prompt %S" tag)
@@ -311,7 +316,8 @@ spaces to return the surrounding template to the captured column."
    source))
 
 (defun combobulate-envelope-machine--activate-prompt-step (tag label source)
-  "Return a step that activates TAG and suspends for a prompt value."
+  "Create a step that activates TAG with LABEL.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'activate-prompt
    (format "activate prompt %S" tag)
@@ -332,7 +338,8 @@ spaces to return the surrounding template to the captured column."
    source))
 
 (defun combobulate-envelope-machine--choice-step (choices source)
-  "Return a step that suspends the runtime with precompiled CHOICES."
+  "Create a step that suspends with precompiled CHOICES.
+SOURCE is the instruction that produced the step."
   (combobulate-envelope-machine--make-step
    'choice
    (format "choose one of %s"
