@@ -36,59 +36,42 @@
 
 ;;; internal
 
-;;; NOTE: The autoload cookies are required so third-party package
-;;; managers like straight.el work correctly. I cannot verify that
-;;; this assertion is entirely correct, but I think straight.el does
-;;; something with autoloading that is substantially different from
-;;; what `use-package' does when you set a `:load-path'.
-
-
-;;;###autoload
+(require 'combobulate-setup)
 (require 'combobulate-rules)
-;;;###autoload
 (require 'combobulate-procedure)
-;;;###autoload
 (require 'combobulate-navigation)
-;;;###autoload
 (require 'combobulate-manipulation)
-;;;###autoload
 (require 'combobulate-envelope)
-;;;###autoload
 (require 'combobulate-display)
-;;;###autoload
 (require 'combobulate-ui)
-;;;###autoload
 (require 'combobulate-misc)
-;;;###autoload
 (require 'combobulate-query)
-;;;###autoload
 (require 'combobulate-cursor)
 ;;; end internal
 
 
 
 ;;; language support
-;;;###autoload
 (require 'combobulate-toml)
-;;;###autoload
 (require 'combobulate-html)
-;;;###autoload
 (require 'combobulate-python)
-;;;###autoload
 (require 'combobulate-js-ts)
-;;;###autoload
 (require 'combobulate-css)
-;;;###autoload
 (require 'combobulate-yaml)
-;;;###autoload
 (require 'combobulate-json)
-;;;###autoload
 (require 'combobulate-go)
-;;;###autoload
 (require 'combobulate-ocaml)
 ;;; end language support
 
+;;;###autoload
+(defun combobulate-mode (&optional arg &rest _)
+  "Navigate and edit by syntactic constructs.
+
+This is a helper command that tries to activate the right
+Combobulate minor mode suitable for the current buffer."
+  (interactive "p")
+  ;; This is no longer an actual minor mode, but instead a function.
+  (combobulate-maybe-activate nil (not (null arg))))
+
 (provide 'combobulate)
 ;;; combobulate.el ends here
-
-
