@@ -243,7 +243,7 @@
 
          (:activation-nodes
           ( (:nodes ("comprehension") :position at)
-            (:nodes ("application_expression" "fun_expression") :position in))
+            (:nodes ("application_expression" "fun_expression") :position at))
           :selector (:choose node :match-children t))
 
          (:activation-nodes
