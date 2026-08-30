@@ -120,7 +120,7 @@ jobs:
               (unless (treesit-available-p)
                 (error "Emacs was built without tree-sitter support"))
               (dolist (language (quote (css dockerfile go html javascript json
-                                        python toml tsx typescript yaml)))
+                                        python scheme toml tsx typescript yaml)))
                 (unless (treesit-language-available-p language)
                   (error "Missing %s grammar" language))))'
 

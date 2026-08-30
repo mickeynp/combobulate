@@ -424,6 +424,57 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/python-list.py[@5~after].py")))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-clone-dwim--scheme-datums-1 ()
+ "Test `combobulate' with `fixtures/clone/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/clone/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/scheme-datums.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-clone-dwim--scheme-datums-2 ()
+ "Test `combobulate' with `fixtures/clone/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/clone/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/scheme-datums.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-clone-dwim--scheme-datums-3 ()
+ "Test `combobulate' with `fixtures/clone/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/clone/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/scheme-datums.scm[@3~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-clone-dwim--scheme-datums-4 ()
+ "Test `combobulate' with `fixtures/clone/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/clone/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/scheme-datums.scm[@4~after].scm")))
 (ert-deftest combobulate-test-yaml-combobulate-clone-dwim--yaml-block-mapping-pairs-1 ()
  "Test `combobulate' with `fixtures/clone/yaml-block-mapping-pairs.yaml' in `yaml-ts-mode' mode."
 	     (combobulate-test

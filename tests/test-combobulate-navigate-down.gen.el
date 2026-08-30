@@ -345,6 +345,147 @@
 	       (combobulate-test-assert-at-marker 9)))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-byte-vector-2 ()
+ "Test `combobulate' with `fixtures/down/scheme-byte-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-byte-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-list-delimiters-3 ()
+ "Test `combobulate' with `fixtures/down/scheme-list-delimiters.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-list-delimiters.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-list-4 ()
+ "Test `combobulate' with `fixtures/down/scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-quasiquote-splicing-4 ()
+ "Test `combobulate' with `fixtures/down/scheme-quasiquote-splicing.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-quasiquote-splicing.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-quasiquote-unquote-4 ()
+ "Test `combobulate' with `fixtures/down/scheme-quasiquote-unquote.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-quasiquote-unquote.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-quasisyntax-splicing-4 ()
+ "Test `combobulate' with `fixtures/down/scheme-quasisyntax-splicing.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-quasisyntax-splicing.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-quasisyntax-unsyntax-4 ()
+ "Test `combobulate' with `fixtures/down/scheme-quasisyntax-unsyntax.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-quasisyntax-unsyntax.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-quote-3 ()
+ "Test `combobulate' with `fixtures/down/scheme-quote.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-quote.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-syntax-3 ()
+ "Test `combobulate' with `fixtures/down/scheme-syntax.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-syntax.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-down--scheme-vector-3 ()
+ "Test `combobulate' with `fixtures/down/scheme-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/down/scheme-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
 (ert-deftest combobulate-test-toml-combobulate-navigate-down--table-3 ()
  "Test `combobulate' with `fixtures/down/table.toml' in `toml-ts-mode' mode."
 	     (combobulate-test

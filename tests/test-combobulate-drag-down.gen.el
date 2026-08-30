@@ -1939,6 +1939,379 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/python-tuple.py[@5~after].py")))))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-brace-list-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-brace-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-brace-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-brace-list.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-brace-list-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-brace-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-brace-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-brace-list.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-brace-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-brace-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-brace-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-brace-list.scm[@3~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-bracket-list-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-bracket-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-bracket-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-bracket-list.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-bracket-list-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-bracket-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-bracket-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-bracket-list.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-bracket-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-bracket-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-bracket-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-bracket-list.scm[@3~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-byte-vector-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-byte-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-byte-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-byte-vector.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-byte-vector-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-byte-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-byte-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-byte-vector.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-byte-vector-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-byte-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-byte-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-byte-vector.scm[@3~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@3~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-4 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@4~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-5 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@5~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-6 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@6~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-7 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@7~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-8 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@8~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-9 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@9~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-10 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 10)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@10~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-11 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 11)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@11~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-12 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 12)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@12~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-13 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 13)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@13~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-14 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 14)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@14~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-15 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 15)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@15~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-16 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 16)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@16~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-datums-17 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 17)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-datums.scm[@17~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-list-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-list.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-list-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-list.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-list.scm[@3~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-program-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-program.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-program.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-program.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-program-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-program.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-program.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-program.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-program-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-program.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-program.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-program.scm[@3~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-program-4 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-program.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-program.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 4)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-program.scm[@4~after].scm")))))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-vector-1 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-vector.scm[@1~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-vector-2 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-vector.scm[@2~after].scm")))
+
+(ert-deftest combobulate-test-scheme-combobulate-drag-down--scheme-vector-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/scheme-vector.scm[@3~after].scm")))))
 (ert-deftest combobulate-test-go-combobulate-drag-down--switch-1 ()
  "Test `combobulate' with `fixtures/sibling/switch.go' in `go-ts-mode' mode."
 	     (combobulate-test

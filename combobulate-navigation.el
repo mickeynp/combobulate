@@ -36,6 +36,8 @@
 
 (declare-function combobulate-production-rules-get-rules "combobulate-procedure")
 (declare-function combobulate-production-rules-get-inverted "combobulate-procedure")
+(declare-function combobulate-procedure-apply-activation-nodes
+  "combobulate-procedure")
 (declare-function combobulate-procedure-start-matches "combobulate-procedure")
 (declare-function combobulate-procedure-collect-activation-nodes "combobulate-procedure")
 
@@ -861,20 +863,62 @@ NODE is found or all depths have been searched."
           (throw 'done subtree))
         (cl-incf offset)))))
 
+(defun combobulate-nav-defun-node-p (node)
+  "Return non-nil when NODE satisfies a defun activation rule.
+
+Defun identity is determined by the activation rules in
+`combobulate-default-procedures'.  Selectors are intentionally not
+considered: they describe nodes selected after activation, not the node
+that constitutes the defun itself."
+  (when combobulate-default-procedures
+    (save-excursion
+      (goto-char (combobulate-node-start node))
+      (seq-some
+       (lambda (procedure)
+         (when-let* ((activation-nodes
+                     (plist-get procedure :activation-nodes)))
+           (combobulate-procedure-apply-activation-nodes
+            activation-nodes node)))
+       combobulate-default-procedures))))
+
+(defun combobulate-nav-get-defun (&optional node skip-region)
+  "Return the innermost defun containing NODE or point.
+
+If SKIP-REGION is non-nil, ignore defuns contained in the active
+region."
+  (when (and combobulate-default-procedures
+             (setq node (or node (combobulate-node-at-point))))
+    (seq-find
+     (lambda (candidate)
+       (and (combobulate-nav-defun-node-p candidate)
+            (or (not skip-region)
+                (not (combobulate-node-in-region-p candidate)))))
+     (cons node (combobulate-get-parents node)))))
+
 (defun combobulate-nav-to-defun (direction &optional node)
   "Navigate to a defun in DIRECTION, possibly from NODE.
 
 DIRECTION must be `forward' or `backward'."
-  (when-let* ((current-node (or node
+  (when-let* ((current-node (or (combobulate-nav-get-defun node)
+                                node
                                 (combobulate--get-nearest-navigable-node)
                                 (combobulate-node-at-point)))
               (min-depth most-positive-fixnum)
-              (tree (save-excursion
-                      (combobulate-move-to-node current-node (eq direction 'backward))
-                      (combobulate-build-sparse-tree direction combobulate-navigable-nodes
-                                                     (if (eq direction 'backward)
-                                                         #'combobulate-node-before-point-p
-                                                       #'combobulate-node-on-or-after-point-p)))))
+              (tree
+               (save-excursion
+                 (combobulate-move-to-node current-node
+                                           (eq direction 'backward))
+                 (combobulate-build-sparse-tree
+                  direction combobulate-navigable-nodes
+                  (lambda (candidate)
+                    (and
+                     (funcall
+                      (if (eq direction 'backward)
+                          #'combobulate-node-before-point-p
+                        #'combobulate-node-on-or-after-point-p)
+                      candidate)
+                     (or (null combobulate-default-procedures)
+                         (combobulate-nav-defun-node-p candidate))))))))
     (let ((valid-nodes)
           (current-node-depth
            ;; determine the smallest depth in the tree and also the

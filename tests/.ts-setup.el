@@ -8,6 +8,7 @@
          (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
          (go . ("https://github.com/tree-sitter/tree-sitter-go" "v0.20.0"))
          (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+         (scheme . ("https://github.com/6cdh/tree-sitter-scheme" "v0.24.7-1"))
          (toml . ("https://github.com/tree-sitter/tree-sitter-toml" "v0.5.1"))
          (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
          (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))

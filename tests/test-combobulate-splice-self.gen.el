@@ -340,6 +340,18 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-self/choice-0-pairs-in-table.toml[@1~after].toml")))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-splice-self--choice-0-scheme-list-1 ()
+ "Test `combobulate' with `fixtures/splice/choice-0-scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/splice/choice-0-scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-splice-self)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0 0 0))
+		 (combobulate-splice-self))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-self/choice-0-scheme-list.scm[@1~after].scm")))
 (ert-deftest combobulate-test-go-combobulate-splice-self--choice-0-vars-1 ()
  "Test `combobulate' with `fixtures/splice/choice-0-vars.go' in `go-ts-mode' mode."
 	     (combobulate-test

@@ -1136,12 +1136,17 @@ Uses `procedures-defun' to determine what a
 defun is.  Repeat calls expands the scope."
   (interactive "p")
   (with-argument-repetition arg
-    (with-navigation-nodes (:procedures (combobulate-read procedures-defun) :skip-prefix t)
-      (unless (combobulate-mark-node-at-point nil t)
+    (with-navigation-nodes (:procedures (combobulate-read procedures-defun)
+                            :skip-prefix t)
+      (when (and mark-active (> (point) (mark)))
+        (exchange-point-and-mark))
+      (if-let* ((node (combobulate-nav-get-defun nil t)))
+          (progn
+            (combobulate--mark-node node nil t)
+            (combobulate--flash-node node)
+            node)
         (if (< arg 0)
             (combobulate-navigate-beginning-of-defun)
-          (when (and mark-active (> (mark) (point)))
-            (exchange-point-and-mark))
           (combobulate-navigate-end-of-defun))))))
 
 (defun combobulate--partition-by-position (self-node query-nodes )

@@ -2316,9 +2316,72 @@
 )
 ;; END All supertypes in json
 
+;; START Production rules for scheme
+(defconst combobulate-rules-scheme 
+ '(("block_comment" (:*unnamed* ("block_comment"))) 
+ ("boolean" (:*unnamed* nil)) 
+ ("byte_vector" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("character" (:*unnamed* nil)) 
+ ("comment" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("directive" (:*unnamed* ("block_comment" "comment" "directive"))) 
+ ("escape_sequence" (:*unnamed* nil)) 
+ ("keyword" (:*unnamed* nil)) 
+ ("list" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("number" (:*unnamed* nil)) 
+ ("program" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("quasiquote" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("quasisyntax" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("quote" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("string" (:*unnamed* ("escape_sequence"))) 
+ ("symbol" (:*unnamed* nil)) 
+ ("syntax" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("unquote" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("unquote_splicing" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("unsyntax" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("unsyntax_splicing" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+ ("vector" (:*unnamed* ("list" "block_comment" "byte_vector" "directive" "unsyntax_splicing" "comment" "quote" "unquote_splicing" "quasiquote" "character" "string" "syntax" "boolean" "number" "vector" "unquote" "keyword" "symbol" "unsyntax" "quasisyntax"))) 
+))
+;; END Production rules for scheme
+;; START Inverse production rules for scheme
+(defconst combobulate-rules-scheme-inverse 
+ '(("block_comment" ("list" "block_comment" "byte_vector" "unsyntax" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "directive" "quasisyntax" "program" "syntax"))
+   ("boolean" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("byte_vector" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("character" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("comment" ("list" "byte_vector" "unsyntax" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "directive" "quasisyntax" "program" "syntax"))
+   ("directive" ("list" "byte_vector" "unsyntax" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "directive" "quasisyntax" "program" "syntax"))
+   ("escape_sequence" ("string"))
+   ("keyword" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("list" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("number" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("quasiquote" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("quasisyntax" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("quote" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("string" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("symbol" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("syntax" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("unquote" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("unquote_splicing" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("unsyntax" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("unsyntax_splicing" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+   ("vector" ("list" "byte_vector" "unsyntax_splicing" "vector" "comment" "unquote" "quote" "unquote_splicing" "quasiquote" "unsyntax" "quasisyntax" "program" "syntax"))
+  ) 
+)
+;; END Inverse production rules for scheme
+;; START All node types in scheme
+(defconst combobulate-rules-scheme-types 
+ '("block_comment" "boolean" "byte_vector" "character" "comment" "directive" "escape_sequence" "keyword" "list" "number" "program" "quasiquote" "quasisyntax" "quote" "string" "symbol" "syntax" "unquote" "unquote_splicing" "unsyntax" "unsyntax_splicing" "vector") 
+)
+;; END All node types in scheme
+;; START All supertypes in scheme
+(defconst combobulate-rules-scheme-supertypes 
+ nil 
+)
+;; END All supertypes in scheme
+
 ;; START Auto-generated list of all languages
 (defconst combobulate-rules-languages 
- '(c css dockerfile go html javascript json python toml tsx typescript yaml) 
+ '(c css dockerfile go html javascript json python scheme toml tsx typescript yaml) 
  "A list of all the languages that have production rules.")
 ;; END Auto-generated list of all languages
 (defconst combobulate-rules-alist 
@@ -2330,6 +2393,7 @@
  (javascript ,combobulate-rules-javascript)
  (json ,combobulate-rules-json)
  (python ,combobulate-rules-python)
+ (scheme ,combobulate-rules-scheme)
  (toml ,combobulate-rules-toml)
  (tsx ,combobulate-rules-tsx)
  (typescript ,combobulate-rules-typescript)
@@ -2345,6 +2409,7 @@
  (javascript ,combobulate-rules-javascript-inverse)
  (json ,combobulate-rules-json-inverse)
  (python ,combobulate-rules-python-inverse)
+ (scheme ,combobulate-rules-scheme-inverse)
  (toml ,combobulate-rules-toml-inverse)
  (tsx ,combobulate-rules-tsx-inverse)
  (typescript ,combobulate-rules-typescript-inverse)
@@ -2360,6 +2425,7 @@
  (javascript ,combobulate-rules-javascript-types)
  (json ,combobulate-rules-json-types)
  (python ,combobulate-rules-python-types)
+ (scheme ,combobulate-rules-scheme-types)
  (toml ,combobulate-rules-toml-types)
  (tsx ,combobulate-rules-tsx-types)
  (typescript ,combobulate-rules-typescript-types)
@@ -2375,6 +2441,7 @@
  (javascript ,combobulate-rules-javascript-supertypes)
  (json ,combobulate-rules-json-supertypes)
  (python ,combobulate-rules-python-supertypes)
+ (scheme ,combobulate-rules-scheme-supertypes)
  (toml ,combobulate-rules-toml-supertypes)
  (tsx ,combobulate-rules-tsx-supertypes)
  (typescript ,combobulate-rules-typescript-supertypes)

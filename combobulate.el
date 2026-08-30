@@ -67,6 +67,7 @@
 (require 'combobulate-yaml)
 (require 'combobulate-json)
 (require 'combobulate-go)
+(require 'combobulate-scheme)
 ;;; end language support
 
 

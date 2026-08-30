@@ -144,6 +144,57 @@
     (should-not (combobulate-procedure-apply-has-parent
                  '("arrow_function") (combobulate-node-at-point '("jsx_expression"))))))
 
+(ert-deftest combobulate-nav-defun-node-p-honors-activation-constraints ()
+  :tags '(combobulate procedure)
+  (combobulate-test (:language json :mode json-ts-mode)
+    "[[1], 2]"
+    bob
+    (search-forward "1")
+    (backward-char)
+    (let* ((number (combobulate-node-at-point '("number")))
+           (inner (combobulate-node-parent number))
+           (outer (combobulate-node-parent inner))
+           (combobulate-default-procedures
+            '((:activation-nodes
+               ((:nodes ("array")
+                 :has-parent ("array")))))))
+      (should (equal (combobulate-node-type inner) "array"))
+      (should (equal (combobulate-node-type outer) "array"))
+      (should (combobulate-nav-defun-node-p inner))
+      (should-not (combobulate-nav-defun-node-p outer))
+      (should (combobulate-node-eq
+               inner (combobulate-nav-get-defun number))))))
+
+(ert-deftest combobulate-nav-defun-node-p-preserves-node-only-rules ()
+  :tags '(combobulate procedure)
+  (combobulate-test (:language json :mode json-ts-mode)
+    "[[1], 2]"
+    bob
+    (search-forward "1")
+    (backward-char)
+    (let* ((number (combobulate-node-at-point '("number")))
+           (inner (combobulate-node-parent number))
+           (outer (combobulate-node-parent inner))
+           (combobulate-default-procedures
+            '((:activation-nodes ((:nodes ("array")))))))
+      (should (combobulate-nav-defun-node-p inner))
+      (should (combobulate-nav-defun-node-p outer))
+      (should (combobulate-node-eq
+               inner (combobulate-nav-get-defun number))))))
+
+(ert-deftest combobulate-nav-defun-node-p-ignores-selectors ()
+  :tags '(combobulate procedure)
+  (combobulate-test (:language json :mode json-ts-mode)
+    "[1]"
+    bob
+    (let ((array (combobulate-node-at-point '("array")))
+          (combobulate-default-procedures
+           '((:activation-nodes ((:nodes ("array")))
+              :selector (:choose node
+                         :match-children
+                         (:match-rules ("string")))))))
+      (should (combobulate-nav-defun-node-p array)))))
+
 (ert-deftest combobulate-procedure-apply-has-ancestor ()
   :tags '(combobulate procedure)
   ;; Simple string node test

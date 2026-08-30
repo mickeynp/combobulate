@@ -1,0 +1,2 @@
+;; -*- combobulate-test-point-overlays: ((1 outline 370) (2 outline 373) (3 outline 383) (4 outline 387) (5 outline 397) (6 outline 406) (7 outline 409) (8 outline 418) (9 outline 434) (10 outline 444) (11 outline 451) (12 outline 458) (13 outline 469) (14 outline 478) (15 outline 487) (16 outline 498) (17 outline 510)); eval: (combobulate-test-fixture-mode t); -*-
+(#t #vu8(1 2) #\a #:keyword 42 (nested) `(quasi) #`(quasisyntax) '(quoted) "text" symbol #'(syntax) ,unquote ,@splice #,unsyntax #,@unsplice #(vector))

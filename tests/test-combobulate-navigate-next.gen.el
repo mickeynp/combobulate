@@ -701,6 +701,141 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-brace-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-brace-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-brace-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-bracket-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-bracket-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-bracket-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-byte-vector-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-byte-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-byte-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-datums-17 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 8)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 9)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 10)
+	       (combobulate-test-go-to-marker 10)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 11)
+	       (combobulate-test-go-to-marker 11)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 12)
+	       (combobulate-test-go-to-marker 12)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 13)
+	       (combobulate-test-go-to-marker 13)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 14)
+	       (combobulate-test-go-to-marker 14)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 15)
+	       (combobulate-test-go-to-marker 15)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 16)
+	       (combobulate-test-go-to-marker 16)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 17)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-list.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-list.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-program-4 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-program.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-program.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)))
+
+(ert-deftest combobulate-test-scheme-combobulate-navigate-next--scheme-vector-3 ()
+ "Test `combobulate' with `fixtures/sibling/scheme-vector.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/sibling/scheme-vector.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
 (ert-deftest combobulate-test-go-combobulate-navigate-next--switch-3 ()
  "Test `combobulate' with `fixtures/sibling/switch.go' in `go-ts-mode' mode."
 	     (combobulate-test

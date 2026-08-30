@@ -88,6 +88,18 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/python-match-case.py[@1~after].py")))
 
 
+(ert-deftest combobulate-test-scheme-combobulate-kill-dwim--scheme-datums-1 ()
+ "Test `combobulate' with `fixtures/kill-node/scheme-datums.scm' in `scheme-mode' mode."
+	     (combobulate-test
+		 (:language scheme :mode scheme-mode :fixture "fixtures/kill-node/scheme-datums.scm")
+	       :tags
+	       '(combobulate scheme scheme-mode combobulate-kill-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate--with-test-overlays
+		(lambda
+		  (ov)
+		  (combobulate-kill-node-dwim)))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/scheme-datums.scm[@1~after].scm")))
 (ert-deftest combobulate-test-yaml-combobulate-kill-dwim--yaml-block-mapping-pairs-1 ()
  "Test `combobulate' with `fixtures/kill-node/yaml-block-mapping-pairs.yaml' in `yaml-ts-mode' mode."
 	     (combobulate-test

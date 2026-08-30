@@ -426,11 +426,16 @@ doesn't exist."
   (with-current-buffer (oref obj output-buffer)
     (let* ((numbers)
            (fixture-buf (find-file-noselect fixture-file-name))
-           (fixture-language) (fixture-major-mode) (lang))
+           (fixture-language) (fixture-major-mode))
       (with-current-buffer fixture-buf
-        (setq lang (car (combobulate-parser-list)))
-        (cl-assert (not (null lang)) nil "No language found in `%s' (major mode: `%s')" fixture-file-name major-mode)
-        (setq fixture-language (combobulate-parser-language lang))
+        (let ((parser (car (combobulate-parser-list))))
+          (setq fixture-language
+                (if parser
+                    (combobulate-parser-language parser)
+                  (combobulate-primary-language t))))
+        (cl-assert (not (null fixture-language)) nil
+                   "No language found in `%s' (major mode: `%s')"
+                   fixture-file-name major-mode)
         (setf fixture-major-mode major-mode)
         (setq numbers (seq-sort #'< (mapcar (lambda (ov) (overlay-get ov 'combobulate-test-number))
                                             (combobulate--with-test-overlays)))))
