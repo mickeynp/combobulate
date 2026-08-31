@@ -187,7 +187,17 @@ jobs:
 
       - name: Check generated test harnesses
         if: matrix.emacs-version == '29.4'
-        run: git diff --exit-code -- tests
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- tests; then
+            exit 0
+          fi
+
+          echo '::error title=Generated test harnesses are stale::Run make build-tests and commit the regenerated files.'
+          git diff --name-only -- tests | while IFS= read -r file; do
+            printf '%s\n' "::error file=${file},title=Stale generated test harness::Run make build-tests and commit this file."
+          done
+          exit 1
 
   # Never execute pull-request code in this job. It alone can create Checks and
   # consumes only the exact JUnit artifact emitted by the unprivileged test job.
