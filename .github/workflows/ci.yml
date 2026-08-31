@@ -171,7 +171,6 @@ jobs:
           retention-days: 14
 
       - name: Regenerate test harnesses
-        if: matrix.emacs-version == '29.4'
         run: |
           docker run --rm \
             --network none \
@@ -186,7 +185,6 @@ jobs:
             "$IMAGE_NAME" build-tests
 
       - name: Check generated test harnesses
-        if: matrix.emacs-version == '29.4'
         run: |
           set -euo pipefail
           if git diff --quiet -- tests; then
