@@ -52,8 +52,8 @@ jobs:
         id: emacs-source
         env:
           EMACS_SOURCE_REF: ${{ matrix.emacs-source-ref }}
-          # Official GNU Emacs repository hosted by Savannah.
-          EMACS_SOURCE_REPOSITORY: https://git.savannah.gnu.org/git/emacs.git
+          # GitHub mirror of the official GNU Emacs repository.
+          EMACS_SOURCE_REPOSITORY: https://github.com/emacs-mirror/emacs.git
         run: |
           set -euo pipefail
           cache_key="emacs-${{ matrix.emacs-version }}"
@@ -98,8 +98,10 @@ jobs:
             EMACS_VERSION=${{ matrix.emacs-version }}
             EMACS_SOURCE_REF=${{ matrix.emacs-source-ref }}
             EMACS_SOURCE_SHA=${{ steps.emacs-source.outputs.sha }}
-          cache-from: type=gha,scope=${{ steps.emacs-source.outputs.cache-key }}-${{ github.base_ref || github.ref_name }}
-          cache-to: ${{ github.event_name == 'push' && format('type=gha,mode=max,scope={0}-{1}', steps.emacs-source.outputs.cache-key, github.ref_name) || '' }}
+          # A branch-independent scope lets pull requests restore the cache
+          # exported by the default branch; source SHA still invalidates 31.x.
+          cache-from: type=gha,scope=${{ steps.emacs-source.outputs.cache-key }}
+          cache-to: ${{ github.event_name == 'push' && format('type=gha,mode=max,scope={0}', steps.emacs-source.outputs.cache-key) || '' }}
 
       - name: Verify Emacs and tree-sitter grammars
         run: |
