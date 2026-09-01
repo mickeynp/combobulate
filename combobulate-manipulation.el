@@ -217,7 +217,7 @@
                           (not ,--pre-existing-session))
                  (prog1
                      (signal 'combobulate-refactor-uncommitted-changes
-                             (format "Uncommitted changes in session `%s'" ,--session))
+                             (list (format "Uncommitted changes in session `%s'" ,--session)))
                    (combobulate-refactor-delete-session ,--session))))
            (t (rollback) (signal (car err) (cdr err))))))))
 (defun combobulate-tally-nodes (nodes &optional skip-label)
