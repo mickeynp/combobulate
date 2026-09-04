@@ -50,7 +50,7 @@
   ;; Combobulate for implementation files (`ml').
   (defconst combobulate-ocaml-definitions
     '((context-nodes
-       '("false" "true" "number" "class_name" "value_name"
+       '("false" "true" "number" "class_name" "value_name" "stack_" "mutable"
          "module_name" "module_type_name" "field_name" "false" "true"))
 
       (navigate-down-into-lists nil)
@@ -479,7 +479,8 @@
 
         (:activation-nodes ((:nodes ("let_binding" 
                                      "fun_expression") 
-                             :position at))
+                             :position at)
+                             (:nodes ("infix_expression") :position at :has-parent ("comprehension")))
           :selector (:choose node :match-children t))
 
         (:activation-nodes ((:nodes ("let_expression") :position at))
@@ -488,7 +489,10 @@
                                     (rule "_sequence_expression")
                                     (rule "_simple_expression")))))
 
-        (:activation-nodes ((:nodes ("application_expression") :position at))
+        (:activation-nodes ((:nodes ("application_expression"
+                                     "stack_expression"
+                                     "comprehension"
+                                     "comprehension_binding") :position at))
           :selector (:choose node :match-children t))
 
         ;;  (:activation-nodes ((:nodes ("while_expression" "for_expression") :position at))
@@ -546,7 +550,7 @@
                     "tuple_pattern"
                     "application_expression"
                     "constructor_declaration"
-                    "parameter") :position at)
+                    "parameter" "at_mode_expr" "comprehension_iterator") :position at)
            (:nodes ((rule "polymorphic_variant_type"))))
           :selector (:choose node :match-children (:discard-rules ("|"))))
 
@@ -649,7 +653,7 @@
   ;; Asubset of constructs compared to implementation files
   (defconst combobulate-ocaml-interface-definitions
     '((context-nodes
-       '("false" "true" "number" "class_name" "value_name"
+       '("false" "true" "number" "class_name" "value_name" "stack_" "mutable"
          "module_name" "module_type_name" "field_name"
          "module" "sig" "end" "val" "type" "class" "exception"
          "open" "external" ":" ";" "," "|" "->" "=" "(" ")" "[" "]" "{" "}"))
@@ -713,8 +717,14 @@
                     (rule "class_binding")
                     (rule "type_binding")
                     (rule "signature")
-                    (rule "_class_field_specification"))))
-          :selector (:choose node :match-siblings (:discard-rules ("attribute" "ERROR"))))
+                    (rule "_class_field_specification")
+                    "attribute"
+                    "item_attribute"
+                    "floating_attribute"
+                    (rule "comprehension")
+                    (rule "stack_expression")
+                    (irule "signature"))))
+          :selector (:choose node :match-siblings (:discard-rules ("ERROR"))))
 
          (:activation-nodes
           ((:nodes ((rule "compilation_unit"))))
