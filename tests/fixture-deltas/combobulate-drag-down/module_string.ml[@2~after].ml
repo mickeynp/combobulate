@@ -4,7 +4,7 @@ module StringOps = struct
   let lowercase s = String.lowercase_ascii s
   let reverse s =
     let len = String.length s in
-    String.init len (fun i -> s.[len - 1 - i])
+    len String.init (fun i -> s.[len - 1 - i])
   let concat_with sep strs = String.concat sep strs
 end
 
