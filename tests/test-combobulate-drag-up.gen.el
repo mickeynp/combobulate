@@ -39,6 +39,52 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/attributes.html[@1~after].html")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--block-4 ()
+ "Test `combobulate' with `fixtures/sibling/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/block.c[@4~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--block-3 ()
+ "Test `combobulate' with `fixtures/sibling/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/block.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--block-2 ()
+ "Test `combobulate' with `fixtures/sibling/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/block.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--block-1 ()
+ "Test `combobulate' with `fixtures/sibling/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/block.c[@1~after].c")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-up--block-6 ()
  "Test `combobulate' with `fixtures/sibling/block.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -933,6 +979,41 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/elements.html[@1~after].html")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--enum-members-3 ()
+ "Test `combobulate' with `fixtures/sibling/enum-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/enum-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/enum-members.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--enum-members-2 ()
+ "Test `combobulate' with `fixtures/sibling/enum-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/enum-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/enum-members.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--enum-members-1 ()
+ "Test `combobulate' with `fixtures/sibling/enum-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/enum-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/enum-members.c[@1~after].c")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-up--expr-switch-3 ()
  "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -1104,6 +1185,41 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/extension_points.mli[@1~after].mli")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--for-loop-3 ()
+ "Test `combobulate' with `fixtures/sibling/for-loop.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/for-loop.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/for-loop.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--for-loop-2 ()
+ "Test `combobulate' with `fixtures/sibling/for-loop.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/for-loop.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/for-loop.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--for-loop-1 ()
+ "Test `combobulate' with `fixtures/sibling/for-loop.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/for-loop.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/for-loop.c[@1~after].c")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-up--for-loop-3 ()
  "Test `combobulate' with `fixtures/sibling/for-loop.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -1137,6 +1253,41 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/for-loop.go[@1~after].go")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--function-args-3 ()
+ "Test `combobulate' with `fixtures/sibling/function-args.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/function-args.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/function-args.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--function-args-2 ()
+ "Test `combobulate' with `fixtures/sibling/function-args.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/function-args.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/function-args.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--function-args-1 ()
+ "Test `combobulate' with `fixtures/sibling/function-args.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/function-args.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/function-args.c[@1~after].c")))))
 
 
 (ert-deftest combobulate-test-ocaml-combobulate-drag-up--gadt-3 ()
@@ -1209,6 +1360,96 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/gadt.mli[@1~after].mli")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-8 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@8~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-7 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@7~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-6 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@6~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-5 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@5~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-4 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@4~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-3 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@3~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-2 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@2~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--header-1 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/header.h[@1~after].h")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-up--import-declaration-2 ()
  "Test `combobulate' with `fixtures/sibling/import-declaration.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -1231,6 +1472,41 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/import-declaration.go[@1~after].go")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--initializer-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/initializer-list.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/initializer-list.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/initializer-list.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--initializer-list-2 ()
+ "Test `combobulate' with `fixtures/sibling/initializer-list.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/initializer-list.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/initializer-list.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--initializer-list-1 ()
+ "Test `combobulate' with `fixtures/sibling/initializer-list.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/initializer-list.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/initializer-list.c[@1~after].c")))))
 
 
 (ert-deftest combobulate-test-go-combobulate-drag-up--inside-case-1 ()
@@ -1503,6 +1779,74 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/literal.go[@1~after].go")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-6 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@6~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-5 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@5~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-4 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@4~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-3 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-2 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--macro-declarations-1 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/macro-declarations.c[@1~after].c")))))
 
 
 (ert-deftest combobulate-test-go-combobulate-drag-up--map-2 ()
@@ -2452,6 +2796,63 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-blocks.py[@1~after].py")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--nested-guards-5 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-guards.h[@5~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--nested-guards-4 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-guards.h[@4~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--nested-guards-3 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-guards.h[@3~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--nested-guards-2 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-guards.h[@2~after].h")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--nested-guards-1 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/nested-guards.h[@1~after].h")))))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-drag-up--nested_type_records-2 ()
  "Test `combobulate' with `fixtures/sibling/nested_type_records.ml' in `tuareg-mode' mode."
 	     (combobulate-test
@@ -3011,6 +3412,186 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@1~after].mli")))))
 
 
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-12 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 12)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@12~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-11 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 11)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@11~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-10 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 10)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@10~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-9 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@9~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-8 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@8~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-7 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@7~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-6 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@6~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-5 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@5~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-4 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@4~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-3 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-2 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--preprocessor-1 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/preprocessor.c[@1~after].c")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--program-4 ()
+ "Test `combobulate' with `fixtures/sibling/program.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/program.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/program.c[@4~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--program-3 ()
+ "Test `combobulate' with `fixtures/sibling/program.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/program.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/program.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--program-2 ()
+ "Test `combobulate' with `fixtures/sibling/program.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/program.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/program.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--program-1 ()
+ "Test `combobulate' with `fixtures/sibling/program.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/program.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/program.c[@1~after].c")))))
+
+
 (ert-deftest combobulate-test-go-combobulate-drag-up--program-7 ()
  "Test `combobulate' with `fixtures/sibling/program.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -3511,6 +4092,76 @@
 		  (combobulate-test-go-to-marker 1)
 		  (combobulate-drag-up)
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/signature_attributes.mli[@1~after].mli")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--struct-members-3 ()
+ "Test `combobulate' with `fixtures/sibling/struct-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/struct-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/struct-members.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--struct-members-2 ()
+ "Test `combobulate' with `fixtures/sibling/struct-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/struct-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/struct-members.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--struct-members-1 ()
+ "Test `combobulate' with `fixtures/sibling/struct-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/struct-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/struct-members.c[@1~after].c")))))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--switch-3 ()
+ "Test `combobulate' with `fixtures/sibling/switch.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/switch.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/switch.c[@3~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--switch-2 ()
+ "Test `combobulate' with `fixtures/sibling/switch.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/switch.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/switch.c[@2~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-drag-up--switch-1 ()
+ "Test `combobulate' with `fixtures/sibling/switch.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/switch.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/switch.c[@1~after].c")))))
 
 
 (ert-deftest combobulate-test-go-combobulate-drag-up--switch-3 ()

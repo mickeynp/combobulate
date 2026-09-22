@@ -60,6 +60,20 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/choice-0-block-pairs.yaml[@4~after].yaml")))
 
 
+(ert-deftest combobulate-test-c-combobulate-splice-up--choice-0-block-1 ()
+ "Test `combobulate' with `fixtures/splice/choice-0-block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/splice/choice-0-block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-splice-up)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0 0 0))
+		 (combobulate-splice-up))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/choice-0-block.c[@1~after].c")))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-splice-up--choice-0-jsx-elements-1 ()
  "Test `combobulate' with `fixtures/splice/choice-0-jsx-elements.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -380,6 +394,20 @@
 		    '(0 0 0 0 0 0))
 		 (combobulate-splice-up))
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/choice-1-inside-case.go[@1~after].go")))
+
+
+(ert-deftest combobulate-test-c-combobulate-splice-up--choice-1-switch-1 ()
+ "Test `combobulate' with `fixtures/splice/choice-1-switch.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/splice/choice-1-switch.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-splice-up)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0 0 0))
+		 (combobulate-splice-up))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-splice-up/choice-1-switch.c[@1~after].c")))
 
 
 (ert-deftest combobulate-test-go-combobulate-splice-up--choice-1-switch-1 ()

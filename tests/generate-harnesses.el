@@ -315,6 +315,41 @@
     :action-body '((combobulate-navigate-next))
     :per-marker nil
     :reverse nil)
+   ;; Defun navigation (C-M-a / C-M-e).  `procedures-defun' lists the
+   ;; top-level items a language recognises, so walk a file of them.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun/*"
+    :collection-name "combobulate-navigate-beginning-of-defun"
+    :action-body '((combobulate-navigate-beginning-of-defun))
+    :per-marker nil
+    :reverse t)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun-end/*"
+    :collection-name "combobulate-navigate-end-of-defun"
+    :action-body '((combobulate-navigate-end-of-defun))
+    :per-marker nil
+    :reverse nil)
+   ;; Parent navigation (C-M-u).  Markers are stamped from the actual
+   ;; walk, so each one is the parent of the marker after it.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/up/*"
+    :collection-name "combobulate-navigate-up"
+    :action-body '((combobulate-navigate-up))
+    :per-marker nil
+    :reverse t)
+   ;; Marking a defun (C-M-h).  Deleting the region records what was
+   ;; marked, which is what the assertion needs to see.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/mark-defun/*"
+    :collection-name "combobulate-mark-defun"
+    :action-body '((combobulate-mark-defun)
+                   (delete-region (region-beginning) (region-end)))
+    :per-marker t
+    :reverse nil)
    ;; Parent navigation
    ;; child navigation
    (combobulate-test-suite

@@ -119,7 +119,7 @@ jobs:
                              emacs-version (treesit-available-p)))
               (unless (treesit-available-p)
                 (error "Emacs was built without tree-sitter support"))
-              (dolist (language (quote (css go html javascript json ocaml
+              (dolist (language (quote (c css go html javascript json ocaml
                                         ocaml-interface ocaml_type python toml
                                         tsx typescript yaml)))
                 (unless (treesit-language-available-p language)

@@ -252,6 +252,23 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-down--function-4 ()
+ "Test `combobulate' with `fixtures/down/function.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/down/function.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+
 (ert-deftest combobulate-test-python-combobulate-navigate-down--function-5 ()
  "Test `combobulate' with `fixtures/down/function.py' in `python-ts-mode' mode."
 	     (combobulate-test

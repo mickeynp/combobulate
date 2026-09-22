@@ -18,6 +18,34 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/attributes.html[@1~after].html")))
 
 
+(ert-deftest combobulate-test-c-combobulate-clone-dwim--block-1 ()
+ "Test `combobulate' with `fixtures/clone/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/clone/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/block.c[@1~after].c")))
+
+
+(ert-deftest combobulate-test-c-combobulate-clone-dwim--block-2 ()
+ "Test `combobulate' with `fixtures/clone/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/clone/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-clone-dwim)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-with-stubbed-proffer-choices
+		   (:choices
+		    '(0 0 0 0))
+		 (combobulate-clone-node-dwim))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-clone-dwim/block.c[@2~after].c")))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-clone-dwim--component-jsx-1 ()
  "Test `combobulate' with `fixtures/clone/component-jsx.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test

@@ -18,6 +18,23 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--block-4 ()
+ "Test `combobulate' with `fixtures/sibling/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-next--block-6 ()
  "Test `combobulate' with `fixtures/sibling/block.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -342,6 +359,20 @@
 	       (combobulate-test-assert-at-marker 7)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--enum-members-3 ()
+ "Test `combobulate' with `fixtures/sibling/enum-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/enum-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-next--expr-switch-3 ()
  "Test `combobulate' with `fixtures/sibling/expr-switch.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -402,12 +433,40 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--for-loop-3 ()
+ "Test `combobulate' with `fixtures/sibling/for-loop.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/for-loop.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-next--for-loop-3 ()
  "Test `combobulate' with `fixtures/sibling/for-loop.go' in `go-ts-mode' mode."
 	     (combobulate-test
 		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/for-loop.go")
 	       :tags
 	       '(combobulate go go-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--function-args-3 ()
+ "Test `combobulate' with `fixtures/sibling/function-args.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/function-args.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 2)
@@ -444,6 +503,35 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--header-8 ()
+ "Test `combobulate' with `fixtures/sibling/header.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/header.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 8)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-next--import-declaration-2 ()
  "Test `combobulate' with `fixtures/sibling/import-declaration.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -453,6 +541,20 @@
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 2)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--initializer-list-3 ()
+ "Test `combobulate' with `fixtures/sibling/initializer-list.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/initializer-list.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
 
 
 (ert-deftest combobulate-test-go-combobulate-navigate-next--inside-case-1 ()
@@ -535,6 +637,29 @@
 		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/literal.go")
 	       :tags
 	       '(combobulate go go-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--macro-declarations-6 ()
+ "Test `combobulate' with `fixtures/sibling/macro-declarations.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/macro-declarations.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 2)
@@ -881,6 +1006,26 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--nested-guards-5 ()
+ "Test `combobulate' with `fixtures/sibling/nested-guards.h' in `c-ts-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-ts-mode :fixture "fixtures/sibling/nested-guards.h")
+	       :tags
+	       '(combobulate c c-ts-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-next--nested_type_records-2 ()
  "Test `combobulate' with `fixtures/sibling/nested_type_records.ml' in `tuareg-mode' mode."
 	     (combobulate-test
@@ -1078,6 +1223,64 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
+(ert-deftest combobulate-test-c-combobulate-navigate-next--preprocessor-12 ()
+ "Test `combobulate' with `fixtures/sibling/preprocessor.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/preprocessor.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 8)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 9)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 10)
+	       (combobulate-test-go-to-marker 10)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 11)
+	       (combobulate-test-go-to-marker 11)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 12)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--program-4 ()
+ "Test `combobulate' with `fixtures/sibling/program.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/program.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)))
+
+
 (ert-deftest combobulate-test-go-combobulate-navigate-next--program-7 ()
  "Test `combobulate' with `fixtures/sibling/program.go' in `go-ts-mode' mode."
 	     (combobulate-test
@@ -1247,6 +1450,34 @@
 		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/signature_attributes.mli")
 	       :tags
 	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--struct-members-3 ()
+ "Test `combobulate' with `fixtures/sibling/struct-members.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/struct-members.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest combobulate-test-c-combobulate-navigate-next--switch-3 ()
+ "Test `combobulate' with `fixtures/sibling/switch.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/sibling/switch.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-navigate-next)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-next)
 	       (combobulate-test-assert-at-marker 2)

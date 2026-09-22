@@ -18,6 +18,20 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/attributes.html[@1~after].html")))
 
 
+(ert-deftest combobulate-test-c-combobulate-kill-dwim--block-1 ()
+ "Test `combobulate' with `fixtures/kill-node/block.c' in `c-mode' mode."
+	     (combobulate-test
+		 (:language c :mode c-mode :fixture "fixtures/kill-node/block.c")
+	       :tags
+	       '(combobulate c c-mode combobulate-kill-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate--with-test-overlays
+		(lambda
+		  (ov)
+		  (combobulate-kill-node-dwim)))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/block.c[@1~after].c")))
+
+
 (ert-deftest combobulate-test-go-combobulate-kill-dwim--block-1 ()
  "Test `combobulate' with `fixtures/kill-node/block.go' in `go-ts-mode' mode."
 	     (combobulate-test
