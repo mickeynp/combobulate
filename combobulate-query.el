@@ -529,8 +529,8 @@ Rewrites `:match' to `#match', etc. along the way."
                    ;; `.' is the anchor in the real query language,
                    ;; but `:anchor' in elisp forms.
                    `((":anchor" . ".")
-                     ;; Fix up `:match' to `#match', etc.
-                     (,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1")))
+                     ;; Fix up `:match' to `#match?', etc.
+                     (,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1?")))
       (setq tgt-query (replace-regexp-in-string before after tgt-query)))
     (string-trim tgt-query)))
 
