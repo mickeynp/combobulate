@@ -527,6 +527,11 @@ MINOR-MODE-FN is the minor mode function for this language."
     (push (list language major-modes minor-mode-fn)
           combobulate-registered-languages-alist)))
 
+(defcustom combobulate-mode-lighter "©"
+  "Lighter displayed in mode line when `combobulate-mode' is enabled."
+  :group 'combobulate
+  :type 'string)
+
 (cl-defmacro define-combobulate-language (&key name
                                                major-modes (custom nil)
                                                setup-fn
@@ -626,7 +631,7 @@ support where you still want to use Combobulate's features."
           (push `(define-minor-mode ,minor-mode-fn
                    ,(format "Combobulate minor mode for the `%s' tree-sitter language." name)
                    :init-value nil
-                   :lighter "©"
+                   :lighter combobulate-mode-lighter
                    :keymap ,language-keymap
                    ;; Recycle `combobulate-mode' as the variable used
                    ;; to store the toggle state of this minor mode
