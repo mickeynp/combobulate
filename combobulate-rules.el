@@ -1924,6 +1924,197 @@
 )
 ;; END All supertypes in json
 
+;; START Production rules for elixir
+(defconst combobulate-rules-elixir 
+ '(("access_call" (:*unnamed* nil :key ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier") :target ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("after_block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "stab_clause" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("alias" (:*unnamed* nil)) 
+ ("anonymous_function" (:*unnamed* ("stab_clause"))) 
+ ("arguments" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("atom" (:*unnamed* nil)) 
+ ("binary_operator" (:*unnamed* nil :left ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "arguments" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier") :operator nil :right ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("bitstring" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "stab_clause" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("body" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("boolean" (:*unnamed* nil)) 
+ ("call" (:*unnamed* ("do_block" "arguments") :target ("call" "identifier" "dot"))) 
+ ("catch_block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "stab_clause" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("char" (:*unnamed* nil)) 
+ ("charlist" (:*unnamed* ("interpolation" "escape_sequence" "quoted_content") :quoted_end nil :quoted_start nil)) 
+ ("comment" (:*unnamed* nil)) 
+ ("do_block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "catch_block" "access_call" "rescue_block" "nil" "quoted_atom" "stab_clause" "alias" "after_block" "else_block" "anonymous_function" "list" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("dot" (:*unnamed* nil :left ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier") :operator nil :right ("charlist" "tuple" "operator_identifier" "alias" "string" "identifier"))) 
+ ("else_block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "stab_clause" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("escape_sequence" (:*unnamed* nil)) 
+ ("float" (:*unnamed* nil)) 
+ ("identifier" (:*unnamed* nil)) 
+ ("integer" (:*unnamed* nil)) 
+ ("interpolation" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("keyword" (:*unnamed* nil)) 
+ ("keywords" (:*unnamed* ("pair"))) 
+ ("list" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("map" (:*unnamed* ("struct" "map_content"))) 
+ ("map_content" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("nil" (:*unnamed* nil)) 
+ ("operator_identifier" (:*unnamed* nil)) 
+ ("pair" (:*unnamed* nil :key ("keyword" "quoted_keyword") :value ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("quoted_atom" (:*unnamed* ("interpolation" "escape_sequence" "quoted_content") :quoted_end nil :quoted_start nil)) 
+ ("quoted_content" (:*unnamed* nil)) 
+ ("quoted_keyword" (:*unnamed* ("interpolation" "escape_sequence" "quoted_content") :quoted_end nil :quoted_start nil)) 
+ ("rescue_block" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "stab_clause" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("sigil" (:*unnamed* ("sigil_name" "quoted_content" "interpolation" "escape_sequence" "sigil_modifiers") :quoted_end nil :quoted_start nil)) 
+ ("sigil_modifiers" (:*unnamed* nil)) 
+ ("sigil_name" (:*unnamed* nil)) 
+ ("source" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("stab_clause" (:*unnamed* nil :left ("arguments" "binary_operator") :operator nil :right ("body"))) 
+ ("string" (:*unnamed* ("interpolation" "escape_sequence" "quoted_content") :quoted_end nil :quoted_start nil)) 
+ ("struct" (:*unnamed* ("quoted_atom" "atom" "call" "alias" "unary_operator" "identifier" "dot"))) 
+ ("tuple" (:*unnamed* ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "keywords" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier"))) 
+ ("unary_operator" (:*unnamed* nil :operand ("tuple" "charlist" "block" "float" "operator_identifier" "boolean" "unary_operator" "binary_operator" "string" "map" "access_call" "nil" "quoted_atom" "alias" "list" "anonymous_function" "atom" "bitstring" "dot" "sigil" "integer" "call" "char" "identifier") :operator nil)) 
+))
+;; END Production rules for elixir
+;; START Inverse production rules for elixir
+(defconst combobulate-rules-elixir-inverse 
+ '(("access_call" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("after_block" ("do_block"))
+   ("alias" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("anonymous_function" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("arguments" ("binary_operator" "call" "stab_clause"))
+   ("atom" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("binary_operator" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "stab_clause" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("bitstring" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("block" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("body" ("stab_clause"))
+   ("boolean" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("call" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "call" "source"))
+   ("catch_block" ("do_block"))
+   ("char" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("charlist" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("do_block" ("call"))
+   ("dot" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "call" "source"))
+   ("else_block" ("do_block"))
+   ("escape_sequence" ("charlist" "quoted_atom" "string" "sigil" "quoted_keyword"))
+   ("float" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("identifier" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "call" "source"))
+   ("integer" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("interpolation" ("charlist" "quoted_atom" "string" "sigil" "quoted_keyword"))
+   ("keyword" ("pair"))
+   ("keywords" ("tuple" "map_content" "list" "arguments" "binary_operator" "bitstring"))
+   ("list" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("map" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("map_content" ("map"))
+   ("nil" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("operator_identifier" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("pair" ("keywords"))
+   ("quoted_atom" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("quoted_content" ("charlist" "quoted_atom" "string" "sigil" "quoted_keyword"))
+   ("quoted_keyword" ("pair"))
+   ("rescue_block" ("do_block"))
+   ("sigil" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("sigil_modifiers" ("sigil"))
+   ("sigil_name" ("sigil"))
+   ("stab_clause" ("do_block" "block" "after_block" "else_block" "anonymous_function" "catch_block" "rescue_block"))
+   ("string" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("struct" ("map"))
+   ("tuple" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+   ("unary_operator" ("tuple" "binary_operator" "rescue_block" "do_block" "else_block" "block" "map_content" "unary_operator" "arguments" "pair" "catch_block" "access_call" "struct" "after_block" "list" "interpolation" "bitstring" "dot" "body" "source"))
+  ) 
+)
+;; END Inverse production rules for elixir
+;; START All node types in elixir
+(defconst combobulate-rules-elixir-types 
+ '("access_call" "after_block" "alias" "anonymous_function" "arguments" "atom" "binary_operator" "bitstring" "block" "body" "boolean" "call" "catch_block" "char" "charlist" "comment" "do_block" "dot" "else_block" "escape_sequence" "float" "identifier" "integer" "interpolation" "keyword" "keywords" "list" "map" "map_content" "nil" "operator_identifier" "pair" "quoted_atom" "quoted_content" "quoted_keyword" "rescue_block" "sigil" "sigil_modifiers" "sigil_name" "source" "stab_clause" "string" "struct" "tuple" "unary_operator") 
+)
+;; END All node types in elixir
+;; START All supertypes in elixir
+(defconst combobulate-rules-elixir-supertypes 
+ nil 
+)
+;; END All supertypes in elixir
+
+;; START Production rules for heex
+(defconst combobulate-rules-heex 
+ '(("attribute" (:*unnamed* ("expression" "attribute_value" "attribute_name" "quoted_attribute_value"))) 
+ ("attribute_name" (:*unnamed* nil)) 
+ ("attribute_value" (:*unnamed* nil)) 
+ ("comment" (:*unnamed* nil)) 
+ ("component" (:*unnamed* ("expression" "component" "slot" "tag" "doctype" "end_component" "self_closing_component" "text" "start_component" "comment" "directive"))) 
+ ("component_name" (:*unnamed* ("function" "module"))) 
+ ("directive" (:*unnamed* ("ending_expression_value" "expression_value" "partial_expression_value"))) 
+ ("doctype" (:*unnamed* nil)) 
+ ("end_component" (:*unnamed* ("component_name"))) 
+ ("end_slot" (:*unnamed* ("slot_name"))) 
+ ("end_tag" (:*unnamed* ("tag_name"))) 
+ ("ending_expression_value" (:*unnamed* nil)) 
+ ("expression" (:*unnamed* ("expression_value"))) 
+ ("expression_value" (:*unnamed* nil)) 
+ ("fragment" (:*unnamed* ("expression" "component" "comment" "tag" "doctype" "text" "directive"))) 
+ ("function" (:*unnamed* nil)) 
+ ("module" (:*unnamed* nil)) 
+ ("partial_expression_value" (:*unnamed* nil)) 
+ ("quoted_attribute_value" (:*unnamed* ("attribute_value"))) 
+ ("self_closing_component" (:*unnamed* ("expression" "attribute" "special_attribute" "component_name"))) 
+ ("self_closing_slot" (:*unnamed* ("expression" "attribute" "special_attribute" "slot_name"))) 
+ ("self_closing_tag" (:*unnamed* ("expression" "attribute" "tag_name" "special_attribute"))) 
+ ("slot" (:*unnamed* ("expression" "component" "self_closing_slot" "start_slot" "tag" "doctype" "text" "comment" "end_slot" "directive"))) 
+ ("slot_name" (:*unnamed* nil)) 
+ ("special_attribute" (:*unnamed* ("expression" "special_attribute_name"))) 
+ ("special_attribute_name" (:*unnamed* nil)) 
+ ("start_component" (:*unnamed* ("expression" "attribute" "special_attribute" "component_name"))) 
+ ("start_slot" (:*unnamed* ("expression" "attribute" "special_attribute" "slot_name"))) 
+ ("start_tag" (:*unnamed* ("expression" "attribute" "tag_name" "special_attribute"))) 
+ ("tag" (:*unnamed* ("expression" "component" "tag" "doctype" "self_closing_tag" "text" "end_tag" "comment" "start_tag" "directive"))) 
+ ("tag_name" (:*unnamed* nil)) 
+ ("text" (:*unnamed* nil)) 
+))
+;; END Production rules for heex
+;; START Inverse production rules for heex
+(defconst combobulate-rules-heex-inverse 
+ '(("attribute" ("self_closing_slot" "start_slot" "self_closing_tag" "self_closing_component" "start_component" "start_tag"))
+   ("attribute_name" ("attribute"))
+   ("attribute_value" ("quoted_attribute_value" "attribute"))
+   ("comment" ("slot" "component" "tag" "fragment"))
+   ("component" ("slot" "component" "tag" "fragment"))
+   ("component_name" ("start_component" "end_component" "self_closing_component"))
+   ("directive" ("slot" "component" "tag" "fragment"))
+   ("doctype" ("slot" "component" "tag" "fragment"))
+   ("end_component" ("component"))
+   ("end_slot" ("slot"))
+   ("end_tag" ("tag"))
+   ("ending_expression_value" ("directive"))
+   ("expression" ("slot" "component" "self_closing_slot" "start_slot" "special_attribute" "tag" "self_closing_component" "fragment" "attribute" "self_closing_tag" "start_component" "start_tag"))
+   ("expression_value" ("expression" "directive"))
+   ("function" ("component_name"))
+   ("module" ("component_name"))
+   ("partial_expression_value" ("directive"))
+   ("quoted_attribute_value" ("attribute"))
+   ("self_closing_component" ("component"))
+   ("self_closing_slot" ("slot"))
+   ("self_closing_tag" ("tag"))
+   ("slot" ("component"))
+   ("slot_name" ("self_closing_slot" "start_slot" "end_slot"))
+   ("special_attribute" ("self_closing_slot" "start_slot" "self_closing_tag" "self_closing_component" "start_component" "start_tag"))
+   ("special_attribute_name" ("special_attribute"))
+   ("start_component" ("component"))
+   ("start_slot" ("slot"))
+   ("start_tag" ("tag"))
+   ("tag" ("slot" "component" "tag" "fragment"))
+   ("tag_name" ("end_tag" "start_tag" "self_closing_tag"))
+   ("text" ("slot" "component" "tag" "fragment"))
+  ) 
+)
+;; END Inverse production rules for heex
+;; START All node types in heex
+(defconst combobulate-rules-heex-types 
+ '("attribute" "attribute_name" "attribute_value" "comment" "component" "component_name" "directive" "doctype" "end_component" "end_slot" "end_tag" "ending_expression_value" "expression" "expression_value" "fragment" "function" "module" "partial_expression_value" "quoted_attribute_value" "self_closing_component" "self_closing_slot" "self_closing_tag" "slot" "slot_name" "special_attribute" "special_attribute_name" "start_component" "start_slot" "start_tag" "tag" "tag_name" "text") 
+)
+;; END All node types in heex
+;; START All supertypes in heex
+(defconst combobulate-rules-heex-supertypes 
+ nil 
+)
+;; END All supertypes in heex
+
 ;; START Production rules for ocaml
 (defconst combobulate-rules-ocaml 
  '(("_binding_pattern" (:*unnamed* ("exception_pattern" "effect_pattern" "alias_pattern" "or_pattern" "tuple_pattern" "cons_pattern"))) 
@@ -2994,12 +3185,14 @@
 
 ;; START Auto-generated list of all languages
 (defconst combobulate-rules-languages 
- '(css go html javascript json ocaml ocaml-interface python toml tsx typescript yaml) 
+ '(css elixir go heex html javascript json ocaml ocaml-interface python toml tsx typescript yaml) 
  "A list of all the languages that have production rules.")
 ;; END Auto-generated list of all languages
 (defconst combobulate-rules-alist 
  `((css ,combobulate-rules-css)
+ (elixir ,combobulate-rules-elixir)
  (go ,combobulate-rules-go)
+ (heex ,combobulate-rules-heex)
  (html ,combobulate-rules-html)
  (javascript ,combobulate-rules-javascript)
  (json ,combobulate-rules-json)
@@ -3014,7 +3207,9 @@
 
 (defconst combobulate-rules-inverse-alist 
  `((css ,combobulate-rules-css-inverse)
+ (elixir ,combobulate-rules-elixir-inverse)
  (go ,combobulate-rules-go-inverse)
+ (heex ,combobulate-rules-heex-inverse)
  (html ,combobulate-rules-html-inverse)
  (javascript ,combobulate-rules-javascript-inverse)
  (json ,combobulate-rules-json-inverse)
@@ -3029,7 +3224,9 @@
 
 (defconst combobulate-rules-types-alist 
  `((css ,combobulate-rules-css-types)
+ (elixir ,combobulate-rules-elixir-types)
  (go ,combobulate-rules-go-types)
+ (heex ,combobulate-rules-heex-types)
  (html ,combobulate-rules-html-types)
  (javascript ,combobulate-rules-javascript-types)
  (json ,combobulate-rules-json-types)
@@ -3044,7 +3241,9 @@
 
 (defconst combobulate-rules-supertypes-alist 
  `((css ,combobulate-rules-css-supertypes)
+ (elixir ,combobulate-rules-elixir-supertypes)
  (go ,combobulate-rules-go-supertypes)
+ (heex ,combobulate-rules-heex-supertypes)
  (html ,combobulate-rules-html-supertypes)
  (javascript ,combobulate-rules-javascript-supertypes)
  (json ,combobulate-rules-json-supertypes)
