@@ -23,13 +23,23 @@
 ;; Supports the tree-sitter-elixir grammar.
 ;;
 ;; In that grammar `def', `case', `if' and `Enum.map(...)' are all
-;; `call' nodes, so defun navigation cannot be expressed as node
-;; types.  Instead, the defun commands are remapped to the
-;; `treesit-*-defun' commands, which use the major mode's
-;; `treesit-defun-type-regexp' predicate.
+;; `call' nodes, and a pipeline is a chain of nested `binary_operator'
+;; nodes.  Whether a node is a function head, a clause head or a
+;; pipeline stage depends on its surroundings, not on its type, so
+;; the sibling and hierarchy procedures delegate to the functions
+;; below through a tree-sitter `:pred' predicate.
+;;
+;; The keys for next, previous and down run commands that call those
+;; functions directly, because the procedure queries walk the whole
+;; enclosing block and get slow in large modules.  The procedures
+;; still serve the rest of Combobulate.
+;;
+;; Defun navigation is remapped to the `treesit-*-defun' commands,
+;; which use the major mode's `treesit-defun-type-regexp' predicate.
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
 (require 'combobulate-settings)
 (require 'combobulate-navigation)
 (require 'combobulate-setup)
@@ -41,7 +51,330 @@
   :group 'combobulate
   :prefix "combobulate-elixir-")
 
-(defun combobulate-elixir-pretty-print-node-name (node default-name)
+(defconst combobulate-elixir--wrappers
+  '("source" "do_block" "else_block" "rescue_block" "catch_block" "after_block"
+    "body" "block" "arguments" "keywords" "map_content")
+  "Node types that only group other nodes.")
+
+(defconst combobulate-elixir--sequences
+  '("arguments" "list" "tuple" "map_content" "keywords" "bitstring")
+  "Node types whose children are comma-separated elements.")
+
+(defconst combobulate-elixir--blocks
+  '("source" "do_block" "else_block" "rescue_block" "catch_block" "after_block"
+    "body" "block" "anonymous_function")
+  "Node types whose children are statements or clauses.")
+
+(defun combobulate-elixir--type-p (node types)
+  (and node (member (treesit-node-type node) types)))
+
+(defun combobulate-elixir--child-of-type (node type)
+  (seq-find (lambda (child) (equal (treesit-node-type child) type))
+            (treesit-node-children node t)))
+
+(defun combobulate-elixir--do-block (node)
+  "Return the `do_block' of NODE if NODE is a call that has one."
+  (and (equal (treesit-node-type node) "call")
+       (combobulate-elixir--child-of-type node "do_block")))
+
+(defun combobulate-elixir--pipe-p (node)
+  (and (equal (treesit-node-type node) "binary_operator")
+       (equal (treesit-node-text (treesit-node-child-by-field-name node "operator") t) "|>")))
+
+(defun combobulate-elixir--pipe-stages (node)
+  "Return the head and stages of the pipeline that the `|>' NODE belongs to."
+  (while (combobulate-elixir--pipe-p (treesit-node-parent node))
+    (setq node (treesit-node-parent node)))
+  (let ((stages))
+    (while (combobulate-elixir--pipe-p node)
+      (push (treesit-node-child-by-field-name node "right") stages)
+      (setq node (treesit-node-child-by-field-name node "left")))
+    (cons node stages)))
+
+(defun combobulate-elixir--elements (node)
+  "Return the named children of NODE, with `keywords' replaced by its pairs.
+
+Comments are left out because Combobulate never navigates to them."
+  (mapcan (lambda (child)
+            (pcase (treesit-node-type child)
+              ("keywords" (treesit-node-children child t))
+              ("comment" nil)
+              (_ (list child))))
+          (treesit-node-children node t)))
+
+(defun combobulate-elixir--head-p (arguments)
+  "Return non-nil if ARGUMENTS is the head of a clause or of a `do' block call.
+
+`with' and `for' are excluded because their heads hold clauses that
+are worth navigating between."
+  (let ((owner (treesit-node-parent arguments)))
+    (or (equal (treesit-node-type owner) "stab_clause")
+        (and (combobulate-elixir--do-block owner)
+             (not (member (treesit-node-text (treesit-node-child-by-field-name owner "target") t)
+                          '("with" "for")))))))
+
+(defun combobulate-elixir--point-at (pos)
+  "Return POS, or the line's first non-blank position if POS is in indentation."
+  (save-excursion
+    (goto-char pos)
+    (when (looking-back "^[ \t]*" (line-beginning-position))
+      (skip-chars-forward " \t"))
+    (point)))
+
+(defun combobulate-elixir--node-at (pos)
+  "Return the smallest named node at POS, skipping leading indentation."
+  (let ((pos (combobulate-elixir--point-at pos)))
+    (treesit-node-descendant-for-range (treesit-buffer-root-node 'elixir) pos pos t)))
+
+(defun combobulate-elixir--outermost-at (node)
+  "Return the largest node that starts where NODE starts and is not a wrapper."
+  (let ((start (treesit-node-start node))
+        (best (unless (combobulate-elixir--type-p node combobulate-elixir--wrappers) node)))
+    (while (and (setq node (treesit-node-parent node))
+                (= (treesit-node-start node) start))
+      (unless (combobulate-elixir--type-p node combobulate-elixir--wrappers)
+        (setq best node)))
+    best))
+
+(defun combobulate-elixir--siblings (pos)
+  "Return the nodes that are siblings of the node at POS."
+  (let* ((at (combobulate-elixir--node-at pos))
+         (node (or (combobulate-elixir--outermost-at at) at))
+         (parent))
+    (catch 'done
+      (while (setq parent (treesit-node-parent node))
+        (cond
+         ((combobulate-elixir--pipe-p parent)
+          (throw 'done (combobulate-elixir--pipe-stages parent)))
+         ((and (equal (treesit-node-type parent) "arguments")
+               (combobulate-elixir--head-p parent))
+          (setq node (treesit-node-parent parent)))
+         ((equal (treesit-node-type parent) "keywords")
+          (throw 'done (combobulate-elixir--elements (treesit-node-parent parent))))
+         ((combobulate-elixir--type-p parent (append combobulate-elixir--sequences
+                                                     combobulate-elixir--blocks))
+          (throw 'done (combobulate-elixir--elements parent)))
+         (t (setq node parent)))))))
+
+(defun combobulate-elixir--thing-at (pos)
+  "Return the node at POS, grown from a call's target to the whole call."
+  (let ((node (combobulate-elixir--node-at pos))
+        (parent))
+    (while (and (setq parent (treesit-node-parent node))
+                (pcase (treesit-node-type parent)
+                  ((or "call" "access_call")
+                   (treesit-node-eq node (treesit-node-child-by-field-name parent "target")))
+                  ((or "dot" "unary_operator") t)))
+      (setq node parent))
+    node))
+
+(defun combobulate-elixir--inside (node)
+  "Return the nodes directly inside NODE that navigating down can land on."
+  (pcase (treesit-node-type node)
+    ("call"
+     (let ((container (or (combobulate-elixir--do-block node)
+                          (combobulate-elixir--child-of-type node "arguments"))))
+       (and container (combobulate-elixir--elements container))))
+    ("stab_clause"
+     (let ((body (treesit-node-child-by-field-name node "right")))
+       (and body (combobulate-elixir--elements body))))
+    ("binary_operator"
+     (if (combobulate-elixir--pipe-p node)
+         (combobulate-elixir--pipe-stages node)
+       (list (treesit-node-child-by-field-name node "right"))))
+    ("unary_operator"
+     (let ((operand (treesit-node-child-by-field-name node "operand")))
+       (if (equal (treesit-node-type operand) "call")
+           (combobulate-elixir--inside operand)
+         (list operand))))
+    ("pair" (list (treesit-node-child-by-field-name node "value")))
+    ("map"
+     (let ((content (combobulate-elixir--child-of-type node "map_content")))
+       (and content (combobulate-elixir--elements content))))
+    ((or "string" "charlist" "sigil" "quoted_atom" "quoted_keyword") nil)
+    (_ (combobulate-elixir--elements node))))
+
+(defun combobulate-elixir--down-target (pos)
+  "Return the node that navigating down from POS lands on."
+  (let* ((pos (combobulate-elixir--point-at pos))
+         (at (combobulate-elixir--node-at pos))
+         (thing (combobulate-elixir--thing-at pos)))
+    (cl-flet ((first-after (nodes)
+                (seq-find (lambda (n) (> (treesit-node-start n) pos)) nodes)))
+      (or (first-after (combobulate-elixir--inside thing))
+          ;; On a leaf that starts an assignment, pipeline or clause, enter that instead.
+          (and (= (treesit-node-start at) pos)
+               (let ((outermost (combobulate-elixir--outermost-at at)))
+                 (and outermost (first-after (combobulate-elixir--inside outermost)))))
+          ;; On a leaf in a function or clause head, enter the body the head introduces.
+          (let ((node thing) (target))
+            (while (and (not target) (setq node (treesit-node-parent node)))
+              (let ((body (pcase (treesit-node-type node)
+                            ("call" (combobulate-elixir--do-block node))
+                            ("stab_clause" (treesit-node-child-by-field-name node "right")))))
+                (when (and body (< pos (treesit-node-start body)))
+                  (setq target (first-after (combobulate-elixir--elements body))))))
+            target)))))
+
+(defvar-local combobulate-elixir--cache nil
+  "The last navigation result, as (KIND POINT TICK RESULT STARTS).
+
+STARTS is a hash table of the start positions of the nodes in
+RESULT, so the `:pred' predicates can reject most nodes cheaply.")
+
+(defun combobulate-elixir--cached (kind fn)
+  "Return FN applied to point and a table of its start positions.
+
+The `:pred' predicates run once per candidate node, so the answer is
+computed once and reused while point and the buffer are unchanged."
+  (pcase-let ((`(,k ,pt ,tick . ,rest) combobulate-elixir--cache))
+    (if (and (eq k kind) (eql pt (point)) (eql tick (buffer-chars-modified-tick)))
+        rest
+      (let* ((result (funcall fn (point)))
+             (starts (make-hash-table)))
+        (dolist (node (ensure-list result))
+          (puthash (treesit-node-start node) t starts))
+        (setq combobulate-elixir--cache
+              (list kind (point) (buffer-chars-modified-tick) result starts))
+        (list result starts)))))
+
+(defun combobulate-elixir--sibling-p (node)
+  (pcase-let ((`(,siblings ,starts) (combobulate-elixir--cached 'sibling #'combobulate-elixir--siblings)))
+    (and (gethash (treesit-node-start node) starts)
+         (seq-find (lambda (sibling) (treesit-node-eq sibling node)) siblings))))
+
+(defun combobulate-elixir--down-p (node)
+  "Match the down target, or, when there is none, the nodes around point.
+
+Matching the nodes around point when there is no target stops the
+procedure from retrying the query on every ancestor; navigation then
+ignores them because they do not start after point."
+  (pcase-let ((`(,target ,starts) (combobulate-elixir--cached 'down #'combobulate-elixir--down-target)))
+    (if target
+        (and (gethash (treesit-node-start node) starts)
+             (treesit-node-eq target node))
+      (<= (treesit-node-start node) (point) (treesit-node-end node)))))
+
+(defun combobulate-elixir--grows-p (node parent backward)
+  "Return non-nil if the sexp NODE extends to PARENT, which shares its edge."
+  (let ((field (treesit-node-field-name node)))
+    (pcase (treesit-node-type parent)
+      ("call" (or (equal field "target")
+                  (and backward
+                       (or (equal (treesit-node-type node) "do_block")
+                           (and (equal (treesit-node-type node) "arguments")
+                                (equal (treesit-node-type (treesit-node-child node 0)) "("))))))
+      ("access_call" (or backward (equal field "target")))
+      ("dot" t)
+      ("unary_operator" backward)
+      ("arguments" (and (not backward)
+                        (equal (treesit-node-type (treesit-node-parent parent)) "stab_clause")))
+      ("stab_clause" (and (not backward) (equal field "left"))))))
+
+(defun combobulate-elixir--sexp-at (pos backward)
+  "Return the expression that starts at POS, or ends at POS if BACKWARD."
+  (let* ((root (treesit-buffer-root-node 'elixir))
+         (node (if backward
+                   (and (> pos (point-min))
+                        (treesit-node-descendant-for-range root (1- pos) pos t))
+                 (treesit-node-descendant-for-range root pos pos t)))
+         (edge (lambda (n) (if backward (treesit-node-end n) (treesit-node-start n))))
+         (parent))
+    (when (and node (= (funcall edge node) pos))
+      (while (and (setq parent (treesit-node-parent node))
+                  (= (funcall edge parent) pos)
+                  (combobulate-elixir--grows-p node parent backward))
+        (setq node parent))
+      node)))
+
+(defun combobulate-elixir-forward-sexp (&optional arg)
+  "Move forward over ARG Elixir expressions, or backward if ARG is negative.
+
+From `def' this moves over the whole definition, and from
+`Keyword.get' over the whole call.  Where no expression starts,
+fall back to `forward-sexp-default-function'.  Inside a `~H' sigil,
+use Combobulate's HEEx navigation."
+  (setq arg (or arg 1))
+  (if (eq (treesit-language-at (point)) 'heex)
+      (combobulate-forward-sexp-function arg)
+    (let ((backward (< arg 0)))
+      (dotimes (_ (abs arg))
+        (forward-comment (if backward (- (buffer-size)) (buffer-size)))
+        (let ((node (combobulate-elixir--sexp-at (point) backward)))
+          (if node
+              (goto-char (if backward (treesit-node-start node) (treesit-node-end node)))
+            (forward-sexp-default-function (if backward -1 1))))))))
+
+(defun combobulate-elixir--skip-indentation ()
+  "Move to the line's first node when point is in indentation.
+
+Combobulate otherwise resolves indentation to the enclosing block."
+  (when (looking-back "^[ \t]*" (line-beginning-position))
+    (skip-chars-forward " \t")))
+
+(defun combobulate-elixir--anchor ()
+  "Return the start of the smallest non-wrapper node at point.
+
+This is the position Combobulate's sibling navigation works from.
+`else', `rescue', `catch' and `after' blocks count as nodes here
+because they are siblings of the statements before them."
+  (let ((node (combobulate-elixir--node-at (point))))
+    (while (and node (combobulate-elixir--type-p
+                      node '("source" "do_block" "body" "block" "arguments"
+                             "keywords" "map_content")))
+      (setq node (treesit-node-parent node)))
+    (if node (treesit-node-start node) (point))))
+
+(defun combobulate-elixir--navigate (arg fallback find)
+  "Move ARG times to the node FIND returns, or run FALLBACK inside HEEx.
+
+The commands below compute their targets directly instead of going
+through the procedure queries, which walk the whole enclosing block
+and get slow in large modules."
+  (combobulate-elixir--skip-indentation)
+  (if (eq (treesit-language-at (point)) 'heex)
+      (funcall fallback arg)
+    (dotimes (_ (or arg 1))
+      (combobulate-visual-move-to-node (funcall find)))))
+
+(defun combobulate-elixir-navigate-next (&optional arg)
+  "Move to the next sibling ARG times."
+  (interactive "^p")
+  (combobulate-elixir--navigate
+   arg #'combobulate-navigate-next
+   (lambda ()
+     (skip-chars-forward combobulate-skip-prefix-regexp)
+     (let ((anchor (combobulate-elixir--anchor)))
+       (seq-find (lambda (node) (> (treesit-node-start node) anchor))
+                 (combobulate-elixir--siblings anchor))))))
+
+(defun combobulate-elixir-navigate-previous (&optional arg)
+  "Move to the previous sibling ARG times."
+  (interactive "^p")
+  (combobulate-elixir--navigate
+   arg #'combobulate-navigate-previous
+   (lambda ()
+     (combobulate-elixir--skip-indentation)
+     (let ((anchor (combobulate-elixir--anchor)))
+       (car (last (seq-filter (lambda (node) (< (treesit-node-start node) anchor))
+                              (combobulate-elixir--siblings anchor))))))))
+
+(defun combobulate-elixir-navigate-up (&optional arg)
+  "Like `combobulate-navigate-up', but skipping leading indentation."
+  (interactive "^p")
+  (combobulate-elixir--skip-indentation)
+  (combobulate-navigate-up arg))
+
+(defun combobulate-elixir-navigate-down (&optional arg)
+  "Move into the node at point ARG times."
+  (interactive "^p")
+  (combobulate-elixir--navigate
+   arg #'combobulate-navigate-down
+   (lambda ()
+     (combobulate-elixir--skip-indentation)
+     (combobulate-elixir--down-target (point)))))
+
+(defun combobulate-elixir-pretty-print-node-name (node _default-name)
   "Pretty printer for Elixir nodes"
   (combobulate-string-truncate
    (replace-regexp-in-string
@@ -56,7 +389,7 @@
            (combobulate-node-text target))))
       ("stab_clause"
        (concat (combobulate-node-text (combobulate-node-child-by-field node "left")) " ->"))
-      (_ default-name)))
+      (_ (car (split-string (combobulate-node-text node) "\n")))))
    40))
 
 (eval-and-compile
@@ -65,37 +398,45 @@
        '("identifier" "alias" "atom" "keyword"))
       (plausible-separators '("," "\n"))
       (pretty-print-node-name-function #'combobulate-elixir-pretty-print-node-name)
+      (navigate-down-into-lists nil)
       (procedures-sibling
-       '(;; A clause head such as `n < 0' sits in an `arguments' node, so
-         ;; clauses must be matched before the generic rule below.
+       '(;; Statements, definitions and clauses when point is at their start.
          (:activation-nodes
-          ((:nodes ("stab_clause")
+          ((:nodes ((exclude (all) "source" "do_block" "body" "block" "arguments"
+                             "keywords" "map_content"))
                    :position at
-                   :has-parent ("do_block" "else_block" "rescue_block" "catch_block"
-                                "after_block" "anonymous_function")))
+                   :has-parent ("source" "do_block" "else_block" "rescue_block" "catch_block"
+                                "after_block" "body" "block" "anonymous_function")))
           :selector (:choose parent :match-children t))
+         ;; Everything else, including heads, pipelines and keyword lists.
+         ;; The query runs on the nearest block so it stays cheap.
          (:activation-nodes
-          ((:nodes
-            ((all))
-            :has-parent ("source" "do_block" "else_block" "rescue_block" "catch_block"
-                         "after_block" "body" "block" "anonymous_function"
-                         "arguments" "list" "tuple" "map_content" "keywords" "bitstring")))
-          :selector (:choose parent :match-children t))))
+          ((:nodes ((exclude (all) "source" "do_block" "body" "block" "arguments"
+                             "keywords" "map_content"))
+                   :has-ancestor ("source" "do_block" "else_block" "rescue_block" "catch_block"
+                                  "after_block" "body" "block" "anonymous_function")))
+          :selector (:choose parent
+                             :match-query
+                             (:query (((_) @match (:pred combobulate-elixir--sibling-p @match)))
+                                     :engine treesitter)))))
       (procedures-hierarchy
-       '((:activation-nodes
-          ((:nodes ("call") :position at))
-          :selector (:choose node
-                             :match-query (:query (call (do_block (_)+ @match))
-                                                  :engine combobulate)))
+       '(;; The target is usually inside the node at point, so query that first.
          (:activation-nodes
-          ((:nodes ("stab_clause") :position at))
+          ((:nodes ((exclude (all) "do_block" "body" "arguments" "keywords" "map_content"))
+                   :position at))
           :selector (:choose node
-                             :match-children (:match-rules ("body"))))
+                             :match-query
+                             (:query (((_) @match (:pred combobulate-elixir--down-p @match)))
+                                     :engine treesitter)))
          (:activation-nodes
-          ((:nodes ("call") :position at))
-          :selector (:choose node
-                             :match-query (:query (call (arguments (_)+ @match))
-                                                  :engine combobulate)))
+          ((:nodes ((exclude (all) "do_block" "body" "arguments" "keywords" "map_content"))
+                   :has-ancestor ("source" "do_block" "else_block" "rescue_block" "catch_block"
+                                  "after_block" "body" "block" "anonymous_function")))
+          :selector (:choose parent
+                             :match-query
+                             (:query (((_) @match (:pred combobulate-elixir--down-p @match)))
+                                     :engine treesitter)))
+         ;; Lists the node types that navigating up may stop at.
          (:activation-nodes
           ((:nodes ((exclude (all) "do_block" "body" "arguments" "keywords" "map_content"))
                    :position at))
@@ -108,10 +449,15 @@
  :setup-fn combobulate-elixir-setup)
 
 (defun combobulate-elixir-setup (_)
+  (setq-local forward-sexp-function #'combobulate-elixir-forward-sexp)
   (let ((map (combobulate-read map)))
     (define-key map [remap combobulate-navigate-beginning-of-defun] #'treesit-beginning-of-defun)
     (define-key map [remap combobulate-navigate-end-of-defun] #'treesit-end-of-defun)
-    (define-key map [remap combobulate-mark-defun] #'mark-defun)))
+    (define-key map [remap combobulate-mark-defun] #'mark-defun)
+    (define-key map [remap combobulate-navigate-next] #'combobulate-elixir-navigate-next)
+    (define-key map [remap combobulate-navigate-previous] #'combobulate-elixir-navigate-previous)
+    (define-key map [remap combobulate-navigate-up] #'combobulate-elixir-navigate-up)
+    (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)))
 
 (provide 'combobulate-elixir)
 ;;; combobulate-elixir.el ends here
