@@ -303,6 +303,12 @@ ignores them because they do not start after point."
         (setq node parent))
       node)))
 
+(defun combobulate-elixir--in-heex-p ()
+  "Return non-nil if point is inside a `~H' sigil."
+  ;; Emacs only sets the HEEx parser's ranges on redisplay.
+  (treesit-update-ranges (point) (min (point-max) (1+ (point))))
+  (eq (treesit-language-at (point)) 'heex))
+
 (defun combobulate-elixir-forward-sexp (&optional arg)
   "Move forward over ARG Elixir expressions, or backward if ARG is negative.
 
@@ -311,7 +317,7 @@ From `def' this moves over the whole definition, and from
 fall back to `forward-sexp-default-function'.  Inside a `~H' sigil,
 use Combobulate's HEEx navigation."
   (setq arg (or arg 1))
-  (if (eq (treesit-language-at (point)) 'heex)
+  (if (combobulate-elixir--in-heex-p)
       (combobulate-forward-sexp-function arg)
     (let ((backward (< arg 0)))
       (dotimes (_ (abs arg))
@@ -348,7 +354,7 @@ The commands below compute their targets directly instead of going
 through the procedure queries, which walk the whole enclosing block
 and get slow in large modules."
   (combobulate-elixir--skip-indentation)
-  (if (eq (treesit-language-at (point)) 'heex)
+  (if (combobulate-elixir--in-heex-p)
       (funcall fallback arg)
     (dotimes (_ (or arg 1))
       (combobulate-visual-move-to-node (funcall find)))))
@@ -493,7 +499,7 @@ Uses the same siblings as \\[combobulate-elixir-navigate-next]."
 
 (defun combobulate-elixir--drag-command (arg direction fallback)
   (combobulate-elixir--skip-indentation)
-  (if (eq (treesit-language-at (point)) 'heex)
+  (if (combobulate-elixir--in-heex-p)
       (funcall fallback arg)
     (dotimes (_ (or arg 1))
       (let ((start (combobulate-elixir--drag direction)))
@@ -506,7 +512,7 @@ Uses the same siblings as \\[combobulate-elixir-navigate-next]."
 The last clause of a `case' or `fn' includes the newline before
 `end', and killing it would pull `end' onto the previous line."
   (interactive "p")
-  (if (eq (treesit-language-at (point)) 'heex)
+  (if (combobulate-elixir--in-heex-p)
       (combobulate-kill-node-dwim arg)
     (dotimes (_ (or arg 1))
       (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
@@ -634,7 +640,7 @@ Outside any construct, fall back to `combobulate-navigate-sequence-next'."
   (interactive "^p")
   (combobulate-elixir--skip-indentation)
   (dotimes (_ (or arg 1))
-    (let ((target (and (not (eq (treesit-language-at (point)) 'heex))
+    (let ((target (and (not (combobulate-elixir--in-heex-p))
                        (combobulate-elixir--sequence-target 'next))))
       (if target
           (goto-char target)
@@ -648,7 +654,7 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
   (interactive "^p")
   (combobulate-elixir--skip-indentation)
   (dotimes (_ (or arg 1))
-    (let ((target (and (not (eq (treesit-language-at (point)) 'heex))
+    (let ((target (and (not (combobulate-elixir--in-heex-p))
                        (combobulate-elixir--sequence-target 'previous))))
       (if target
           (goto-char target)
