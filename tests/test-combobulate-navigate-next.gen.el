@@ -1874,3 +1874,115 @@
 	       (combobulate-test-assert-at-marker 2)))
 
 
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-args-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-args.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-args.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-body-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-body.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-body.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-clauses-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-clauses.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-clauses.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-export-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-export.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-export.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-forms-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-forms.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-forms.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-list-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-list.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-list.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-next--erlang-map-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/erlang-map.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/sibling/erlang-map.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-next)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-next)
+    (combobulate-test-assert-at-marker 3)))
+
+
