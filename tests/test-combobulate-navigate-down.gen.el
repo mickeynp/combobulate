@@ -643,3 +643,67 @@
 	       (combobulate-test-assert-at-marker 4)))
 
 
+(ert-deftest
+    combobulate-test-elixir-combobulate-navigate-down--elixir-call-3
+    ()
+
+  "Test `combobulate' with `fixtures/down/elixir-call.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/down/elixir-call.ex")
+    :tags
+    '(combobulate elixir elixir-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-navigate-down--elixir-def-4
+    ()
+
+  "Test `combobulate' with `fixtures/down/elixir-def.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/down/elixir-def.ex")
+    :tags
+    '(combobulate elixir elixir-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)
+    (combobulate-test-go-to-marker 3) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 4)))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-navigate-down--elixir-pipeline-3
+    ()
+
+  "Test `combobulate' with `fixtures/down/elixir-pipeline.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/down/elixir-pipeline.ex")
+    :tags
+    '(combobulate elixir elixir-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-navigate-down--heex-tag-3 ()
+
+  "Test `combobulate' with `fixtures/down/heex-tag.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/down/heex-tag.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)))
+
+
