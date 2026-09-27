@@ -78,5 +78,22 @@
     (combobulate-erlang-navigate-sequence-next)
     (should (looking-at-p "end"))))
 
+(ert-deftest combobulate-test-erlang-same-kind-skips-the-other-clauses ()
+  (combobulate-test-erlang "‸a() -> ok.\nb(x) -> ok;\nb(_) -> ok.\nc() -> ok.\n"
+    (combobulate-erlang-navigate-next-same-kind)
+    (should (looking-at-p "b(x)"))
+    (combobulate-erlang-navigate-next-same-kind)
+    (should (looking-at-p "c()"))))
+
+(ert-deftest combobulate-test-erlang-previous-same-kind-reaches-the-first-clause ()
+  (combobulate-test-erlang "a() -> ok.\nb(x) -> ok;\nb(_) -> ok.\n‸c() -> ok.\n"
+    (combobulate-erlang-navigate-previous-same-kind)
+    (should (looking-at-p "b(x)"))))
+
+(ert-deftest combobulate-test-erlang-same-kind-groups-calls-by-function ()
+  (combobulate-test-erlang "f() ->\n    ‸io:format(\"a\"),\n    lists:reverse([]),\n    io:format(\"b\").\n"
+    (combobulate-erlang-navigate-next-same-kind)
+    (should (looking-at-p "io:format(\"b\")"))))
+
 (provide 'test-erlang)
 ;;; test-erlang.el ends here

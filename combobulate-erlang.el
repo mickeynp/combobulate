@@ -199,6 +199,68 @@ and `after'."
 
 ;;; Editing
 
+(defun combobulate-erlang--kind (node)
+  "Return a string naming the kind of NODE for same-kind navigation.
+
+Attributes such as `-doc' are grouped by name, and calls by the
+function they call."
+  (let ((field-text (lambda (n field)
+                      (treesit-node-text (treesit-node-child-by-field-name n field) t))))
+    (pcase (treesit-node-type node)
+      ("wild_attribute" (treesit-node-text (treesit-node-child-by-field-name node "name") t))
+      ("call" (concat "call " (funcall field-text node "expr")))
+      ("remote" (concat "call " (funcall field-text node "module")
+                        (funcall field-text (treesit-node-child-by-field-name node "fun") "expr")))
+      (type type))))
+
+(defun combobulate-erlang--same-kind-target (direction)
+  "Return the nearest sibling in DIRECTION of the same kind as the one at point.
+
+From a function clause, this is the first clause of the next or
+previous function, so the other clauses of the current one are skipped."
+  (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
+    (let* ((real (lambda (node) (if (combobulate-proxy-node-p node)
+                                    (combobulate-proxy-node-to-real-node node)
+                                  node)))
+           (nearest (save-excursion
+                      (combobulate-skip-whitespace-forward t)
+                      (combobulate--get-nearest-navigable-node)))
+           (current (and nearest (funcall real (or (combobulate-nav-get-self-sibling nearest) nearest))))
+           (kind (and current (combobulate-erlang--kind current)))
+           (key (and current (combobulate-erlang--clause-key current)))
+           (same (and kind
+                      (seq-filter (lambda (node)
+                                    (and (equal (combobulate-erlang--kind node) kind)
+                                         (not (and key (equal (combobulate-erlang--clause-key node) key)))))
+                                  (mapcar real (combobulate-nav-get-siblings current))))))
+      (if (eq direction 'next)
+          (seq-find (lambda (node) (> (treesit-node-start node) (treesit-node-start current))) same)
+        (let ((target (car (last (seq-filter (lambda (node)
+                                               (< (treesit-node-start node) (treesit-node-start current)))
+                                             same)))))
+          (when (and target key)
+            (let ((target-key (combobulate-erlang--clause-key target))
+                  (previous))
+              (while (and (setq previous (treesit-node-prev-sibling target t))
+                          (equal (combobulate-erlang--clause-key previous) target-key))
+                (setq target previous))))
+          target)))))
+
+(defun combobulate-erlang-navigate-next-same-kind (&optional arg)
+  "Move to the next sibling of the same kind ARG times.
+
+From a function clause this reaches the next function; from `-spec'
+the next `-spec'; from a call to `io:format' the next such call."
+  (interactive "^p")
+  (dotimes (_ (or arg 1))
+    (combobulate-visual-move-to-node (combobulate-erlang--same-kind-target 'next))))
+
+(defun combobulate-erlang-navigate-previous-same-kind (&optional arg)
+  "Move to the previous sibling of the same kind ARG times."
+  (interactive "^p")
+  (dotimes (_ (or arg 1))
+    (combobulate-visual-move-to-node (combobulate-erlang--same-kind-target 'previous))))
+
 (defun combobulate-erlang--separator-p (node)
   (and node
        (not (treesit-node-check node 'named))
