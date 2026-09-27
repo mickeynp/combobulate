@@ -605,9 +605,7 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
     (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)
     (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
     (define-key map [remap combobulate-navigate-sequence-previous]
-                #'combobulate-elixir-navigate-sequence-previous)
-    (define-key map (kbd "C-M-S-n") #'combobulate-elixir-navigate-next-same-kind)
-    (define-key map (kbd "C-M-S-p") #'combobulate-elixir-navigate-previous-same-kind)))
+                #'combobulate-elixir-navigate-sequence-previous)))
 
 (provide 'combobulate-elixir)
 ;;; combobulate-elixir.el ends here
