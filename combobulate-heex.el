@@ -149,6 +149,70 @@ Combobulate otherwise resolves indentation to the enclosing tag."
   (combobulate-heex--skip-indentation)
   (combobulate-navigate-down arg))
 
+(defconst combobulate-heex--wrappers
+  '("start_tag" "end_tag" "self_closing_tag"
+    "start_component" "end_component" "self_closing_component"
+    "start_slot" "end_slot" "self_closing_slot")
+  "Node types that open or close a tag, component or slot.")
+
+(defun combobulate-heex--kind (node)
+  "Return a string naming the kind of NODE for same-kind navigation.
+
+Tags, components and slots are grouped by name, and attributes by
+attribute name."
+  (pcase (treesit-node-type node)
+    ((and (or "tag" "component" "slot") type)
+     (let ((opening (treesit-node-child node 0 t)))
+       (concat type " " (treesit-node-text (treesit-node-child opening 0 t) t))))
+    ((and (or "attribute" "special_attribute") type)
+     (concat type " " (treesit-node-text (treesit-node-child node 0 t) t)))
+    (type type)))
+
+(defun combobulate-heex--item-at (pos)
+  "Return the tag, component, slot, attribute or other element at POS."
+  ;; Inside a `~H' sigil the HEEx parser only sees ranges that were updated.
+  (treesit-update-ranges pos (min (point-max) (1+ pos)))
+  (let ((node (treesit-node-at pos 'heex)))
+    (while (and node
+                (not (member (treesit-node-type node) '("attribute" "special_attribute")))
+                (not (member (treesit-node-type (treesit-node-parent node))
+                             '("fragment" "tag" "component" "slot"))))
+      (setq node (treesit-node-parent node)))
+    (if (and node (member (treesit-node-type node) combobulate-heex--wrappers))
+        (treesit-node-parent node)
+      node)))
+
+(defun combobulate-heex--same-kind-target (direction)
+  "Return the nearest sibling in DIRECTION of the same kind as the one at point."
+  (when-let* ((item (combobulate-heex--item-at (point)))
+              (kind (combobulate-heex--kind item))
+              (siblings (seq-filter
+                         (lambda (node)
+                           (and (not (member (treesit-node-type node) combobulate-heex--wrappers))
+                                (equal (combobulate-heex--kind node) kind)))
+                         (treesit-node-children (treesit-node-parent item) t))))
+    (if (eq direction 'next)
+        (seq-find (lambda (node) (> (treesit-node-start node) (treesit-node-start item))) siblings)
+      (car (last (seq-filter (lambda (node) (< (treesit-node-start node) (treesit-node-start item)))
+                             siblings))))))
+
+(defun combobulate-heex-navigate-next-same-kind (&optional arg)
+  "Move to the next sibling of the same kind ARG times.
+
+From `<.button>' this reaches the next `<.button>', and from a
+`class' attribute the next `class' attribute of the same tag."
+  (interactive "^p")
+  (combobulate-heex--skip-indentation)
+  (dotimes (_ (or arg 1))
+    (combobulate-visual-move-to-node (combobulate-heex--same-kind-target 'next))))
+
+(defun combobulate-heex-navigate-previous-same-kind (&optional arg)
+  "Move to the previous sibling of the same kind ARG times."
+  (interactive "^p")
+  (combobulate-heex--skip-indentation)
+  (dotimes (_ (or arg 1))
+    (combobulate-visual-move-to-node (combobulate-heex--same-kind-target 'previous))))
+
 (defun combobulate-heex-forward-sexp (&optional arg)
   "Like `combobulate-forward-sexp-function', but safe at the buffer edges.
 

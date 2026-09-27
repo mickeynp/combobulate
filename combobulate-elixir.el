@@ -46,6 +46,9 @@
 (require 'combobulate-manipulation)
 (require 'combobulate-rules)
 
+(declare-function combobulate-heex-navigate-next-same-kind "combobulate-heex")
+(declare-function combobulate-heex-navigate-previous-same-kind "combobulate-heex")
+
 (defgroup combobulate-elixir nil
   "Configuration switches for Elixir"
   :group 'combobulate
@@ -103,7 +106,7 @@ Comments are left out because Combobulate never navigates to them."
           (treesit-node-children node t)))
 
 (defun combobulate-elixir--do-keyword-p (arguments)
-  "Return non-nil if ARGUMENTS ends in keywords with a `do:' pair, as in `def f, do: x'."
+  "Return non-nil if ARGUMENTS has a `do:' pair, as in `def f, do: x'."
   (let ((keywords (combobulate-elixir--child-of-type arguments "keywords")))
     (and keywords
          (seq-find (lambda (pair)
@@ -418,7 +421,7 @@ From `def' this skips `@doc', `@spec' and other statements to reach
 the next `def' or `defp'; from `@doc' it reaches the next `@doc'."
   (interactive "^p")
   (combobulate-elixir--navigate
-   arg #'combobulate-navigate-next
+   arg #'combobulate-heex-navigate-next-same-kind
    (lambda ()
      (skip-chars-forward combobulate-skip-prefix-regexp)
      (combobulate-elixir--same-kind-target 'next))))
@@ -427,8 +430,148 @@ the next `def' or `defp'; from `@doc' it reaches the next `@doc'."
   "Move to the previous sibling of the same kind ARG times."
   (interactive "^p")
   (combobulate-elixir--navigate
-   arg #'combobulate-navigate-previous
+   arg #'combobulate-heex-navigate-previous-same-kind
    (lambda () (combobulate-elixir--same-kind-target 'previous))))
+
+(defun combobulate-elixir--trimmed-range (node)
+  "Return the range of NODE without trailing whitespace.
+
+The grammar ends the last clause of a `case' or `fn' after the
+newline before `end', so swapping untrimmed ranges moves that
+newline."
+  (save-excursion
+    (goto-char (treesit-node-end node))
+    (skip-chars-backward " \t\n" (treesit-node-start node))
+    (cons (treesit-node-start node) (point))))
+
+(defun combobulate-elixir--drag (direction)
+  "Swap the sibling at point with its neighbour in DIRECTION.
+
+Return the position where the sibling at point now starts."
+  (let* ((anchor (combobulate-elixir--anchor))
+         (siblings (combobulate-elixir--siblings anchor))
+         (self (seq-find (lambda (node)
+                           (and (<= (treesit-node-start node) anchor)
+                                (< anchor (treesit-node-end node))))
+                         siblings))
+         (other (and self
+                     (if (eq direction 'up)
+                         (car (last (seq-filter (lambda (node) (< (treesit-node-start node)
+                                                                  (treesit-node-start self)))
+                                                siblings)))
+                       (seq-find (lambda (node) (> (treesit-node-start node) (treesit-node-start self)))
+                                 siblings)))))
+    (unless self
+      (user-error "Nothing to drag at point"))
+    (unless other
+      (user-error "No sibling to swap with in that direction"))
+    (when (xor (equal (treesit-node-type self) "pair") (equal (treesit-node-type other) "pair"))
+      (user-error "Keyword pairs must stay after the other elements"))
+    (pcase-let* ((`(,first ,second) (if (eq direction 'up) (list other self) (list self other)))
+                 (first-range (combobulate-elixir--trimmed-range first))
+                 (second-range (combobulate-elixir--trimmed-range second))
+                 (self-length (- (cdr (combobulate-elixir--trimmed-range self))
+                                 (treesit-node-start self))))
+      (transpose-subr-1 first-range second-range)
+      (if (eq direction 'up)
+          (car first-range)
+        (- (cdr second-range) self-length)))))
+
+(defun combobulate-elixir-drag-up (&optional arg)
+  "Swap the sibling at point with the previous one ARG times.
+
+Uses the same siblings as \\[combobulate-elixir-navigate-previous]."
+  (interactive "^p")
+  (combobulate-elixir--drag-command arg 'up #'combobulate-drag-up))
+
+(defun combobulate-elixir-drag-down (&optional arg)
+  "Swap the sibling at point with the next one ARG times.
+
+Uses the same siblings as \\[combobulate-elixir-navigate-next]."
+  (interactive "^p")
+  (combobulate-elixir--drag-command arg 'down #'combobulate-drag-down))
+
+(defun combobulate-elixir--drag-command (arg direction fallback)
+  (combobulate-elixir--skip-indentation)
+  (if (eq (treesit-language-at (point)) 'heex)
+      (funcall fallback arg)
+    (dotimes (_ (or arg 1))
+      (let ((start (combobulate-elixir--drag direction)))
+        (combobulate-visual-move-to-node
+         (combobulate-elixir--outermost-at (combobulate-elixir--node-at start)))))))
+
+(defun combobulate-elixir-kill-node-dwim (&optional arg)
+  "Like `combobulate-kill-node-dwim', but keep the node's trailing whitespace.
+
+The last clause of a `case' or `fn' includes the newline before
+`end', and killing it would pull `end' onto the previous line."
+  (interactive "p")
+  (if (eq (treesit-language-at (point)) 'heex)
+      (combobulate-kill-node-dwim arg)
+    (dotimes (_ (or arg 1))
+      (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
+        (when-let* ((nearest (save-excursion
+                               (combobulate-skip-whitespace-forward t)
+                               (combobulate--get-nearest-navigable-node)))
+                    (node (or (combobulate-nav-get-self-sibling nearest) nearest))
+                    (range (combobulate-elixir--trimmed-range node))
+                    (proxy (combobulate-proxy-node-make-from-range (car range) (cdr range))))
+          (unless (combobulate-node-on-or-after-point-p proxy)
+            (error "No node to kill"))
+          (let ((text (combobulate--consume-node proxy t)))
+            (if (memq last-command '(combobulate-kill-node-dwim combobulate-elixir-kill-node-dwim))
+                (kill-append text nil)
+              (kill-new text)))
+          (combobulate-message "Killed node" proxy))))))
+
+(defconst combobulate-elixir--unsplicable
+  '("do_block" "else_block" "rescue_block" "catch_block" "after_block"
+    "body" "stab_clause" "keywords" "map_content")
+  "Node types that splicing must not replace.
+
+Replacing a `do' block with its contents drops `do' and `end', and
+replacing a clause drops its `->', which leaves invalid code.")
+
+(defun combobulate-elixir--splice (command arg)
+  "Run the splice COMMAND with ARG, offering only choices that keep valid code."
+  (combobulate-elixir--skip-indentation)
+  (let* ((anchor (combobulate-elixir--anchor))
+         (current (seq-find (lambda (node)
+                              (and (<= (treesit-node-start node) anchor)
+                                   (< anchor (treesit-node-end node))))
+                            (combobulate-elixir--siblings anchor))))
+    (when (equal (treesit-node-type current) "stab_clause")
+      (user-error "Clauses cannot live outside their `case', `cond' or `fn'")))
+  (let ((proffer (symbol-function 'combobulate-proffer-choices)))
+    (cl-letf (((symbol-function 'combobulate-proffer-choices)
+               (lambda (nodes &rest args)
+                 (apply proffer
+                        (or (seq-remove (lambda (node)
+                                          (combobulate-elixir--type-p node combobulate-elixir--unsplicable))
+                                        nodes)
+                            (user-error "Nothing to splice here without breaking the code"))
+                        args))))
+      (funcall command arg))))
+
+(defun combobulate-elixir-splice-up (&optional arg)
+  "Like `combobulate-splice-up', without choices that break the code."
+  (interactive "^p")
+  (combobulate-elixir--splice #'combobulate-splice-up arg))
+
+(defun combobulate-elixir-splice-down (&optional arg)
+  "Like `combobulate-splice-down', without choices that break the code."
+  (interactive "^p")
+  (combobulate-elixir--splice #'combobulate-splice-down arg))
+
+(defun combobulate-elixir-splice-self (&optional arg)
+  "Like `combobulate-splice-self', without choices that break the code."
+  (interactive "^p")
+  (combobulate-elixir--splice #'combobulate-splice-self arg))
+
+(defun combobulate-elixir-splice-parent (&optional arg)
+  "Like `combobulate-splice-parent', without choices that break the code."
+  (interactive "^p")
+  (combobulate-elixir--splice #'combobulate-splice-parent arg))
 
 (defun combobulate-elixir-navigate-up (&optional arg)
   "Like `combobulate-navigate-up', but skipping leading indentation."
@@ -605,7 +748,14 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
     (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)
     (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
     (define-key map [remap combobulate-navigate-sequence-previous]
-                #'combobulate-elixir-navigate-sequence-previous)))
+                #'combobulate-elixir-navigate-sequence-previous)
+    (define-key map [remap combobulate-drag-up] #'combobulate-elixir-drag-up)
+    (define-key map [remap combobulate-drag-down] #'combobulate-elixir-drag-down)
+    (define-key map [remap combobulate-kill-node-dwim] #'combobulate-elixir-kill-node-dwim)
+    (define-key map [remap combobulate-splice-up] #'combobulate-elixir-splice-up)
+    (define-key map [remap combobulate-splice-down] #'combobulate-elixir-splice-down)
+    (define-key map [remap combobulate-splice-self] #'combobulate-elixir-splice-self)
+    (define-key map [remap combobulate-splice-parent] #'combobulate-elixir-splice-parent)))
 
 (provide 'combobulate-elixir)
 ;;; combobulate-elixir.el ends here
