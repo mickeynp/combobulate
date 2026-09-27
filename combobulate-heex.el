@@ -57,6 +57,25 @@
        '((:activation-nodes
           ((:nodes ("tag" "component" "slot" "attribute" "special_attribute"
                     "expression" "directive" "text" "comment" "doctype"))))))
+      (procedures-sequence
+       '((:activation-nodes
+          ((:nodes ("tag_name") :position any :has-ancestor ("tag")))
+          :selector (:choose parent :match-query
+                             (:query (_ (start_tag (tag_name) @match)
+                                        (end_tag (tag_name) @match))
+                                     :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ("component_name") :position any :has-ancestor ("component")))
+          :selector (:choose parent :match-query
+                             (:query (_ (start_component (component_name) @match)
+                                        (end_component (component_name) @match))
+                                     :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ("slot_name") :position any :has-ancestor ("slot")))
+          :selector (:choose parent :match-query
+                             (:query (_ (start_slot (slot_name) @match)
+                                        (end_slot (slot_name) @match))
+                                     :engine combobulate)))))
       (procedures-sibling
        '((:activation-nodes
           ((:nodes ("attribute" "special_attribute")))

@@ -374,6 +374,73 @@ and get slow in large modules."
      (combobulate-elixir--skip-indentation)
      (combobulate-elixir--down-target (point)))))
 
+(defun combobulate-elixir--keywords (node)
+  "Return the start positions of the keywords that delimit NODE.
+
+For a call with a `do' block these are the call's target, `do',
+any `else', `rescue', `catch' or `after', and `end'.  For an
+anonymous function they are `fn' and `end'."
+  (let ((keywords (lambda (parent)
+                    (seq-keep (lambda (child)
+                                (and (member (treesit-node-type child)
+                                             '("do" "else" "rescue" "catch" "after" "fn" "end"))
+                                     (treesit-node-start child)))
+                              (treesit-node-children parent)))))
+    (pcase (treesit-node-type node)
+      ("call"
+       (let ((do-block (combobulate-elixir--do-block node)))
+         (and do-block
+              (append (list (treesit-node-start node))
+                      (mapcan (lambda (child)
+                                (if (member (treesit-node-type child)
+                                            '("else_block" "rescue_block" "catch_block" "after_block"))
+                                    (funcall keywords child)
+                                  (and (member (treesit-node-type child) '("do" "end"))
+                                       (list (treesit-node-start child)))))
+                              (treesit-node-children do-block))))))
+      ("anonymous_function" (funcall keywords node)))))
+
+(defun combobulate-elixir--sequence-target (direction)
+  "Return the next keyword position in DIRECTION among the constructs around point."
+  (let ((node (treesit-node-at (point) 'elixir))
+        (target))
+    (while (and node (not target))
+      (let ((positions (combobulate-elixir--keywords node)))
+        (setq target (if (eq direction 'next)
+                         (seq-find (lambda (pos) (> pos (point))) positions)
+                       (car (last (seq-filter (lambda (pos) (< pos (point))) positions))))))
+      (setq node (treesit-node-parent node)))
+    target))
+
+(defun combobulate-elixir-navigate-sequence-next (&optional arg)
+  "Move to the next keyword of the construct at point ARG times.
+
+From `def' this visits `do', then `end'; from `with' also `else'.
+Outside any construct, fall back to `combobulate-navigate-sequence-next'."
+  (interactive "^p")
+  (combobulate-elixir--skip-indentation)
+  (dotimes (_ (or arg 1))
+    (let ((target (and (not (eq (treesit-language-at (point)) 'heex))
+                       (combobulate-elixir--sequence-target 'next))))
+      (if target
+          (goto-char target)
+        (setq this-command 'combobulate-navigate-sequence-next)
+        (combobulate-navigate-sequence-next)))))
+
+(defun combobulate-elixir-navigate-sequence-previous (&optional arg)
+  "Move to the previous keyword of the construct at point ARG times.
+
+Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
+  (interactive "^p")
+  (combobulate-elixir--skip-indentation)
+  (dotimes (_ (or arg 1))
+    (let ((target (and (not (eq (treesit-language-at (point)) 'heex))
+                       (combobulate-elixir--sequence-target 'previous))))
+      (if target
+          (goto-char target)
+        (setq this-command 'combobulate-navigate-sequence-previous)
+        (combobulate-navigate-sequence-previous)))))
+
 (defun combobulate-elixir-pretty-print-node-name (node _default-name)
   "Pretty printer for Elixir nodes"
   (combobulate-string-truncate
@@ -407,6 +474,13 @@ and get slow in large modules."
                    :position at
                    :has-parent ("source" "do_block" "else_block" "rescue_block" "catch_block"
                                 "after_block" "body" "block" "anonymous_function")))
+          :selector (:choose parent :match-children t))
+         ;; Elements of argument lists and collections.  Plain children
+         ;; carry the `@match' marks that splicing and dragging expect.
+         (:activation-nodes
+          ((:nodes ((exclude (all) "source" "do_block" "body" "block" "arguments"
+                             "keywords" "map_content"))
+                   :has-parent ("arguments" "list" "tuple" "map_content" "keywords" "bitstring")))
           :selector (:choose parent :match-children t))
          ;; Everything else, including heads, pipelines and keyword lists.
          ;; The query runs on the nearest block so it stays cheap.
@@ -457,7 +531,10 @@ and get slow in large modules."
     (define-key map [remap combobulate-navigate-next] #'combobulate-elixir-navigate-next)
     (define-key map [remap combobulate-navigate-previous] #'combobulate-elixir-navigate-previous)
     (define-key map [remap combobulate-navigate-up] #'combobulate-elixir-navigate-up)
-    (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)))
+    (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)
+    (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
+    (define-key map [remap combobulate-navigate-sequence-previous]
+                #'combobulate-elixir-navigate-sequence-previous)))
 
 (provide 'combobulate-elixir)
 ;;; combobulate-elixir.el ends here
