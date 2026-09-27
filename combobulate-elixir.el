@@ -102,14 +102,27 @@ Comments are left out because Combobulate never navigates to them."
               (_ (list child))))
           (treesit-node-children node t)))
 
+(defun combobulate-elixir--do-keyword-p (arguments)
+  "Return non-nil if ARGUMENTS ends in keywords with a `do:' pair, as in `def f, do: x'."
+  (let ((keywords (combobulate-elixir--child-of-type arguments "keywords")))
+    (and keywords
+         (seq-find (lambda (pair)
+                     (equal (string-trim (treesit-node-text
+                                          (treesit-node-child-by-field-name pair "key") t))
+                            "do:"))
+                   (treesit-node-children keywords t)))))
+
 (defun combobulate-elixir--head-p (arguments)
   "Return non-nil if ARGUMENTS is the head of a clause or of a `do' block call.
 
+A call written with a `do:' keyword counts as having a `do' block.
 `with' and `for' are excluded because their heads hold clauses that
 are worth navigating between."
   (let ((owner (treesit-node-parent arguments)))
     (or (equal (treesit-node-type owner) "stab_clause")
-        (and (combobulate-elixir--do-block owner)
+        (and (equal (treesit-node-type owner) "call")
+             (or (combobulate-elixir--do-block owner)
+                 (combobulate-elixir--do-keyword-p arguments))
              (not (member (treesit-node-text (treesit-node-child-by-field-name owner "target") t)
                           '("with" "for")))))))
 
@@ -359,6 +372,64 @@ and get slow in large modules."
        (car (last (seq-filter (lambda (node) (< (treesit-node-start node) anchor))
                               (combobulate-elixir--siblings anchor))))))))
 
+(defun combobulate-elixir--kind (node)
+  "Return a string naming the kind of NODE for same-kind navigation.
+
+Calls are grouped by keyword, with private forms such as `defp'
+counting as their public form.  Module attributes are grouped by
+name and binary operators by operator."
+  (let ((field-text (lambda (n field)
+                      (treesit-node-text (treesit-node-child-by-field-name n field) t))))
+    (pcase (treesit-node-type node)
+      ("call"
+       (let ((name (funcall field-text node "target")))
+         (if (string-match (rx bos (group "def" (* alpha)) "p" eos) name)
+             (match-string 1 name)
+           name)))
+      ("unary_operator"
+       (let ((operand (treesit-node-child-by-field-name node "operand")))
+         (concat (funcall field-text node "operator")
+                 (if (equal (treesit-node-type operand) "call")
+                     (funcall field-text operand "target")
+                   (treesit-node-text operand t)))))
+      ("binary_operator" (concat "binary_operator " (funcall field-text node "operator")))
+      (type type))))
+
+(defun combobulate-elixir--same-kind-target (direction)
+  "Return the nearest sibling in DIRECTION of the same kind as the one at point."
+  (let* ((anchor (combobulate-elixir--anchor))
+         (siblings (combobulate-elixir--siblings anchor))
+         (current (seq-find (lambda (node)
+                              (and (<= (treesit-node-start node) anchor)
+                                   (< anchor (treesit-node-end node))))
+                            siblings))
+         (kind (and current (combobulate-elixir--kind current)))
+         (same (seq-filter (lambda (node) (equal (combobulate-elixir--kind node) kind))
+                           siblings)))
+    (when kind
+      (if (eq direction 'next)
+          (seq-find (lambda (node) (> (treesit-node-start node) anchor)) same)
+        (car (last (seq-filter (lambda (node) (< (treesit-node-start node) anchor)) same)))))))
+
+(defun combobulate-elixir-navigate-next-same-kind (&optional arg)
+  "Move to the next sibling of the same kind ARG times.
+
+From `def' this skips `@doc', `@spec' and other statements to reach
+the next `def' or `defp'; from `@doc' it reaches the next `@doc'."
+  (interactive "^p")
+  (combobulate-elixir--navigate
+   arg #'combobulate-navigate-next
+   (lambda ()
+     (skip-chars-forward combobulate-skip-prefix-regexp)
+     (combobulate-elixir--same-kind-target 'next))))
+
+(defun combobulate-elixir-navigate-previous-same-kind (&optional arg)
+  "Move to the previous sibling of the same kind ARG times."
+  (interactive "^p")
+  (combobulate-elixir--navigate
+   arg #'combobulate-navigate-previous
+   (lambda () (combobulate-elixir--same-kind-target 'previous))))
+
 (defun combobulate-elixir-navigate-up (&optional arg)
   "Like `combobulate-navigate-up', but skipping leading indentation."
   (interactive "^p")
@@ -534,7 +605,9 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
     (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)
     (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
     (define-key map [remap combobulate-navigate-sequence-previous]
-                #'combobulate-elixir-navigate-sequence-previous)))
+                #'combobulate-elixir-navigate-sequence-previous)
+    (define-key map (kbd "C-M-S-n") #'combobulate-elixir-navigate-next-same-kind)
+    (define-key map (kbd "C-M-S-p") #'combobulate-elixir-navigate-previous-same-kind)))
 
 (provide 'combobulate-elixir)
 ;;; combobulate-elixir.el ends here
