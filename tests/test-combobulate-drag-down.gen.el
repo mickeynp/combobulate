@@ -5503,3 +5503,427 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/yaml-sequence.yaml[@2~after].yaml")))))
 
 
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-args-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-args.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-args.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-args.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-args-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-args.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-args.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-args.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-args-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-args.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-args.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-args.ex[@3~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-body.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-body.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-body.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-body-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-body.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-body.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-body.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-body-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-body.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-body.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-body.ex[@3~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-keywords-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-keywords.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-keywords.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-keywords.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-keywords-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-keywords.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-keywords.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-keywords.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-keywords-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-keywords.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-keywords.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-keywords.ex[@3~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-list-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-list.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-list.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-list.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-list-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-list.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-list.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-list.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-list-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-list.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-list.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-list.ex[@3~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-module-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-module.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-module.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-module.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-module-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-module.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-module.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-module.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-module-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-module.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-module.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-module.ex[@3~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-module-4
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-module.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-module.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 4) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-module.ex[@4~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-module-5
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-module.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-module.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 5) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-module.ex[@5~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-test-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-test.exs' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-test.exs")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-test.exs[@1~after].exs")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-test-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-test.exs' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-test.exs")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-test.exs[@2~after].exs")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-test-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-test.exs' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-test.exs")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-test.exs[@3~after].exs")))))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-with-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-with.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-with.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-with.ex[@1~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-with-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-with.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-with.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/elixir-with.ex[@2~after].ex")))
+
+
+(ert-deftest
+    combobulate-test-elixir-combobulate-drag-down--elixir-with-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/elixir-with.ex' in `elixir-ts-mode' mode."
+  (combobulate-test
+      (:language elixir :mode elixir-ts-mode :fixture
+		 "fixtures/sibling/elixir-with.ex")
+    :tags '(combobulate elixir elixir-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/elixir-with.ex[@3~after].ex")))))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-attributes-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-attributes.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-attributes.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/heex-attributes.heex[@1~after].heex")))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-attributes-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-attributes.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-attributes.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/heex-attributes.heex[@2~after].heex")))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-attributes-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-attributes.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-attributes.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/heex-attributes.heex[@3~after].heex")))))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-elements-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-elements.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-elements.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 1) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/heex-elements.heex[@1~after].heex")))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-elements-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-elements.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-elements.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-down)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-down/heex-elements.heex[@2~after].heex")))
+
+
+(ert-deftest
+    combobulate-test-heex-combobulate-drag-down--heex-elements-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/heex-elements.heex' in `heex-ts-mode' mode."
+  (combobulate-test
+      (:language heex :mode heex-ts-mode :fixture
+		 "fixtures/sibling/heex-elements.heex")
+    :tags '(combobulate heex heex-ts-mode combobulate-drag-down)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 3) (combobulate-drag-down)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-down/heex-elements.heex[@3~after].heex")))))
+
+

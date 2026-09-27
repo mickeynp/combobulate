@@ -286,6 +286,8 @@ doesn't exist."
   (save-window-excursion
     (save-excursion
       (let* ((auto-mode-alist (append '(("\\.go\\'" . go-ts-mode)
+                                        ("\\.exs?\\'" . elixir-ts-mode)
+                                        ("\\.heex\\'" . heex-ts-mode)
                                         ("\\.mli\\'" . tuareg-interface-mode)
                                         ("\\.ml\\'" . tuareg-mode))
                                       auto-mode-alist))

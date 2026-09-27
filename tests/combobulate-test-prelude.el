@@ -37,6 +37,9 @@
 (require 'yaml-ts-mode)
 (require 'json-ts-mode)
 (require 'tuareg)
+;; Bundled with Emacs 30 and later; tests using them are skipped otherwise.
+(require 'elixir-ts-mode nil t)
+(require 'heex-ts-mode nil t)
 
 ;;; Helpers for writing procedures
 
@@ -580,6 +583,7 @@ macros are available for use in the test body."
   (declare (indent 1) (debug (sexp body)))
   (let ((setup-stmts (symbol-value setup)))
     `(with-temp-buffer
+       (skip-unless (fboundp ',mode))
        (delay-mode-hooks
          (let ((positions '())
                ;; disable noisy BS in python
