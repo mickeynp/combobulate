@@ -1,7 +1,8 @@
 ;;-*- mode: emacs-lisp; -*-
 
 (let ((treesit-language-source-alist
-       '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+       '((bash . ("https://github.com/tree-sitter/tree-sitter-bash" "v0.23.3"))
+         (css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
          (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
          (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.1" "src"))
          (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))

@@ -5505,3 +5505,354 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/yaml-sequence.yaml[@1~after].yaml")))))
 
 
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-arguments-4 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-arguments.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-arguments.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 4) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-arguments.sh[@4~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-arguments-3 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-arguments.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-arguments.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-arguments.sh[@3~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-arguments-2 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-arguments.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-arguments.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-arguments.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-arguments-1 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-arguments.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-arguments.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-arguments.sh[@1~after].sh")))))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-array-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-array.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-array.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-array.sh[@3~after].sh")))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-array-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-array.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-array.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-array.sh[@2~after].sh")))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-array-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-array.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-array.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-array.sh[@1~after].sh")))))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-case-items-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-case-items.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-case-items.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-case-items.sh[@3~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-case-items-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-case-items.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-case-items.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-case-items.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-case-items-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-case-items.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-case-items.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-case-items.sh[@1~after].sh")))))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-elif-body-2 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-elif-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-elif-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-elif-body.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-elif-body-1 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-elif-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-elif-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-elif-body.sh[@1~after].sh")))))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-function-body-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-function-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-function-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-function-body.sh[@3~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-function-body-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-function-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-function-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-function-body.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-function-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-function-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-function-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-function-body.sh[@1~after].sh")))))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-if-body-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-if-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-if-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-if-body.sh[@3~after].sh")))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-if-body-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-if-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-if-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-if-body.sh[@2~after].sh")))
+
+
+(ert-deftest combobulate-test-bash-combobulate-drag-up--bash-if-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-if-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-if-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-if-body.sh[@1~after].sh")))))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-loop-body-3 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-loop-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-loop-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-loop-body.sh[@3~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-loop-body-2 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-loop-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-loop-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-loop-body.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-loop-body-1 ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-loop-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-loop-body.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-loop-body.sh[@1~after].sh")))))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-statements-4
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-statements.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-statements.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 4) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-statements.sh[@4~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-statements-3
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-statements.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-statements.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 3) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-statements.sh[@3~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-statements-2
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-statements.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-statements.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (combobulate-test-go-to-marker 2) (combobulate-drag-up)
+    (combobulate-compare-action-with-fixture-delta
+     "./fixture-deltas/combobulate-drag-up/bash-statements.sh[@2~after].sh")))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-drag-up--bash-statements-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-statements.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-statements.sh")
+    :tags '(combobulate bash bash-ts-mode combobulate-drag-up)
+    (should-error
+     (progn
+       (combobulate-test-go-to-marker 1) (combobulate-drag-up)
+       (combobulate-compare-action-with-fixture-delta
+	"./fixture-deltas/combobulate-drag-up/bash-statements.sh[@1~after].sh")))))
+
+

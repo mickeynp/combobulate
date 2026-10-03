@@ -1874,3 +1874,133 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-arguments-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-arguments.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-arguments.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 3) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-array-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-array.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-array.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-case-items-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-case-items.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-case-items.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-elif-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-elif-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-elif-body.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-function-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-function-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-function-body.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-if-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-if-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-if-body.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-loop-body-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-loop-body.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-loop-body.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest
+    combobulate-test-bash-combobulate-navigate-previous--bash-statements-1
+    ()
+
+  "Test `combobulate' with `fixtures/sibling/bash-statements.sh' in `bash-ts-mode' mode."
+  (combobulate-test
+      (:language bash :mode bash-ts-mode :fixture
+		 "fixtures/sibling/bash-statements.sh")
+    :tags
+    '(combobulate bash bash-ts-mode combobulate-navigate-previous)
+    (combobulate-test-go-to-marker 3) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-previous)
+    (combobulate-test-assert-at-marker 1)))
+
+
