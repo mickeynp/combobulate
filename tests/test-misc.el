@@ -117,6 +117,17 @@
         (error nil))
       (should-not (alist-get 'test combobulate-refactor--active-sessions)))))
 
+(ert-deftest combobulate-test-combobulate-message-keeps-percent-signs-in-strings ()
+  :tags '(combobulate)
+  (should (string-suffix-p "Enveloping %{a: 1}" (combobulate-message "Enveloping" "%{a: 1}"))))
+
+(ert-deftest combobulate-test-combobulate-message-keeps-percent-signs-in-node-names ()
+  :tags '(combobulate)
+  (with-temp-buffer
+    (insert "x = 1 % 2")
+    (python-ts-mode)
+    (should (string-suffix-p "Dragging %" (combobulate-message "Dragging" (treesit-node-at 7))))))
+
 
 (provide 'test-misc)
 ;;; test-misc.el ends here
