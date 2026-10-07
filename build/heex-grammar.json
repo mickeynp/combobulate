@@ -1,5 +1,4 @@
 {
-  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
   "name": "heex",
   "rules": {
     "fragment": {
@@ -23,10 +22,6 @@
         {
           "type": "SYMBOL",
           "name": "component"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "entity"
         },
         {
           "type": "SYMBOL",
@@ -496,29 +491,24 @@
           "type": "SEQ",
           "members": [
             {
-              "type": "ALIAS",
-              "content": {
-                "type": "STRING",
-                "value": "{"
-              },
-              "named": false,
-              "value": "left"
+              "type": "STRING",
+              "value": "{"
             },
             {
-              "type": "REPEAT",
-              "content": {
-                "type": "SYMBOL",
-                "name": "_expression_value"
-              }
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_expression_value"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
             },
             {
-              "type": "ALIAS",
-              "content": {
-                "type": "STRING",
-                "value": "}"
-              },
-              "named": false,
-              "value": "right"
+              "type": "STRING",
+              "value": "}"
             }
           ]
         }
@@ -551,10 +541,6 @@
         {
           "type": "STRING",
           "value": ":for"
-        },
-        {
-          "type": "STRING",
-          "value": ":key"
         },
         {
           "type": "STRING",
@@ -726,8 +712,13 @@
                 ]
               },
               {
-                "type": "STRING",
-                "value": "%>"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "%>"
+                  }
+                ]
               }
             ]
           }
@@ -864,22 +855,6 @@
             },
             {
               "type": "STRING",
-              "value": "catch"
-            },
-            {
-              "type": "STRING",
-              "value": "rescue"
-            },
-            {
-              "type": "STRING",
-              "value": "after"
-            },
-            {
-              "type": "STRING",
-              "value": "else"
-            },
-            {
-              "type": "STRING",
               "value": "->"
             }
           ]
@@ -994,11 +969,7 @@
     },
     "text": {
       "type": "PATTERN",
-      "value": "[^<>{}&\\s]([^<>{}&]*[^<>{}&\\s])?"
-    },
-    "entity": {
-      "type": "PATTERN",
-      "value": "&(#([xX][0-9a-fA-F]{1,6}|[0-9]{1,5})|[A-Za-z]{1,30});?"
+      "value": "[^<>{}\\s]([^<>{}]*[^<>{}\\s])?"
     }
   },
   "extras": [
@@ -1011,6 +982,6 @@
   "precedences": [],
   "externals": [],
   "inline": [],
-  "supertypes": [],
-  "reserved": {}
+  "supertypes": []
 }
+
