@@ -37,6 +37,7 @@
 (require 'yaml-ts-mode)
 (require 'json-ts-mode)
 (require 'tuareg)
+(require 'sh-script)
 
 ;;; Helpers for writing procedures
 
