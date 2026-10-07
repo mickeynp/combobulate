@@ -530,7 +530,11 @@ Rewrites `:match' to `#match', etc. along the way."
                    ;; but `:anchor' in elisp forms.
                    `((":anchor" . ".")
                      ;; Fix up `:match' to `#match', etc.
-                     (,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1")))
+                     ,(if (< emacs-major-version 31)
+                          `(,(rx ":" (group (| "match" "pred" "eq"))) . "#\\1")
+                        ;; Emacs 31 renamed the predicates for newer tree-sitter libraries.
+                        `(,(rx ":" (| "match" "pred" "equal"))
+                          . ,(lambda (keyword) (treesit-query-expand (list (intern keyword))))))))
       (setq tgt-query (replace-regexp-in-string before after tgt-query)))
     (string-trim tgt-query)))
 

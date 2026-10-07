@@ -530,6 +530,33 @@
     (should (eq (iter-next machine) 'start))
     (should (eq (iter-next machine 'no-children) 'skip))))
 
+(defun combobulate-test-query-bar-p (node)
+  (equal (treesit-node-text node t) "bar"))
+
+(defun combobulate-test-query-builder-captures (query)
+  "Return the text of the nodes QUERY captures in a small Python buffer."
+  (with-temp-buffer
+    (insert "foo = 1\nbar = 2")
+    (python-ts-mode)
+    (mapcar (lambda (capture) (treesit-node-text (cdr capture) t))
+            (treesit-query-capture (treesit-buffer-root-node)
+                                   (combobulate-query-builder-to-string query)))))
+
+(ert-deftest combobulate-test-query-builder-to-string-match ()
+  (should (equal (combobulate-test-query-builder-captures
+                  '((identifier) @id (:match "^b" @id)))
+                 '("bar"))))
+
+(ert-deftest combobulate-test-query-builder-to-string-equal ()
+  (should (equal (combobulate-test-query-builder-captures
+                  '((identifier) @id (:equal "bar" @id)))
+                 '("bar"))))
+
+(ert-deftest combobulate-test-query-builder-to-string-pred ()
+  (should (equal (combobulate-test-query-builder-captures
+                  '((identifier) @id (:pred combobulate-test-query-bar-p @id)))
+                 '("bar"))))
+
 
 ;;; test-query.el ends here
 
