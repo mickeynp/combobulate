@@ -60,10 +60,6 @@
           "named": true
         },
         {
-          "type": "entity",
-          "named": true
-        },
-        {
           "type": "expression",
           "named": true
         },
@@ -210,7 +206,6 @@
   {
     "type": "fragment",
     "named": true,
-    "root": true,
     "fields": {},
     "children": {
       "multiple": true,
@@ -230,10 +225,6 @@
         },
         {
           "type": "doctype",
-          "named": true
-        },
-        {
-          "type": "entity",
           "named": true
         },
         {
@@ -378,10 +369,6 @@
         },
         {
           "type": "end_slot",
-          "named": true
-        },
-        {
-          "type": "entity",
           "named": true
         },
         {
@@ -541,10 +528,6 @@
           "named": true
         },
         {
-          "type": "entity",
-          "named": true
-        },
-        {
           "type": "expression",
           "named": true
         },
@@ -609,10 +592,6 @@
   },
   {
     "type": ":if",
-    "named": false
-  },
-  {
-    "type": ":key",
     "named": false
   },
   {
@@ -684,10 +663,6 @@
     "named": false
   },
   {
-    "type": "after",
-    "named": false
-  },
-  {
     "type": "attribute_name",
     "named": true
   },
@@ -696,20 +671,8 @@
     "named": true
   },
   {
-    "type": "catch",
-    "named": false
-  },
-  {
     "type": "do",
     "named": false
-  },
-  {
-    "type": "else",
-    "named": false
-  },
-  {
-    "type": "entity",
-    "named": true
   },
   {
     "type": "function",
@@ -720,20 +683,8 @@
     "named": false
   },
   {
-    "type": "left",
-    "named": false
-  },
-  {
     "type": "module",
     "named": true
-  },
-  {
-    "type": "rescue",
-    "named": false
-  },
-  {
-    "type": "right",
-    "named": false
   },
   {
     "type": "slot_name",
