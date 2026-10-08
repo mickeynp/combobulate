@@ -29,10 +29,11 @@
 ;; the sibling and hierarchy procedures delegate to the functions
 ;; below through a tree-sitter `:pred' predicate.
 ;;
-;; The keys for next, previous and down run commands that call those
-;; functions directly, because the procedure queries walk the whole
-;; enclosing block and get slow in large modules.  The procedures
-;; still serve the rest of Combobulate.
+;; Dragging runs its own commands, which swap the siblings that
+;; `combobulate-elixir--siblings' returns.  The generic drag would take
+;; the newline before `end' along with the last clause of a `case' or
+;; `fn', and would swap the value of a `key: value' pair instead of
+;; the pair.
 ;;
 ;; Defun navigation is remapped to the `treesit-*-defun' commands,
 ;; which use the major mode's `treesit-defun-type-regexp' predicate.
@@ -348,38 +349,12 @@ because they are siblings of the statements before them."
     (if node (treesit-node-start node) (point))))
 
 (defun combobulate-elixir--navigate (arg fallback find)
-  "Move ARG times to the node FIND returns, or run FALLBACK inside HEEx.
-
-The commands below compute their targets directly instead of going
-through the procedure queries, which walk the whole enclosing block
-and get slow in large modules."
+  "Move ARG times to the node FIND returns, or run FALLBACK inside HEEx."
   (combobulate-elixir--skip-indentation)
   (if (combobulate-elixir--in-heex-p)
       (funcall fallback arg)
     (dotimes (_ (or arg 1))
       (combobulate-visual-move-to-node (funcall find)))))
-
-(defun combobulate-elixir-navigate-next (&optional arg)
-  "Move to the next sibling ARG times."
-  (interactive "^p")
-  (combobulate-elixir--navigate
-   arg #'combobulate-navigate-next
-   (lambda ()
-     (skip-chars-forward combobulate-skip-prefix-regexp)
-     (let ((anchor (combobulate-elixir--anchor)))
-       (seq-find (lambda (node) (> (treesit-node-start node) anchor))
-                 (combobulate-elixir--siblings anchor))))))
-
-(defun combobulate-elixir-navigate-previous (&optional arg)
-  "Move to the previous sibling ARG times."
-  (interactive "^p")
-  (combobulate-elixir--navigate
-   arg #'combobulate-navigate-previous
-   (lambda ()
-     (combobulate-elixir--skip-indentation)
-     (let ((anchor (combobulate-elixir--anchor)))
-       (car (last (seq-filter (lambda (node) (< (treesit-node-start node) anchor))
-                              (combobulate-elixir--siblings anchor))))))))
 
 (defun combobulate-elixir--kind (node)
   "Return a string naming the kind of NODE for same-kind navigation.
@@ -486,14 +461,14 @@ Return the position where the sibling at point now starts."
 (defun combobulate-elixir-drag-up (&optional arg)
   "Swap the sibling at point with the previous one ARG times.
 
-Uses the same siblings as \\[combobulate-elixir-navigate-previous]."
+Uses the same siblings as \\[combobulate-navigate-previous]."
   (interactive "^p")
   (combobulate-elixir--drag-command arg 'up #'combobulate-drag-up))
 
 (defun combobulate-elixir-drag-down (&optional arg)
   "Swap the sibling at point with the next one ARG times.
 
-Uses the same siblings as \\[combobulate-elixir-navigate-next]."
+Uses the same siblings as \\[combobulate-navigate-next]."
   (interactive "^p")
   (combobulate-elixir--drag-command arg 'down #'combobulate-drag-down))
 
@@ -579,21 +554,6 @@ replacing a clause drops its `->', which leaves invalid code.")
   (interactive "^p")
   (combobulate-elixir--splice #'combobulate-splice-parent arg))
 
-(defun combobulate-elixir-navigate-up (&optional arg)
-  "Like `combobulate-navigate-up', but skipping leading indentation."
-  (interactive "^p")
-  (combobulate-elixir--skip-indentation)
-  (combobulate-navigate-up arg))
-
-(defun combobulate-elixir-navigate-down (&optional arg)
-  "Move into the node at point ARG times."
-  (interactive "^p")
-  (combobulate-elixir--navigate
-   arg #'combobulate-navigate-down
-   (lambda ()
-     (combobulate-elixir--skip-indentation)
-     (combobulate-elixir--down-target (point)))))
-
 (defun combobulate-elixir--keywords (node)
   "Return the start positions of the keywords that delimit NODE.
 
@@ -660,6 +620,16 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
           (goto-char target)
         (setq this-command 'combobulate-navigate-sequence-previous)
         (combobulate-navigate-sequence-previous)))))
+
+(defun combobulate-elixir-beginning-of-defun (&optional arg)
+  "Like `treesit-beginning-of-defun', but land on the defun's first character.
+
+Combobulate resolves point in indentation to the enclosing block, so
+landing at the start of an indented line would stop the navigation
+commands that follow."
+  (interactive "^p")
+  (treesit-beginning-of-defun arg)
+  (skip-chars-forward " \t"))
 
 (defun combobulate-elixir-pretty-print-node-name (node _default-name)
   "Pretty printer for Elixir nodes"
@@ -745,13 +715,9 @@ Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
 (defun combobulate-elixir-setup (_)
   (setq-local forward-sexp-function #'combobulate-elixir-forward-sexp)
   (let ((map (combobulate-read map)))
-    (define-key map [remap combobulate-navigate-beginning-of-defun] #'treesit-beginning-of-defun)
+    (define-key map [remap combobulate-navigate-beginning-of-defun] #'combobulate-elixir-beginning-of-defun)
     (define-key map [remap combobulate-navigate-end-of-defun] #'treesit-end-of-defun)
     (define-key map [remap combobulate-mark-defun] #'mark-defun)
-    (define-key map [remap combobulate-navigate-next] #'combobulate-elixir-navigate-next)
-    (define-key map [remap combobulate-navigate-previous] #'combobulate-elixir-navigate-previous)
-    (define-key map [remap combobulate-navigate-up] #'combobulate-elixir-navigate-up)
-    (define-key map [remap combobulate-navigate-down] #'combobulate-elixir-navigate-down)
     (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
     (define-key map [remap combobulate-navigate-sequence-previous]
                 #'combobulate-elixir-navigate-sequence-previous)
