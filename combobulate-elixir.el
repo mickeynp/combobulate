@@ -47,9 +47,6 @@
 (require 'combobulate-manipulation)
 (require 'combobulate-rules)
 
-(declare-function combobulate-heex-navigate-next-same-kind "combobulate-heex")
-(declare-function combobulate-heex-navigate-previous-same-kind "combobulate-heex")
-
 (defgroup combobulate-elixir nil
   "Configuration switches for Elixir"
   :group 'combobulate
@@ -347,72 +344,6 @@ because they are siblings of the statements before them."
                              "keywords" "map_content")))
       (setq node (treesit-node-parent node)))
     (if node (treesit-node-start node) (point))))
-
-(defun combobulate-elixir--navigate (arg fallback find)
-  "Move ARG times to the node FIND returns, or run FALLBACK inside HEEx."
-  (combobulate-elixir--skip-indentation)
-  (if (combobulate-elixir--in-heex-p)
-      (funcall fallback arg)
-    (dotimes (_ (or arg 1))
-      (combobulate-visual-move-to-node (funcall find)))))
-
-(defun combobulate-elixir--kind (node)
-  "Return a string naming the kind of NODE for same-kind navigation.
-
-Calls are grouped by keyword, with private forms such as `defp'
-counting as their public form.  Module attributes are grouped by
-name and binary operators by operator."
-  (let ((field-text (lambda (n field)
-                      (treesit-node-text (treesit-node-child-by-field-name n field) t))))
-    (pcase (treesit-node-type node)
-      ("call"
-       (let ((name (funcall field-text node "target")))
-         (if (string-match (rx bos (group "def" (* alpha)) "p" eos) name)
-             (match-string 1 name)
-           name)))
-      ("unary_operator"
-       (let ((operand (treesit-node-child-by-field-name node "operand")))
-         (concat (funcall field-text node "operator")
-                 (if (equal (treesit-node-type operand) "call")
-                     (funcall field-text operand "target")
-                   (treesit-node-text operand t)))))
-      ("binary_operator" (concat "binary_operator " (funcall field-text node "operator")))
-      (type type))))
-
-(defun combobulate-elixir--same-kind-target (direction)
-  "Return the nearest sibling in DIRECTION of the same kind as the one at point."
-  (let* ((anchor (combobulate-elixir--anchor))
-         (siblings (combobulate-elixir--siblings anchor))
-         (current (seq-find (lambda (node)
-                              (and (<= (treesit-node-start node) anchor)
-                                   (< anchor (treesit-node-end node))))
-                            siblings))
-         (kind (and current (combobulate-elixir--kind current)))
-         (same (seq-filter (lambda (node) (equal (combobulate-elixir--kind node) kind))
-                           siblings)))
-    (when kind
-      (if (eq direction 'next)
-          (seq-find (lambda (node) (> (treesit-node-start node) anchor)) same)
-        (car (last (seq-filter (lambda (node) (< (treesit-node-start node) anchor)) same)))))))
-
-(defun combobulate-elixir-navigate-next-same-kind (&optional arg)
-  "Move to the next sibling of the same kind ARG times.
-
-From `def' this skips `@doc', `@spec' and other statements to reach
-the next `def' or `defp'; from `@doc' it reaches the next `@doc'."
-  (interactive "^p")
-  (combobulate-elixir--navigate
-   arg #'combobulate-heex-navigate-next-same-kind
-   (lambda ()
-     (skip-chars-forward combobulate-skip-prefix-regexp)
-     (combobulate-elixir--same-kind-target 'next))))
-
-(defun combobulate-elixir-navigate-previous-same-kind (&optional arg)
-  "Move to the previous sibling of the same kind ARG times."
-  (interactive "^p")
-  (combobulate-elixir--navigate
-   arg #'combobulate-heex-navigate-previous-same-kind
-   (lambda () (combobulate-elixir--same-kind-target 'previous))))
 
 (defun combobulate-elixir--trimmed-range (node)
   "Return the range of NODE without trailing whitespace.
