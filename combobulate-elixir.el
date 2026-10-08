@@ -35,16 +35,17 @@
 ;; `fn', and would swap the value of a `key: value' pair instead of
 ;; the pair.
 ;;
-;; Three more things are not procedures:
+;; The sequence procedure is a query for the keywords of every call with
+;; a `do' block and every anonymous function, and a `:pred' predicate
+;; keeps the ones that belong to the constructs around point.
+;;
+;; Two more things are not procedures:
 ;;
 ;; - Sexp movement.  `procedures-sexp' is a list of node types, and the
 ;;   generic function takes the smallest listed node that starts at
 ;;   point.  `Enum.map(...)' starts with an `alias', then a `dot', then
 ;;   the `call'.  Listing `dot' or `alias' stops at `Enum.map', and
 ;;   leaving them out splits `Phoenix.Component' at every dot.
-;; - Sequence movement.  A `procedures-sequence' query cannot skip the
-;;   optional `rescue', `catch', `else' and `after' clauses between
-;;   `do' and `end' without dropping `end' in some shapes.
 ;; - Defun navigation, which is remapped to the `treesit-*-defun'
 ;;   commands because every Elixir definition is a `call' node.
 
@@ -495,73 +496,6 @@ replacing a clause drops its `->', which leaves invalid code.")
   (interactive "^p")
   (combobulate-elixir--splice #'combobulate-splice-parent arg))
 
-(defun combobulate-elixir--keywords (node)
-  "Return the start positions of the keywords that delimit NODE.
-
-For a call with a `do' block these are the call's target, `do',
-any `else', `rescue', `catch' or `after', and `end'.  For an
-anonymous function they are `fn' and `end'."
-  (let ((keywords (lambda (parent)
-                    (seq-keep (lambda (child)
-                                (and (member (treesit-node-type child)
-                                             '("do" "else" "rescue" "catch" "after" "fn" "end"))
-                                     (treesit-node-start child)))
-                              (treesit-node-children parent)))))
-    (pcase (treesit-node-type node)
-      ("call"
-       (let ((do-block (combobulate-elixir--do-block node)))
-         (and do-block
-              (append (list (treesit-node-start node))
-                      (mapcan (lambda (child)
-                                (if (member (treesit-node-type child)
-                                            '("else_block" "rescue_block" "catch_block" "after_block"))
-                                    (funcall keywords child)
-                                  (and (member (treesit-node-type child) '("do" "end"))
-                                       (list (treesit-node-start child)))))
-                              (treesit-node-children do-block))))))
-      ("anonymous_function" (funcall keywords node)))))
-
-(defun combobulate-elixir--sequence-target (direction)
-  "Return the next keyword position in DIRECTION among the constructs around point."
-  (let ((node (treesit-node-at (point) 'elixir))
-        (target))
-    (while (and node (not target))
-      (let ((positions (combobulate-elixir--keywords node)))
-        (setq target (if (eq direction 'next)
-                         (seq-find (lambda (pos) (> pos (point))) positions)
-                       (car (last (seq-filter (lambda (pos) (< pos (point))) positions))))))
-      (setq node (treesit-node-parent node)))
-    target))
-
-(defun combobulate-elixir-navigate-sequence-next (&optional arg)
-  "Move to the next keyword of the construct at point ARG times.
-
-From `def' this visits `do', then `end'; from `with' also `else'.
-Outside any construct, fall back to `combobulate-navigate-sequence-next'."
-  (interactive "^p")
-  (combobulate-elixir--skip-indentation)
-  (dotimes (_ (or arg 1))
-    (let ((target (and (not (combobulate-elixir--in-heex-p))
-                       (combobulate-elixir--sequence-target 'next))))
-      (if target
-          (goto-char target)
-        (setq this-command 'combobulate-navigate-sequence-next)
-        (combobulate-navigate-sequence-next)))))
-
-(defun combobulate-elixir-navigate-sequence-previous (&optional arg)
-  "Move to the previous keyword of the construct at point ARG times.
-
-Outside any construct, fall back to `combobulate-navigate-sequence-previous'."
-  (interactive "^p")
-  (combobulate-elixir--skip-indentation)
-  (dotimes (_ (or arg 1))
-    (let ((target (and (not (combobulate-elixir--in-heex-p))
-                       (combobulate-elixir--sequence-target 'previous))))
-      (if target
-          (goto-char target)
-        (setq this-command 'combobulate-navigate-sequence-previous)
-        (combobulate-navigate-sequence-previous)))))
-
 (defun combobulate-elixir-beginning-of-defun (&optional arg)
   "Like `treesit-beginning-of-defun', but land on the defun's first character.
 
@@ -571,6 +505,42 @@ commands that follow."
   (interactive "^p")
   (treesit-beginning-of-defun arg)
   (skip-chars-forward " \t"))
+
+(defvar-local combobulate-elixir--sequence-cache nil
+  "The constructs around point, as ((POINT . TICK) . CONSTRUCTS).")
+
+(defun combobulate-elixir--sequence-constructs ()
+  "Return the calls with a `do' block and the anonymous functions around point.
+
+The `:pred' predicate of `procedures-sequence' runs once per keyword,
+so the answer is computed once and reused while point and the buffer
+are unchanged."
+  (let ((key (cons (point) (buffer-chars-modified-tick))))
+    (unless (equal (car combobulate-elixir--sequence-cache) key)
+      (let ((node (treesit-node-at (point) 'elixir))
+            (constructs))
+        (while node
+          (when (or (equal (treesit-node-type node) "anonymous_function")
+                    (combobulate-elixir--do-block node))
+            (push node constructs))
+          (setq node (treesit-node-parent node)))
+        (setq combobulate-elixir--sequence-cache (cons key constructs))))
+    (cdr combobulate-elixir--sequence-cache)))
+
+(defun combobulate-elixir--keyword-owner (keyword)
+  "Return the construct that KEYWORD, or the target of a call, belongs to."
+  (let ((parent (treesit-node-parent keyword)))
+    (pcase (treesit-node-type parent)
+      ("do_block" (treesit-node-parent parent))
+      ((or "else_block" "rescue_block" "catch_block" "after_block")
+       (treesit-node-parent (treesit-node-parent parent)))
+      ((or "anonymous_function" "call") parent))))
+
+(defun combobulate-elixir--sequence-keyword-p (node)
+  "Return non-nil if NODE is a keyword of a construct around point."
+  (when-let* ((owner (combobulate-elixir--keyword-owner node)))
+    (seq-find (lambda (construct) (treesit-node-eq construct owner))
+              (combobulate-elixir--sequence-constructs))))
 
 (defun combobulate-elixir-pretty-print-node-name (node _default-name)
   "Pretty printer for Elixir nodes"
@@ -645,7 +615,17 @@ commands that follow."
          (:activation-nodes
           ((:nodes ((exclude (all) "do_block" "body" "arguments" "keywords" "map_content"))
                    :position at))
-          :selector (:choose node :match-children t)))))))
+          :selector (:choose node :match-children t))))
+      ;; The keywords of the constructs around point, such as `do' and `end'.
+      (procedures-sequence
+       '((:activation-nodes ((:nodes ("source") :position any))
+          :selector (:choose node
+                             :match-query
+                             (:query ((["do" "end" "else" "rescue" "catch" "after" "fn"] @match
+                                       (:pred combobulate-elixir--sequence-keyword-p @match))
+                                      ((call target: (_) @match (do_block))
+                                       (:pred combobulate-elixir--sequence-keyword-p @match)))
+                                     :engine treesitter))))))))
 
 (define-combobulate-language
  :name elixir
@@ -659,9 +639,6 @@ commands that follow."
     (define-key map [remap combobulate-navigate-beginning-of-defun] #'combobulate-elixir-beginning-of-defun)
     (define-key map [remap combobulate-navigate-end-of-defun] #'treesit-end-of-defun)
     (define-key map [remap combobulate-mark-defun] #'mark-defun)
-    (define-key map [remap combobulate-navigate-sequence-next] #'combobulate-elixir-navigate-sequence-next)
-    (define-key map [remap combobulate-navigate-sequence-previous]
-                #'combobulate-elixir-navigate-sequence-previous)
     (define-key map [remap combobulate-drag-up] #'combobulate-elixir-drag-up)
     (define-key map [remap combobulate-drag-down] #'combobulate-elixir-drag-down)
     (define-key map [remap combobulate-kill-node-dwim] #'combobulate-elixir-kill-node-dwim)
