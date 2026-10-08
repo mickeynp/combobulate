@@ -35,8 +35,18 @@
 ;; `fn', and would swap the value of a `key: value' pair instead of
 ;; the pair.
 ;;
-;; Defun navigation is remapped to the `treesit-*-defun' commands,
-;; which use the major mode's `treesit-defun-type-regexp' predicate.
+;; Three more things are not procedures:
+;;
+;; - Sexp movement.  `procedures-sexp' is a list of node types, and the
+;;   generic function takes the smallest listed node that starts at
+;;   point.  `Enum.map(...)' starts with an `alias', then a `dot', then
+;;   the `call'.  Listing `dot' or `alias' stops at `Enum.map', and
+;;   leaving them out splits `Phoenix.Component' at every dot.
+;; - Sequence movement.  A `procedures-sequence' query cannot skip the
+;;   optional `rescue', `catch', `else' and `after' clauses between
+;;   `do' and `end' without dropping `end' in some shapes.
+;; - Defun navigation, which is remapped to the `treesit-*-defun'
+;;   commands because every Elixir definition is a `call' node.
 
 ;;; Code:
 
