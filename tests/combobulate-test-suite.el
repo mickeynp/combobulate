@@ -286,6 +286,8 @@ doesn't exist."
   (save-window-excursion
     (save-excursion
       (let* ((auto-mode-alist (append '(("\\.go\\'" . go-ts-mode)
+                                        ("\\.exs?\\'" . elixir-ts-mode)
+                                        ("\\.heex\\'" . heex-ts-mode)
                                         ("\\.mli\\'" . tuareg-interface-mode)
                                         ("\\.ml\\'" . tuareg-mode))
                                       auto-mode-alist))
@@ -429,7 +431,8 @@ doesn't exist."
         (unless (combobulate-parser-list)
           (when-let ((lang-match (combobulate-get-registered-language major-mode)))
             (combobulate-create-language (car lang-match))))
-        (setq lang (car (combobulate-parser-list)))
+        (setq lang (or (bound-and-true-p treesit-primary-parser)
+                       (car (combobulate-parser-list))))
         (cl-assert (not (null lang)) nil "No language found in `%s' (major mode: `%s')" fixture-file-name major-mode)
         (setq fixture-language (combobulate-parser-language lang))
         (setf fixture-major-mode major-mode)

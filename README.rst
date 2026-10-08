@@ -113,6 +113,10 @@ Here is a list of the languages currently supported.
 +--------------------+--------------------------------------------------------------+------------------------------+
 |OCaml [2]           |tuareg-mode [3], tuareg-interface-mode [3], neocaml-mode, neocaml-interface-mode   | v0.25.0 |
 +--------------------+--------------------------------------------------------------+------------------------------+
+|Elixir              |elixir-ts-mode                                                |v0.3.3                        |
++--------------------+--------------------------------------------------------------+------------------------------+
+|HEEx                |heex-ts-mode                                                  |v0.7.0                        |
++--------------------+--------------------------------------------------------------+------------------------------+
 
 
 *Don't see your language? If you want your favourite language added, then why not try it yourself? Have a look at ``combobulate-json.el`` for an example.*
