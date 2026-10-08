@@ -423,30 +423,6 @@ Uses the same siblings as \\[combobulate-navigate-next]."
         (combobulate-visual-move-to-node
          (combobulate-elixir--outermost-at (combobulate-elixir--node-at start)))))))
 
-(defun combobulate-elixir-kill-node-dwim (&optional arg)
-  "Like `combobulate-kill-node-dwim', but keep the node's trailing whitespace.
-
-The last clause of a `case' or `fn' includes the newline before
-`end', and killing it would pull `end' onto the previous line."
-  (interactive "p")
-  (if (combobulate-elixir--in-heex-p)
-      (combobulate-kill-node-dwim arg)
-    (dotimes (_ (or arg 1))
-      (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
-        (when-let* ((nearest (save-excursion
-                               (combobulate-skip-whitespace-forward t)
-                               (combobulate--get-nearest-navigable-node)))
-                    (node (or (combobulate-nav-get-self-sibling nearest) nearest))
-                    (range (combobulate-elixir--trimmed-range node))
-                    (proxy (combobulate-proxy-node-make-from-range (car range) (cdr range))))
-          (unless (combobulate-node-on-or-after-point-p proxy)
-            (error "No node to kill"))
-          (let ((text (combobulate--consume-node proxy t)))
-            (if (memq last-command '(combobulate-kill-node-dwim combobulate-elixir-kill-node-dwim))
-                (kill-append text nil)
-              (kill-new text)))
-          (combobulate-message "Killed node" proxy))))))
-
 (defconst combobulate-elixir--unsplicable
   '("do_block" "else_block" "rescue_block" "catch_block" "after_block"
     "body" "stab_clause" "keywords" "map_content")
@@ -641,7 +617,6 @@ are unchanged."
     (define-key map [remap combobulate-mark-defun] #'mark-defun)
     (define-key map [remap combobulate-drag-up] #'combobulate-elixir-drag-up)
     (define-key map [remap combobulate-drag-down] #'combobulate-elixir-drag-down)
-    (define-key map [remap combobulate-kill-node-dwim] #'combobulate-elixir-kill-node-dwim)
     (define-key map [remap combobulate-splice-up] #'combobulate-elixir-splice-up)
     (define-key map [remap combobulate-splice-down] #'combobulate-elixir-splice-down)
     (define-key map [remap combobulate-splice-self] #'combobulate-elixir-splice-self)
