@@ -31,11 +31,8 @@ jobs:
             emacs-source-ref: ""
           - emacs-version: "30.2"
             emacs-source-ref: ""
-          # Track the prerelease branch honestly as 31.x until GNU publishes
-          # refs/tags/emacs-31.1, then switch this row to 31.1 and that tag.
-          # A future emacs-32 lane needs only another source-backed matrix row.
-          - emacs-version: "31.x"
-            emacs-source-ref: refs/heads/emacs-31
+          - emacs-version: "31.1"
+            emacs-source-ref: ""
 
     env:
       IMAGE_NAME: combobulate-test:${{ matrix.emacs-version }}
@@ -208,7 +205,7 @@ jobs:
         emacs-version:
           - "29.4"
           - "30.2"
-          - "31.x"
+          - "31.1"
 
     steps:
       - name: Download ERT results
