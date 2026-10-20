@@ -2954,6 +2954,138 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.ml[@1~after].ml")))))
 
 
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-17 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 17)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@17~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-16 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 16)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@16~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-15 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 15)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@15~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-14 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 14)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@14~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-13 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 13)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@13~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-12 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 12)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@12~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-11 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 11)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@11~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-10 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 10)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@10~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-9 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 9)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@9~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-8 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@8~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-7 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@7~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-6 ()
+ "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/sibling/patterns.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/patterns.mli[@6~after].mli")))
+
+
 (ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--patterns-5 ()
  "Test `combobulate' with `fixtures/sibling/patterns.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test

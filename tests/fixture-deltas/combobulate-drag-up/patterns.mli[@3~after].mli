@@ -1,74 +1,52 @@
-(* -*- combobulate-test-point-overlays: ((1 outline 175) (2 outline 214) (3 outline 1840) (4 outline 1898) (5 outline 2009)); eval: (combobulate-test-fixture-mode t); -*- *)
-type user = { name: string; id: int }
+(* -*- combobulate-test-point-overlays: ((1 outline 405) (2 outline 497) (3 outline 575) (4 outline 660) (5 outline 742) (6 outline 813) (7 outline 910) (8 outline 1033) (9 outline 1121) (10 outline 1207) (11 outline 1306) (12 outline 1383) (13 outline 1469) (14 outline 1560) (15 outline 1660) (16 outline 1753) (17 outline 1859)); eval: (combobulate-test-fixture-mode t); -*- *)
 
-module type ID = sig val id : int end exception"
+(** A user record. *)
+type user = { name : string; id : int }
 
+(** A role, either an administrator or a guest. *)
+val is_admin : role -> bool
+
+(** Whether a role is an administrator. *)
 type role = Admin of user | Guest
 
-let is_admin = function
-  | Admin _ -> true
-  | Guest -> false
+(** Describe a character by the class it falls into. *)
+val classify_char : char -> unit
 
-let is_admin_b user_type =
-  match user_type with
-  | Admin _ -> true
-  | Guest -> false
+(** Describe a point by the axis it lies on. *)
+val describe_point : int * int -> string
 
-let classify_char = function
-  | 'a' | 'e' | 'i' | 'o' | 'u' as vowel -> Printf.printf "%c is a vowel\n" vowel
-  | 'a' .. 'z' -> print_endline "lowercase letter"
-  | '0' .. '9' -> print_endline "digit"
-  | '.' -> print_endline "period"
-  | _ -> print_endline "other character"
+(** The length of a list. *)
+val list_length : 'a list -> int
 
-let describe_point = function
-  | (0, 0) -> "origin"
-  | (x, 0) -> Printf.sprintf "on the x-axis at %d" x
-  | (0, y) -> Printf.sprintf "on the y-axis at %d" y
-  | (x, y) -> Printf.sprintf "point at (%d, %d)" x y
+(** Describe an HTTP method given as a polymorphic variant. *)
+val handle_http_method : [ `GET | `POST | `PUT | `DELETE ] -> string
 
-let rec list_length = function
-  | [] -> 0
-  | _ :: tail -> 1 + list_length tail
+(** The name of a user, marking the root account. *)
+val get_user_name : user -> string
 
-let handle_http_method = function
-  | `GET -> "Fetching resource"
-  | `POST -> "Creating resource"
-  | `PUT -> "Updating resource"
-  | `DELETE -> "Deleting resource"
+(** Describe an array by its first few elements. *)
+val get_array_header : int array -> string
 
-let get_user_name = function
-  | { name; id = 0 } -> name ^ " (root)"
-  | { name; _ } -> name
+(** Print the head of an integer list. *)
+val process_int_list : int list -> unit
 
-let get_array_header = function
-  | [||] -> "empty array"
-  | [| x |] -> Printf.sprintf "single element: %d" x
-  | [| x; y; z |] -> Printf.sprintf "three elements: %d, %d, %d" x y z
-  | [| h; _ |] -> Printf.sprintf "header: %d" h
-  | _ -> "long array"
+(** Force a lazy optional integer, defaulting to zero. *)
+val force_lazy_int : int option Lazy.t -> int
 
-let process_int_list (l: int list) =
-  match l with
-  | (x : int) :: _ -> Printf.printf "The head is %d" x
-  | [] -> ()
+(** Describe an exception. *)
+val handle_exception : exn -> string
 
-let force_lazy_int = function
-  | lazy (Some x) -> x
-  | lazy None -> 0
+(** A module carrying an integer identifier. *)
+module type ID = sig val id : int end
 
-let handle_exception = function
-  | Not_found -> "Resource not found"
-  | Invalid_argument msg -> "Invalid argument: " ^ msg
-  | _ -> "Unknown
+(** The identifier of a first-class [ID] module. *)
+val get_module_id : (module ID) -> int
 
-let get_module_id (module M : ID) = M.id
+(** The head of a list, using [List]'s own constructors. *)
+val get_list_head_with_open : 'a list -> 'a option
 
-let get_list_head_with_open = function
-  | List.[] -> None
-  | List.(x :: _) -> Some x
-
+(** An object that can log a message. *)
 class type logger = object method log : string -> unit end
 
-let log_message (l : #logger) msg =
-  l#log msg
+(** Log a message through a logger object. *)
+val log_message : #logger -> string -> unit
