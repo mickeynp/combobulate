@@ -453,14 +453,24 @@
             :selector (:choose node :match-children
                       t))
 
-         ;; From the top of a definition (point on the `let' keyword)
-         ;; descend straight to the binding body, skipping the name and
-         ;; parameters.  The body is a grandchild of value_definition
-         ;; (value_definition -> let_binding -> body), so a recursive
-         ;; query reaches it; without this the first C-M-d lands on the
-         ;; let_binding (the name) and a second is needed for the body.
-         (:activation-nodes ((:nodes ("value_definition")))
+         ;; From a binding to its body, naming the `body' field so that any
+         ;; expression qualifies.  Together with the value_definition rule
+         ;; below this gives `let -> name -> body' in two steps: the first
+         ;; `C-M-d' lands on the name, which is where you edit it, and the
+         ;; second reaches the body.
+         ;;
+         ;; Point on the name resolves to the `value_name' rather than to
+         ;; the enclosing let_binding, so that spelling needs its own
+         ;; activation choosing the parent.
+         (:activation-nodes ((:nodes ("let_binding") :position at))
           :selector (:choose node :match-query
+                             (:query ((let_binding body: (_) @match))
+                              :engine treesitter)))
+
+         (:activation-nodes ((:nodes ("value_name")
+                              :has-parent ("let_binding")
+                              :position at))
+          :selector (:choose parent :match-query
                              (:query ((let_binding body: (_) @match))
                               :engine treesitter)))
 
@@ -479,9 +489,7 @@
           :selector (:choose node :match-children
                     (:match-rules ("let_binding" "attribute"))))
 
-        (:activation-nodes ((:nodes ("let_binding" 
-                                     "fun_expression") 
-                             :position at)
+        (:activation-nodes ((:nodes ("fun_expression") :position at)
                              (:nodes ("infix_expression") :position at :has-parent ("comprehension")))
           :selector (:choose node :match-children t))
 
