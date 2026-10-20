@@ -317,6 +317,29 @@
     :reverse nil)
    ;; Parent navigation
    ;; child navigation
+   ;; Parent navigation (C-M-u).  `up' is not the inverse of `down': a
+   ;; hierarchy rule can offer a node's name and its body as one flat
+   ;; candidate list, so `C-M-d' may step sideways into a sibling subtree
+   ;; while `C-M-u' only ever walks true ancestors.  A `:reverse'
+   ;; collection over fixtures/down/ would assert an inverse that does not
+   ;; hold, so up gets its own fixtures.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/up/*"
+    :collection-name "combobulate-navigate-up"
+    :action-body '((combobulate-navigate-up))
+    :per-marker nil
+    :reverse t)
+   ;; Marking a defun (C-M-h).  Deleting the region records what was
+   ;; marked, which is what the assertion needs to see.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/mark-defun/*"
+    :collection-name "combobulate-mark-defun"
+    :action-body '((combobulate-mark-defun)
+                   (delete-region (region-beginning) (region-end)))
+    :per-marker t
+    :reverse nil)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
     :fixture-files "fixtures/down/*"
