@@ -203,12 +203,14 @@
       (procedures-logical '((:activation-nodes ((:nodes (all))))))
 
       ;; Top-level items, from the grammar's `_structure_item' expansion,
-      ;; plus the class members, which are not structure items.
+      ;; plus the class members and `include_module_type', which a .ml can
+      ;; hold inside an embedded signature.
       (procedures-defun
        '((:activation-nodes
           ((:nodes ((rule "_structure_item")
                     "method_definition"
-                    "instance_variable_definition"))))))
+                    "instance_variable_definition"
+                    "include_module_type"))))))
 
       (procedures-sibling
        '(
@@ -454,14 +456,8 @@
                       t))
 
          ;; From a binding to its body, naming the `body' field so that any
-         ;; expression qualifies.  Together with the value_definition rule
-         ;; below this gives `let -> name -> body' in two steps: the first
-         ;; `C-M-d' lands on the name, which is where you edit it, and the
-         ;; second reaches the body.
-         ;;
-         ;; Point on the name resolves to the `value_name' rather than to
-         ;; the enclosing let_binding, so that spelling needs its own
-         ;; activation choosing the parent.
+         ;; expression qualifies.  Point on the name resolves to the
+         ;; `value_name', so that spelling needs its own activation.
          (:activation-nodes ((:nodes ("let_binding") :position at))
           :selector (:choose node :match-query
                              (:query ((let_binding body: (_) @match))
