@@ -1,5 +1,5 @@
 (* -*- eval: (combobulate-test-fixture-mode t); combobulate-test-point-overlays: ((1 outline 227) (2 outline 255) (3 outline 310) (4 outline 379) (5 outline 466) (6 outline 505) (7 outline 574) (8 outline 592)); -*- *)
-open Format
+
 
 exception Parse_failure of string * int
 

@@ -17,4 +17,9 @@ module Parsed : sig
   include Set.OrderedType
 end
 
+class type counter =
+  object
 
+
+    method bump : unit
+  end

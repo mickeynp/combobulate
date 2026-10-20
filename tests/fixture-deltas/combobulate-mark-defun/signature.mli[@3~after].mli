@@ -3,7 +3,7 @@ open Format
 
 exception Parse_failure of string * int
 
-external identity : 'a -> 'a = "%identity"
+
 
 type 'a tree =
   | Leaf

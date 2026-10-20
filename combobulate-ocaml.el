@@ -202,13 +202,13 @@
 
       (procedures-logical '((:activation-nodes ((:nodes (all))))))
 
+      ;; Top-level items, from the grammar's `_structure_item' expansion,
+      ;; plus the class members, which are not structure items.
       (procedures-defun
        '((:activation-nodes
-          ((:nodes ("type_definition" "exception_definition" "external"
-                    "value_definition" "method_definition"
-                    "instance_variable_definition" "module_definition"
-                    "module_type_definition" "class_definition"
-                    "kind_definition"))))))
+          ((:nodes ((rule "_structure_item")
+                    "method_definition"
+                    "instance_variable_definition"))))))
 
       (procedures-sibling
        '(
@@ -682,20 +682,13 @@
 
       ;; Interface files only have specifications, not definitions
       ;; This is why declaration and type_specs are discared.
+      ;; Signature items, from the grammar's `_signature_item' expansion,
+      ;; plus the class members.
       (procedures-defun
        '((:activation-nodes
-          ((:nodes ("type_definition"
-                    "exception_definition"
-                    "value_specification"
-                    "module_definition"
-                    "module_type_definition"
-                    "class_definition"
-                    "class_type_definition"
-                    "include_module"
-                    "include_module_type"
-                    "open_module"
-                    "open_module_signature"
-                    "kind_definition"))))))
+          ((:nodes ((rule "_signature_item")
+                    "method_specification"
+                    "instance_variable_specification"))))))
 
       (procedures-logical '((:activation-nodes ((:nodes (all))))))
 

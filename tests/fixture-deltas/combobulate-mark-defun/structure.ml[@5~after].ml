@@ -12,7 +12,11 @@ let rec depth t =
   | Leaf -> 0
   | Node (l, _, r) -> 1 + max (depth l) (depth r)
 
+module type ORDERED = sig
 
+
+  include Set.OrderedType
+end
 
 class counter init =
   object

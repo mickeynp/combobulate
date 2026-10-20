@@ -38,14 +38,12 @@
 		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/mark-defun/signature.mli")
 	       :tags
 	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-mark-defun)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 3)
-		  (combobulate-mark-defun)
-		  (delete-region
-		   (region-beginning)
-		   (region-end))
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-mark-defun/signature.mli[@3~after].mli")))))
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-mark-defun)
+	       (delete-region
+		(region-beginning)
+		(region-end))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-mark-defun/signature.mli[@3~after].mli")))
 
 
 (ert-deftest combobulate-test-ocaml-interface-combobulate-mark-defun--signature-4 ()
@@ -138,14 +136,12 @@
 		 (:language ocaml :mode tuareg-mode :fixture "fixtures/mark-defun/structure.ml")
 	       :tags
 	       '(combobulate ocaml tuareg-mode combobulate-mark-defun)
-	       (should-error
-		(progn
-		  (combobulate-test-go-to-marker 1)
-		  (combobulate-mark-defun)
-		  (delete-region
-		   (region-beginning)
-		   (region-end))
-		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-mark-defun/structure.ml[@1~after].ml")))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-mark-defun)
+	       (delete-region
+		(region-beginning)
+		(region-end))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-mark-defun/structure.ml[@1~after].ml")))
 
 
 (ert-deftest combobulate-test-ocaml-combobulate-mark-defun--structure-2 ()
