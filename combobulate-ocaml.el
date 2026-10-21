@@ -447,6 +447,22 @@
 
        '(
 
+         ;; Descend past a functor's parameters to its body.  The three
+         ;; spellings put the parameters in different places, hence the
+         ;; three node types:
+         ;;
+         ;;   module Make (S : Spec) : sig              <- under the binding
+         ;;   module F = functor (M : S) -> ..          <- under `functor'
+         ;;   module Make : functor (S : Spec) -> sig   <- under `functor_type'
+         ;;
+         ;; `:position at' keeps the rule to a cursor on the binding or the
+         ;; `functor', since from inside the body both are ancestors and
+         ;; every candidate is behind point.
+         (:activation-nodes ((:nodes ("module_binding" "functor" "functor_type")
+                              :position at))
+          :selector (:choose node :match-children
+                             (:discard-rules ("module_parameter"))))
+
          (:activation-nodes
           ((:nodes ("match_expression" "try_expression" "function_expression") :position at))
           :selector (:choose node :match-children (:match-rules ("match_case"))))
@@ -735,6 +751,14 @@
 
       (procedures-hierarchy
        '(
+         ;; Descend past a functor's parameters to the signature it returns.
+         ;; An interface spells a functor with `:', so only two node types,
+         ;; not the three the .ml rule needs.
+         (:activation-nodes ((:nodes ("module_binding" "functor_type")
+                              :position at))
+          :selector (:choose node :match-children
+                             (:discard-rules ("module_parameter"))))
+
 
         (:activation-nodes
           ((:nodes ("instance_variable_specification") :position at))

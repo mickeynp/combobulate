@@ -286,7 +286,81 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--functors-2 ()
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--functor_sig-4 ()
+ "Test `combobulate' with `fixtures/down/functor_sig.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/functor_sig.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--functor_sig-4 ()
+ "Test `combobulate' with `fixtures/down/functor_sig.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/functor_sig.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--functor_type-5 ()
+ "Test `combobulate' with `fixtures/down/functor_type.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/functor_type.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--functor_type-5 ()
+ "Test `combobulate' with `fixtures/down/functor_type.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/functor_type.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--functors-9 ()
  "Test `combobulate' with `fixtures/down/functors.ml' in `tuareg-mode' mode."
 	     (combobulate-test
 		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/functors.ml")
@@ -294,10 +368,31 @@
 	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 2)))
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 8)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 9)))
 
 
-(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--functors-2 ()
+(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--functors-9 ()
  "Test `combobulate' with `fixtures/down/functors.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test
 		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/functors.mli")
@@ -305,7 +400,28 @@
 	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
 	       (combobulate-test-go-to-marker 1)
 	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 2)))
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 8)
+	       (combobulate-test-go-to-marker 8)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 9)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--if-statements-10 ()
