@@ -3610,6 +3610,41 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-tuple.py[@1~after].py")))))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-drag-up--record_in_let-3 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/record_in_let.ml[@3~after].ml")))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-drag-up--record_in_let-2 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-up)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-up)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/record_in_let.ml[@2~after].ml")))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-drag-up--record_in_let-1 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-up)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 1)
+		  (combobulate-drag-up)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/record_in_let.ml[@1~after].ml")))))
+
+
 (ert-deftest combobulate-test-ocaml-interface-combobulate-drag-up--signature_attributes-3 ()
  "Test `combobulate' with `fixtures/sibling/signature_attributes.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test

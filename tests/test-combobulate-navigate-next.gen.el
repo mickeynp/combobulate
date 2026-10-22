@@ -1277,6 +1277,20 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-next--record_in_let-3 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-next--signature_attributes-3 ()
  "Test `combobulate' with `fixtures/sibling/signature_attributes.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test

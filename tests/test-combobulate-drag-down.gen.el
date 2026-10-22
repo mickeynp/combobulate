@@ -3608,6 +3608,41 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/python-tuple.py[@5~after].py")))))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-drag-down--record_in_let-1 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/record_in_let.ml[@1~after].ml")))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-drag-down--record_in_let-2 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-down)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-drag-down)
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/record_in_let.ml[@2~after].ml")))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-drag-down--record_in_let-3 ()
+ "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_in_let.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-drag-down)
+	       (should-error
+		(progn
+		  (combobulate-test-go-to-marker 3)
+		  (combobulate-drag-down)
+		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/record_in_let.ml[@3~after].ml")))))
+
+
 (ert-deftest combobulate-test-ocaml-interface-combobulate-drag-down--signature_attributes-1 ()
  "Test `combobulate' with `fixtures/sibling/signature_attributes.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test
