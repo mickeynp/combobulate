@@ -499,6 +499,20 @@
 	       (combobulate-test-assert-at-marker 2)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--match_case_body-3 ()
+ "Test `combobulate' with `fixtures/down/match_case_body.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/match_case_body.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-down--matches-2 ()
  "Test `combobulate' with `fixtures/down/matches.ml' in `tuareg-mode' mode."
 	     (combobulate-test

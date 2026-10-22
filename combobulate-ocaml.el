@@ -486,6 +486,10 @@
                              (:query ((let_binding body: (_) @match))
                               :engine treesitter)))
 
+        (:activation-nodes ((:nodes ("value_definition") :position at))
+          :selector (:choose node :match-children
+                    (:match-rules ("let_binding" "attribute"))))
+
          ;; Navigate down through chains of let ... in / let open ... in
          ;; expressions. Since these are nested (parent-child) rather than
          ;; flat siblings, hierarchy navigation is the natural fit.
@@ -496,10 +500,6 @@
                              (:match-rules ("let_expression"
                                             "let_open_expression"
                                             "application_expression"))))
-
-        (:activation-nodes ((:nodes ("value_definition") :position at))
-          :selector (:choose node :match-children
-                    (:match-rules ("let_binding" "attribute"))))
 
         (:activation-nodes ((:nodes ("fun_expression") :position at)
                              (:nodes ("infix_expression") :position at :has-parent ("comprehension")))
