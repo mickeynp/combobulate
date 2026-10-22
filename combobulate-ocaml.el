@@ -881,6 +881,28 @@
           :selector (:choose parent :match-children
                              (:match-rules ("method_name"))))
 
+         ;; From a type definition to its name, skipping type parameters,
+         ;; then from the name into its body.  A `variant_declaration'
+         ;; begins on the `|', so the query reaches through it to the first
+         ;; constructor.
+         (:activation-nodes ((:nodes ("type_definition") :position at))
+          :selector (:choose node :match-query
+                             (:query ((type_binding [(type_constructor)
+                                                     (record_declaration)] @match))
+                              :engine treesitter)))
+         (:activation-nodes ((:nodes ("type_constructor")
+                              :has-parent ("type_binding")
+                              :position at))
+          :selector (:choose parent :match-query
+                             (:query ((type_binding
+                                       (variant_declaration
+                                        (constructor_declaration) @match))
+                                      (type_binding [(record_declaration)
+                                                     (polymorphic_variant_type)
+                                                     (constructed_type)
+                                                     (type_constructor_path)] @match))
+                              :engine treesitter)))
+
          ;; For signature and other structural nodes, match their children
          (:activation-nodes
           ((:nodes ((rule "attribute_payload")

@@ -786,12 +786,12 @@
 		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/variant_type.mli")
 	       :tags
 	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-down)
 	       (combobulate-test-assert-at-marker 4)))
