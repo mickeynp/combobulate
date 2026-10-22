@@ -868,9 +868,26 @@
          ;; parent rather than its inner children, so step-by-step
          ;; rules are used instead.  `:position at' keeps each rule
          ;; from competing with the class_body_type descent below.
-         (:activation-nodes ((:nodes ("class_type_definition") :position at))
-          :selector (:choose node :match-children
-                             (:match-rules ("class_type_binding"))))
+         ;; Into a member of a `class type'.  Must precede the
+         ;; class_type_definition rule, which offers only the name and the
+         ;; body and so answers nil from inside a member.
+         (:activation-nodes ((:nodes ("method_specification"
+                                      "instance_variable_specification")
+                                     :position at))
+          :selector (:choose node :match-children t))
+
+         ;; Descend from the `object' of a class type to its members.
+         (:activation-nodes ((:nodes ("class_body_type") :position at))
+          :selector (:choose node :match-children t))
+
+         ;; Reach through the class_type_binding to the name: the binding
+         ;; begins at the type parameters, so `class type ['a] basic_widget'
+         ;; would otherwise descend onto `['a]'.
+         (:activation-nodes ((:nodes ("class_type_definition")))
+          :selector (:choose node :match-query
+                             (:query ((class_type_binding
+                                       [(class_type_name) (class_body_type)] @match))
+                              :engine treesitter)))
          (:activation-nodes ((:nodes ("class_type_binding") :position at))
           :selector (:choose node :match-children
                              (:match-rules ("class_type_name" "class_body_type"))))

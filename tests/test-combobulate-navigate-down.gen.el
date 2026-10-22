@@ -84,21 +84,24 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
-(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--class_type_members-4 ()
+(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--class_type_members-5 ()
  "Test `combobulate' with `fixtures/down/class_type_members.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test
 		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/class_type_members.mli")
 	       :tags
 	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-down)
-	       (combobulate-test-assert-at-marker 4)))
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)))
 
 
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-down--class_types-1 ()
