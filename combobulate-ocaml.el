@@ -527,6 +527,14 @@
         ;;   :selector (:choose node :match-children
         ;;             t))
 
+         ;; Descend from `if cond then a else b' to the first branch;
+         ;; stepping between branches is the if/else sibling rule's job.
+         ;; Needs `if_expression' in `combobulate-prefer-container-types',
+         ;; or the `if' keyword resolves to the condition instead.
+         (:activation-nodes ((:nodes ("if_expression") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("then_clause" "else_clause"))))
+
         ;; (:activation-nodes ((:nodes ("if_expression") :position at))
         ;;   :selector (:choose node :match-children
         ;;             t))
@@ -963,7 +971,8 @@
               ;; resolve to that container, so `C-M-n' on `sig' steps to
               ;; `struct' (siblings of module_binding) instead of
               ;; descending into the first signature item.
-              combobulate-prefer-container-types '("signature" "structure")))
+              combobulate-prefer-container-types '("signature" "structure"
+                                                   "if_expression")))
 
 (provide 'combobulate-ocaml)
 ;;; combobulate-ocaml.el ends here

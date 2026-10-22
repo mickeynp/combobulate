@@ -465,6 +465,20 @@
 	       (combobulate-test-assert-at-marker 10)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--if_then_else-3 ()
+ "Test `combobulate' with `fixtures/down/if_then_else.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/if_then_else.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)))
+
+
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--jsx-with-attributes-6 ()
  "Test `combobulate' with `fixtures/down/jsx-with-attributes.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test

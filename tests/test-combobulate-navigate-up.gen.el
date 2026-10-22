@@ -252,6 +252,26 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-up--if_then_else-1 ()
+ "Test `combobulate' with `fixtures/up/if_then_else.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/up/if_then_else.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-up)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-up)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-up)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-up)
+	       (combobulate-test-assert-at-marker 1)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-up)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-up--match_case_body-1 ()
  "Test `combobulate' with `fixtures/up/match_case_body.ml' in `tuareg-mode' mode."
 	     (combobulate-test
