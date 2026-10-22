@@ -598,6 +598,42 @@
           :selector (:choose node :match-children
                              (:discard-rules ("tag_specification"))))
 
+         ;; From a type definition to its name, skipping type parameters:
+         ;; `type 'cu path_item' descends to `path_item', not to `'cu'.
+         (:activation-nodes ((:nodes ("type_definition") :position at))
+          :selector (:choose node :match-query
+                             (:query ((type_binding [(type_constructor)
+                                                     (record_declaration)] @match))
+                              :engine treesitter)))
+
+         ;; From a type's name into its body.  A `variant_declaration'
+         ;; begins on the `|', so the query reaches through it to the first
+         ;; constructor.  Two activations because point on the name resolves
+         ;; to the `type_constructor' for `type 'cu t' but to the
+         ;; `type_binding' for `type t'.
+         (:activation-nodes ((:nodes ("type_constructor")
+                              :has-parent ("type_binding")
+                              :position at))
+          :selector (:choose parent :match-query
+                             (:query ((type_binding
+                                       (variant_declaration
+                                        (constructor_declaration) @match))
+                                      (type_binding [(record_declaration)
+                                                     (polymorphic_variant_type)
+                                                     (constructed_type)
+                                                     (type_constructor_path)] @match))
+                              :engine treesitter)))
+         (:activation-nodes ((:nodes ("type_binding") :position at))
+          :selector (:choose node :match-query
+                             (:query ((type_binding
+                                       (variant_declaration
+                                        (constructor_declaration) @match))
+                                      (type_binding [(record_declaration)
+                                                     (polymorphic_variant_type)
+                                                     (constructed_type)
+                                                     (type_constructor_path)] @match))
+                              :engine treesitter)))
+
          ;; Descend from a class / class type to its name then object
          ;; body, skipping type parameters, `virtual' and value
          ;; parameters.  The name and body are grandchildren of
