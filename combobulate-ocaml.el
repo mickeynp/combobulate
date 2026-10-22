@@ -634,6 +634,14 @@
                                                      (type_constructor_path)] @match))
                               :engine treesitter)))
 
+         ;; Into a member of a `class type', which a .ml can hold as well
+         ;; as a .mli.  Must precede the class_type_definition rule below,
+         ;; which offers only the name and the body.
+         (:activation-nodes ((:nodes ("method_specification"
+                                      "instance_variable_specification")
+                                     :position at))
+          :selector (:choose node :match-children t))
+
          ;; Descend from a class / class type to its name then object
          ;; body, skipping type parameters, `virtual' and value
          ;; parameters.  The name and body are grandchildren of
