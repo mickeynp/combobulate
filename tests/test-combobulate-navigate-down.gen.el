@@ -740,6 +740,26 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--poly_variant-5 ()
+ "Test `combobulate' with `fixtures/down/poly_variant.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/poly_variant.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 5)))
+
+
 (ert-deftest combobulate-test-toml-combobulate-navigate-down--table-3 ()
  "Test `combobulate' with `fixtures/down/table.toml' in `toml-ts-mode' mode."
 	     (combobulate-test

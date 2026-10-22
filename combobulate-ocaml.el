@@ -847,6 +847,20 @@
          ;; the current one.  Must come before the type_binding rule
          ;; below so it matches first when cursor is on a
          ;; constructor_name inside a variant.
+         ;; Descend from an inline record to its first field, and from a
+         ;; polymorphic variant tag to its payload type.
+         (:activation-nodes ((:nodes ("record_declaration") :position at))
+          :selector (:choose node :match-children
+                             (:match-rules ("field_declaration"))))
+         (:activation-nodes ((:nodes ("tag_specification") :position at))
+          :selector (:choose node :match-children t))
+         ;; A tag begins in the same column as the name inside it, so point
+         ;; resolves to the name; reach the same candidates from there.
+         (:activation-nodes ((:nodes ("tag")
+                              :has-parent ("tag_specification")
+                              :position at))
+          :selector (:choose parent :match-children t))
+
          (:activation-nodes
           ((:nodes ("constructor_declaration")))
           :selector (:choose node :match-children
@@ -861,13 +875,19 @@
          ;; `(rule "type_binding")' which expands to the type
          ;; binding's *contents*, not the binding itself, and so
          ;; never picks variant_declaration as a match target.
+         ;; Reach through `variant_declaration', which begins on the `|',
+         ;; to the first constructor.
          (:activation-nodes
           ((:nodes ("type_binding") :position at))
-          :selector (:choose node :match-children
-                             (:match-rules ("variant_declaration"
-                                            "record_declaration"
-                                            "constructed_type"
-                                            "type_constructor_path"))))
+          :selector (:choose node :match-query
+                             (:query ((type_binding
+                                       (variant_declaration
+                                        (constructor_declaration) @match))
+                                      (type_binding [(record_declaration)
+                                                     (polymorphic_variant_type)
+                                                     (constructed_type)
+                                                     (type_constructor_path)] @match))
+                              :engine treesitter)))
 
          ;; Descend from `class type c = object ... end' through its
          ;; class_type_binding to the class_type_name and then the
