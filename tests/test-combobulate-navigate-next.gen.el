@@ -2056,6 +2056,35 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-next--let_seq_chain-8 ()
+ "Test `combobulate' with `fixtures/sibling-nav/let_seq_chain.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/let_seq_chain.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 5)
+	       (combobulate-test-go-to-marker 5)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 6)
+	       (combobulate-test-go-to-marker 6)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 7)
+	       (combobulate-test-go-to-marker 7)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 8)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-next--match_cases-4 ()
  "Test `combobulate' with `fixtures/sibling-nav/match_cases.ml' in `tuareg-mode' mode."
 	     (combobulate-test

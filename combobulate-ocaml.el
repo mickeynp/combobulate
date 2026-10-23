@@ -272,6 +272,23 @@
                      :match-query (:query ((let_expression) @match
                                            (let_expression body: (_) @match)))))
 
+         ;; A `;' sequence continues a chain: its members sit beside the
+         ;; `let' links rather than under them, so anchor on the nearest
+         ;; enclosing let and flatten the links and the members into one
+         ;; group.  The rules above keep the links whose parent is a let,
+         ;; so this one only sees what they leave: a member of a sequence,
+         ;; and a link that follows one.
+         (:activation-nodes
+          ((:nodes ("let_expression" "for_expression" "while_expression"
+                    "record_expression")
+                   :has-ancestor ("let_expression")
+                   :position at))
+          :selector (:choose parent
+                     :match-query (:query ((let_expression) @match
+                                           (let_expression
+                                            body: (sequence_expression
+                                                   (_) @match))))))
+
           ;; although the value_paths are siblings, here desired functionality will be to go to the sibling of their parent.
 
           (:activation-nodes
