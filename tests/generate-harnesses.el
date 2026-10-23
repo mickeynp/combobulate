@@ -300,6 +300,49 @@
     :action-body '((combobulate-navigate-sequence-next))
     :per-marker nil
     :reverse nil)
+   ;; Beginning and end of defun (C-M-a, C-M-e).
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun/*"
+    :collection-name "combobulate-navigate-beginning-of-defun"
+    :action-body '((combobulate-navigate-beginning-of-defun))
+    :per-marker nil
+    :reverse t)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun-end/*"
+    :collection-name "combobulate-navigate-end-of-defun"
+    :action-body '((combobulate-navigate-end-of-defun))
+    :per-marker nil
+    :reverse nil)
+   ;; Logical navigation (M-n, M-p).
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/logical-next/*"
+    :collection-name "combobulate-navigate-logical-next"
+    :action-body '((combobulate-navigate-logical-next))
+    :per-marker nil
+    :reverse nil)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/logical-previous/*"
+    :collection-name "combobulate-navigate-logical-previous"
+    :action-body '((combobulate-navigate-logical-previous))
+    :per-marker nil
+    :reverse t)
+   ;; Marking a node (C-c o h).  Deleting the region records what was
+   ;; marked.  `mark-node-dwim' proffers when more than one node begins at
+   ;; point, and an unstubbed proffer blocks a batch Emacs indefinitely, so
+   ;; stub it as the splice collections do.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/mark-node/*"
+    :collection-name "combobulate-mark-node-dwim"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0))
+                     (combobulate-mark-node-dwim))
+                   (delete-region (region-beginning) (region-end)))
+    :per-marker t
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
