@@ -223,6 +223,29 @@
           ((:nodes ("tuple_expression" "tuple_pattern") :position at))
           :selector (:choose node :match-children t))
 
+         ;; Step between the branches of an `if ... else if ... else'
+         ;; chain.  Like a let chain it nests to the right, so a branch's
+         ;; predecessor is its nearest `else_clause' ancestor; anchor there
+         ;; and the whole chain below it is one group.
+         (:activation-nodes
+          ((:nodes ("else_clause") :has-ancestor ("else_clause")
+                   :position at))
+          :selector (:choose parent
+                     :match-query (:query ((else_clause) @match))))
+
+         ;; The chain's first `else' has no `else_clause' ancestor, so
+         ;; anchor on the enclosing binding and take the `if' with it,
+         ;; which is how `C-M-p' reaches the head of the chain.
+         (:activation-nodes
+          ((:nodes ("else_clause")
+                   :has-ancestor ("let_expression" "let_binding")
+                   :position at))
+          :selector (:choose parent
+                     :match-query (:query ((else_clause) @match
+                                           (let_binding (if_expression) @match)
+                                           (let_expression
+                                            body: (if_expression) @match)))))
+
          ;; Step between the links of a `let ... in' chain, a `let open M
          ;; in' link included, since the grammar parses that as a
          ;; let_expression too.  The chain nests to the right, so a link's

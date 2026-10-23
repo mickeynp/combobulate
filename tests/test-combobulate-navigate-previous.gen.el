@@ -1969,6 +1969,34 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--if_else_chain-1 ()
+ "Test `combobulate' with `fixtures/sibling-nav/if_else_chain.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/if_else_chain.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--if_else_if_chain-1 ()
+ "Test `combobulate' with `fixtures/sibling-nav/if_else_if_chain.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/if_else_if_chain.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--let_in_case_body-1 ()
  "Test `combobulate' with `fixtures/sibling-nav/let_in_case_body.ml' in `tuareg-mode' mode."
 	     (combobulate-test

@@ -1980,6 +1980,23 @@
 	       (combobulate-test-assert-at-marker 2)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-next--if_else_if_chain-4 ()
+ "Test `combobulate' with `fixtures/sibling-nav/if_else_if_chain.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/if_else_if_chain.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-next)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-next)
+	       (combobulate-test-assert-at-marker 4)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-next--let_in_case_body-2 ()
  "Test `combobulate' with `fixtures/sibling-nav/let_in_case_body.ml' in `tuareg-mode' mode."
 	     (combobulate-test
