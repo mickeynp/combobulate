@@ -300,23 +300,89 @@
     :action-body '((combobulate-navigate-sequence-next))
     :per-marker nil
     :reverse nil)
+   ;; Beginning and end of defun (C-M-a, C-M-e).
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun/*"
+    :collection-name "combobulate-navigate-beginning-of-defun"
+    :action-body '((combobulate-navigate-beginning-of-defun))
+    :per-marker nil
+    :reverse t)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/defun-end/*"
+    :collection-name "combobulate-navigate-end-of-defun"
+    :action-body '((combobulate-navigate-end-of-defun))
+    :per-marker nil
+    :reverse nil)
+   ;; Logical navigation (M-n, M-p).
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/logical-next/*"
+    :collection-name "combobulate-navigate-logical-next"
+    :action-body '((combobulate-navigate-logical-next))
+    :per-marker nil
+    :reverse nil)
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/logical-previous/*"
+    :collection-name "combobulate-navigate-logical-previous"
+    :action-body '((combobulate-navigate-logical-previous))
+    :per-marker nil
+    :reverse t)
+   ;; Marking a node (C-c o h).  Deleting the region records what was
+   ;; marked.  `mark-node-dwim' proffers when more than one node begins at
+   ;; point, and an unstubbed proffer blocks a batch Emacs indefinitely, so
+   ;; stub it as the splice collections do.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/mark-node/*"
+    :collection-name "combobulate-mark-node-dwim"
+    :action-body '((combobulate-with-stubbed-proffer-choices (:choices '(0 0 0 0))
+                     (combobulate-mark-node-dwim))
+                   (delete-region (region-beginning) (region-end)))
+    :per-marker t
+    :reverse nil)
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
-    :fixture-files "fixtures/sibling/*"
+    :fixture-files '("fixtures/sibling/*" "fixtures/sibling-nav/*")
     :collection-name "combobulate-navigate-previous"
     :action-body '((combobulate-navigate-previous))
     :per-marker nil
     :reverse t)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
-    :fixture-files "fixtures/sibling/*"
+    :fixture-files '("fixtures/sibling/*" "fixtures/sibling-nav/*")
     :collection-name "combobulate-navigate-next"
     :action-body '((combobulate-navigate-next))
     :per-marker nil
     :reverse nil)
    ;; Parent navigation
    ;; child navigation
+   ;; Parent navigation (C-M-u).  `up' is not the inverse of `down': a
+   ;; hierarchy rule can offer a node's name and its body as one flat
+   ;; candidate list, so `C-M-d' may step sideways into a sibling subtree
+   ;; while `C-M-u' only ever walks true ancestors.  A `:reverse'
+   ;; collection over fixtures/down/ would assert an inverse that does not
+   ;; hold, so up gets its own fixtures.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-marker-loop
+    :fixture-files "fixtures/up/*"
+    :collection-name "combobulate-navigate-up"
+    :action-body '((combobulate-navigate-up))
+    :per-marker nil
+    :reverse t)
+   ;; Marking a defun (C-M-h).  Deleting the region records what was
+   ;; marked, which is what the assertion needs to see.
+   (combobulate-test-suite
+    :harness-factory #'combobulate-test-harness-with-fixture-delta
+    :fixture-files "fixtures/mark-defun/*"
+    :collection-name "combobulate-mark-defun"
+    :action-body '((combobulate-mark-defun)
+                   (delete-region (region-beginning) (region-end)))
+    :per-marker t
+    :reverse nil)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
     :fixture-files "fixtures/down/*"

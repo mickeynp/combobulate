@@ -79,7 +79,7 @@
                  :matched-selection nil)))
     (catch 'done
       (dolist (activation-node activation-nodes)
-        (map-let (:nodes :position :has-parent :has-ancestor :has-fields)
+        (map-let (:nodes :position :has-parent :has-ancestor :has-fields :has-sibling)
             activation-node
           ;; Expand the rules in `:nodes' and determine if any of them match
           (let ((action-node-type (combobulate-node-type action-node))
@@ -106,6 +106,10 @@
                     (t (error "Unknown `:position' specifier `%s'" position)))
                    (or (and has-fields (combobulate-procedure-apply-has-field has-fields action-node))
                        (not has-fields))
+                   ;; If `:has-sibling' is specified, then require a
+                   ;; matching named sibling of the action node.
+                   (or (and has-sibling (combobulate-procedure-apply-has-sibling has-sibling action-node))
+                       (not has-sibling))
                    ;; If `:has-parent' or `:has-ancestor' is
                    ;; specified, then check the parents of the
                    ;; action node.
@@ -625,6 +629,21 @@ If SKIP-DISCARD-RULES is non-nil, discard rules are not included."
 (defun combobulate-production-rules-get-inverse-rules (&optional language)
   "Return a list of the inverted production rules in LANGUAGE."
   (combobulate-production-rules--get combobulate-rules-inverse-alist language))
+
+(defun combobulate-procedure-apply-has-sibling (has-sibling-rules action-node)
+  "Determine if ACTION-NODE has a named sibling matching HAS-SIBLING-RULES.
+
+ACTION-NODE itself is excluded from the search.  This restricts a
+procedure to nodes that belong to a group of similar siblings, such
+as the individual bindings of a mutually-recursive `type ... and ...'
+or `let ... and ...', so that a lone binding instead falls through to
+a coarser-grained procedure."
+  (when-let ((parent (combobulate-node-parent action-node)))
+    (let ((expanded (combobulate-procedure-expand-rules has-sibling-rules)))
+      (seq-find (lambda (sibling)
+                  (and (not (combobulate-node-eq sibling action-node))
+                       (member (combobulate-node-type sibling) expanded)))
+                (combobulate-node-children parent)))))
 
 (defun combobulate-procedure-expand-rules-1 (rules)
   "Internal function that expands RULES into a set of node types."

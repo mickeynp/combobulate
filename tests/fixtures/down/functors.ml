@@ -1,4 +1,4 @@
-(* -*- combobulate-test-point-overlays: ((1 outline 136) (2 outline 146)); eval: (combobulate-test-fixture-mode t); -*- *)
+(* -*- combobulate-test-point-overlays: ((1 outline 323) (2 outline 330) (3 outline 334) (4 outline 375) (5 outline 384) (6 outline 391) (7 outline 399) (8 outline 412) (9 outline 417)); eval: (combobulate-test-fixture-mode t); -*- *)
 module type ORDERED = sig
   type t = A | B | C | D
 

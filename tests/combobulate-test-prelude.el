@@ -185,6 +185,14 @@ If NUMBER is nil, delete all `combobulate-test' overlays."
             (ert-fail (list "Overlay `%d' is not at point `%s'" number (point))))))
     (error "No overlay found for number %s" number)))
 
+(defun combobulate-test-marker-at-point ()
+  "Return the number of the test marker at point, or nil if there is none."
+  (seq-some (lambda (ov)
+              (and (overlay-get ov 'combobulate-test-number)
+                   (= (overlay-start ov) (point))
+                   (overlay-get ov 'combobulate-test-number)))
+            (overlays-in (point-min) (point-max))))
+
 (defun combobulate--test-place-overlay (string-char number category &optional orig-pt)
   "Place a numbered overlay at point.
 

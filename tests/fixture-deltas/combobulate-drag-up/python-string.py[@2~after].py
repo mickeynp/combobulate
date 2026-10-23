@@ -1,3 +1,3 @@
-# -*- combobulate-test-point-overlays: ((1 outline 191) (2 outline 195) (3 outline 198) (4 outline 203) (5 outline 206) (6 outline 207)); eval: (combobulate-test-fixture-mode t); -*-
+# -*- combobulate-test-point-overlays: ((1 outline 175) (2 outline 179) (3 outline 182) (4 outline 187) (5 outline 190)); eval: (combobulate-test-fixture-mode t); -*-
 
 s = f"{a}foo  bar {b} baz"
