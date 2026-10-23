@@ -223,6 +223,32 @@
           ((:nodes ("tuple_expression" "tuple_pattern") :position at))
           :selector (:choose node :match-children t))
 
+         ;; Step between the links of a `let ... in' chain, a `let open M
+         ;; in' link included, since the grammar parses that as a
+         ;; let_expression too.  The chain nests to the right, so a link's
+         ;; predecessor is its parent: anchor there and flatten the subtree.
+         (:activation-nodes
+          ((:nodes ("let_expression") :has-parent ("let_expression")
+                   :position at))
+          :selector (:choose parent
+                     :match-query (:query ((let_expression) @match
+                                           (let_expression body: (_) @match)
+                                           (let_expression
+                                            body: (sequence_expression (_) @match))))))
+
+         ;; Pair a chain's body with the let that binds for it, so stepping
+         ;; back out of the body reaches the preceding link.  `:position at'
+         ;; leaves the body's own contents to the rules below.
+         (:activation-nodes
+          ((:nodes ("application_expression"
+                    "infix_expression"
+                    "tuple_expression")
+                   :has-parent ("let_expression")
+                   :position at))
+          :selector (:choose parent
+                     :match-query (:query ((let_expression) @match
+                                           (let_expression body: (_) @match)))))
+
           ;; although the value_paths are siblings, here desired functionality will be to go to the sibling of their parent.
 
           (:activation-nodes

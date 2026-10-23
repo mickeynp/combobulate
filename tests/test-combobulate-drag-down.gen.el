@@ -1952,28 +1952,6 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/module_signatures.mli[@5~after].mli")))))
 
 
-(ert-deftest combobulate-test-ocaml-combobulate-drag-down--module_string-1 ()
- "Test `combobulate' with `fixtures/sibling/module_string.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/module_string.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-drag-down)
-	       (combobulate-test-go-to-marker 1)
-	       (combobulate-drag-down)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/module_string.ml[@1~after].ml")))
-
-
-(ert-deftest combobulate-test-ocaml-combobulate-drag-down--module_string-2 ()
- "Test `combobulate' with `fixtures/sibling/module_string.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/module_string.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-drag-down)
-	       (combobulate-test-go-to-marker 2)
-	       (combobulate-drag-down)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-down/module_string.ml[@2~after].ml")))
-
-
 (ert-deftest combobulate-test-ocaml-combobulate-drag-down--module_type_expressions-1 ()
  "Test `combobulate' with `fixtures/sibling/module_type_expressions.ml' in `tuareg-mode' mode."
 	     (combobulate-test

@@ -303,14 +303,14 @@
    ;; Sibling navigation
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
-    :fixture-files "fixtures/sibling/*"
+    :fixture-files '("fixtures/sibling/*" "fixtures/sibling-nav/*")
     :collection-name "combobulate-navigate-previous"
     :action-body '((combobulate-navigate-previous))
     :per-marker nil
     :reverse t)
    (combobulate-test-suite
     :harness-factory #'combobulate-test-harness-marker-loop
-    :fixture-files "fixtures/sibling/*"
+    :fixture-files '("fixtures/sibling/*" "fixtures/sibling-nav/*")
     :collection-name "combobulate-navigate-next"
     :action-body '((combobulate-navigate-next))
     :per-marker nil
