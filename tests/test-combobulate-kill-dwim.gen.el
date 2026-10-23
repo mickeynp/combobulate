@@ -88,6 +88,48 @@
 	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/python-match-case.py[@1~after].py")))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-kill-dwim--record_fields-1 ()
+ "Test `combobulate' with `fixtures/kill-node/record_fields.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/kill-node/record_fields.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-kill-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate--with-test-overlays
+		(lambda
+		  (ov)
+		  (combobulate-kill-node-dwim)))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/record_fields.ml[@1~after].ml")))
+
+
+(ert-deftest combobulate-test-ocaml-interface-combobulate-kill-dwim--signature_items-1 ()
+ "Test `combobulate' with `fixtures/kill-node/signature_items.mli' in `tuareg-interface-mode' mode."
+	     (combobulate-test
+		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/kill-node/signature_items.mli")
+	       :tags
+	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-kill-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate--with-test-overlays
+		(lambda
+		  (ov)
+		  (combobulate-kill-node-dwim)))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/signature_items.mli[@1~after].mli")))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-kill-dwim--structure_items-1 ()
+ "Test `combobulate' with `fixtures/kill-node/structure_items.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/kill-node/structure_items.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-kill-dwim)
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate--with-test-overlays
+		(lambda
+		  (ov)
+		  (combobulate-kill-node-dwim)))
+	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-kill-dwim/structure_items.ml[@1~after].ml")))
+
+
 (ert-deftest combobulate-test-yaml-combobulate-kill-dwim--yaml-block-mapping-pairs-1 ()
  "Test `combobulate' with `fixtures/kill-node/yaml-block-mapping-pairs.yaml' in `yaml-ts-mode' mode."
 	     (combobulate-test

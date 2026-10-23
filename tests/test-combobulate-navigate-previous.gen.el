@@ -128,6 +128,17 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--constructor_patterns-1 ()
+ "Test `combobulate' with `fixtures/sibling/constructor_patterns.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/constructor_patterns.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-css-combobulate-navigate-previous--css-declaration-1 ()
  "Test `combobulate' with `fixtures/sibling/css-declaration.css' in `css-ts-mode' mode."
 	     (combobulate-test
@@ -469,6 +480,20 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--let_and_bindings-1 ()
+ "Test `combobulate' with `fixtures/sibling/let_and_bindings.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/let_and_bindings.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--let_and_in-1 ()
  "Test `combobulate' with `fixtures/sibling/let_and_in.ml' in `tuareg-mode' mode."
 	     (combobulate-test
@@ -513,6 +538,20 @@
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--let_parameters-1 ()
+ "Test `combobulate' with `fixtures/sibling/let_parameters.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/let_parameters.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 2)
@@ -1255,6 +1294,20 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--record_expression-1 ()
+ "Test `combobulate' with `fixtures/sibling/record_expression.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/record_expression.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--record_in_let-1 ()
  "Test `combobulate' with `fixtures/sibling/record_in_let.ml' in `tuareg-mode' mode."
 	     (combobulate-test
@@ -1303,6 +1356,20 @@
 		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/type-declaration.go")
 	       :tags
 	       '(combobulate go go-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--type_and_bindings-1 ()
+ "Test `combobulate' with `fixtures/sibling/type_and_bindings.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling/type_and_bindings.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
@@ -1897,6 +1964,17 @@
 		 (:language yaml :mode yaml-ts-mode :fixture "fixtures/sibling/yaml-sequence.yaml")
 	       :tags
 	       '(combobulate yaml yaml-ts-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 1)))
+
+
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--let_in_case_body-1 ()
+ "Test `combobulate' with `fixtures/sibling-nav/let_in_case_body.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/let_in_case_body.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
 	       (combobulate-test-go-to-marker 2)
 	       (combobulate-navigate-previous)
 	       (combobulate-test-assert-at-marker 1)))
