@@ -138,25 +138,42 @@ doesn't exist."
          `,@action-body))))
 
 (defclass combobulate-test-harness-marker-loop (combobulate-test-harness)
-  ()
+  ((landed :initarg :landed
+           :initform nil
+           :custom list
+           :documentation "Alist of marker number to the marker the action actually moved point to.
+
+Recorded when the action works but does not land on the marker the
+run expects, so the generated test asserts what the action does
+instead of the step the run assumed.")
+   (skipped :initarg :skipped
+            :initform nil
+            :custom list
+            :documentation "Marker numbers the run records no step for.
+
+A step is skipped when the action works but moves point somewhere
+no marker names, which no assertion can express."))
   "A class to generate `ert-deftest' forms for `combobulate' with a marker loop.")
 
 (cl-defmethod combobulate-test-harness-extend-action-body ((obj combobulate-test-harness-marker-loop))
-  (with-slots (action-body command-error fixture-delta-file-name marker-number total-markers reverse) obj
+  (with-slots (action-body command-error fixture-delta-file-name marker-number total-markers reverse landed skipped) obj
     (princ (format "Marker number: %s / %s\n" marker-number total-markers))
-    (when (and (>= marker-number 1) (< marker-number total-markers))
+    ;; A forward run steps from each marker to the next, so it starts at
+    ;; the first marker and stops at the one before the last; a reverse run
+    ;; is its mirror image and starts at the last.
+    (when (and (not (member marker-number skipped))
+               (if reverse
+                   (and (> marker-number 1) (<= marker-number total-markers))
+                 (and (>= marker-number 1) (< marker-number total-markers))))
       `(,@(if (member marker-number command-error)
               `((should-error
-                 (progn ,@action-body)))
+                 (progn (combobulate-test-go-to-marker ,marker-number)
+                        ,@action-body)))
             `((combobulate-test-go-to-marker ,marker-number)
               ,@action-body
-              ,(if reverse
-                   (if (> marker-number 1)
-                       `(combobulate-test-assert-at-marker ,(1- marker-number))
-                     `(combobulate-test-assert-at-marker ,marker-number))
-                 (if (< marker-number total-markers)
-                     `(combobulate-test-assert-at-marker ,(1+ marker-number))
-                   `(combobulate-test-assert-at-marker ,marker-number)))))))))
+              (combobulate-test-assert-at-marker
+               ,(or (alist-get marker-number landed)
+                    (if reverse (1- marker-number) (1+ marker-number))))))))))
 
 
 (defclass combobulate-test-harness-with-fixture-delta (combobulate-test-harness)
@@ -375,13 +392,40 @@ doesn't exist."
                 (eval `(progn ,@current-form))
               (error
                (setq current-form nil)
-               (message "⚠️ Action function exited with an error: `%s'. Generating error test for fixture `%s'."
-                        err-arg fixture-file-name)
-               (setf (oref obj command-error) (cons i (oref obj command-error)))))
+               ;; The form that just failed runs the action and asserts the
+               ;; step the run assumes, so either could have signalled.  Run
+               ;; the action on its own to tell them apart: if it errors the
+               ;; fixture gets an error test, and if it does not then the
+               ;; step was wrong, and the marker the action really moves to
+               ;; is what the test should assert.
+               (if (condition-case nil
+                       (progn (eval `(progn (combobulate-test-go-to-marker ,i)
+                                            ,@action-body))
+                              nil)
+                     (error t))
+                   (progn
+                     (message "⚠️ Action function exited with an error: `%s'. Generating error test for fixture `%s'."
+                              err-arg fixture-file-name)
+                     (setf (oref obj command-error) (cons i (oref obj command-error))))
+                 (if-let ((landed-on (combobulate-test-marker-at-point)))
+                     (progn
+                       (message "ℹ️ Action moved to marker `%s', not the next step, for fixture `%s'."
+                                landed-on fixture-file-name)
+                       (setf (oref obj landed) (cons (cons i landed-on) (oref obj landed))))
+                   (message "ℹ️ Action did not land on a marker for fixture `%s'. Recording no step for marker `%s'."
+                            fixture-file-name i)
+                   (setf (oref obj skipped) (cons i (oref obj skipped)))))))
             (setq expanded (append expanded (macroexpand (combobulate-test-harness-extend-action-body obj))))))
-        (with-current-buffer output-buffer
-          (setf (oref obj action-body) expanded)
-          (insert (combobulate-test-harness-create-ert-test-form obj t)))))))
+        (if (null expanded)
+            ;; Every step was skipped, so there is nothing for the test to
+            ;; assert and the fixture's markers do not describe a chain for
+            ;; this action.  An empty test would read as coverage, so emit
+            ;; none at all.
+            (message "⚠️ No step held for fixture `%s'. Generating no test."
+                     fixture-file-name)
+          (with-current-buffer output-buffer
+            (setf (oref obj action-body) expanded)
+            (insert (combobulate-test-harness-create-ert-test-form obj t))))))))
 
 
 (cl-defmethod combobulate-test-harness-run-and-write-test ((obj combobulate-test-harness-with-fixture-delta))

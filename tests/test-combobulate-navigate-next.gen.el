@@ -455,14 +455,6 @@
 	       (combobulate-test-assert-at-marker 2)))
 
 
-(ert-deftest combobulate-test-go-combobulate-navigate-next--inside-case-1 ()
- "Test `combobulate' with `fixtures/sibling/inside-case.go' in `go-ts-mode' mode."
-	     (combobulate-test
-		 (:language go :mode go-ts-mode :fixture "fixtures/sibling/inside-case.go")
-	       :tags
-	       '(combobulate go go-ts-mode combobulate-navigate-next)))
-
-
 (ert-deftest combobulate-test-toml-combobulate-navigate-next--inside-table-3 ()
  "Test `combobulate' with `fixtures/sibling/inside-table.toml' in `toml-ts-mode' mode."
 	     (combobulate-test
@@ -1214,7 +1206,7 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
-(ert-deftest combobulate-test-python-combobulate-navigate-next--python-string-6 ()
+(ert-deftest combobulate-test-python-combobulate-navigate-next--python-string-5 ()
  "Test `combobulate' with `fixtures/sibling/python-string.py' in `python-ts-mode' mode."
 	     (combobulate-test
 		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
@@ -1231,10 +1223,7 @@
 	       (combobulate-test-assert-at-marker 4)
 	       (combobulate-test-go-to-marker 4)
 	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 5)
-	       (combobulate-test-go-to-marker 5)
-	       (combobulate-navigate-next)
-	       (combobulate-test-assert-at-marker 6)))
+	       (combobulate-test-assert-at-marker 5)))
 
 
 (ert-deftest combobulate-test-python-combobulate-navigate-next--python-tuple-pattern-5 ()

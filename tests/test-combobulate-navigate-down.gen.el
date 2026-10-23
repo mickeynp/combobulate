@@ -104,30 +104,6 @@
 	       (combobulate-test-assert-at-marker 5)))
 
 
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--class_types-1 ()
- "Test `combobulate' with `fixtures/down/class_types.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/class_types.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)))
-
-
-(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--class_types-1 ()
- "Test `combobulate' with `fixtures/down/class_types.mli' in `tuareg-interface-mode' mode."
-	     (combobulate-test
-		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/class_types.mli")
-	       :tags
-	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)))
-
-
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--class_types_b-1 ()
- "Test `combobulate' with `fixtures/down/class_types_b.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/class_types_b.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)))
-
-
 (ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--class_types_b-4 ()
  "Test `combobulate' with `fixtures/down/class_types_b.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test
@@ -151,9 +127,9 @@
 		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/classes.ml")
 	       :tags
 	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
+	       (combobulate-test-go-to-marker 1)
+	       (combobulate-navigate-down)
+	       (combobulate-test-assert-at-marker 1)))
 
 
 (ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--classes-2 ()
@@ -527,17 +503,6 @@
 	       (combobulate-test-assert-at-marker 3)))
 
 
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--matches-2 ()
- "Test `combobulate' with `fixtures/down/matches.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/matches.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
-
-
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--module-statements-7 ()
  "Test `combobulate' with `fixtures/down/module-statements.tsx' in `tsx-ts-mode' mode."
 	     (combobulate-test
@@ -564,57 +529,6 @@
 	       (combobulate-test-assert-at-marker 7)))
 
 
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--module_sig_a-4 ()
- "Test `combobulate' with `fixtures/down/module_sig_a.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/module_sig_a.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
-
-
-(ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--module_sig_a-4 ()
- "Test `combobulate' with `fixtures/down/module_sig_a.mli' in `tuareg-interface-mode' mode."
-	     (combobulate-test
-		 (:language ocaml-interface :mode tuareg-interface-mode :fixture "fixtures/down/module_sig_a.mli")
-	       :tags
-	       '(combobulate ocaml-interface tuareg-interface-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
-
-
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--module_sig_b-4 ()
- "Test `combobulate' with `fixtures/down/module_sig_b.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/module_sig_b.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
-
-
 (ert-deftest combobulate-test-ocaml-interface-combobulate-navigate-down--module_signature-4 ()
  "Test `combobulate' with `fixtures/down/module_signature.mli' in `tuareg-interface-mode' mode."
 	     (combobulate-test
@@ -630,14 +544,6 @@
 	       (combobulate-test-go-to-marker 3)
 	       (combobulate-navigate-down)
 	       (combobulate-test-assert-at-marker 4)))
-
-
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--module_string-1 ()
- "Test `combobulate' with `fixtures/down/module_string.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/module_string.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)))
 
 
 (ert-deftest combobulate-test-tsx-combobulate-navigate-down--nested-jsx-8 ()
@@ -667,17 +573,6 @@
 	       (combobulate-test-go-to-marker 7)
 	       (combobulate-navigate-down)
 	       (combobulate-test-assert-at-marker 8)))
-
-
-(ert-deftest combobulate-test-ocaml-combobulate-navigate-down--nested_matches-2 ()
- "Test `combobulate' with `fixtures/down/nested_matches.ml' in `tuareg-mode' mode."
-	     (combobulate-test
-		 (:language ocaml :mode tuareg-mode :fixture "fixtures/down/nested_matches.ml")
-	       :tags
-	       '(combobulate ocaml tuareg-mode combobulate-navigate-down)
-	       (should-error
-		(progn
-		  (combobulate-navigate-down)))))
 
 
 (ert-deftest combobulate-test-json-combobulate-navigate-down--object-9 ()

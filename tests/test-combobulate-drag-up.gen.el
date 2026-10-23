@@ -3428,17 +3428,6 @@
 		  (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-set.py[@1~after].py")))))
 
 
-(ert-deftest combobulate-test-python-combobulate-drag-up--python-string-6 ()
- "Test `combobulate' with `fixtures/sibling/python-string.py' in `python-ts-mode' mode."
-	     (combobulate-test
-		 (:language python :mode python-ts-mode :fixture "fixtures/sibling/python-string.py")
-	       :tags
-	       '(combobulate python python-ts-mode combobulate-drag-up)
-	       (combobulate-test-go-to-marker 6)
-	       (combobulate-drag-up)
-	       (combobulate-compare-action-with-fixture-delta "./fixture-deltas/combobulate-drag-up/python-string.py[@6~after].py")))
-
-
 (ert-deftest combobulate-test-python-combobulate-drag-up--python-string-5 ()
  "Test `combobulate' with `fixtures/sibling/python-string.py' in `python-ts-mode' mode."
 	     (combobulate-test
