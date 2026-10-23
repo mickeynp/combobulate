@@ -2056,6 +2056,23 @@
 	       (combobulate-test-assert-at-marker 1)))
 
 
+(ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--match_cases-1 ()
+ "Test `combobulate' with `fixtures/sibling-nav/match_cases.ml' in `tuareg-mode' mode."
+	     (combobulate-test
+		 (:language ocaml :mode tuareg-mode :fixture "fixtures/sibling-nav/match_cases.ml")
+	       :tags
+	       '(combobulate ocaml tuareg-mode combobulate-navigate-previous)
+	       (combobulate-test-go-to-marker 4)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 3)
+	       (combobulate-test-go-to-marker 3)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)
+	       (combobulate-test-go-to-marker 2)
+	       (combobulate-navigate-previous)
+	       (combobulate-test-assert-at-marker 2)))
+
+
 (ert-deftest combobulate-test-ocaml-combobulate-navigate-previous--module_string-1 ()
  "Test `combobulate' with `fixtures/sibling-nav/module_string.ml' in `tuareg-mode' mode."
 	     (combobulate-test
