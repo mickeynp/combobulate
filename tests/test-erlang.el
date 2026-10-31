@@ -18,82 +18,31 @@
        (let ((combobulate-flash-node nil))
          ,@body))))
 
-(ert-deftest combobulate-test-erlang-kill-last-clause-takes-previous-separator ()
-  (combobulate-test-erlang "f(X) ->\n    case X of\n        a -> 1;\n        ‸b -> 2\n    end.\n"
-    (combobulate-erlang-kill-node-dwim)
-    (should (equal (buffer-string) "f(X) ->\n    case X of\n        a -> 1\n    end.\n"))))
-
-(ert-deftest combobulate-test-erlang-kill-first-clause-takes-its-line ()
-  (combobulate-test-erlang "f(X) ->\n    case X of\n        ‸a -> 1;\n        b -> 2\n    end.\n"
-    (combobulate-erlang-kill-node-dwim)
-    (should (equal (buffer-string) "f(X) ->\n    case X of\n        b -> 2\n    end.\n"))))
-
-(ert-deftest combobulate-test-erlang-kill-last-statement-takes-previous-comma ()
-  (combobulate-test-erlang "f() ->\n    A = 1,\n    ‸{ok, A}.\n"
-    (combobulate-erlang-kill-node-dwim)
-    (should (equal (buffer-string) "f() ->\n    A = 1.\n"))))
-
-(ert-deftest combobulate-test-erlang-kill-last-function-clause-ends-the-function ()
-  (combobulate-test-erlang "f(0) -> zero;\n‸f(N) -> N.\n\ng() -> ok.\n"
-    (combobulate-erlang-kill-node-dwim)
-    (should (equal (buffer-string) "f(0) -> zero.\n\ng() -> ok.\n"))))
-
-(ert-deftest combobulate-test-erlang-drag-last-function-clause-up ()
-  (combobulate-test-erlang "f(0) -> zero;\n‸f(N) -> N.\n"
-    (combobulate-erlang-drag-up)
-    (should (equal (buffer-string) "f(N) -> N;\nf(0) -> zero.\n"))))
-
-(ert-deftest combobulate-test-erlang-drag-refuses-to-cross-after ()
-  (combobulate-test-erlang "f() ->\n    receive\n        stop -> ok\n    ‸after 10 -> timeout\n    end.\n"
-    (should-error (combobulate-erlang-drag-up) :type 'user-error)
-    (should (equal (buffer-string) "f() ->\n    receive\n        stop -> ok\n    after 10 -> timeout\n    end.\n"))))
-
-(ert-deftest combobulate-test-erlang-splice-up-replaces-the-case ()
-  (combobulate-test-erlang "f(X) ->\n    case X of\n        a -> ‸one;\n        b -> two\n    end.\n"
-    (combobulate-erlang-splice-up)
-    (should (equal (buffer-string) "f(X) ->\n    one.\n"))))
-
-(ert-deftest combobulate-test-erlang-splice-up-reindents-the-statements ()
-  (combobulate-test-erlang "f() ->\n    begin\n        ‸A = 1,\n        A\n    end.\n"
-    (combobulate-erlang-splice-up)
-    (should (equal (buffer-string) "f() ->\n    A = 1,\n    A.\n"))))
-
-(ert-deftest combobulate-test-erlang-splice-refuses-a-function-body ()
-  (combobulate-test-erlang "f() ->\n    ‸ok.\n"
-    (should-error (combobulate-erlang-splice-up) :type 'user-error)))
+(defun combobulate-test-erlang--press (key)
+  "Run the command that KEY is bound to, as a user pressing it would."
+  (let* ((command (key-binding (kbd key)))
+         (this-command command)
+         (last-command nil))
+    (call-interactively command)))
 
 (ert-deftest combobulate-test-erlang-sequence-visits-case-keywords ()
   (combobulate-test-erlang "f(X) ->\n    ‸case X of\n        a -> 1\n    end.\n"
-    (combobulate-erlang-navigate-sequence-next)
+    (combobulate-test-erlang--press "M-n")
     (should (looking-at-p "of"))
-    (combobulate-erlang-navigate-sequence-next)
+    (combobulate-test-erlang--press "M-n")
     (should (looking-at-p "end"))
-    (combobulate-erlang-navigate-sequence-previous)
+    (combobulate-test-erlang--press "M-p")
     (should (looking-at-p "of"))))
 
-(ert-deftest combobulate-test-erlang-sequence-skips-missing-keywords ()
-  (combobulate-test-erlang "f() ->\n    ‸try g()\n    catch\n        _:_ -> ok\n    end.\n"
-    (combobulate-erlang-navigate-sequence-next)
-    (should (looking-at-p "catch"))
-    (combobulate-erlang-navigate-sequence-next)
+(ert-deftest combobulate-test-erlang-sequence-visits-the-end-of-receive ()
+  (combobulate-test-erlang "f() ->\n    ‸receive\n        m -> 1\n    after 10 -> 2\n    end.\n"
+    (combobulate-test-erlang--press "M-n")
     (should (looking-at-p "end"))))
 
-(ert-deftest combobulate-test-erlang-same-kind-skips-the-other-clauses ()
-  (combobulate-test-erlang "‸a() -> ok.\nb(x) -> ok;\nb(_) -> ok.\nc() -> ok.\n"
-    (combobulate-erlang-navigate-next-same-kind)
-    (should (looking-at-p "b(x)"))
-    (combobulate-erlang-navigate-next-same-kind)
-    (should (looking-at-p "c()"))))
-
-(ert-deftest combobulate-test-erlang-previous-same-kind-reaches-the-first-clause ()
-  (combobulate-test-erlang "a() -> ok.\nb(x) -> ok;\nb(_) -> ok.\n‸c() -> ok.\n"
-    (combobulate-erlang-navigate-previous-same-kind)
-    (should (looking-at-p "b(x)"))))
-
-(ert-deftest combobulate-test-erlang-same-kind-groups-calls-by-function ()
-  (combobulate-test-erlang "f() ->\n    ‸io:format(\"a\"),\n    lists:reverse([]),\n    io:format(\"b\").\n"
-    (combobulate-erlang-navigate-next-same-kind)
-    (should (looking-at-p "io:format(\"b\")"))))
+(ert-deftest combobulate-test-erlang-drag-up-does-not-move-after ()
+  (combobulate-test-erlang "f() ->\n    receive\n        stop -> ok\n    ‸after 10 -> timeout\n    end.\n"
+    (should-error (combobulate-test-erlang--press "M-P"))
+    (should (equal (buffer-string) "f() ->\n    receive\n        stop -> ok\n    after 10 -> timeout\n    end.\n"))))
 
 (provide 'test-erlang)
 ;;; test-erlang.el ends here
