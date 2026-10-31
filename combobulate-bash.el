@@ -59,35 +59,6 @@
     '("command_name" "variable_assignment" "file_redirect" "herestring_redirect")
     "Node types in a `command' that are not its arguments.")
 
-  (defun combobulate-bash--statement-procedures (position)
-    "Return the sibling procedures for statements, activated at POSITION."
-    `((:activation-nodes
-       ((:nodes ("case_item") :position ,position :has-parent ("case_statement")))
-       :selector (:choose parent :match-children (:match-rules ("case_item"))))
-      ;; Without a selector, a condition is its own only sibling, so
-      ;; it is never dragged into the body.
-      (:activation-nodes
-       ((:nodes ((all)) :position ,position :has-fields ("condition"))))
-      (:activation-nodes
-       ((:nodes ((rule "_statement")) :position ,position :has-parent ("if_statement")))
-       :selector (:choose parent
-                          :match-query (:query (if_statement "then" (_)+ @match)
-                                               :engine combobulate
-                                               :discard-rules ("elif_clause" "else_clause"))))
-      (:activation-nodes
-       ((:nodes ((rule "_statement")) :position ,position :has-parent ("elif_clause")))
-       :selector (:choose parent
-                          :match-query (:query (elif_clause "then" (_)+ @match)
-                                               :engine combobulate)))
-      (:activation-nodes
-       ((:nodes ((rule "_statement")) :position ,position :has-parent ("case_item")))
-       :selector (:choose parent
-                          :match-query (:query (case_item ")" (_)+ @match)
-                                               :engine combobulate)))
-      (:activation-nodes
-       ((:nodes ((rule "_statement")) :position ,position :has-parent ,combobulate-bash--blocks))
-       :selector (:choose parent :match-children t))))
-
   (defvar combobulate-bash-definitions
     `((context-nodes '("word" "variable_name" "special_variable_name" "number" "string_content"))
       (procedure-discard-rules '("comment"))
@@ -97,7 +68,33 @@
        ;; Procedures are tried in order, each against point's node and
        ;; all its ancestors.  The statement at point comes first, then
        ;; the parts of a statement, then the statement point is in.
-       '(,@(combobulate-bash--statement-procedures 'at)
+       '(;; The statement at point.
+         (:activation-nodes
+          ((:nodes ("case_item") :position at :has-parent ("case_statement")))
+          :selector (:choose parent :match-children (:match-rules ("case_item"))))
+         ;; Without a selector, a condition is its own only sibling, so
+         ;; it is never dragged into the body.
+         (:activation-nodes
+          ((:nodes ((all)) :position at :has-fields ("condition"))))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :position at :has-parent ("if_statement")))
+          :selector (:choose parent
+                             :match-query (:query (if_statement "then" (_)+ @match)
+                                                  :engine combobulate
+                                                  :discard-rules ("elif_clause" "else_clause"))))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :position at :has-parent ("elif_clause")))
+          :selector (:choose parent
+                             :match-query (:query (elif_clause "then" (_)+ @match)
+                                                  :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :position at :has-parent ("case_item")))
+          :selector (:choose parent
+                             :match-query (:query (case_item ")" (_)+ @match)
+                                                  :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :position at :has-parent ,combobulate-bash--blocks))
+          :selector (:choose parent :match-children t))
          (:activation-nodes
           ((:nodes ((exclude (all) ,@combobulate-bash--command-parts)) :has-parent ("command")))
           :selector (:choose parent
@@ -106,7 +103,31 @@
           ((:nodes ((all)) :has-parent ("pipeline" "list" "array" "declaration_command"
                                          "unset_command" "variable_assignments")))
           :selector (:choose parent :match-children t))
-         ,@(combobulate-bash--statement-procedures nil)))
+         ;; The statement point is in.
+         (:activation-nodes
+          ((:nodes ("case_item") :has-parent ("case_statement")))
+          :selector (:choose parent :match-children (:match-rules ("case_item"))))
+         (:activation-nodes
+          ((:nodes ((all)) :has-fields ("condition"))))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :has-parent ("if_statement")))
+          :selector (:choose parent
+                             :match-query (:query (if_statement "then" (_)+ @match)
+                                                  :engine combobulate
+                                                  :discard-rules ("elif_clause" "else_clause"))))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :has-parent ("elif_clause")))
+          :selector (:choose parent
+                             :match-query (:query (elif_clause "then" (_)+ @match)
+                                                  :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :has-parent ("case_item")))
+          :selector (:choose parent
+                             :match-query (:query (case_item ")" (_)+ @match)
+                                                  :engine combobulate)))
+         (:activation-nodes
+          ((:nodes ((rule "_statement")) :has-parent ,combobulate-bash--blocks))
+          :selector (:choose parent :match-children t))))
       (procedures-hierarchy
        '((:activation-nodes
           ((:nodes ("function_definition") :position at))
