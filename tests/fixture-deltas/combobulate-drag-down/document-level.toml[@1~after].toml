@@ -5,9 +5,9 @@ ports = [8000, 8001, 8002]
 enabled = true
 
 
+outside = 1
 
-
-outside = 1[database.connection]
+[database.connection]
 username = "admin"
 password = "password123"
 

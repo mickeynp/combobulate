@@ -21,7 +21,6 @@ services:
     env_file:
       - etc/postgres.env
 
-
 x-logging:
   &common-logging
   driver: "json-file"

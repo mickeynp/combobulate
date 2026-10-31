@@ -251,8 +251,21 @@ first; followed by the node type of each grouped label."
                           '(before after around self)))))
 
 (defun combobulate--swap-node-regions (node-a node-b)
-  "Swaps the region substring in NODE-A with NODE-B"
-  (transpose-subr-1 (combobulate-node-range node-a) (combobulate-node-range node-b)))
+  "Swaps the region substring in NODE-A with NODE-B.
+
+If only one of the nodes ends with a newline, as the last clause of a
+block does in some grammars, the newline stays where it is."
+  (cl-flet ((range (node trim)
+              (save-excursion
+                (goto-char (combobulate-node-end node))
+                (when trim
+                  (skip-chars-backward " \t\n" (combobulate-node-start node)))
+                (cons (combobulate-node-start node) (point))))
+            (ends-with-newline-p (node)
+              (string-suffix-p "\n" (combobulate-node-text node))))
+    (let ((trim (not (eq (ends-with-newline-p node-a)
+                         (ends-with-newline-p node-b)))))
+      (transpose-subr-1 (range node-a trim) (range node-b trim)))))
 
 (defun combobulate-transpose-sexps-1 (backward)
   "Capture a transposable node, either forward or BACKWARD."
