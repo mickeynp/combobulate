@@ -26,6 +26,17 @@
 
 (require 'combobulate-test-prelude)
 
+(ert-deftest combobulate-test-combobulate-mode-activates-the-primary-parser-language ()
+  :tags '(combobulate)
+  (skip-unless (boundp 'treesit-primary-parser))
+  (with-temp-buffer
+    (insert "x = 1")
+    (python-ts-mode)
+    (treesit-parser-create 'json)
+    (combobulate-mode)
+    (should combobulate-python-minor-mode)
+    (should-not (bound-and-true-p combobulate-json-minor-mode))))
+
 (ert-deftest combobulate-test-combobulate-refactor-raise-uncommitted-error ()
   :tags '(refactor combobulate)
   (combobulate-test (:language python :mode python-ts-mode :fixture "fixtures/envelope/blank.py")
