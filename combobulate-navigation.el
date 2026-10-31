@@ -707,6 +707,7 @@ that technically has another immediate parent."
           (car (last (seq-filter #'combobulate-node-before-point-p siblings))))
          ((eq direction 'self)
           (or (car (seq-filter #'combobulate-point-at-beginning-of-node-p siblings))
+              (car (seq-filter #'combobulate-point-in-node-range-p siblings))
               (when (combobulate-point-at-beginning-of-node-p node) node))))))))
 
 (defun combobulate-nav-get-next-sibling (node)
