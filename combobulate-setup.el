@@ -466,7 +466,9 @@ enable Combobulate."
   ;; in `combobulate-registered-languages-alist'.
   ;;
   (when-let (match (or (when-let ((existing-parsers (combobulate-parser-list)))
-                         (let ((ts-lang (combobulate-parser-language (car existing-parsers))))
+                         (let ((ts-lang (combobulate-parser-language
+                                         (or (bound-and-true-p treesit-primary-parser)
+                                             (car existing-parsers)))))
                            (seq-find (pcase-lambda (`(,name _ _))
                                        (eq name ts-lang))
                                      combobulate-registered-languages-alist)))
