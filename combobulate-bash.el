@@ -153,34 +153,5 @@
 
 (defun combobulate-bash-setup (_))
 
-(defun combobulate-bash--drag (command arg)
-  "Run the drag COMMAND with ARG, unless point is not on one of the siblings.
-
-The condition of `elif' has no field, so the procedure for the
-body activates on it too, and dragging would swap it into the body."
-  (with-navigation-nodes (:procedures (combobulate-read procedures-sibling))
-    (when-let* ((real (lambda (node) (if (combobulate-proxy-node-p node)
-                                         (combobulate-proxy-node-to-real-node node)
-                                       node)))
-                (nearest (combobulate--get-nearest-navigable-node))
-                (self (funcall real (or (combobulate-nav-get-self-sibling nearest) nearest)))
-                (siblings (mapcar real (combobulate-nav-get-siblings self))))
-      (unless (seq-position siblings self #'combobulate-node-eq)
-        (user-error "Cannot drag %s" (combobulate-pretty-print-node self)))))
-  (funcall command arg))
-
-(defun combobulate-bash-drag-up (&optional arg)
-  "Like `combobulate-drag-up', but refuse to drag a node out of its siblings."
-  (interactive "^p")
-  (combobulate-bash--drag #'combobulate-drag-up arg))
-
-(defun combobulate-bash-drag-down (&optional arg)
-  "Like `combobulate-drag-down', but refuse to drag a node out of its siblings."
-  (interactive "^p")
-  (combobulate-bash--drag #'combobulate-drag-down arg))
-
-(define-key combobulate-bash-map [remap combobulate-drag-up] #'combobulate-bash-drag-up)
-(define-key combobulate-bash-map [remap combobulate-drag-down] #'combobulate-bash-drag-down)
-
 (provide 'combobulate-bash)
 ;;; combobulate-bash.el ends here

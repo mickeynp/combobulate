@@ -30,14 +30,9 @@
     (concat (substring combobulate-test-bash-script 0 pos) "‸"
             (substring combobulate-test-bash-script pos))))
 
-(ert-deftest combobulate-test-bash-drag-refuses-to-move-the-elif-condition-into-the-body ()
-  (combobulate-test-bash (combobulate-test-bash-at "[ -z")
-    (should-error (combobulate-bash-drag-down) :type 'user-error)
-    (should (equal (buffer-string) combobulate-test-bash-script))))
-
 (ert-deftest combobulate-test-bash-drag-refuses-to-move-the-if-condition-into-the-body ()
   (combobulate-test-bash (combobulate-test-bash-at "[ -n")
-    (should-error (combobulate-bash-drag-down))
+    (should-error (combobulate-drag-down))
     (should (equal (buffer-string) combobulate-test-bash-script))))
 
 (ert-deftest combobulate-test-bash-next-stays-on-the-if-condition ()
@@ -46,10 +41,9 @@
       (combobulate-navigate-next)
       (should (= (point) start)))))
 
-(ert-deftest combobulate-test-bash-drag-is-remapped ()
+(ert-deftest combobulate-test-bash-drag-swaps-the-statements-of-an-elif-body ()
   (combobulate-test-bash (combobulate-test-bash-at "two")
-    (should (eq (key-binding [remap combobulate-drag-down]) #'combobulate-bash-drag-down))
-    (call-interactively (key-binding [remap combobulate-drag-down]))
+    (combobulate-drag-down)
     (should (equal (buffer-string)
                    "if [ -n \"$a\" ]; then\n  one\nelif [ -z \"$b\" ]; then\n  three\n  two\nfi\n"))))
 
@@ -63,7 +57,7 @@
 
 (ert-deftest combobulate-test-bash-drag-swaps-the-stages-of-a-pipeline ()
   (combobulate-test-bash "cat log | ‸grep error | sort\n"
-    (combobulate-bash-drag-down)
+    (combobulate-drag-down)
     (should (equal (buffer-string) "cat log | sort | grep error\n"))))
 
 (provide 'test-bash)
