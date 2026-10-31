@@ -643,3 +643,37 @@
 	       (combobulate-test-assert-at-marker 4)))
 
 
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-down--erlang-call-3
+    ()
+
+  "Test `combobulate' with `fixtures/down/erlang-call.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/down/erlang-call.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)))
+
+
+(ert-deftest
+    combobulate-test-erlang-combobulate-navigate-down--erlang-function-4
+    ()
+
+  "Test `combobulate' with `fixtures/down/erlang-function.erl' in `erlang-ts-mode' mode."
+  (combobulate-test
+      (:language erlang :mode erlang-ts-mode :fixture
+		 "fixtures/down/erlang-function.erl")
+    :tags
+    '(combobulate erlang erlang-ts-mode combobulate-navigate-down)
+    (combobulate-test-go-to-marker 1) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 2)
+    (combobulate-test-go-to-marker 2) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 3)
+    (combobulate-test-go-to-marker 3) (combobulate-navigate-down)
+    (combobulate-test-assert-at-marker 4)))
+
+

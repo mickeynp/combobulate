@@ -37,6 +37,8 @@
 (require 'yaml-ts-mode)
 (require 'json-ts-mode)
 (require 'tuareg)
+;; From MELPA; tests using it are skipped when it is not installed.
+(require 'erlang-ts nil t)
 
 ;;; Helpers for writing procedures
 
@@ -580,6 +582,7 @@ macros are available for use in the test body."
   (declare (indent 1) (debug (sexp body)))
   (let ((setup-stmts (symbol-value setup)))
     `(with-temp-buffer
+       (skip-unless (fboundp ',mode))
        (delay-mode-hooks
          (let ((positions '())
                ;; disable noisy BS in python
