@@ -124,46 +124,7 @@
  :custom combobulate-heex-definitions
  :setup-fn combobulate-heex-setup)
 
-(defun combobulate-heex--skip-indentation ()
-  "Move to the line's first tag when point is in indentation.
-
-Combobulate otherwise resolves indentation to the enclosing tag."
-  (when (looking-back "^[ \t]*" (line-beginning-position))
-    (skip-chars-forward " \t")))
-
-(defun combobulate-heex-navigate-previous (&optional arg)
-  "Like `combobulate-navigate-previous', but skipping leading indentation."
-  (interactive "^p")
-  (combobulate-heex--skip-indentation)
-  (combobulate-navigate-previous arg))
-
-(defun combobulate-heex-navigate-up (&optional arg)
-  "Like `combobulate-navigate-up', but skipping leading indentation."
-  (interactive "^p")
-  (combobulate-heex--skip-indentation)
-  (combobulate-navigate-up arg))
-
-(defun combobulate-heex-navigate-down (&optional arg)
-  "Like `combobulate-navigate-down', but skipping leading indentation."
-  (interactive "^p")
-  (combobulate-heex--skip-indentation)
-  (combobulate-navigate-down arg))
-
-(defun combobulate-heex-forward-sexp (&optional arg)
-  "Like `combobulate-forward-sexp-function', but safe at the buffer edges.
-
-Signal `scan-error' there instead of failing with `args-out-of-range'."
-  (setq arg (or arg 1))
-  (if (if (< arg 0) (bobp) (eobp))
-      (signal 'scan-error (list "No more sexps" (point) (point)))
-    (combobulate-forward-sexp-function arg)))
-
-(defun combobulate-heex-setup (_)
-  (setq-local forward-sexp-function #'combobulate-heex-forward-sexp)
-  (let ((map (combobulate-read map)))
-    (define-key map [remap combobulate-navigate-previous] #'combobulate-heex-navigate-previous)
-    (define-key map [remap combobulate-navigate-up] #'combobulate-heex-navigate-up)
-    (define-key map [remap combobulate-navigate-down] #'combobulate-heex-navigate-down)))
+(defun combobulate-heex-setup (_))
 
 (provide 'combobulate-heex)
 ;;; combobulate-heex.el ends here
