@@ -1471,8 +1471,8 @@ an error is raised. If the operation is successful, the cursor is
 moved to the modified node."
   (let* ((up (eq direction 'up))
          (node (or (combobulate--get-nearest-navigable-node) (error "No navigable node")))
-         (sibling (combobulate--get-sibling node (if up 'backward 'forward)))
-         (self (combobulate--get-sibling node 'self)))
+         (self (combobulate--get-sibling node 'self))
+         (sibling (combobulate--get-sibling (or self node) (if up 'backward 'forward))))
     (unless sibling
       (error "No sibling node to swap with in that direction"))
     (combobulate--goto-node sibling)
